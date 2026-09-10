@@ -1,0 +1,45 @@
+name: Experimento 3 - Regresion Puertos y Adaptadores (KYC)
+
+on:
+  push:
+    paths:
+      - "experimentos/experimento-3-puertos-adaptadores-kyc/**"
+      - ".github/workflows/experimento-3-kyc-regression.yml"
+  pull_request:
+    paths:
+      - "experimentos/experimento-3-puertos-adaptadores-kyc/**"
+      - ".github/workflows/experimento-3-kyc-regression.yml"
+  workflow_dispatch:
+
+jobs:
+  regresion-por-proveedor:
+    name: Regresion (proveedor ${{ matrix.kyc_provider }})
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: experimentos/experimento-3-puertos-adaptadores-kyc
+    strategy:
+      fail-fast: false
+      matrix:
+        kyc_provider: ["A", "B"]
+    env:
+      KYC_PROVIDER: ${{ matrix.kyc_provider }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Instalar dependencias
+        run: pip install -r requirements.txt
+
+      - name: Ejecutar la misma suite de regresion para este proveedor
+        run: pytest -v --junitxml=resultados-${{ matrix.kyc_provider }}.xml
+
+      - name: Publicar evidencia de la ejecucion
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: evidencia-experimento-3-proveedor-${{ matrix.kyc_provider }}
+          path: experimentos/experimento-3-puertos-adaptadores-kyc/resultados-${{ matrix.kyc_provider }}.xml
