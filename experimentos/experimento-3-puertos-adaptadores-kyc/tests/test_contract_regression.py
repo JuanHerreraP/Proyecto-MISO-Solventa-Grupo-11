@@ -35,7 +35,7 @@ CASOS_POR_RESULTADO = [
 ]
 
 
-@pytest.mark.parametrize("provider_name", ["A", "B"])
+@pytest.mark.parametrize("provider_name", ["A", "B", "C"])
 @pytest.mark.parametrize("document_number,expected_status", CASOS_POR_RESULTADO)
 def test_verificacion_responde_200_y_el_estado_esperado(
     client_with_provider, provider_name, document_number, expected_status
@@ -50,7 +50,7 @@ def test_verificacion_responde_200_y_el_estado_esperado(
     assert body["status"] == expected_status
 
 
-@pytest.mark.parametrize("provider_name", ["A", "B"])
+@pytest.mark.parametrize("provider_name", ["A", "B", "C"])
 def test_la_respuesta_cumple_el_contrato_esperado_por_el_consumidor(
     client_with_provider, provider_name
 ):
@@ -69,7 +69,7 @@ def test_la_respuesta_cumple_el_contrato_esperado_por_el_consumidor(
     assert 0.0 <= body["risk_score"] <= 1.0
 
 
-@pytest.mark.parametrize("provider_name", ["A", "B"])
+@pytest.mark.parametrize("provider_name", ["A", "B", "C"])
 def test_la_validacion_de_entrada_es_igual_sin_importar_el_proveedor(
     client_with_provider, provider_name
 ):
@@ -81,7 +81,7 @@ def test_la_validacion_de_entrada_es_igual_sin_importar_el_proveedor(
     assert response.status_code == 422
 
 
-@pytest.mark.parametrize("provider_name", ["A", "B"])
+@pytest.mark.parametrize("provider_name", ["A", "B", "C"])
 def test_salud_reporta_el_proveedor_activo_sin_exponer_su_contrato(
     client_with_provider, provider_name
 ):

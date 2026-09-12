@@ -17,6 +17,7 @@ from pydantic import BaseModel
 
 from app.adapters.kyc_provider_a import KYCProviderAAdapter
 from app.adapters.kyc_provider_b import KYCProviderBAdapter
+from app.adapters.kyc_provider_c import KYCProviderCAdapter
 from app.config import get_configured_provider_name
 from app.domain.models import VerificationRequest
 from app.domain.ports import IdentityVerificationProvider
@@ -35,6 +36,8 @@ def get_identity_verification_provider() -> IdentityVerificationProvider:
         return KYCProviderAAdapter()
     if provider_name == "B":
         return KYCProviderBAdapter()
+    if provider_name == "C":
+        return KYCProviderCAdapter()
     raise ValueError(f"Proveedor KYC no soportado: {provider_name}")
 
 
