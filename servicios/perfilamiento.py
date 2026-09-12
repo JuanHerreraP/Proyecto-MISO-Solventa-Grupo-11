@@ -5,8 +5,11 @@ from fastapi import FastAPI, HTTPException, status
 from pydantic import BaseModel
 import redis.asyncio as redis
 import httpx
+import dotenv
 
 app = FastAPI(title="Servicio de Perfilamiento de Riesgo - Solventa")
+
+dotenv.load_dotenv()  # Cargar variables de entorno desde .env
 
 # Configuración de entornos y conectores
 REDIS_HOST = os.getenv("REDIS_HOST", "localhost")
@@ -48,11 +51,17 @@ async def obtener_perfil_riesgo(cliente_id: str):
                 client.get(f"{OPEN_DATA_URL}/{cliente_id}"),
                 return_exceptions=True
             )
-            
+            print(f"Respuestas externas: Finance={res_finance.status_code if not isinstance(res_finance, Exception) else 'Error'}, Data={res_data.status_code if not isinstance(res_data, Exception) else 'Error'}")
+            print(f"Respuestas externas: Finance={res_finance.json() if not isinstance(res_finance, Exception) and res_finance.status_code == 200 else 'Error'}, Data={res_data.json() if not isinstance(res_data, Exception) and res_data.status_code == 200 else 'Error'}")
             # Procesar respuestas externas (simuladas o reales)
-            score_finance = res_finance.json().get("score", 0.5) if not isinstance(res_finance, Exception) and res_finance.status_code == 200 else 0.5
-            score_data = res_data.json().get("score", 0.5) if not isinstance(res_data, Exception) and res_data.status_code == 200 else 0.5
-            
+            score_finance = res_finance.json().get("score_financiero") if not isinstance(res_finance, Exception) and res_finance.status_code == 200 else None
+            score_data = res_data.json().get("score_territorial") if not isinstance(res_data, Exception) and res_data.status_code == 200 else None
+
+            if score_finance is None or score_data is None:
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail="Error al obtener puntajes de riesgo"
+                )
             # Consolidar scoring de riesgo
             final_score = round((score_finance * 0.6) + (score_data * 0.4), 2)
             nivel = "BAJO" if final_score < 0.3 else "MEDIO" if final_score < 0.7 else "ALTO"
@@ -64,7 +73,7 @@ async def obtener_perfil_riesgo(cliente_id: str):
             }
 
             # PASO 3: Guardar el resultado en ElastiCache Redis con TTL
-            await redis_client.setex(cache_key, CACHE_TTL_SECONDS, json.dumps(perfil_consolidado))
+            # await redis_client.setex(cache_key, CACHE_TTL_SECONDS, json.dumps(perfil_consolidado))
             
             perfil_consolidado["fuente"] = "external_fetch"
             return perfil_consolidado
@@ -74,3 +83,11 @@ async def obtener_perfil_riesgo(cliente_id: str):
                 status_code=status.HTTP_504_GATEWAY_TIMEOUT,
                 detail=f"Error consultando fuentes externas de perfilamiento: {str(err)}"
             )
+
+@app.get("/health", status_code=status.HTTP_200_OK)
+def HealthCheck():
+    """
+    Endpoint de health check para monitoreo.
+    Retorna 200 OK si el servicio está operativo.
+    """
+    return {"status": "UP"}
