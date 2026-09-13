@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Style Tile Solventa - Mobile</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500&family=Plus+Jakarta+Sans:wght@700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet">
+  <style>
+    :root {
+      --night: #101b32;
+      --text: #1f2a44;
+      --muted: #6b7890;
+      --canvas: #f5f7fb;
+      --surface: #fff;
+      --line: #e3e8f1;
+      --blue: #3867f2;
+      --blue-soft: #e9eeff;
+      --lime: #a7e451;
+      --lime-soft: #f0fbdf;
+      --sky: #29b4d3;
+      --sky-soft: #e3f8fc;
+      --orange: #f69a4a;
+      --orange-soft: #fff0e3;
+      --rose: #db6474;
+      --rose-soft: #feecef;
+      --success: #268150;
+      --success-soft: #e0f5e8;
+      --radius: 20px;
+      --shadow: 0 16px 38px rgba(16, 27, 50, .09);
+    }
+    * { box-sizing: border-box; }
+    .material-symbols-outlined { font-family: "Material Symbols Outlined"; font-weight: normal; font-style: normal; font-size: 20px; line-height: 1; letter-spacing: normal; text-transform: none; display: inline-block; white-space: nowrap; direction: ltr; -webkit-font-feature-settings: "liga"; -webkit-font-smoothing: antialiased; font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24; }
+    body { margin: 0; color: var(--text); background: var(--canvas); font-family: "DM Sans", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    .page { max-width: 1220px; margin: auto; padding: 48px 72px 72px; }
+    .hero { position: relative; overflow: hidden; display: grid; grid-template-columns: repeat(12, minmax(0,1fr)); align-items: center; border-radius: 28px; padding: 44px 48px; color: var(--night); background: var(--lime); box-shadow: var(--shadow); }
+    .hero-content { position: relative; z-index: 1; grid-column: span 7; max-width: 720px; }
+    .platform-icon { position: relative; z-index: 1; grid-column: span 5; justify-self: center; color: rgba(16,27,50,.58); font-size: 144px; font-variation-settings: "FILL" 0, "wght" 300, "GRAD" 0, "opsz" 48; }
+    .hero::before { content: ""; position: absolute; width: 350px; height: 350px; top: -205px; right: -75px; border: 42px solid rgba(255,255,255,.42); border-radius: 50%; }
+    .hero::after { content: ""; position: absolute; width: 110px; height: 110px; right: 175px; bottom: -55px; border-radius: 50%; background: var(--blue); opacity: .13; }
+    .eyebrow { margin: 0 0 10px; color: #36551b; font-size: 12px; font-weight: 850; letter-spacing: .15em; text-transform: uppercase; }
+    h1 { position: relative; z-index: 1; margin: 0; max-width: 670px; font-size: clamp(39px, 5.5vw, 64px); letter-spacing: -.035em; line-height: .98; }
+    .hero p:last-child { position: relative; z-index: 1; max-width: 605px; margin: 18px 0 0; font-size: 16px; line-height: 1.55; }
+    .section { margin-top: 38px; }
+    .section-header { display: flex; justify-content: space-between; align-items: baseline; gap: 20px; border-bottom: 1px solid var(--line); padding-bottom: 11px; margin-bottom: 16px; }
+    h1, h2, h3 { font-family: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif; }
+    h2 { margin: 0; font-size: 23px; letter-spacing: -.02em; }
+    h3 { margin: 0 0 8px; font-size: 14px; }
+    .note { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.5; }
+    .grid { display: grid; gap: 16px; }
+    .two { grid-template-columns: repeat(2, minmax(0,1fr)); }
+    .three { grid-template-columns: repeat(3, minmax(0,1fr)); }
+    .card { padding: 20px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }
+    .tags { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 15px; }
+    .tag { padding: 7px 11px; border-radius: 999px; color: #1e4f74; background: var(--sky-soft); font-size: 12px; font-weight: 800; }
+    .tag.lime { color: #45651d; background: var(--lime-soft); }
+    .swatches { display: grid; grid-template-columns: repeat(5, 1fr); gap: 9px; margin-top: 15px; }
+    .swatch { overflow: hidden; border: 1px solid var(--line); border-radius: 12px; background: white; }
+    .color { height: 60px; }
+    .label { padding: 8px; color: var(--muted); font-size: 10px; }
+    .label b { display: block; color: var(--text); font-size: 11px; }
+    .headline { margin: 12px 0 9px; font-weight: 850; font-size: 34px; letter-spacing: -.035em; line-height: 1.06; }
+    .font-spec { display: grid; gap: 12px; margin-top: 15px; }
+    .font-example { padding: 12px 14px; border-radius: 12px; background: #f8fafc; border: 1px solid var(--line); }
+    .font-example small { display: block; margin-bottom: 6px; color: var(--muted); font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .06em; }
+    .font-title { margin: 0; font-family: "Plus Jakarta Sans", sans-serif; font-size: 25px; font-weight: 800; letter-spacing: -.025em; line-height: 1.1; }
+    .font-description { margin: 0; font-family: "DM Sans", sans-serif; color: var(--muted); font-size: 13px; line-height: 1.45; }
+    .type-list { display: grid; gap: 7px; margin-top: 2px; font-size: 13px; }
+    .type-list div { display: flex; justify-content: space-between; padding-bottom: 7px; border-bottom: 1px solid #eef2f7; }
+    .type-list small { color: var(--muted); }
+    .button-row, .status-row { display: flex; flex-wrap: wrap; align-items: center; gap: 9px; margin-top: 13px; }
+    .button { display: inline-block; padding: 11px 14px; border-radius: 11px; font-size: 12px; font-weight: 850; }
+    .button.primary { color: var(--night); background: var(--lime); }
+    .button.secondary { color: #264ecc; background: var(--blue-soft); }
+    .button.outline { color: var(--text); box-shadow: inset 0 0 0 1px #cbd4e1; }
+    .status { display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; padding: 6px 9px; font-size: 11px; font-weight: 850; }
+    .status::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+    .online { color: var(--success); background: var(--success-soft); }
+    .offline { color: #1e6982; background: var(--sky-soft); }
+    .warning { color: #aa5a16; background: var(--orange-soft); }
+    .phone-area { display: grid; place-items: center; padding: 25px; border-radius: 18px; background: linear-gradient(145deg, #dfe7fa, #edf8f7); }
+    .phone { width: min(100%, 294px); min-height: 502px; padding: 14px; border: 7px solid var(--night); border-radius: 34px; background: #fbfcff; box-shadow: 0 16px 32px rgba(16,27,50,.2); }
+    .phone-top { display: flex; justify-content: space-between; padding: 1px 2px 17px; color: var(--night); font-size: 10px; font-weight: 850; }
+    .phone h3 { font-size: 23px; letter-spacing: -.05em; }
+    .phone .note { font-size: 11px; }
+    .policy-card { margin-top: 14px; padding: 17px; border-radius: 17px; color: white; background: var(--night); }
+    .policy-card small { color: #b6c4dc; font-size: 10px; }
+    .policy-card strong { display: block; margin: 6px 0 2px; font-size: 21px; letter-spacing: -.045em; }
+    .policy-card span { color: var(--lime); font-size: 10px; font-weight: 800; }
+    .quick { display: grid; grid-template-columns: repeat(2, 1fr); gap: 9px; margin-top: 12px; }
+    .action { min-height: 71px; padding: 10px; border: 1px solid var(--line); border-radius: 13px; background: white; color: var(--text); font-size: 11px; font-weight: 800; }
+    .action .material-symbols-outlined { display: grid; place-items: center; width: 23px; height: 23px; margin-bottom: 6px; border-radius: 8px; color: #264ecc; background: var(--blue-soft); font-size: 16px; }
+    .icon-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 13px; }.icon-sample { display: grid; justify-items: center; gap: 5px; padding: 10px 5px; border: 1px solid var(--line); border-radius: 11px; color: var(--muted); font-size: 9px; text-align: center; }.icon-sample .material-symbols-outlined { color: var(--blue); font-size: 21px; }
+    .alert-stack { display: grid; gap: 8px; margin-top: 13px; }.alert-item { display: flex; align-items: flex-start; gap: 8px; padding: 10px; border-radius: 11px; font-size: 11px; line-height: 1.35; }.alert-item .material-symbols-outlined { font-size: 17px; }.alert-item b { display: block; font-size: 11px; }.alert-success { color: #176b48; background: var(--success-soft); }.alert-info { color: #1d6680; background: var(--sky-soft); }.alert-warning { color: #925016; background: var(--orange-soft); }
+    .form-stack { display: grid; gap: 9px; margin-top: 13px; }.field { display: flex; align-items: center; gap: 8px; padding: 10px; border: 1px solid #ccd6e4; border-radius: 10px; color: var(--muted); background: white; font-size: 11px; }.field .material-symbols-outlined { color: var(--blue); font-size: 17px; }.toggle-row { display: flex; align-items: center; justify-content: space-between; color: var(--text); font-size: 11px; font-weight: 700; }.toggle { width: 34px; height: 20px; padding: 3px; border-radius: 999px; background: var(--blue); }.toggle::after { content: ""; display: block; width: 14px; height: 14px; margin-left: auto; border-radius: 50%; background: white; }.form-stack .button { width: max-content; }
+    .bottom-nav { display: flex; justify-content: space-between; margin-top: 18px; padding: 11px 2px 0; border-top: 1px solid var(--line); color: var(--muted); font-size: 9px; }
+    .bottom-nav span { display: grid; justify-items: center; gap: 4px; }.bottom-nav .active { color: var(--blue); font-weight: 800; }.bottom-nav .material-symbols-outlined { font-size: 17px; }
+    .rules { margin: 0; padding-left: 18px; color: var(--muted); font-size: 13px; line-height: 1.62; }
+    .footer { margin-top: 34px; color: var(--muted); font-size: 11px; text-align: center; }
+    @media (max-width:760px) { .page { padding:24px 22px 50px; } .hero { grid-template-columns:1fr; padding:28px 24px; } .hero-content,.platform-icon { grid-column:auto; } .platform-icon { margin-top:20px; font-size:100px; } .two,.three { grid-template-columns:1fr; } .swatches { grid-template-columns:repeat(2,1fr); } }
+    @media print { body { background:white; } .page { max-width:none; padding:0; } .card,.hero,.phone-area { break-inside:avoid; box-shadow:none; } }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="hero"><div class="hero-content"><p class="eyebrow">Solventa · Style tile mobile</p><h1>Tu seguro, cuando lo necesitas.</h1><p>La experiencia móvil reúne consulta de pólizas, reporte de siniestros y asistencia en una interfaz clara, confiable y disponible sin conexión.</p></div><i class="material-symbols-outlined platform-icon">android</i></header>
+
+    <section class="section"><div class="section-header"><h2>Personalidad visual</h2><p class="note">Directa, humana y preparada para acciones en movimiento.</p></div><div class="grid two"><article class="card"><h3>Conceptos guía</h3><p class="note">La app traduce procesos de seguros a acciones breves y comprensibles, con información siempre disponible para el cliente.</p><div class="tags"><span class="tag lime">Protección</span><span class="tag lime">Control</span><span class="tag">Cercanía</span><span class="tag">Rapidez</span><span class="tag">Autonomía</span></div></article><article class="card"><h3>Uso en móvil</h3><ul class="rules"><li>Una acción principal por bloque.</li><li>Controles cómodos para el tacto.</li><li>Estado de sincronización visible, sin alarmar.</li><li>Lenguaje claro al solicitar datos o evidencias.</li></ul></article></div></section>
+
+    <section class="section"><div class="section-header"><h2>Fundamentos</h2><p class="note">Una paleta más enérgica, diseñada específicamente para la app.</p></div><div class="grid two"><article class="card"><h3>Color</h3><p class="note">Azul para navegación y estabilidad; verde lima para acciones de avance. La jerarquía evita depender solo del color.</p><div class="swatches"><div class="swatch"><div class="color" style="background:#101b32"></div><div class="label"><b>Noche</b>#101B32</div></div><div class="swatch"><div class="color" style="background:#3867f2"></div><div class="label"><b>Navegación</b>#3867F2</div></div><div class="swatch"><div class="color" style="background:#a7e451"></div><div class="label"><b>Avance</b>#A7E451</div></div><div class="swatch"><div class="color" style="background:#29b4d3"></div><div class="label"><b>Offline</b>#29B4D3</div></div><div class="swatch"><div class="color" style="background:#f69a4a"></div><div class="label"><b>Atención</b>#F69A4A</div></div></div></article><article class="card"><h3>Tipografía</h3><p class="note">Se usan dos familias complementarias para diferenciar jerarquía y lectura.</p><div class="font-spec"><div class="font-example"><small>Plus Jakarta Sans · títulos y textos grandes</small><p class="font-title">Tu seguro, cuando lo necesitas.</p></div><div class="font-example"><small>DM Sans · descripciones y ayudas</small><p class="font-description">Acompañamos cada acción con información breve y fácil de entender.</p></div></div><div class="type-list"><div><b>Plus Jakarta Sans</b><small>Bold / ExtraBold</small></div><div><b>DM Sans</b><small>Regular / Medium</small></div></div></article></div></section>
+
+    <section class="section"><div class="section-header"><h2>Componentes</h2><p class="note">Optimización para decisiones rápidas y feedback inmediato.</p></div><div class="grid three"><article class="card"><h3>Acciones táctiles</h3><div class="button-row"><span class="button primary">Reportar siniestro</span><span class="button secondary">Ver póliza</span><span class="button outline">Más tarde</span></div></article><article class="card"><h3>Conectividad y estado</h3><div class="status-row"><span class="status online">Sincronizado</span><span class="status offline">Guardado sin conexión</span><span class="status warning">Falta una evidencia</span></div></article><article class="card"><h3>Iconografía</h3><p class="note">Material Symbols Outlined para Android y web.</p><div class="icon-grid"><span class="icon-sample"><i class="material-symbols-outlined">report</i>Siniestro</span><span class="icon-sample"><i class="material-symbols-outlined">verified_user</i>Cobertura</span><span class="icon-sample"><i class="material-symbols-outlined">location_on</i>Asistencia</span><span class="icon-sample"><i class="material-symbols-outlined">notifications</i>Avisos</span><span class="icon-sample"><i class="material-symbols-outlined">home</i>Inicio</span><span class="icon-sample"><i class="material-symbols-outlined">person</i>Perfil</span></div></article><article class="card"><h3>Alertas y notificaciones</h3><div class="alert-stack"><div class="alert-item alert-success"><i class="material-symbols-outlined">check_circle</i><span><b>Sincronización lista</b>Los cambios se guardaron.</span></div><div class="alert-item alert-warning"><i class="material-symbols-outlined">info</i><span><b>Falta evidencia</b>Adjunta una foto para continuar.</span></div></div></article><article class="card"><h3>Campos y controles</h3><div class="form-stack"><div class="field"><i class="material-symbols-outlined">mail</i>Correo electrónico</div><div class="toggle-row"><span>Recibir notificaciones</span><span class="toggle" aria-label="Activado"></span></div><span class="button primary">Guardar cambios</span></div></article><article class="card"><h3>Regla de contenido</h3><p class="note">Cada estado explica qué ocurre, qué se guardó y qué puede hacer el usuario a continuación.</p></article></div></section>
+
+    <section class="section"><div class="section-header"><h2>Muestra de aplicación</h2><p class="note">Referencia de composición para la billetera de pólizas móvil.</p></div><div class="phone-area"><div class="phone"><div class="phone-top"><span>9:41</span><span>● ● ●</span></div><h3>Hola, Fernando</h3><p class="note">Todo lo importante de tu protección, en un solo lugar.</p><div class="policy-card"><small>Billetera de pólizas</small><strong>3 pólizas activas</strong><span>● Actualizado hace 2 min</span></div><div class="quick"><div class="action"><i class="material-symbols-outlined">report</i>Reportar siniestro</div><div class="action"><i class="material-symbols-outlined">verified_user</i>Ver mis coberturas</div><div class="action"><i class="material-symbols-outlined">location_on</i>Solicitar asistencia</div><div class="action"><i class="material-symbols-outlined">notifications</i>Ver notificaciones</div></div><div class="status-row"><span class="status offline">Datos disponibles sin conexión</span></div><div class="bottom-nav"><span class="active"><i class="material-symbols-outlined">home</i>Inicio</span><span><i class="material-symbols-outlined">shield</i>Pólizas</span><span><i class="material-symbols-outlined">report</i>Siniestros</span><span><i class="material-symbols-outlined">person</i>Perfil</span></div></div></div></section>
+    <p class="footer">Style Tile Mobile · Solventa · Este documento define una dirección visual inicial; no representa pantallas finales ni determina la UI definitiva. Los componentes, contenidos y flujos podrán ajustarse con la validación de usuarios, el alcance funcional y las decisiones de implementación.</p>
+  </main>
+</body>
+</html>
