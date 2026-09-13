@@ -18,6 +18,14 @@ OPEN_FINANCE_URL = os.getenv("OPEN_FINANCE_URL", "http://mock-open-finance/evalu
 OPEN_DATA_URL = os.getenv("OPEN_DATA_URL", "http://mock-open-data/evaluar")
 CACHE_TTL_SECONDS = 3600  # 1 hora de vigencia del perfil
 
+
+print("========= CONFIG PERFILAMIENTO =========")
+print("REDIS_HOST:", REDIS_HOST)
+print("REDIS_PORT:", REDIS_PORT)
+print("OPEN_FINANCE_URL:", OPEN_FINANCE_URL)
+print("OPEN_DATA_URL:", OPEN_DATA_URL)
+print("=========================================")
+
 # Cliente de Redis asíncrono
 redis_client = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, decode_responses=True)
 
@@ -51,6 +59,7 @@ async def obtener_perfil_riesgo(cliente_id: str):
                 client.get(f"{OPEN_DATA_URL}/{cliente_id}"),
                 return_exceptions=True
             )
+
             print(f"Respuestas externas: Finance={res_finance.status_code if not isinstance(res_finance, Exception) else 'Error'}, Data={res_data.status_code if not isinstance(res_data, Exception) else 'Error'}")
             print(f"Respuestas externas: Finance={res_finance.json() if not isinstance(res_finance, Exception) and res_finance.status_code == 200 else 'Error'}, Data={res_data.json() if not isinstance(res_data, Exception) and res_data.status_code == 200 else 'Error'}")
             # Procesar respuestas externas (simuladas o reales)

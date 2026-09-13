@@ -16,6 +16,11 @@ PERFILAMIENTO_SERVICE_URL = os.getenv(
     "http://localhost:8000/api/v1/perfilamiento"
 )
 
+print(
+    "PERFILAMIENTO_SERVICE_URL:",
+    PERFILAMIENTO_SERVICE_URL
+)
+
 # Modelos de Solicitud y Respuesta
 class CotizacionRequest(BaseModel):
     cliente_id: str
