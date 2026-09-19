@@ -12,4 +12,4 @@ COPY adaptadores ./adaptadores
 ENV APP_MODULE=servicios.perfilamiento:app
 ENV PORT=8000
 
-CMD ["sh", "-c", "uvicorn ${APP_MODULE} --host 0.0.0.0 --port ${PORT}"]
+CMD ["sh", "-c", "uvicorn ${APP_MODULE} --host 0.0.0.0 --port ${PORT} --workers 2 --backlog 2048"]

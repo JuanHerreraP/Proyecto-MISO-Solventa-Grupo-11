@@ -28,6 +28,7 @@ print("=========================================")
 
 # Cliente de Redis asíncrono
 redis_client = redis.Redis(host=REDIS_HOST, port=REDIS_PORT, decode_responses=True)
+client = httpx.AsyncClient(timeout=15.0, limits=httpx.Limits(max_keepalive_connections=100, max_connections=500))
 
 class PerfilRiesgoResponse(BaseModel):
     cliente_id: str
@@ -39,59 +40,58 @@ class PerfilRiesgoResponse(BaseModel):
 async def obtener_perfil_riesgo(cliente_id: str):
     cache_key = f"perfil:{cliente_id}"
     
-    # PASO 1: Consultar la caché (Cache-Aside)
-    try:
-        cached_profile = await redis_client.get(cache_key)
-        if cached_profile:
-            data = json.loads(cached_profile)
-            data["fuente"] = "cache"
-            return data
-    except Exception as e:
-        # Fallback en caso de error de conexión a Redis (degradación elegante)
-        pass
+    # # PASO 1: Consultar la caché (Cache-Aside)
+    # try:
+    #     cached_profile = await redis_client.get(cache_key)
+    #     if cached_profile:
+    #         data = json.loads(cached_profile)
+    #         data["fuente"] = "cache"
+    #         return data
+    # except Exception as e:
+    #     # Fallback en caso de error de conexión a Redis (degradación elegante)
+    #     pass
 
     # PASO 2: Cache Miss -> Consultar adaptadores de Open Finance y Open Data
-    async with httpx.AsyncClient(timeout=0.7) as client: # Timeout duro de 700 ms
-        try:
-            # Consultas en paralelo a los adaptadores Lambda
-            res_finance, res_data = await asyncio.gather(
-                client.get(f"{OPEN_FINANCE_URL}/{cliente_id}"),
-                client.get(f"{OPEN_DATA_URL}/{cliente_id}"),
-                return_exceptions=True
-            )
+    try:
+        # Consultas en paralelo a los adaptadores Lambda
+        res_finance, res_data = await asyncio.gather(
+            client.get(f"{OPEN_FINANCE_URL}/{cliente_id}"),
+            client.get(f"{OPEN_DATA_URL}/{cliente_id}"),
+            return_exceptions=True
+        )
 
-            print(f"Respuestas externas: Finance={res_finance.status_code if not isinstance(res_finance, Exception) else 'Error'}, Data={res_data.status_code if not isinstance(res_data, Exception) else 'Error'}")
-            print(f"Respuestas externas: Finance={res_finance.json() if not isinstance(res_finance, Exception) and res_finance.status_code == 200 else 'Error'}, Data={res_data.json() if not isinstance(res_data, Exception) and res_data.status_code == 200 else 'Error'}")
-            # Procesar respuestas externas (simuladas o reales)
-            score_finance = res_finance.json().get("score_financiero") if not isinstance(res_finance, Exception) and res_finance.status_code == 200 else None
-            score_data = res_data.json().get("score_territorial") if not isinstance(res_data, Exception) and res_data.status_code == 200 else None
+        print(f"Respuestas externas: Finance={res_finance.status_code if not isinstance(res_finance, Exception) else 'Error'}, Data={res_data.status_code if not isinstance(res_data, Exception) else 'Error'}")
+        print(f"Respuestas externas: Finance={res_finance.json() if not isinstance(res_finance, Exception) and res_finance.status_code == 200 else 'Error'}, Data={res_data.json() if not isinstance(res_data, Exception) and res_data.status_code == 200 else 'Error'}")
+        # Procesar respuestas externas (simuladas o reales)
+        score_finance = res_finance.json().get("score_financiero") if not isinstance(res_finance, Exception) and res_finance.status_code == 200 else None
+        score_data = res_data.json().get("score_territorial") if not isinstance(res_data, Exception) and res_data.status_code == 200 else None
 
-            if score_finance is None or score_data is None:
-                raise HTTPException(
-                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    detail="Error al obtener puntajes de riesgo"
-                )
-            # Consolidar scoring de riesgo
-            final_score = round((score_finance * 0.6) + (score_data * 0.4), 2)
-            nivel = "BAJO" if final_score < 0.3 else "MEDIO" if final_score < 0.7 else "ALTO"
-            
-            perfil_consolidado = {
-                "cliente_id": cliente_id,
-                "score_riesgo": final_score,
-                "nivel_riesgo": nivel
-            }
-
-            # PASO 3: Guardar el resultado en ElastiCache Redis con TTL
-            # await redis_client.setex(cache_key, CACHE_TTL_SECONDS, json.dumps(perfil_consolidado))
-            
-            perfil_consolidado["fuente"] = "external_fetch"
-            return perfil_consolidado
-
-        except Exception as err:
+        if score_finance is None or score_data is None:
             raise HTTPException(
-                status_code=status.HTTP_504_GATEWAY_TIMEOUT,
-                detail=f"Error consultando fuentes externas de perfilamiento: {str(err)}"
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Error al obtener puntajes de riesgo"
             )
+        # Consolidar scoring de riesgo
+        final_score = round((score_finance * 0.6) + (score_data * 0.4), 2)
+        nivel = "BAJO" if final_score < 0.3 else "MEDIO" if final_score < 0.7 else "ALTO"
+        
+        perfil_consolidado = {
+            "cliente_id": cliente_id,
+            "score_riesgo": final_score,
+            "nivel_riesgo": nivel
+        }
+
+        # PASO 3: Guardar el resultado en ElastiCache Redis con TTL
+        # await redis_client.setex(cache_key, CACHE_TTL_SECONDS, json.dumps(perfil_consolidado))
+        
+        perfil_consolidado["fuente"] = "external_fetch"
+        return perfil_consolidado
+
+    except Exception as err:
+        raise HTTPException(
+            status_code=status.HTTP_504_GATEWAY_TIMEOUT,
+            detail=f"Error consultando fuentes externas de perfilamiento: {str(err)}"
+        )
 
 @app.get("/health", status_code=status.HTTP_200_OK)
 def HealthCheck():

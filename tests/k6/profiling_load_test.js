@@ -2,43 +2,37 @@ import http from 'k6/http';
 import { check } from 'k6';
 import { Trend } from 'k6/metrics';
 
-const cacheHitDuration = new Trend('cache_hit_duration', true);
-const cacheMissDuration = new Trend('cache_miss_duration', true);
+// Métrica personalizada para auditar el p95
+const latenciaCotizacion = new Trend('latencia_cotizacion', true);
 
-const BASE_URL = __ENV.BASE_URL || 'http://18.217.232.244:8003';
+// IMPORTANTE: Sobrescribir con la DNS pública de tu ALB (Puerto 80)
+const BASE_URL = __ENV.BASE_URL || 'http://tu-alb-ec03.us-east-2.elb.amazonaws.com';
 
 export const options = {
     scenarios: {
-        cache_hit: {
-            executor: 'constant-vus',
-            exec: 'cacheHit',
-            vus: 5,
-            duration: '30s',
-        },
-
-        cache_miss: {
-            executor: 'constant-vus',
-            exec: 'cacheMiss',
-            vus: 5,
-            duration: '30s',
-            startTime: '35s',
+        ec03_escalabilidad: {
+            executor: 'ramping-arrival-rate',
+            startRate: 8,               // ~500 cotizaciones/minuto (8.33 req/s)
+            timeUnit: '1s',
+            preAllocatedVUs: 200,        // VUs reservadas para la rampa
+            maxVUs: 3000,                // VUs máximas para sostener las 833.33 req/s
+            stages: [
+                { duration: '30s', target: 8 },     // Baseline: 500 cotizaciones/minuto
+                { duration: '1m',  target: 834 },   // Disparo violento a 50.000 req/min (~834 req/s) en <= 60s
+                { duration: '3m',  target: 834 },   // Sostiene las 50.000 req/min para validar p95 en régimen permanente
+                { duration: '1m',  target: 8 },     // Rampa de bajada (cooldown)
+            ],
+            exec: 'cotizarService',
         },
     },
 
+    // Criterios de aceptación del experimento EC03
     thresholds: {
-        cache_hit_duration: [
-            'p(95)<400',
-            'p(99)<800',
-        ],
-
-        cache_miss_duration: [
-            'p(95)<400',
-            'p(99)<800',
-        ],
-
-        http_req_failed: [
-            'rate<0.01',
-        ],
+        // Exigencia del p95 de latencia
+        latencia_cotizacion: ['p(95)<1000'], // Ajusta a tu SLA objetivo (ej. < 1000ms)
+        
+        // Tasa de error general aceptable durante el escalado
+        http_req_failed: ['rate<0.02'],      // Menos del 2% de errores durante la transición de Auto Scaling
     },
 };
 
@@ -55,13 +49,9 @@ function payload(clienteId) {
     });
 }
 
-
-// -------------------------------------------------
-// Preparar un cliente que quede previamente en Redis
-// -------------------------------------------------
-
-export function setup() {
-    const clienteId = 'k6-cliente-cache';
+export function cotizarService() {
+    // Genera clientes dinámicos para evitar respuestas cacheables si se requiere evaluar cómputo real
+    const clienteId = `k6-ec03-${__VU}-${__ITER}-${Date.now()}`;
 
     const response = http.post(
         `${BASE_URL}/api/v1/cotizar`,
@@ -69,73 +59,10 @@ export function setup() {
         { headers }
     );
 
-    check(response, {
-        'warmup responde 201': (r) => r.status === 201,
-    });
-
-    return {
-        clienteCache: clienteId,
-    };
-}
-
-
-// -------------------------------------------------
-// CACHE HIT
-// Se reutiliza siempre el mismo cliente.
-// -------------------------------------------------
-
-export function cacheHit(data) {
-    const response = http.post(
-        `${BASE_URL}/api/v1/cotizar`,
-        payload(data.clienteCache),
-        { headers }
-    );
-
-    cacheHitDuration.add(response.timings.duration);
+    // Registrar latencia de la petición
+    latenciaCotizacion.add(response.timings.duration);
 
     check(response, {
-        'cache hit - HTTP 201': (r) => r.status === 201,
-
-        'respuesta viene de cache': (r) => {
-            try {
-                return r.json('fuente_perfilamiento') === 'cache';
-            } catch (_) {
-                return false;
-            }
-        },
-    });
-}
-
-
-// -------------------------------------------------
-// CACHE MISS
-// Cada petición utiliza un cliente nuevo.
-// -------------------------------------------------
-
-export function cacheMiss() {
-    const clienteId =
-        `k6-miss-${__VU}-${__ITER}-${Date.now()}`;
-
-    const response = http.post(
-        `${BASE_URL}/api/v1/cotizar`,
-        payload(clienteId),
-        { headers }
-    );
-
-    cacheMissDuration.add(response.timings.duration);
-
-    check(response, {
-        'cache miss - HTTP 201': (r) => r.status === 201,
-
-        'respuesta viene de proveedor externo': (r) => {
-            try {
-                return (
-                    r.json('fuente_perfilamiento')
-                    === 'external_fetch'
-                );
-            } catch (_) {
-                return false;
-            }
-        },
+        'Estado 201 o 200 (Cotización exitosa)': (r) => r.status === 201 || r.status === 200,
     });
 }

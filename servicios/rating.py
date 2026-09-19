@@ -21,6 +21,7 @@ print(
     PERFILAMIENTO_SERVICE_URL
 )
 
+client = httpx.AsyncClient(timeout=15.0, limits=httpx.Limits(max_keepalive_connections=100, max_connections=500))
 # Modelos de Solicitud y Respuesta
 class CotizacionRequest(BaseModel):
     cliente_id: str
@@ -44,20 +45,19 @@ async def calcular_cotizacion(payload: CotizacionRequest):
     start_time = time.perf_counter()
     
     # 1. Obtenemos el perfil de riesgo invocando el Servicio de Perfilamiento
-    async with httpx.AsyncClient(timeout=1.0) as client:
-        try:
-            response = await client.get(f"{PERFILAMIENTO_SERVICE_URL}/{payload.cliente_id}")
-            if response.status_code != 200:
-                raise HTTPException(
-                    status_code=status.HTTP_502_BAD_GATEWAY,
-                    detail="Error obteniendo el perfil de riesgo del cliente."
-                )
-            perfil = response.json()
-        except httpx.RequestError as exc:
+    try:
+        response = await client.get(f"{PERFILAMIENTO_SERVICE_URL}/{payload.cliente_id}")
+        if response.status_code != 200:
             raise HTTPException(
-                status_code=status.HTTP_504_GATEWAY_TIMEOUT,
-                detail=f"Fallo de conexión con el servicio de perfilamiento: {str(exc)}"
+                status_code=status.HTTP_502_BAD_GATEWAY,
+                detail="Error obteniendo el perfil de riesgo del cliente."
             )
+        perfil = response.json()
+    except httpx.RequestError as exc:
+        raise HTTPException(
+            status_code=500, 
+            detail=f"Fallo de conexión: {type(exc).__name__} -> {str(exc)}"
+        )
 
     score_riesgo = perfil.get("score_riesgo", 0.5)
     nivel_riesgo = perfil.get("nivel_riesgo", "MEDIO")
@@ -95,3 +95,7 @@ async def calcular_cotizacion(payload: CotizacionRequest):
         fuente_perfilamiento=fuente_perfil,
         tiempo_ejecucion_ms=elapsed_ms
     )
+
+@app.get("/api/v1/health", status_code=status.HTTP_200_OK)
+def health_check():
+    return {"status": "ok", "service": "rating_engine"}
