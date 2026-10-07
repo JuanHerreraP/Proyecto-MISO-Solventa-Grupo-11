@@ -59,4 +59,4 @@ Los pesos y umbrales son valores iniciales definidos por el equipo de desarrollo
 - **Autenticación:** el rol se lee de la cabecera `X-Rol` de forma provisional. Debe reemplazarse por el rol del token cuando la HU19 (BPM-54) esté lista. Hasta entonces tampoco se puede comprobar que un cliente consulte solo su propia oferta.
 - **Persistencia:** el perfil se guarda en memoria con vigencia de una hora, detrás del puerto `RepositorioPerfiles`. Falta el adaptador de ElastiCache Redis.
 - **EC02:** el script `backend/tests/k6/perfil_riesgo.js` trae los umbrales p95 ≤ 400 ms y p99 ≤ 800 ms, pero no se ha corrido contra un ambiente desplegado. La prueba local solo mide el cálculo en proceso.
-- **Integración con la HU10:** falta conectar la salida real del enriquecimiento con este contrato.
+- **Integración con la HU10:** conectada. `POST /api/v1/enriquecimientos` consolida las señales y genera el perfil con este contrato. Ver [enriquecimiento.md](enriquecimiento.md).

@@ -34,8 +34,9 @@ La documentación OpenAPI queda en `http://localhost:8000/docs`.
 
 ## Funcionalidades
 
+- [Enriquecimiento del perfil con Open Finance y Open Data (HU10)](docs/enriquecimiento.md)
 - [Perfil de riesgo individualizado y pricing (HU11)](docs/perfil-de-riesgo.md)
 
 ## Integración continua
 
-`.github/workflows/ci.yml` corre en cada pull request y en cada push a `main`. Ejecuta lint y pruebas con cobertura del backend, y activa los trabajos de web y Android cuando esas carpetas tengan proyecto.
+`.github/workflows/ci.yml` corre en cada pull request y en cada push a `main`. Ejecuta lint y pruebas con cobertura del backend, y detecta si existen los proyectos web y Android y solo entonces corre sus trabajos.
