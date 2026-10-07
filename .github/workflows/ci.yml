@@ -12,6 +12,19 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  detectar:
+    name: Detectar proyectos
+    runs-on: ubuntu-latest
+    outputs:
+      web: ${{ steps.proyectos.outputs.web }}
+      android: ${{ steps.proyectos.outputs.android }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: proyectos
+        run: |
+          if [ -f web/package.json ]; then echo "web=true" >> "$GITHUB_OUTPUT"; else echo "web=false" >> "$GITHUB_OUTPUT"; fi
+          if [ -f android/gradlew ]; then echo "android=true" >> "$GITHUB_OUTPUT"; else echo "android=false" >> "$GITHUB_OUTPUT"; fi
+
   backend:
     name: Backend (lint y pruebas)
     runs-on: ubuntu-latest
@@ -51,7 +64,8 @@ jobs:
   web:
     name: Web (lint y pruebas)
     runs-on: ubuntu-latest
-    if: ${{ hashFiles('web/package.json') != '' }}
+    needs: detectar
+    if: needs.detectar.outputs.web == 'true'
     defaults:
       run:
         working-directory: web
@@ -70,7 +84,8 @@ jobs:
   android:
     name: Android (pruebas unitarias)
     runs-on: ubuntu-latest
-    if: ${{ hashFiles('android/gradlew') != '' }}
+    needs: detectar
+    if: needs.detectar.outputs.android == 'true'
     defaults:
       run:
         working-directory: android
