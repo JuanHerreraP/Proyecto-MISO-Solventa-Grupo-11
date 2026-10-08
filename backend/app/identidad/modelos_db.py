@@ -89,3 +89,57 @@ class UsuarioDB(Base):
         nullable=False,
         server_default=func.now(),
     )
+
+class EventoAutenticacionDB(Base):
+    __tablename__ = "eventos_autenticacion"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid.uuid4,
+    )
+
+    usuario_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        nullable=True,
+        index=True,
+    )
+
+    email: Mapped[str | None] = mapped_column(
+        String(255),
+        nullable=True,
+        index=True,
+    )
+
+    tipo_evento: Mapped[str] = mapped_column(
+        String(50),
+        nullable=False,
+        index=True,
+    )
+
+    exitoso: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+    )
+
+    detalle: Mapped[str | None] = mapped_column(
+        String(500),
+        nullable=True,
+    )
+
+    ip: Mapped[str | None] = mapped_column(
+        String(100),
+        nullable=True,
+    )
+
+    user_agent: Mapped[str | None] = mapped_column(
+        String(500),
+        nullable=True,
+    )
+
+    fecha: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+        index=True,
+    )

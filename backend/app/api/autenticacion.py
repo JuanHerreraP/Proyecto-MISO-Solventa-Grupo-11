@@ -2,7 +2,7 @@
 
 import httpx
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.orm import Session
 
 from app.identidad.config import get_identity_verification_provider
@@ -19,7 +19,10 @@ from app.identidad.servicio import (
     UsuarioInactivoError,
 )
 from app.infraestructura.database import get_db
-
+from app.identidad.auditoria import (
+    TipoEventoAuth,
+    registrar_evento_auth,
+)
 
 router = APIRouter(
     prefix="/api/v1/auth",
@@ -48,9 +51,20 @@ def registrar_usuario(
     )
 
     try:
-        return servicio.registrar_usuario(solicitud)
+        resultado = servicio.registrar_usuario(solicitud)
+        registrar_evento_auth(
+            tipo_evento=TipoEventoAuth.USER_REGISTERED,
+            exitoso=True,
+            request=Request
+        )
+        return resultado
 
     except UsuarioYaExisteError as error:
+        registrar_evento_auth(
+            tipo_evento=TipoEventoAuth.REGISTRATION_REJECTED,
+            exitoso=False,
+            request=Request
+        )
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail=str(error),
@@ -67,6 +81,16 @@ def registrar_usuario(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=str(error),
         ) from error
+
+    except KYCRechazadoError as error:
+
+        registrar_evento_auth(
+            tipo_evento=TipoEventoAuth.REGISTRATION_REJECTED,
+            exitoso=False,
+            email=str(solicitud.email),
+            detalle="KYC_REJECTED",
+            request=Request
+        )
 
     except KYCPendienteError as error:
         raise HTTPException(
@@ -108,34 +132,68 @@ def login(
         db: Session = Depends(get_db),
     ) -> RespuestaLogin:
 
-        repositorio = RepositorioUsuariosPostgres(
-            db
+    repositorio = RepositorioUsuariosPostgres(
+        db
+    )
+
+    servicio = ServicioIdentidad(
+        repositorio=repositorio
+    )
+
+    try:
+        resultado = servicio.autenticar_usuario(
+            email=str(solicitud.email),
+            password=solicitud.password,
         )
 
-        servicio = ServicioIdentidad(
-            repositorio=repositorio,
+        usuario = repositorio.buscar_por_email(
+            str(solicitud.email)
         )
 
-        try:
-            return servicio.autenticar_usuario(
-                email=str(solicitud.email),
-                password=solicitud.password,
-            )
+        registrar_evento_auth(
+            tipo_evento=TipoEventoAuth.LOGIN_SUCCESS,
+            exitoso=True,
+            usuario_id=usuario.id,
+            email=usuario.email,
+            detalle="Inicio de sesión exitoso.",
+            request=Request,
+        )
 
-        except CredencialesInvalidasError as error:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail={
-                    "codigo": "INVALID_CREDENTIALS",
-                    "mensaje": str(error),
-                },
-            ) from error
+        return resultado
 
-        except UsuarioInactivoError as error:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail={
-                    "codigo": "USER_INACTIVE",
-                    "mensaje": str(error),
-                },
-            ) from error
+    except CredencialesInvalidasError as error:
+
+        registrar_evento_auth(
+            tipo_evento=TipoEventoAuth.LOGIN_FAILED,
+            exitoso=False,
+            email=str(solicitud.email),
+            detalle="INVALID_CREDENTIALS",
+            request=Request,
+        )
+
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail={
+                "codigo": "INVALID_CREDENTIALS",
+                "mensaje": str(error),
+            },
+        ) from error
+
+    except UsuarioInactivoError as error:
+
+        registrar_evento_auth(
+            tipo_evento=TipoEventoAuth.LOGIN_FAILED,
+            exitoso=False,
+            email=str(solicitud.email),
+            detalle="USER_INACTIVE",
+            request=Request,
+        )
+
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail={
+                "codigo": "USER_INACTIVE",
+                "mensaje": str(error),
+            },
+        ) from error
+        

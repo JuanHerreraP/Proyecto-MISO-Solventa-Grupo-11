@@ -12,7 +12,7 @@ from app.identidad.modelos import (
 )
 from app.identidad.modelos_db import UsuarioDB
 from app.identidad.puertos import IdentityVerificationProvider
-from app.identidad.tokens import crear_access_token, ACCESS_TOKEN_MINUTES
+from app.identidad.tokens import crear_access_token, ACCESS_TOKEN_MINUTES, REFRESH_TOKEN_DAYS, crear_refresh_token
 
 
 class UsuarioYaExisteError(Exception):
@@ -175,8 +175,18 @@ class ServicioIdentidad:
             rol=usuario.rol,
         )
 
+        refresh_token = crear_refresh_token(
+            usuario_id=str(usuario.id),
+            email=usuario.email,
+            rol=usuario.rol,
+        )
+
         return RespuestaLogin(
             access_token=access_token,
+            refresh_token=refresh_token,
             token_type="bearer",
             expires_in=ACCESS_TOKEN_MINUTES * 60,
+            refresh_expires_in=REFRESH_TOKEN_DAYS * 86400,
         )
+
+        

@@ -2,7 +2,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.identidad.modelos_db import UsuarioDB
-
+from uuid import UUID
 
 
 class RepositorioUsuariosPostgres:
@@ -38,4 +38,12 @@ class RepositorioUsuariosPostgres:
 
         return list(
             self.db.scalars(sentencia).all()
+        )
+    def buscar_por_id(
+        self,
+        usuario_id: str,
+    ):
+        return self.db.get(
+            UsuarioDB,
+            UUID(usuario_id),
         )
