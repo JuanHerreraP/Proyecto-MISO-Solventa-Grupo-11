@@ -5,6 +5,8 @@ from enum import Enum
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
+from app.socios.dominio.catalogo import CodigoEndpoint
+
 
 class EstadoSocio(str, Enum):
     """Estado del socio dentro del proceso de aprovisionamiento."""
@@ -64,6 +66,7 @@ class SocioDistribucion(BaseModel):
         description="Código de país ISO 3166-1 alfa-2.",
     )
     tipos_seguros_autorizados: list[TipoSeguro] = Field(min_length=1)
+    endpoints_autorizados: set[CodigoEndpoint] = Field(min_length=1)
     estado: EstadoSocio = EstadoSocio.PENDIENTE
     creado_en: datetime
     actualizado_en: datetime
