@@ -9,6 +9,7 @@ from app.socios.dominio.auditoria import (
     RegistroAuditoriaSocio,
     RepositorioAuditoriaSocios,
 )
+from app.socios.dominio.catalogo import CodigoEndpoint
 from app.socios.dominio.modelos import (
     EstadoSocio,
     SocioDistribucion,
@@ -25,6 +26,18 @@ class NitDuplicado(Exception):
 
 class SocioNoEncontrado(Exception):
     """No existe un socio con el identificador solicitado."""
+
+
+class CredencialesSocioInvalidas(Exception):
+    """El socio o el tenant presentado no corresponde a una configuración válida."""
+
+
+class SocioInactivo(Exception):
+    """El socio existe, pero no está habilitado para consumir las APIs."""
+
+
+class EndpointNoAutorizado(Exception):
+    """El socio no tiene autorización para consumir el endpoint solicitado."""
 
 
 def generar_socio_id() -> str:
@@ -110,6 +123,21 @@ class ServicioSocios:
     def consultar_auditoria(self, socio_id: str) -> list[RegistroAuditoriaSocio]:
         self.consultar(socio_id)
         return self._auditoria.listar_por_socio(socio_id)
+
+    def autorizar_consumo(
+        self,
+        socio_id: str,
+        tenant_id: str,
+        endpoint: CodigoEndpoint,
+    ) -> SocioDistribucion:
+        socio = self._repositorio.obtener(socio_id)
+        if socio is None or socio.tenant_id != tenant_id:
+            raise CredencialesSocioInvalidas(socio_id)
+        if socio.estado is not EstadoSocio.ACTIVO:
+            raise SocioInactivo(socio_id)
+        if endpoint not in socio.endpoints_autorizados:
+            raise EndpointNoAutorizado(endpoint)
+        return socio
 
     def _registrar_auditoria(
         self,
