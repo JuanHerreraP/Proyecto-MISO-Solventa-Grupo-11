@@ -11,6 +11,7 @@ def socio_valido(**cambios: object) -> SocioDistribucion:
     ahora = datetime.now(UTC)
     datos = {
         "socio_id": "SOCIO-001",
+        "tenant_id": "TENANT-001",
         "nit": "900123456-7",
         "razon_social": "Banco Andes S.A.",
         "contactos_tecnicos": [

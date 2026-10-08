@@ -45,12 +45,11 @@ class ContactoTecnico(BaseModel):
     )
 
 
-class SocioDistribucion(BaseModel):
-    """Ficha técnica de un socio que distribuirá seguros de Solventa."""
+class DatosSocio(BaseModel):
+    """Datos suministrados para configurar un socio de distribución."""
 
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
 
-    socio_id: str = Field(min_length=1, max_length=50)
     nit: str = Field(
         min_length=5,
         max_length=20,
@@ -67,9 +66,6 @@ class SocioDistribucion(BaseModel):
     )
     tipos_seguros_autorizados: list[TipoSeguro] = Field(min_length=1)
     endpoints_autorizados: set[CodigoEndpoint] = Field(min_length=1)
-    estado: EstadoSocio = EstadoSocio.PENDIENTE
-    creado_en: datetime
-    actualizado_en: datetime
 
     @field_validator("contactos_tecnicos")
     @classmethod
@@ -87,3 +83,17 @@ class SocioDistribucion(BaseModel):
         if len(tipos) != len(set(tipos)):
             raise ValueError("Los tipos de seguro autorizados no pueden repetirse.")
         return tipos
+
+
+class SolicitudAltaSocio(DatosSocio):
+    """Datos que recibe la API para dar de alta un socio."""
+
+
+class SocioDistribucion(DatosSocio):
+    """Ficha técnica aprovisionada de un socio de distribución."""
+
+    socio_id: str = Field(min_length=1, max_length=50)
+    tenant_id: str = Field(min_length=1, max_length=50)
+    estado: EstadoSocio = EstadoSocio.PENDIENTE
+    creado_en: datetime
+    actualizado_en: datetime
