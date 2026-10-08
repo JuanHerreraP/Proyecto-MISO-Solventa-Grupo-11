@@ -5,7 +5,7 @@ import time
 from fastapi import FastAPI, Request
 
 from app import __version__
-from app.api import enriquecimiento, perfilamiento, salud
+from app.api import enriquecimiento, perfilamiento, salud, identidad
 
 
 def crear_app() -> FastAPI:
@@ -25,6 +25,7 @@ def crear_app() -> FastAPI:
     app.include_router(salud.router)
     app.include_router(perfilamiento.router)
     app.include_router(enriquecimiento.router)
+    app.include_router(identidad.router)
     return app
 
 

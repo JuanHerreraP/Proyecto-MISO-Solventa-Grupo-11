@@ -1,6 +1,9 @@
 """Modelos del dominio de identidad."""
 
-from datetime import datetime
+from dataclasses import dataclass
+
+from enum import Enum
+from datetime import date, datetime
 from enum import Enum
 
 from pydantic import BaseModel, EmailStr, Field
@@ -15,9 +18,32 @@ class Rol(str, Enum):
     SERVICIO_INTERNO = "SERVICIO_INTERNO"
 
 
-class EstadoKYC(str, Enum):
-    APROBADO = "APROBADO"
-    RECHAZADO = "RECHAZADO"
+class VerificationStatus(str, Enum):
+    APPROVED = "APPROVED"
+    REJECTED = "REJECTED"
+    IN_REVIEW = "IN_REVIEW"
+
+
+@dataclass(frozen=True)
+class VerificationRequest:
+    customer_id: str
+    consent_id: str
+    document_type: str
+    document_number: str
+    full_name: str
+    birth_date: date
+
+
+@dataclass(frozen=True)
+class VerificationResult:
+    verification_id: str
+    status: VerificationStatus
+    # Riesgo normalizado 0.0 (bajo riesgo) - 1.0 (alto riesgo). La semántica de
+    # "riesgo" (y no de "confianza" o "score" crudo del proveedor) es una
+    # decisión del dominio: cada adaptador debe traducir a esta semántica.
+    risk_score: float
+    provider_name: str
+    checked_at: datetime
 
 
 class SolicitudRegistro(BaseModel):
@@ -27,19 +53,6 @@ class SolicitudRegistro(BaseModel):
     password: str = Field(min_length=8, max_length=128)
     tipo_documento: str = Field(min_length=1, max_length=20)
     numero_documento: str = Field(min_length=5, max_length=30)
-
-
-class SolicitudKYC(BaseModel):
-    nombre: str
-    apellido: str
-    tipo_documento: str
-    numero_documento: str
-
-
-class ResultadoKYC(BaseModel):
-    estado: EstadoKYC
-    referencia: str
-    motivo: str | None = None
 
 
 class Usuario(BaseModel):
