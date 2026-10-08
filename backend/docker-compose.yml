@@ -1,0 +1,15 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: solventa-postgres
+    environment:
+      POSTGRES_DB: solventa
+      POSTGRES_USER: solventa
+      POSTGRES_PASSWORD: solventa_dev
+    ports:
+      - "5432:5432"
+    volumes:
+      - solventa_postgres_data:/var/lib/postgresql/data
+
+volumes:
+  solventa_postgres_data:

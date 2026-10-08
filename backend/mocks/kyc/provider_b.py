@@ -56,5 +56,5 @@ def verify(payload: VerificationRequest) -> VerificationResponse:
 def health():
     return {
         "status": "ok",
-        "provider": "A",
+        "provider": "B",
     }

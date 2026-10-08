@@ -7,6 +7,7 @@ from datetime import date, datetime
 from enum import Enum
 
 from pydantic import BaseModel, EmailStr, Field
+from datetime import datetime
 
 
 class Rol(str, Enum):
@@ -51,8 +52,10 @@ class SolicitudRegistro(BaseModel):
     apellido: str = Field(min_length=2, max_length=100)
     email: EmailStr
     password: str = Field(min_length=8, max_length=128)
-    tipo_documento: str = Field(min_length=1, max_length=20)
-    numero_documento: str = Field(min_length=5, max_length=30)
+    tipo_documento: str
+    numero_documento: str
+    fecha_nacimiento: date
+    acepta_validacion_identidad: bool
 
 
 class Usuario(BaseModel):
@@ -64,9 +67,9 @@ class Usuario(BaseModel):
     rol: Rol
     activo: bool
     kyc_validado: bool
-    referencia_kyc: str
+    referencia_kyc: str | None = None
     fecha_creacion: datetime
-
+    consentimiento_kyc: bool
 
 class RespuestaRegistro(BaseModel):
     id: str
@@ -76,3 +79,14 @@ class RespuestaRegistro(BaseModel):
     rol: Rol
     kyc_validado: bool
     fecha_creacion: datetime
+
+
+class SolicitudLogin(BaseModel):
+    email: EmailStr
+    password: str
+
+
+class RespuestaLogin(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    expires_in: int
