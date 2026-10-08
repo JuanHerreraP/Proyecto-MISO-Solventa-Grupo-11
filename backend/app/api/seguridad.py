@@ -25,3 +25,11 @@ def rol_actual(x_rol: str | None = Header(default=None)) -> Rol:
         return Rol(x_rol)
     except ValueError:
         raise HTTPException(status.HTTP_403_FORBIDDEN, "Rol no reconocido.") from None
+
+
+def actor_actual(x_actor_id: str | None = Header(default=None)) -> str:
+    """Identificador provisional del actor hasta que HU19 entregue el JWT."""
+
+    if x_actor_id is None or not x_actor_id.strip():
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Falta identificar al actor.")
+    return x_actor_id.strip()
