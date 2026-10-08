@@ -6,9 +6,14 @@ from fastapi import FastAPI, Request
 
 from app import __version__
 from app.api import autorizacion_socios, enriquecimiento, perfilamiento, salud, socios
+from app.api import enriquecimiento, perfilamiento, salud, identidad, autenticacion
+from app.infraestructura.database import Base, engine
+from app.identidad import modelos_db
 
 
 def crear_app() -> FastAPI:
+    Base.metadata.create_all(bind=engine)
+
     app = FastAPI(
         title="Solventa API",
         version=__version__,
@@ -27,6 +32,8 @@ def crear_app() -> FastAPI:
     app.include_router(enriquecimiento.router)
     app.include_router(socios.router)
     app.include_router(autorizacion_socios.router)
+    app.include_router(identidad.router)
+    app.include_router(autenticacion.router)
     return app
 
 
