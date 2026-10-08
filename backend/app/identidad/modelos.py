@@ -2,12 +2,10 @@
 
 from dataclasses import dataclass
 
-from enum import Enum
 from datetime import date, datetime
 from enum import Enum
 
 from pydantic import BaseModel, EmailStr, Field
-from datetime import datetime
 
 
 class Rol(str, Enum):
@@ -15,6 +13,7 @@ class Rol(str, Enum):
     ANALISTA_RIESGOS = "ANALISTA_RIESGOS"
     OPERACIONES_SINIESTROS = "OPERACIONES_SINIESTROS"
     SOCIO_DISTRIBUCION = "SOCIO_DISTRIBUCION"
+    INGENIERO_INTEGRACIONES = "INGENIERO_INTEGRACIONES"
     CLIENTE = "CLIENTE"
     SERVICIO_INTERNO = "SERVICIO_INTERNO"
 

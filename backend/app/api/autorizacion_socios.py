@@ -1,4 +1,4 @@
-"""Autorización provisional de socios para el gateway (BPM-147)."""
+"""Autorización interna de socios para el gateway (BPM-147)."""
 
 from fastapi import APIRouter, Depends, Header, HTTPException, status
 from pydantic import BaseModel
@@ -33,7 +33,7 @@ def autorizar_socio(
     x_scope: str | None = Header(default=None),
     servicio: ServicioSocios = Depends(obtener_servicio),
 ) -> AutorizacionConcedida:
-    """Contrato interno para el gateway hasta que HU19 entregue credenciales firmadas."""
+    """Valida el tenant y el scope después de que el gateway autentica al socio."""
 
     if not x_socio_id or not x_tenant_id:
         raise HTTPException(

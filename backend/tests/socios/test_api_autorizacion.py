@@ -1,7 +1,9 @@
+from types import SimpleNamespace
+
 import pytest
 from fastapi.testclient import TestClient
 
-from app.api.socios import obtener_servicio
+from app.api.socios import administrador_actual, obtener_servicio
 from app.main import app
 from app.socios.dominio.auditoria import RepositorioAuditoriaSociosEnMemoria
 from app.socios.dominio.catalogo import CodigoEndpoint
@@ -11,7 +13,12 @@ from app.socios.servicio import ServicioSocios
 from tests.socios.fabrica import solicitud_alta
 
 RUTA = "/api/v1/autorizaciones/socios"
-INGENIERO = {"X-Rol": "INGENIERO_INTEGRACIONES", "X-Actor-Id": "ingeniero-01"}
+USUARIO_INGENIERO = SimpleNamespace(
+    id="ingeniero-01",
+    email="ingeniero@solventa.com",
+    rol="INGENIERO_INTEGRACIONES",
+    activo=True,
+)
 
 
 @pytest.fixture
@@ -23,6 +30,7 @@ def cliente_y_socio():
     )
     socio = servicio.dar_de_alta(solicitud_alta(), actor_id="ingeniero-01")
     app.dependency_overrides[obtener_servicio] = lambda: servicio
+    app.dependency_overrides[administrador_actual] = lambda: USUARIO_INGENIERO
     yield TestClient(app), socio
     app.dependency_overrides.clear()
 
@@ -102,7 +110,6 @@ def test_gateway_rechaza_socio_inactivo(cliente_y_socio) -> None:
     cliente.patch(
         f"/api/v1/socios/{socio.socio_id}",
         json={"estado": "INACTIVO"},
-        headers=INGENIERO,
     )
 
     respuesta = cliente.post(

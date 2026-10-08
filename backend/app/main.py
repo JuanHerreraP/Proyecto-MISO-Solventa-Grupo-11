@@ -5,10 +5,18 @@ import time
 from fastapi import FastAPI, Request
 
 from app import __version__
-from app.api import autorizacion_socios, enriquecimiento, perfilamiento, salud, socios
-from app.api import enriquecimiento, perfilamiento, salud, identidad, autenticacion
+from app.api import (
+    autenticacion,
+    autorizacion_socios,
+    enriquecimiento,
+    identidad,
+    perfilamiento,
+    salud,
+    socios,
+)
+from app.identidad import modelos_db  # noqa: F401
 from app.infraestructura.database import Base, engine
-from app.identidad import modelos_db
+from app.socios import modelos_db as modelos_db_socios  # noqa: F401
 
 
 def crear_app() -> FastAPI:

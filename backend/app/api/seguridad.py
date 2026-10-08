@@ -20,8 +20,6 @@ from app.identidad.tokens import (
 )
 from app.infraestructura.database import get_db
 
-from uuid import UUID
-
 from app.identidad.auditoria import (
     TipoEventoAuth,
     registrar_evento_auth,
@@ -33,13 +31,6 @@ bearer = HTTPBearer(
     auto_error=False
 )
 
-
-class Rol(str, Enum):
-    ANALISTA_RIESGOS = "ANALISTA_RIESGOS"
-    ASESOR_VENTAS = "ASESOR_VENTAS"
-    CLIENTE = "CLIENTE"
-    INGENIERO_INTEGRACIONES = "INGENIERO_INTEGRACIONES"
-    SERVICIO_INTERNO = "SERVICIO_INTERNO"
 
 def get_current_user(
     request: Request,

@@ -1,31 +1,37 @@
 """API de administración de socios de distribución (HU24)."""
 
-from functools import lru_cache
-
 from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.orm import Session
 
-from app.api.seguridad import Rol, actor_actual, rol_actual
-from app.socios.dominio.auditoria import RepositorioAuditoriaSociosEnMemoria
+from app.api.seguridad import requiere_roles
+from app.identidad.modelos import Rol
+from app.infraestructura.database import get_db
 from app.socios.dominio.modelos import (
     SocioDistribucion,
     SolicitudActualizacionSocio,
     SolicitudAltaSocio,
 )
 from app.socios.dominio.tenant import AprovisionadorTenantsEnMemoria
-from app.socios.repositorio import RepositorioSociosEnMemoria
+from app.socios.repositorio import (
+    RepositorioAuditoriaSociosPostgres,
+    RepositorioSociosPostgres,
+)
 from app.socios.servicio import NitDuplicado, ServicioSocios, SocioNoEncontrado
 
 router = APIRouter(prefix="/api/v1/socios", tags=["socios"])
 
-ROLES_ADMINISTRADORES = {Rol.INGENIERO_INTEGRACIONES, Rol.SERVICIO_INTERNO}
+ROLES_ADMINISTRADORES = (
+    Rol.INGENIERO_INTEGRACIONES.value,
+    Rol.SERVICIO_INTERNO.value,
+)
+administrador_actual = requiere_roles(*ROLES_ADMINISTRADORES)
 
 
-@lru_cache
-def obtener_servicio() -> ServicioSocios:
+def obtener_servicio(db: Session = Depends(get_db)) -> ServicioSocios:
     return ServicioSocios(
-        repositorio=RepositorioSociosEnMemoria(),
+        repositorio=RepositorioSociosPostgres(db),
         tenants=AprovisionadorTenantsEnMemoria(),
-        auditoria=RepositorioAuditoriaSociosEnMemoria(),
+        auditoria=RepositorioAuditoriaSociosPostgres(db),
     )
 
 
@@ -37,14 +43,11 @@ def obtener_servicio() -> ServicioSocios:
 )
 def dar_de_alta(
     solicitud: SolicitudAltaSocio,
-    rol: Rol = Depends(rol_actual),
-    actor_id: str = Depends(actor_actual),
+    usuario=Depends(administrador_actual),
     servicio: ServicioSocios = Depends(obtener_servicio),
 ) -> SocioDistribucion:
-    if rol not in ROLES_ADMINISTRADORES:
-        raise HTTPException(status.HTTP_403_FORBIDDEN, "El rol no puede registrar socios.")
     try:
-        return servicio.dar_de_alta(solicitud, actor_id)
+        return servicio.dar_de_alta(solicitud, str(usuario.id))
     except NitDuplicado:
         raise HTTPException(
             status.HTTP_409_CONFLICT,
@@ -59,11 +62,9 @@ def dar_de_alta(
 )
 def consultar(
     socio_id: str,
-    rol: Rol = Depends(rol_actual),
+    _usuario=Depends(administrador_actual),
     servicio: ServicioSocios = Depends(obtener_servicio),
 ) -> SocioDistribucion:
-    if rol not in ROLES_ADMINISTRADORES:
-        raise HTTPException(status.HTTP_403_FORBIDDEN, "El rol no puede consultar socios.")
     try:
         return servicio.consultar(socio_id)
     except SocioNoEncontrado:
@@ -78,13 +79,10 @@ def consultar(
 def actualizar(
     socio_id: str,
     solicitud: SolicitudActualizacionSocio,
-    rol: Rol = Depends(rol_actual),
-    actor_id: str = Depends(actor_actual),
+    usuario=Depends(administrador_actual),
     servicio: ServicioSocios = Depends(obtener_servicio),
 ) -> SocioDistribucion:
-    if rol not in ROLES_ADMINISTRADORES:
-        raise HTTPException(status.HTTP_403_FORBIDDEN, "El rol no puede modificar socios.")
     try:
-        return servicio.actualizar(socio_id, solicitud, actor_id)
+        return servicio.actualizar(socio_id, solicitud, str(usuario.id))
     except SocioNoEncontrado:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "El socio no existe.") from None
