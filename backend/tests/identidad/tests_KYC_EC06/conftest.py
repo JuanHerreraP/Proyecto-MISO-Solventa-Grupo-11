@@ -27,9 +27,7 @@ def _esperar_puerto(
         except OSError:
             time.sleep(0.1)
 
-    raise RuntimeError(
-        f"No fue posible iniciar el servicio en {host}:{port}"
-    )
+    raise RuntimeError(f"No fue posible iniciar el servicio en {host}:{port}")
 
 
 @pytest.fixture(

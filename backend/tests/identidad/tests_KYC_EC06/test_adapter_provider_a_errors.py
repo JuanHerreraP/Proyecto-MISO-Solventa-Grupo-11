@@ -14,7 +14,6 @@ from app.identidad.modelos import (
 
 
 class FakeProviderAClient(ProviderAClient):
-
     def __init__(self, response: dict):
         self._response = response
 
@@ -52,13 +51,9 @@ def test_score_cero_se_normaliza_a_cero():
         }
     )
 
-    adapter = KYCProviderAAdapter(
-        client=fake
-    )
+    adapter = KYCProviderAAdapter(client=fake)
 
-    resultado = adapter.verify(
-        _request()
-    )
+    resultado = adapter.verify(_request())
 
     assert resultado.risk_score == 0.0
 
@@ -72,13 +67,9 @@ def test_score_cien_se_normaliza_a_uno():
         }
     )
 
-    adapter = KYCProviderAAdapter(
-        client=fake
-    )
+    adapter = KYCProviderAAdapter(client=fake)
 
-    resultado = adapter.verify(
-        _request()
-    )
+    resultado = adapter.verify(_request())
 
     assert resultado.risk_score == 1.0
 
@@ -92,14 +83,10 @@ def test_estado_externo_desconocido_no_es_aceptado():
         }
     )
 
-    adapter = KYCProviderAAdapter(
-        client=fake
-    )
+    adapter = KYCProviderAAdapter(client=fake)
 
     with pytest.raises(KeyError):
-        adapter.verify(
-            _request()
-        )
+        adapter.verify(_request())
 
 
 def test_respuesta_sin_verification_id_no_es_aceptada():
@@ -110,14 +97,10 @@ def test_respuesta_sin_verification_id_no_es_aceptada():
         }
     )
 
-    adapter = KYCProviderAAdapter(
-        client=fake
-    )
+    adapter = KYCProviderAAdapter(client=fake)
 
     with pytest.raises(KeyError):
-        adapter.verify(
-            _request()
-        )
+        adapter.verify(_request())
 
 
 def test_respuesta_sin_score_no_es_aceptada():
@@ -128,11 +111,7 @@ def test_respuesta_sin_score_no_es_aceptada():
         }
     )
 
-    adapter = KYCProviderAAdapter(
-        client=fake
-    )
+    adapter = KYCProviderAAdapter(client=fake)
 
     with pytest.raises(KeyError):
-        adapter.verify(
-            _request()
-        )
+        adapter.verify(_request())

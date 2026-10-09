@@ -8,9 +8,7 @@ from app.identidad.modelos import (
 
 
 def test_registro_rechaza_email_invalido():
-    with pytest.raises(
-        ValidationError
-    ):
+    with pytest.raises(ValidationError):
         SolicitudRegistro(
             nombre="Ana",
             apellido="Perez",
@@ -24,9 +22,7 @@ def test_registro_rechaza_email_invalido():
 
 
 def test_registro_rechaza_password_menor_a_ocho():
-    with pytest.raises(
-        ValidationError
-    ):
+    with pytest.raises(ValidationError):
         SolicitudRegistro(
             nombre="Ana",
             apellido="Perez",
@@ -40,9 +36,7 @@ def test_registro_rechaza_password_menor_a_ocho():
 
 
 def test_login_rechaza_email_invalido():
-    with pytest.raises(
-        ValidationError
-    ):
+    with pytest.raises(ValidationError):
         SolicitudLogin(
             email="correo-invalido",
             password="Password123!",
@@ -55,12 +49,6 @@ def test_login_acepta_datos_validos():
         password="Password123!",
     )
 
-    assert (
-        str(solicitud.email)
-        == "ana@gmail.com"
-    )
+    assert str(solicitud.email) == "ana@gmail.com"
 
-    assert (
-        solicitud.password
-        == "Password123!"
-    )
+    assert solicitud.password == "Password123!"

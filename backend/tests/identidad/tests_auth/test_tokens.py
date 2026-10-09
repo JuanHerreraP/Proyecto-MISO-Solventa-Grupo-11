@@ -18,11 +18,9 @@ def _crear_llaves():
         encryption_algorithm=serialization.NoEncryption(),
     )
 
-    public_pem = (
-        private_key.public_key().public_bytes(
-            encoding=serialization.Encoding.PEM,
-            format=serialization.PublicFormat.SubjectPublicKeyInfo,
-        )
+    public_pem = private_key.public_key().public_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PublicFormat.SubjectPublicKeyInfo,
     )
 
     return private_pem, public_pem
@@ -32,17 +30,11 @@ def test_access_token_usa_rs256(
     tmp_path,
     monkeypatch,
 ):
-    private_pem, public_pem = (
-        _crear_llaves()
-    )
+    private_pem, public_pem = _crear_llaves()
 
-    private_path = (
-        tmp_path / "private_key.pem"
-    )
+    private_path = tmp_path / "private_key.pem"
 
-    private_path.write_bytes(
-        private_pem
-    )
+    private_path.write_bytes(private_pem)
 
     monkeypatch.setattr(
         tokens,
@@ -56,9 +48,7 @@ def test_access_token_usa_rs256(
         rol="CLIENTE",
     )
 
-    header = jwt.get_unverified_header(
-        token
-    )
+    header = jwt.get_unverified_header(token)
 
     assert header["alg"] == "RS256"
 
@@ -67,17 +57,11 @@ def test_access_token_contiene_claims_del_usuario(
     tmp_path,
     monkeypatch,
 ):
-    private_pem, public_pem = (
-        _crear_llaves()
-    )
+    private_pem, public_pem = _crear_llaves()
 
-    private_path = (
-        tmp_path / "private_key.pem"
-    )
+    private_path = tmp_path / "private_key.pem"
 
-    private_path.write_bytes(
-        private_pem
-    )
+    private_path.write_bytes(private_pem)
 
     monkeypatch.setattr(
         tokens,
@@ -107,17 +91,11 @@ def test_access_token_expira_en_30_minutos(
     tmp_path,
     monkeypatch,
 ):
-    private_pem, public_pem = (
-        _crear_llaves()
-    )
+    private_pem, public_pem = _crear_llaves()
 
-    private_path = (
-        tmp_path / "private_key.pem"
-    )
+    private_path = tmp_path / "private_key.pem"
 
-    private_path.write_bytes(
-        private_pem
-    )
+    private_path.write_bytes(private_pem)
 
     monkeypatch.setattr(
         tokens,
@@ -143,10 +121,7 @@ def test_access_token_expira_en_30_minutos(
         algorithms=["RS256"],
     )
 
-    diferencia = (
-        payload["exp"]
-        - payload["iat"]
-    )
+    diferencia = payload["exp"] - payload["iat"]
 
     assert diferencia == 1800
 
@@ -155,21 +130,13 @@ def test_token_no_valida_con_otra_llave(
     tmp_path,
     monkeypatch,
 ):
-    private_pem, public_pem = (
-        _crear_llaves()
-    )
+    private_pem, public_pem = _crear_llaves()
 
-    _, public_key_incorrecta = (
-        _crear_llaves()
-    )
+    _, public_key_incorrecta = _crear_llaves()
 
-    private_path = (
-        tmp_path / "private_key.pem"
-    )
+    private_path = tmp_path / "private_key.pem"
 
-    private_path.write_bytes(
-        private_pem
-    )
+    private_path.write_bytes(private_pem)
 
     monkeypatch.setattr(
         tokens,
@@ -183,9 +150,7 @@ def test_token_no_valida_con_otra_llave(
         rol="CLIENTE",
     )
 
-    with pytest.raises(
-        jwt.InvalidSignatureError
-    ):
+    with pytest.raises(jwt.InvalidSignatureError):
         jwt.decode(
             token,
             public_key_incorrecta,

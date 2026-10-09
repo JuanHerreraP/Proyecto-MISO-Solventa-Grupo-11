@@ -90,6 +90,7 @@ class UsuarioDB(Base):
         server_default=func.now(),
     )
 
+
 class EventoAutenticacionDB(Base):
     __tablename__ = "eventos_autenticacion"
 

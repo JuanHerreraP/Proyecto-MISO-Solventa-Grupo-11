@@ -17,22 +17,16 @@ class FakeRepositorioUsuarios:
         self.usuarios = {}
 
     def buscar_por_email(self, email: str):
-        return self.usuarios.get(
-            email.strip().lower()
-        )
+        return self.usuarios.get(email.strip().lower())
 
     def guardar(self, usuario):
         if usuario.id is None:
             usuario.id = uuid4()
 
         if usuario.fecha_creacion is None:
-            usuario.fecha_creacion = datetime.now(
-                timezone.utc
-            )
+            usuario.fecha_creacion = datetime.now(timezone.utc)
 
-        self.usuarios[
-            usuario.email.strip().lower()
-        ] = usuario
+        self.usuarios[usuario.email.strip().lower()] = usuario
 
         return usuario
 

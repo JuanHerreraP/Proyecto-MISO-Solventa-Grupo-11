@@ -47,27 +47,19 @@ def registrar_evento_auth(
             if request.client is not None:
                 ip = request.client.host
 
-            user_agent = request.headers.get(
-                "user-agent"
-            )
+            user_agent = request.headers.get("user-agent")
 
         usuario_uuid = None
 
         if usuario_id:
             try:
-                usuario_uuid = UUID(
-                    str(usuario_id)
-                )
+                usuario_uuid = UUID(str(usuario_id))
             except ValueError:
                 usuario_uuid = None
 
         evento = EventoAutenticacionDB(
             usuario_id=usuario_uuid,
-            email=(
-                email.strip().lower()
-                if email
-                else None
-            ),
+            email=(email.strip().lower() if email else None),
             tipo_evento=tipo_evento.value,
             exitoso=exitoso,
             detalle=detalle,
@@ -83,10 +75,7 @@ def registrar_evento_auth(
 
         # La auditoría no debe tumbar
         # el flujo principal.
-        logger.exception(
-            "No fue posible registrar "
-            "el evento de auditoría."
-        )
+        logger.exception("No fue posible registrar el evento de auditoría.")
 
     finally:
         db.close()

@@ -55,9 +55,7 @@ def test_provider_a_envia_el_contrato_http_correcto(monkeypatch):
         birth_date="1995-01-01",
     )
 
-    assert llamada["url"] == (
-        "http://provider-a.test/kyc/verify"
-    )
+    assert llamada["url"] == ("http://provider-a.test/kyc/verify")
 
     assert llamada["json"] == {
         "documentType": "CC",
@@ -160,9 +158,7 @@ def test_provider_a_propaga_error_http_500(monkeypatch):
         return httpx.Response(
             status_code=500,
             request=request,
-            json={
-                "detail": "Error interno del proveedor"
-            },
+            json={"detail": "Error interno del proveedor"},
         )
 
     monkeypatch.setattr(

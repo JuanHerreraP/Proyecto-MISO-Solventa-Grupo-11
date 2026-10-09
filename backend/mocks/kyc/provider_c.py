@@ -22,9 +22,7 @@ class VerificationResponse(BaseModel):
 @app.post("/kyc/verify", response_model=VerificationResponse)
 def verify(payload: VerificationRequest) -> VerificationResponse:
     digest = int(
-        hashlib.sha256(
-            payload.documentNumber.encode()
-        ).hexdigest(),
+        hashlib.sha256(payload.documentNumber.encode()).hexdigest(),
         16,
     )
 
@@ -43,9 +41,7 @@ def verify(payload: VerificationRequest) -> VerificationResponse:
         score = 80 + (digest % 20)
 
     return VerificationResponse(
-        verificationId=(
-            f"A-{payload.documentNumber}-{digest % 100000}"
-        ),
+        verificationId=(f"A-{payload.documentNumber}-{digest % 100000}"),
         status=status,
         score=min(score, 100),
     )

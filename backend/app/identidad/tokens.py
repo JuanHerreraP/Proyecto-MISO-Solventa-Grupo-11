@@ -22,9 +22,7 @@ PUBLIC_KEY_PATH = Path(
     )
 )
 
-ACCESS_TOKEN_MINUTES = int(
-    os.getenv("JWT_ACCESS_TOKEN_MINUTES", "30")
-)
+ACCESS_TOKEN_MINUTES = int(os.getenv("JWT_ACCESS_TOKEN_MINUTES", "30"))
 
 REFRESH_TOKEN_DAYS = int(
     os.getenv(
@@ -41,9 +39,7 @@ def crear_access_token(
 ) -> str:
 
     ahora = datetime.now(timezone.utc)
-    expiracion = ahora + timedelta(
-        minutes=ACCESS_TOKEN_MINUTES
-    )
+    expiracion = ahora + timedelta(minutes=ACCESS_TOKEN_MINUTES)
 
     payload = {
         "sub": usuario_id,
@@ -85,24 +81,16 @@ def validar_access_token(
         )
 
     except jwt.ExpiredSignatureError as error:
-        raise TokenExpiradoError(
-            "El token de acceso ha expirado."
-        ) from error
+        raise TokenExpiradoError("El token de acceso ha expirado.") from error
 
     except jwt.InvalidTokenError as error:
-        raise TokenInvalidoError(
-            "El token de acceso no es válido."
-        ) from error
+        raise TokenInvalidoError("El token de acceso no es válido.") from error
 
     if payload.get("type") != "access":
-        raise TokenInvalidoError(
-            "El token proporcionado no es un token de acceso."
-        )
+        raise TokenInvalidoError("El token proporcionado no es un token de acceso.")
 
     if not payload.get("sub"):
-        raise TokenInvalidoError(
-            "El token no contiene un usuario válido."
-        )
+        raise TokenInvalidoError("El token no contiene un usuario válido.")
 
     return payload
 
@@ -115,9 +103,7 @@ def crear_refresh_token(
 
     ahora = datetime.now(timezone.utc)
 
-    expiracion = ahora + timedelta(
-        days=REFRESH_TOKEN_DAYS
-    )
+    expiracion = ahora + timedelta(days=REFRESH_TOKEN_DAYS)
 
     payload = {
         "sub": usuario_id,
@@ -151,18 +137,12 @@ def validar_refresh_token(
         )
 
     except jwt.ExpiredSignatureError as error:
-        raise TokenExpiradoError(
-            "El refresh token ha expirado."
-        ) from error
+        raise TokenExpiradoError("El refresh token ha expirado.") from error
 
     except jwt.InvalidTokenError as error:
-        raise TokenInvalidoError(
-            "El refresh token no es válido."
-        ) from error
+        raise TokenInvalidoError("El refresh token no es válido.") from error
 
     if payload.get("type") != "refresh":
-        raise TokenInvalidoError(
-            "El token proporcionado no es un refresh token."
-        )
+        raise TokenInvalidoError("El token proporcionado no es un refresh token.")
 
     return payload

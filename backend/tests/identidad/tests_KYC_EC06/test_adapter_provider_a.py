@@ -4,6 +4,7 @@ particularidades del contrato externo (estado "PENDING", score 0-100) se
 traducen correctamente al modelo de dominio, y que esa traducción vive
 únicamente dentro del adaptador.
 """
+
 from datetime import date
 
 from app.identidad.adaptadores.kyc_provider_a import (
@@ -33,9 +34,7 @@ def _request(document_number: str = "123") -> VerificationRequest:
 
 
 def test_traduce_pending_a_in_review_y_normaliza_el_score():
-    fake = FakeProviderAClient(
-        {"verificationId": "A-FAKE-1", "status": "PENDING", "score": 55}
-    )
+    fake = FakeProviderAClient({"verificationId": "A-FAKE-1", "status": "PENDING", "score": 55})
     adapter = KYCProviderAAdapter(client=fake)
 
     result = adapter.verify(_request())

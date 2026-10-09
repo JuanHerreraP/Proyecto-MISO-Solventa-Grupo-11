@@ -13,14 +13,17 @@ from app.identidad.puertos import IdentityVerificationProvider
 
 
 def get_configured_provider_name() -> str:
-    return os.getenv(
-        "KYC_PROVIDER",
-        "A",
-    ).strip().upper()
+    return (
+        os.getenv(
+            "KYC_PROVIDER",
+            "A",
+        )
+        .strip()
+        .upper()
+    )
 
 
-def get_identity_verification_provider(
-) -> IdentityVerificationProvider:
+def get_identity_verification_provider() -> IdentityVerificationProvider:
 
     provider_name = get_configured_provider_name()
 
@@ -33,6 +36,4 @@ def get_identity_verification_provider(
     if provider_name == "C":
         return KYCProviderCAdapter()
 
-    raise ValueError(
-        f"Proveedor KYC no soportado: {provider_name}"
-    )
+    raise ValueError(f"Proveedor KYC no soportado: {provider_name}")

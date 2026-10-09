@@ -63,9 +63,7 @@ class ServicioIdentidad:
 
         existente = self.repositorio.buscar_por_email(str(solicitud.email))
         if existente is not None:
-            raise UsuarioYaExisteError(
-                "Ya existe un usuario registrado con este correo."
-            )
+            raise UsuarioYaExisteError("Ya existe un usuario registrado con este correo.")
 
         if self.provider is None:
             raise RuntimeError("Se requiere un proveedor KYC para registrar usuarios.")

@@ -15,6 +15,7 @@ Según la interpretación de resultados ya definida para este experimento:
   comportamiento observado difiere entre proveedores para el mismo caso ->
   la hipótesis debe revisarse (ver README de este experimento).
 """
+
 import pytest
 
 PAYLOAD_BASE = {
@@ -91,13 +92,8 @@ def test_salud_reporta_el_proveedor_activo_sin_exponer_su_contrato(
 ):
     client = client_with_provider(provider_name)
 
-    response = client.get(
-        "/identidad/salud"
-    )
+    response = client.get("/identidad/salud")
 
     assert response.status_code == 200
 
-    assert (
-        response.json()["proveedor_kyc_activo"]
-        == provider_name
-    )
+    assert response.json()["proveedor_kyc_activo"] == provider_name

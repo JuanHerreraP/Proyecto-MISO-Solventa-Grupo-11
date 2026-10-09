@@ -20,9 +20,7 @@ def _crear_usuario(
     return SimpleNamespace(
         id=uuid4(),
         email="ana@gmail.com",
-        password_hash=password_hash.hash(
-            password
-        ),
+        password_hash=password_hash.hash(password),
         rol="CLIENTE",
         activo=activo,
     )
@@ -34,9 +32,7 @@ def test_login_exitoso_devuelve_token(
 ):
     usuario = _crear_usuario()
 
-    repositorio.usuarios[
-        "ana@gmail.com"
-    ] = usuario
+    repositorio.usuarios["ana@gmail.com"] = usuario
 
     def fake_crear_access_token(
         usuario_id,
@@ -50,19 +46,14 @@ def test_login_exitoso_devuelve_token(
         fake_crear_access_token,
     )
 
-    servicio = ServicioIdentidad(
-        repositorio=repositorio
-    )
+    servicio = ServicioIdentidad(repositorio=repositorio)
 
     resultado = servicio.autenticar_usuario(
         email="ana@gmail.com",
         password="Password123!",
     )
 
-    assert (
-        resultado.access_token
-        == "jwt-falso-para-prueba"
-    )
+    assert resultado.access_token == "jwt-falso-para-prueba"
 
     assert resultado.token_type == "bearer"
 
@@ -72,13 +63,9 @@ def test_login_exitoso_devuelve_token(
 def test_login_correo_inexistente(
     repositorio,
 ):
-    servicio = ServicioIdentidad(
-        repositorio=repositorio
-    )
+    servicio = ServicioIdentidad(repositorio=repositorio)
 
-    with pytest.raises(
-        CredencialesInvalidasError
-    ):
+    with pytest.raises(CredencialesInvalidasError):
         servicio.autenticar_usuario(
             email="noexiste@gmail.com",
             password="Password123!",
@@ -90,17 +77,11 @@ def test_login_password_incorrecto(
 ):
     usuario = _crear_usuario()
 
-    repositorio.usuarios[
-        "ana@gmail.com"
-    ] = usuario
+    repositorio.usuarios["ana@gmail.com"] = usuario
 
-    servicio = ServicioIdentidad(
-        repositorio=repositorio
-    )
+    servicio = ServicioIdentidad(repositorio=repositorio)
 
-    with pytest.raises(
-        CredencialesInvalidasError
-    ):
+    with pytest.raises(CredencialesInvalidasError):
         servicio.autenticar_usuario(
             email="ana@gmail.com",
             password="incorrecta123",
@@ -110,21 +91,13 @@ def test_login_password_incorrecto(
 def test_usuario_inactivo_no_puede_iniciar_sesion(
     repositorio,
 ):
-    usuario = _crear_usuario(
-        activo=False
-    )
+    usuario = _crear_usuario(activo=False)
 
-    repositorio.usuarios[
-        "ana@gmail.com"
-    ] = usuario
+    repositorio.usuarios["ana@gmail.com"] = usuario
 
-    servicio = ServicioIdentidad(
-        repositorio=repositorio
-    )
+    servicio = ServicioIdentidad(repositorio=repositorio)
 
-    with pytest.raises(
-        UsuarioInactivoError
-    ):
+    with pytest.raises(UsuarioInactivoError):
         servicio.autenticar_usuario(
             email="ana@gmail.com",
             password="Password123!",
@@ -137,9 +110,7 @@ def test_login_no_necesita_proveedor_kyc(
 ):
     usuario = _crear_usuario()
 
-    repositorio.usuarios[
-        "ana@gmail.com"
-    ] = usuario
+    repositorio.usuarios["ana@gmail.com"] = usuario
 
     monkeypatch.setattr(
         "app.identidad.servicio.crear_access_token",

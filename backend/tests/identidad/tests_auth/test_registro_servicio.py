@@ -35,24 +35,16 @@ def test_registro_exitoso_crea_usuario(
     solicitud_registro,
     resultado_kyc_aprobado,
 ):
-    provider = FakeProviderKYC(
-        resultado_kyc_aprobado
-    )
+    provider = FakeProviderKYC(resultado_kyc_aprobado)
 
     servicio = ServicioIdentidad(
         repositorio=repositorio,
         provider=provider,
     )
 
-    resultado = servicio.registrar_usuario(
-        solicitud_registro
-    )
+    resultado = servicio.registrar_usuario(solicitud_registro)
 
-    usuario_guardado = (
-        repositorio.buscar_por_email(
-            "ana@gmail.com"
-        )
-    )
+    usuario_guardado = repositorio.buscar_por_email("ana@gmail.com")
 
     assert usuario_guardado is not None
 
@@ -60,10 +52,7 @@ def test_registro_exitoso_crea_usuario(
 
     assert resultado.kyc_validado is True
 
-    assert (
-        usuario_guardado.referencia_kyc
-        == "A-1000000001-123"
-    )
+    assert usuario_guardado.referencia_kyc == "A-1000000001-123"
 
 
 def test_registro_consulta_el_kyc(
@@ -71,18 +60,14 @@ def test_registro_consulta_el_kyc(
     solicitud_registro,
     resultado_kyc_aprobado,
 ):
-    provider = FakeProviderKYC(
-        resultado_kyc_aprobado
-    )
+    provider = FakeProviderKYC(resultado_kyc_aprobado)
 
     servicio = ServicioIdentidad(
         repositorio=repositorio,
         provider=provider,
     )
 
-    servicio.registrar_usuario(
-        solicitud_registro
-    )
+    servicio.registrar_usuario(solicitud_registro)
 
     assert len(provider.llamadas) == 1
 
@@ -90,10 +75,7 @@ def test_registro_consulta_el_kyc(
 
     assert request_kyc.document_type == "CC"
 
-    assert (
-        request_kyc.document_number
-        == "1000000001"
-    )
+    assert request_kyc.document_number == "1000000001"
 
     assert request_kyc.full_name == "Ana Perez"
 
@@ -103,22 +85,16 @@ def test_password_no_se_guarda_en_texto_plano(
     solicitud_registro,
     resultado_kyc_aprobado,
 ):
-    provider = FakeProviderKYC(
-        resultado_kyc_aprobado
-    )
+    provider = FakeProviderKYC(resultado_kyc_aprobado)
 
     servicio = ServicioIdentidad(
         repositorio=repositorio,
         provider=provider,
     )
 
-    servicio.registrar_usuario(
-        solicitud_registro
-    )
+    servicio.registrar_usuario(solicitud_registro)
 
-    usuario = repositorio.buscar_por_email(
-        "ana@gmail.com"
-    )
+    usuario = repositorio.buscar_por_email("ana@gmail.com")
 
     assert usuario.password_hash != "Password123!"
 
@@ -133,18 +109,14 @@ def test_respuesta_registro_no_expone_password(
     solicitud_registro,
     resultado_kyc_aprobado,
 ):
-    provider = FakeProviderKYC(
-        resultado_kyc_aprobado
-    )
+    provider = FakeProviderKYC(resultado_kyc_aprobado)
 
     servicio = ServicioIdentidad(
         repositorio=repositorio,
         provider=provider,
     )
 
-    resultado = servicio.registrar_usuario(
-        solicitud_registro
-    )
+    resultado = servicio.registrar_usuario(solicitud_registro)
 
     respuesta = resultado.model_dump()
 
@@ -157,25 +129,17 @@ def test_no_permite_email_duplicado(
     solicitud_registro,
     resultado_kyc_aprobado,
 ):
-    provider = FakeProviderKYC(
-        resultado_kyc_aprobado
-    )
+    provider = FakeProviderKYC(resultado_kyc_aprobado)
 
     servicio = ServicioIdentidad(
         repositorio=repositorio,
         provider=provider,
     )
 
-    servicio.registrar_usuario(
-        solicitud_registro
-    )
+    servicio.registrar_usuario(solicitud_registro)
 
-    with pytest.raises(
-        UsuarioYaExisteError
-    ):
-        servicio.registrar_usuario(
-            solicitud_registro
-        )
+    with pytest.raises(UsuarioYaExisteError):
+        servicio.registrar_usuario(solicitud_registro)
 
 
 def test_sin_consentimiento_no_consulta_kyc(
@@ -183,27 +147,17 @@ def test_sin_consentimiento_no_consulta_kyc(
     solicitud_registro,
     resultado_kyc_aprobado,
 ):
-    solicitud = solicitud_registro.model_copy(
-        update={
-            "acepta_validacion_identidad": False
-        }
-    )
+    solicitud = solicitud_registro.model_copy(update={"acepta_validacion_identidad": False})
 
-    provider = FakeProviderKYC(
-        resultado_kyc_aprobado
-    )
+    provider = FakeProviderKYC(resultado_kyc_aprobado)
 
     servicio = ServicioIdentidad(
         repositorio=repositorio,
         provider=provider,
     )
 
-    with pytest.raises(
-        ConsentimientoRequeridoError
-    ):
-        servicio.registrar_usuario(
-            solicitud
-        )
+    with pytest.raises(ConsentimientoRequeridoError):
+        servicio.registrar_usuario(solicitud)
 
     assert provider.llamadas == []
 
@@ -214,23 +168,15 @@ def test_kyc_rechazado_no_crea_usuario(
     repositorio,
     solicitud_registro,
 ):
-    provider = FakeProviderKYC(
-        _resultado_kyc(
-            VerificationStatus.REJECTED
-        )
-    )
+    provider = FakeProviderKYC(_resultado_kyc(VerificationStatus.REJECTED))
 
     servicio = ServicioIdentidad(
         repositorio=repositorio,
         provider=provider,
     )
 
-    with pytest.raises(
-        KYCRechazadoError
-    ):
-        servicio.registrar_usuario(
-            solicitud_registro
-        )
+    with pytest.raises(KYCRechazadoError):
+        servicio.registrar_usuario(solicitud_registro)
 
     assert repositorio.usuarios == {}
 
@@ -239,42 +185,31 @@ def test_kyc_en_revision_no_crea_usuario(
     repositorio,
     solicitud_registro,
 ):
-    provider = FakeProviderKYC(
-        _resultado_kyc(
-            VerificationStatus.IN_REVIEW
-        )
-    )
+    provider = FakeProviderKYC(_resultado_kyc(VerificationStatus.IN_REVIEW))
 
     servicio = ServicioIdentidad(
         repositorio=repositorio,
         provider=provider,
     )
 
-    with pytest.raises(
-        KYCPendienteError
-    ):
-        servicio.registrar_usuario(
-            solicitud_registro
-        )
+    with pytest.raises(KYCPendienteError):
+        servicio.registrar_usuario(solicitud_registro)
 
     assert repositorio.usuarios == {}
+
 
 def test_registro_asigna_rol_cliente(
     repositorio,
     solicitud_registro,
     resultado_kyc_aprobado,
 ):
-    provider = FakeProviderKYC(
-        resultado_kyc_aprobado
-    )
+    provider = FakeProviderKYC(resultado_kyc_aprobado)
 
     servicio = ServicioIdentidad(
         repositorio=repositorio,
         provider=provider,
     )
 
-    resultado = servicio.registrar_usuario(
-        solicitud_registro
-    )
+    resultado = servicio.registrar_usuario(solicitud_registro)
 
     assert resultado.rol == Rol.CLIENTE
