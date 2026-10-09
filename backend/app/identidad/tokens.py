@@ -6,7 +6,6 @@ from pathlib import Path
 
 import jwt
 
-
 BASE_DIR = Path(__file__).resolve().parents[2]
 
 PRIVATE_KEY_PATH = Path(

@@ -2,7 +2,6 @@ from types import SimpleNamespace
 from uuid import uuid4
 
 import pytest
-
 from pwdlib import PasswordHash
 
 from app.identidad.servicio import (

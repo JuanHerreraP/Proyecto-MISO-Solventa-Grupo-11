@@ -1,28 +1,29 @@
 """Endpoints de registro y autenticación de usuarios."""
 
 import httpx
-
-from fastapi import APIRouter, Depends, HTTPException, status, Request
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
 
+from app.identidad.auditoria import TipoEventoAuth, registrar_evento_auth
 from app.identidad.config import get_identity_verification_provider
-from app.identidad.modelos import RespuestaRegistro, SolicitudRegistro, SolicitudLogin, RespuestaLogin
+from app.identidad.modelos import (
+    RespuestaLogin,
+    RespuestaRegistro,
+    SolicitudLogin,
+    SolicitudRegistro,
+)
 from app.identidad.puertos import IdentityVerificationProvider
 from app.identidad.repositorio import RepositorioUsuariosPostgres
 from app.identidad.servicio import (
     ConsentimientoRequeridoError,
-    KYCRechazadoError,
-    KYCPendienteError,
-    ServicioIdentidad,
-    UsuarioYaExisteError,
     CredencialesInvalidasError,
+    KYCPendienteError,
+    KYCRechazadoError,
+    ServicioIdentidad,
     UsuarioInactivoError,
+    UsuarioYaExisteError,
 )
 from app.infraestructura.database import get_db
-from app.identidad.auditoria import (
-    TipoEventoAuth,
-    registrar_evento_auth,
-)
 
 router = APIRouter(
     prefix="/api/v1/auth",
@@ -37,14 +38,11 @@ router = APIRouter(
 )
 def registrar_usuario(
     solicitud: SolicitudRegistro,
+    request: Request,
     db: Session = Depends(get_db),
-    provider: IdentityVerificationProvider = Depends(
-        get_identity_verification_provider
-    ),
+    provider: IdentityVerificationProvider = Depends(get_identity_verification_provider),
 ) -> RespuestaRegistro:
-
     repositorio = RepositorioUsuariosPostgres(db)
-
     servicio = ServicioIdentidad(
         repositorio=repositorio,
         provider=provider,
@@ -55,7 +53,10 @@ def registrar_usuario(
         registrar_evento_auth(
             tipo_evento=TipoEventoAuth.USER_REGISTERED,
             exitoso=True,
-            request=Request
+            usuario_id=str(resultado.id),
+            email=str(resultado.email),
+            detalle="Registro exitoso.",
+            request=request,
         )
         return resultado
 
@@ -63,7 +64,9 @@ def registrar_usuario(
         registrar_evento_auth(
             tipo_evento=TipoEventoAuth.REGISTRATION_REJECTED,
             exitoso=False,
-            request=Request
+            email=str(solicitud.email),
+            detalle="USER_ALREADY_EXISTS",
+            request=request,
         )
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
@@ -71,38 +74,57 @@ def registrar_usuario(
         ) from error
 
     except ConsentimientoRequeridoError as error:
+        registrar_evento_auth(
+            tipo_evento=TipoEventoAuth.REGISTRATION_REJECTED,
+            exitoso=False,
+            email=str(solicitud.email),
+            detalle="CONSENT_REQUIRED",
+            request=request,
+        )
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=str(error),
         ) from error
 
     except KYCRechazadoError as error:
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail=str(error),
-        ) from error
-
-    except KYCRechazadoError as error:
-
         registrar_evento_auth(
             tipo_evento=TipoEventoAuth.REGISTRATION_REJECTED,
             exitoso=False,
             email=str(solicitud.email),
             detalle="KYC_REJECTED",
-            request=Request
+            request=request,
         )
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=str(error),
+        ) from error
 
     except KYCPendienteError as error:
+        registrar_evento_auth(
+            tipo_evento=TipoEventoAuth.REGISTRATION_REJECTED,
+            exitoso=False,
+            email=str(solicitud.email),
+            detalle="KYC_PENDING",
+            request=request,
+        )
         raise HTTPException(
             status_code=status.HTTP_202_ACCEPTED,
             detail=str(error),
         ) from error
 
     except httpx.HTTPError as error:
+        registrar_evento_auth(
+            tipo_evento=TipoEventoAuth.REGISTRATION_REJECTED,
+            exitoso=False,
+            email=str(solicitud.email),
+            detalle="KYC_PROVIDER_UNAVAILABLE",
+            request=request,
+        )
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="El servicio de validación de identidad no está disponible.",
         ) from error
+
 
 @router.get(
     "/users",
@@ -112,9 +134,7 @@ def registrar_usuario(
 def listar_usuarios(
     db: Session = Depends(get_db),
 ) -> list[RespuestaRegistro]:
-
     repositorio = RepositorioUsuariosPostgres(db)
-
     servicio = ServicioIdentidad(
         repositorio=repositorio,
         provider=get_identity_verification_provider(),
@@ -122,23 +142,19 @@ def listar_usuarios(
 
     return servicio.listar_usuarios()
 
+
 @router.post(
     "/login",
     response_model=RespuestaLogin,
     status_code=status.HTTP_200_OK,
 )
 def login(
-        solicitud: SolicitudLogin,
-        db: Session = Depends(get_db),
-    ) -> RespuestaLogin:
-
-    repositorio = RepositorioUsuariosPostgres(
-        db
-    )
-
-    servicio = ServicioIdentidad(
-        repositorio=repositorio
-    )
+    solicitud: SolicitudLogin,
+    request: Request,
+    db: Session = Depends(get_db),
+) -> RespuestaLogin:
+    repositorio = RepositorioUsuariosPostgres(db)
+    servicio = ServicioIdentidad(repositorio=repositorio)
 
     try:
         resultado = servicio.autenticar_usuario(
@@ -146,31 +162,27 @@ def login(
             password=solicitud.password,
         )
 
-        usuario = repositorio.buscar_por_email(
-            str(solicitud.email)
-        )
-
-        registrar_evento_auth(
-            tipo_evento=TipoEventoAuth.LOGIN_SUCCESS,
-            exitoso=True,
-            usuario_id=usuario.id,
-            email=usuario.email,
-            detalle="Inicio de sesión exitoso.",
-            request=Request,
-        )
+        usuario = repositorio.buscar_por_email(str(solicitud.email))
+        if usuario is not None:
+            registrar_evento_auth(
+                tipo_evento=TipoEventoAuth.LOGIN_SUCCESS,
+                exitoso=True,
+                usuario_id=str(usuario.id),
+                email=usuario.email,
+                detalle="Inicio de sesión exitoso.",
+                request=request,
+            )
 
         return resultado
 
     except CredencialesInvalidasError as error:
-
         registrar_evento_auth(
             tipo_evento=TipoEventoAuth.LOGIN_FAILED,
             exitoso=False,
             email=str(solicitud.email),
             detalle="INVALID_CREDENTIALS",
-            request=Request,
+            request=request,
         )
-
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail={
@@ -180,15 +192,13 @@ def login(
         ) from error
 
     except UsuarioInactivoError as error:
-
         registrar_evento_auth(
             tipo_evento=TipoEventoAuth.LOGIN_FAILED,
             exitoso=False,
             email=str(solicitud.email),
             detalle="USER_INACTIVE",
-            request=Request,
+            request=request,
         )
-
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail={
@@ -196,4 +206,3 @@ def login(
                 "mensaje": str(error),
             },
         ) from error
-        

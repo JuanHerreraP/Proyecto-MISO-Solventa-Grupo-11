@@ -1,18 +1,21 @@
-from datetime import date
-
 from pwdlib import PasswordHash
 
 from app.identidad.modelos import (
+    RespuestaLogin,
     RespuestaRegistro,
     Rol,
     SolicitudRegistro,
     VerificationRequest,
     VerificationStatus,
-    RespuestaLogin,
 )
 from app.identidad.modelos_db import UsuarioDB
 from app.identidad.puertos import IdentityVerificationProvider
-from app.identidad.tokens import crear_access_token, ACCESS_TOKEN_MINUTES, REFRESH_TOKEN_DAYS, crear_refresh_token
+from app.identidad.tokens import (
+    ACCESS_TOKEN_MINUTES,
+    REFRESH_TOKEN_DAYS,
+    crear_access_token,
+    crear_refresh_token,
+)
 
 
 class UsuarioYaExisteError(Exception):
@@ -30,6 +33,7 @@ class KYCRechazadoError(Exception):
 class KYCPendienteError(Exception):
     pass
 
+
 class CredencialesInvalidasError(Exception):
     pass
 
@@ -39,11 +43,10 @@ class UsuarioInactivoError(Exception):
 
 
 class ServicioIdentidad:
-
     def __init__(
         self,
         repositorio,
-        provider: IdentityVerificationProvider |  None = None,
+        provider: IdentityVerificationProvider | None = None,
     ):
         self.repositorio = repositorio
         self.provider = provider
@@ -53,20 +56,19 @@ class ServicioIdentidad:
         self,
         solicitud: SolicitudRegistro,
     ) -> RespuestaRegistro:
-
         if not solicitud.acepta_validacion_identidad:
             raise ConsentimientoRequeridoError(
                 "Se requiere autorización para validar la identidad."
             )
 
-        existente = self.repositorio.buscar_por_email(
-            str(solicitud.email)
-        )
-
+        existente = self.repositorio.buscar_por_email(str(solicitud.email))
         if existente is not None:
             raise UsuarioYaExisteError(
                 "Ya existe un usuario registrado con este correo."
             )
+
+        if self.provider is None:
+            raise RuntimeError("Se requiere un proveedor KYC para registrar usuarios.")
 
         resultado_kyc = self.provider.verify(
             VerificationRequest(
@@ -75,28 +77,31 @@ class ServicioIdentidad:
                 document_type=solicitud.tipo_documento,
                 document_number=solicitud.numero_documento,
                 full_name=f"{solicitud.nombre} {solicitud.apellido}",
-                birth_date=solicitud.fecha_nacimiento
+                birth_date=solicitud.fecha_nacimiento,
             )
         )
 
         if resultado_kyc.status == VerificationStatus.REJECTED:
             raise KYCRechazadoError(
-                "No fue posible completar el registro porque la validación de identidad no fue aprobada. Verifique que la información ingresada sea correcta o comuníquese con soporte si considera que se trata de un error."
+                "No fue posible completar el registro porque la validación de "
+                "identidad no fue aprobada. Verifique que la información "
+                "ingresada sea correcta o comuníquese con soporte si considera "
+                "que se trata de un error."
             )
 
         if resultado_kyc.status == VerificationStatus.IN_REVIEW:
             raise KYCPendienteError(
-                "No fue posible completar el registro de forma inmediata porque la validación de identidad requiere una revisión adicional. "
-                "El proceso quedará pendiente hasta que la verificación sea completada."
+                "No fue posible completar el registro de forma inmediata porque "
+                "la validación de identidad requiere una revisión adicional. El "
+                "proceso quedará pendiente hasta que la verificación sea "
+                "completada."
             )
 
         usuario = UsuarioDB(
             nombre=solicitud.nombre,
             apellido=solicitud.apellido,
             email=str(solicitud.email).lower(),
-            password_hash=self.password_hash.hash(
-                solicitud.password
-            ),
+            password_hash=self.password_hash.hash(solicitud.password),
             rol=Rol.CLIENTE.value,
             activo=True,
             tipo_documento=solicitud.tipo_documento,
@@ -119,10 +124,7 @@ class ServicioIdentidad:
             fecha_creacion=usuario.fecha_creacion,
         )
 
-    def listar_usuarios(
-        self,
-    ) -> list[RespuestaRegistro]:
-
+    def listar_usuarios(self) -> list[RespuestaRegistro]:
         usuarios = self.repositorio.listar_todos()
 
         return [
@@ -138,16 +140,12 @@ class ServicioIdentidad:
             for usuario in usuarios
         ]
 
-
     def autenticar_usuario(
         self,
         email: str,
         password: str,
-        ) -> RespuestaLogin:
-
-        usuario = self.repositorio.buscar_por_email(
-            email
-        )
+    ) -> RespuestaLogin:
+        usuario = self.repositorio.buscar_por_email(email)
 
         if usuario is None:
             raise CredencialesInvalidasError(
@@ -188,5 +186,3 @@ class ServicioIdentidad:
             expires_in=ACCESS_TOKEN_MINUTES * 60,
             refresh_expires_in=REFRESH_TOKEN_DAYS * 86400,
         )
-
-        

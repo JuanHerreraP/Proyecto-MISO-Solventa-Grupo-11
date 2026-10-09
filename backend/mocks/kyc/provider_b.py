@@ -3,7 +3,6 @@ import hashlib
 from fastapi import FastAPI
 from pydantic import BaseModel
 
-
 app = FastAPI(title="KYC Provider B Mock")
 
 

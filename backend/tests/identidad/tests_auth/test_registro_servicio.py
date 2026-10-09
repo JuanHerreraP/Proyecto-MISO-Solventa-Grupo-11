@@ -9,8 +9,8 @@ from app.identidad.modelos import (
 )
 from app.identidad.servicio import (
     ConsentimientoRequeridoError,
-    KYCRechazadoError,
     KYCPendienteError,
+    KYCRechazadoError,
     ServicioIdentidad,
     UsuarioYaExisteError,
 )

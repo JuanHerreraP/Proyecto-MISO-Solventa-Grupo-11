@@ -1,47 +1,22 @@
-from fastapi import (
-    Depends,
-    HTTPException,
-    status,
-    Request,
-)
-from fastapi.security import (
-    HTTPAuthorizationCredentials,
-    HTTPBearer,
-)
+from fastapi import Depends, HTTPException, Request, status
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
 
-from app.identidad.repositorio import (
-    RepositorioUsuariosPostgres,
-)
-from app.identidad.tokens import (
-    TokenExpiradoError,
-    TokenInvalidoError,
-    validar_access_token,
-)
+from app.identidad.auditoria import TipoEventoAuth, registrar_evento_auth
+from app.identidad.modelos import Rol
+from app.identidad.repositorio import RepositorioUsuariosPostgres
+from app.identidad.tokens import TokenExpiradoError, TokenInvalidoError, validar_access_token
 from app.infraestructura.database import get_db
 
-from app.identidad.auditoria import (
-    TipoEventoAuth,
-    registrar_evento_auth,
-)
-
-from app.identidad.modelos import Rol
-
-bearer = HTTPBearer(
-    auto_error=False
-)
+bearer = HTTPBearer(auto_error=False)
 
 
 def get_current_user(
     request: Request,
-    credentials: HTTPAuthorizationCredentials | None = Depends(
-        bearer
-    ),
+    credentials: HTTPAuthorizationCredentials | None = Depends(bearer),
     db: Session = Depends(get_db),
 ):
-
     if credentials is None:
-
         registrar_evento_auth(
             tipo_evento=TipoEventoAuth.TOKEN_REQUIRED,
             exitoso=False,
@@ -58,12 +33,8 @@ def get_current_user(
         )
 
     try:
-        payload = validar_access_token(
-            credentials.credentials
-        )
-
+        payload = validar_access_token(credentials.credentials)
     except TokenExpiradoError as error:
-
         registrar_evento_auth(
             tipo_evento=TipoEventoAuth.TOKEN_EXPIRED,
             exitoso=False,
@@ -78,9 +49,7 @@ def get_current_user(
                 "mensaje": str(error),
             },
         ) from error
-
     except TokenInvalidoError as error:
-
         registrar_evento_auth(
             tipo_evento=TipoEventoAuth.TOKEN_INVALID,
             exitoso=False,
@@ -96,16 +65,10 @@ def get_current_user(
             },
         ) from error
 
-    repositorio = RepositorioUsuariosPostgres(
-        db
-    )
-
-    usuario = repositorio.buscar_por_id(
-        payload["sub"]
-    )
+    repositorio = RepositorioUsuariosPostgres(db)
+    usuario = repositorio.buscar_por_id(payload["sub"])
 
     if usuario is None:
-
         registrar_evento_auth(
             tipo_evento=TipoEventoAuth.ACCESS_DENIED,
             exitoso=False,
@@ -119,15 +82,11 @@ def get_current_user(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail={
                 "codigo": "USER_NOT_FOUND",
-                "mensaje": (
-                    "El usuario asociado al token "
-                    "no existe."
-                ),
+                "mensaje": "El usuario asociado al token no existe.",
             },
         )
 
     if not usuario.activo:
-
         registrar_evento_auth(
             tipo_evento=TipoEventoAuth.ACCESS_DENIED,
             exitoso=False,
@@ -141,36 +100,25 @@ def get_current_user(
             status_code=status.HTTP_403_FORBIDDEN,
             detail={
                 "codigo": "USER_INACTIVE",
-                "mensaje": (
-                    "El usuario se encuentra inactivo."
-                ),
+                "mensaje": "El usuario se encuentra inactivo.",
             },
         )
 
     return usuario
 
 
-def requiere_roles(
-    *roles_permitidos: str,
-):
-
+def requiere_roles(*roles_permitidos: str):
     def verificar(
         request: Request,
-        usuario=Depends(
-            get_current_user
-        ),
+        usuario=Depends(get_current_user),
     ):
-
         if usuario.rol not in roles_permitidos:
-
             registrar_evento_auth(
                 tipo_evento=TipoEventoAuth.ACCESS_DENIED,
                 exitoso=False,
                 usuario_id=usuario.id,
                 email=usuario.email,
-                detalle=(
-                    f"ROLE_DENIED:{usuario.rol}"
-                ),
+                detalle=f"ROLE_DENIED:{usuario.rol}",
                 request=request,
             )
 
@@ -178,10 +126,7 @@ def requiere_roles(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail={
                     "codigo": "ACCESS_DENIED",
-                    "mensaje": (
-                        "El usuario no tiene permisos "
-                        "para realizar esta operación."
-                    ),
+                    "mensaje": "El usuario no tiene permisos para realizar esta operación.",
                 },
             )
 
@@ -195,7 +140,6 @@ def rol_actual(
 ) -> Rol:
     try:
         return Rol(usuario.rol)
-
     except ValueError as error:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,

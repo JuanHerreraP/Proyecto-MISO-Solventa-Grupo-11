@@ -1,7 +1,6 @@
 """Modelos del dominio de identidad."""
 
 from dataclasses import dataclass
-
 from datetime import date, datetime
 from enum import Enum
 
@@ -70,6 +69,7 @@ class Usuario(BaseModel):
     fecha_creacion: datetime
     consentimiento_kyc: bool
 
+
 class RespuestaRegistro(BaseModel):
     id: str
     nombre: str
@@ -88,11 +88,10 @@ class SolicitudLogin(BaseModel):
 class RespuestaLogin(BaseModel):
     access_token: str
     refresh_token: str
-
     token_type: str = "bearer"
-
     expires_in: int
     refresh_expires_in: int
+
 
 class SolicitudRefresh(BaseModel):
     refresh_token: str

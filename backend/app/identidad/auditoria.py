@@ -10,7 +10,6 @@ from sqlalchemy.exc import SQLAlchemyError
 from app.identidad.modelos_db import EventoAutenticacionDB
 from app.infraestructura.database import SessionLocal
 
-
 logger = logging.getLogger(__name__)
 
 

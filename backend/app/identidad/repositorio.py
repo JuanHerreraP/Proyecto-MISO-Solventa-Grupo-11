@@ -1,8 +1,9 @@
+from uuid import UUID
+
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.identidad.modelos_db import UsuarioDB
-from uuid import UUID
 
 
 class RepositorioUsuariosPostgres:

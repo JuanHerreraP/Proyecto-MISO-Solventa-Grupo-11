@@ -1,5 +1,4 @@
 import pytest
-
 from pydantic import ValidationError
 
 from app.identidad.modelos import (
