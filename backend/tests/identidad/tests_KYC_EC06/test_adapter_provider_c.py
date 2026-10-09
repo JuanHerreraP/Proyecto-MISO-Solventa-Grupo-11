@@ -1,19 +1,19 @@
 """
-Pruebas unitarias del adaptador del Proveedor A: verifican que las
+Pruebas unitarias del adaptador del Proveedor C: verifican que las
 particularidades del contrato externo (estado "PENDING", score 0-100) se
 traducen correctamente al modelo de dominio, y que esa traducción vive
 únicamente dentro del adaptador.
 """
 from datetime import date
 
-from app.identidad.adaptadores.kyc_provider_a import (
-    KYCProviderAAdapter,
-    ProviderAClient,
+from app.identidad.adaptadores.kyc_provider_c import (
+    KYCProviderCAdapter,
+    ProviderCClient,
 )
 from app.identidad.modelos import VerificationRequest, VerificationStatus
 
 
-class FakeProviderAClient(ProviderAClient):
+class FakeProviderCClient(ProviderCClient):
     def __init__(self, response: dict):
         self._response = response
 
@@ -33,29 +33,29 @@ def _request(document_number: str = "123") -> VerificationRequest:
 
 
 def test_traduce_pending_a_in_review_y_normaliza_el_score():
-    fake = FakeProviderAClient(
-        {"verificationId": "A-FAKE-1", "status": "PENDING", "score": 55}
+    fake = FakeProviderCClient(
+        {"verificationId": "C-FAKE-1", "status": "PENDING", "score": 55}
     )
-    adapter = KYCProviderAAdapter(client=fake)
+    adapter = KYCProviderCAdapter(client=fake)
 
     result = adapter.verify(_request())
 
     assert result.status == VerificationStatus.IN_REVIEW
     assert result.risk_score == 0.55
-    assert result.provider_name == "proveedor-kyc-a"
-    assert result.verification_id == "A-FAKE-1"
+    assert result.provider_name == "proveedor-kyc-c"
+    assert result.verification_id == "C-FAKE-1"
 
 
 def test_traduce_approved_y_rejected_correctamente():
-    fake_aprobado = FakeProviderAClient(
-        {"verificationId": "A-1", "status": "APPROVED", "score": 10}
+    fake_aprobado = FakeProviderCClient(
+        {"verificationId": "C-1", "status": "APPROVED", "score": 10}
     )
-    fake_rechazado = FakeProviderAClient(
-        {"verificationId": "A-2", "status": "REJECTED", "score": 90}
+    fake_rechazado = FakeProviderCClient(
+        {"verificationId": "C-2", "status": "REJECTED", "score": 90}
     )
 
-    aprobado = KYCProviderAAdapter(client=fake_aprobado).verify(_request())
-    rechazado = KYCProviderAAdapter(client=fake_rechazado).verify(_request())
+    aprobado = KYCProviderCAdapter(client=fake_aprobado).verify(_request())
+    rechazado = KYCProviderCAdapter(client=fake_rechazado).verify(_request())
 
     assert aprobado.status == VerificationStatus.APPROVED
     assert rechazado.status == VerificationStatus.REJECTED
