@@ -1,88 +1,123 @@
 package com.example.solventa
 
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import com.example.solventa.ui.theme.Avance
+import com.example.solventa.ui.theme.SolventaTheme
 
 @Composable
 fun WelcomeScreen(
+    onGetStartedClick: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
-    // Column stacks elements vertically. fillMaxSize makes it full screen.
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(24.dp), // Adds space around the edge of the screen
-        horizontalAlignment = Alignment.CenterHorizontally, // Centers items horizontally
-        verticalArrangement = Arrangement.Center // Centers items vertically
+    Surface(
+        modifier = modifier.fillMaxSize(),
+        color = MaterialTheme.colorScheme.background
     ) {
-
-        // 1. Image (Placeholder icon)
-        // Note: For now, we use a default Android icon.
-        Icon(
-            painter = painterResource(id = android.R.drawable.ic_menu_compass), // Replace with your app logo later
-            contentDescription = "App Logo",
-            modifier = Modifier.size(100.dp),
-            tint = MaterialTheme.colorScheme.primary // Uses app's main color
-        )
-
-        // Spacer adds space between elements
-        Spacer(modifier = Modifier.height(32.dp))
-
-        // 2. Main Title
-        Text(
-            text = "Welcome to My App",
-            fontSize = 28.sp,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onBackground,
-            textAlign = TextAlign.Center
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // 3. Subtitle / Description
-        Text(
-            text = "This is a simple template for the first page of your Kotlin mobile application.",
-            fontSize = 16.sp,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.padding(horizontal = 16.dp) // Extra side padding for text
-        )
-
-        Spacer(modifier = Modifier.height(48.dp))
-
-        // 4. Action Button
-        Button(
-            onClick = {
-                // TODO: Define what happens when clicked (e.g., navigate to Login)
-                println("Get Started button clicked!")
-            },
-            modifier = Modifier.fillMaxWidth().height(50.dp) // Make button wide and tall
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(24.dp),
+            verticalArrangement = Arrangement.SpaceBetween,
+            horizontalAlignment = Alignment.Start
         ) {
-            Text(
-                text = "Get Started",
-                fontSize = 18.sp
-            )
+            // Top Section: Header & Copy
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 48.dp)
+            ) {
+                // Accent Indicator pill using Avance color token
+                Box(
+                    modifier = Modifier
+                        .height(4.dp)
+                        .fillMaxWidth(0.18f)
+                        .background(
+                            color = Avance,
+                            shape = RoundedCornerShape(2.dp)
+                        )
+                )
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                // Headline styled with Plus Jakarta Sans ExtraBold (headlineLarge)
+                Text(
+                    text = "Tu seguro,\ncuando lo\nnecesitas.",
+                    style = MaterialTheme.typography.headlineLarge,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Subtitle styled with DM Sans Regular (bodyLarge)
+                Text(
+                    text = "La experiencia móvil reúne consulta de pólizas, reporte de siniestros y asistencia en una interfaz clara, confiable y disponible sin conexión.",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.8f)
+                )
+            }
+
+            // Bottom Section: Primary Action Callout
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 16.dp)
+            ) {
+                // Main CTA Button using Navegación (primary) automatically
+                Button(
+                    onClick = onGetStartedClick,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp),
+                    shape = RoundedCornerShape(14.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary
+                    )
+                ) {
+                    Text(
+                        text = "Comenzar",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // Supporting text styled with DM Sans Medium (labelMedium)
+                Text(
+                    text = "Acompañamos cada acción con información breve y fácil de entender.",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
+                    modifier = Modifier.align(Alignment.CenterHorizontally)
+                )
+            }
         }
     }
 }
 
 // -- Preview Function --
-// This lets you see the UI in Android Studio without running the emulator.
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun WelcomeScreenPreview() {
-    // Assuming your app theme is named AppTheme
-    // MaterialTheme {
-    WelcomeScreen()
-    // }
+    SolventaTheme {
+        WelcomeScreen()
+    }
 }
