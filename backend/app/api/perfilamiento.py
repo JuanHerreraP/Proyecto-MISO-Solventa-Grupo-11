@@ -4,7 +4,8 @@ from functools import lru_cache
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from app.api.seguridad import Rol, rol_actual
+from app.api.seguridad import rol_actual
+from app.identidad.modelos import Rol
 from app.perfilamiento.dominio.modelos import OfertaCliente, PerfilRiesgo, SenalesPerfilamiento
 from app.perfilamiento.repositorio import RepositorioPerfilesEnMemoria
 from app.perfilamiento.servicio import (
