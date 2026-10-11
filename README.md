@@ -32,8 +32,90 @@ uvicorn app.main:app --reload
 
 La documentación OpenAPI queda en `http://localhost:8000/docs`.
 
+# KYC en local
+
+Se incorpora validación de identidad mediante un proveedor KYC desacoplado. Para desarrollo y pruebas locales se incluyen tres servicios simulados:
+
+| Proveedor | Servicio               | Puerto |
+| --------- | ---------------------- | ------ |
+| A         | `mocks.kyc.provider_a` | `8001` |
+| B         | `mocks.kyc.provider_b` | `8002` |
+| C         | `mocks.kyc.provider_c` | `8003` |
+
+El backend selecciona el proveedor mediante la variable de entorno `KYC_PROVIDER`.
+
+Por defecto se utiliza el proveedor `A`.
+
+### Ejecución con proveedor A
+
+En una terminal, desde `backend/`:
+
+```bash
+source .venv/bin/activate
+uvicorn mocks.kyc.provider_a:app --reload --port 8001
+```
+
+En otra terminal:
+
+```bash
+source .venv/bin/activate
+KYC_PROVIDER=A uvicorn app.main:app --reload --port 8000
+```
+
+### Ejecución con proveedor B
+
+```bash
+uvicorn mocks.kyc.provider_b:app --reload --port 8002
+```
+
+Y ejecutar el backend con:
+
+```bash
+KYC_PROVIDER=B uvicorn app.main:app --reload --port 8000
+```
+
+### Ejecución con proveedor C
+
+```bash
+uvicorn mocks.kyc.provider_c:app --reload --port 8003
+```
+
+Y ejecutar el backend con:
+
+```bash
+KYC_PROVIDER=C uvicorn app.main:app --reload --port 8000
+```
+
+Para probar los tres proveedores simultáneamente se pueden levantar los mocks en terminales independientes:
+
+```bash
+uvicorn mocks.kyc.provider_a:app --reload --port 8001
+uvicorn mocks.kyc.provider_b:app --reload --port 8002
+uvicorn mocks.kyc.provider_c:app --reload --port 8003
+```
+
+El proveedor utilizado por Solventa continuará siendo el indicado en `KYC_PROVIDER`.
+
+Los servicios simulados exponen endpoints de salud en:
+
+- `http://localhost:8001/health`
+- `http://localhost:8002/health`
+- `http://localhost:8003/health`
+
+Las URL pueden sobrescribirse mediante variables de entorno:
+
+| Variable             | Valor local por defecto |
+| -------------------- | ----------------------- |
+| `KYC_PROVIDER`       | `A`                     |
+| `KYC_PROVIDER_A_URL` | `http://127.0.0.1:8001` |
+| `KYC_PROVIDER_B_URL` | `http://127.0.0.1:8002` |
+| `KYC_PROVIDER_C_URL` | `http://127.0.0.1:8003` |
+
+Esta separación permite sustituir el proveedor KYC sin modificar el servicio consumidor, de acuerdo con el experimento arquitectónico EC06.
+
 ## Funcionalidades
 
+- [Registro, onboarding seguro y autenticación basada en tokens (HU19)](docs/identidad-autenticacion.md)
 - [Enriquecimiento del perfil con Open Finance y Open Data (HU10)](docs/enriquecimiento.md)
 - [Perfil de riesgo individualizado y pricing (HU11)](docs/perfil-de-riesgo.md)
 

@@ -79,10 +79,7 @@ def test_normaliza_el_nombre_del_proveedor(
         valor_configurado,
     )
 
-    assert (
-        get_configured_provider_name()
-        == valor_esperado
-    )
+    assert get_configured_provider_name() == valor_esperado
 
 
 def test_proveedor_no_soportado_genera_error(monkeypatch):

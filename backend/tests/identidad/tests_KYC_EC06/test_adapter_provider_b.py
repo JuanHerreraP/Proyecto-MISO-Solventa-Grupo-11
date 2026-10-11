@@ -1,12 +1,16 @@
 """
-Pruebas unitarias del adaptador del Proveedor B: verifican que las
+Pruebas unitarias del adaptador del Proveedor A: verifican que las
 particularidades del contrato externo (estado "PENDING", score 0-100) se
 traducen correctamente al modelo de dominio, y que esa traducción vive
 únicamente dentro del adaptador.
 """
+
 from datetime import date
 
-from app.identidad.adaptadores.kyc_provider_b import KYCProviderBAdapter, ProviderBClient
+from app.identidad.adaptadores.kyc_provider_b import (
+    KYCProviderBAdapter,
+    ProviderBClient,
+)
 from app.identidad.modelos import VerificationRequest, VerificationStatus
 
 
@@ -29,7 +33,7 @@ def _request(document_number: str = "123") -> VerificationRequest:
     )
 
 
-def test_traduce_pending_b_in_review_y_normaliza_el_score():
+def test_traduce_pending_a_in_review_y_normaliza_el_score():
     fake = FakeProviderBClient({"verificationId": "B-FAKE-1", "status": "PENDING", "score": 55})
     adapter = KYCProviderBAdapter(client=fake)
 
@@ -42,8 +46,12 @@ def test_traduce_pending_b_in_review_y_normaliza_el_score():
 
 
 def test_traduce_approved_y_rejected_correctamente():
-    fake_aprobado = FakeProviderBClient({"verificationId": "B-1", "status": "APPROVED", "score": 10})
-    fake_rechazado = FakeProviderBClient({"verificationId": "B-2", "status": "REJECTED", "score": 90})
+    fake_aprobado = FakeProviderBClient(
+        {"verificationId": "B-1", "status": "APPROVED", "score": 10}
+    )
+    fake_rechazado = FakeProviderBClient(
+        {"verificationId": "B-2", "status": "REJECTED", "score": 90}
+    )
 
     aprobado = KYCProviderBAdapter(client=fake_aprobado).verify(_request())
     rechazado = KYCProviderBAdapter(client=fake_rechazado).verify(_request())

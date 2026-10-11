@@ -1,0 +1,642 @@
+/* =========================================================
+   SOLVENTA · AUTENTICACIÓN
+   ========================================================= */
+
+.auth-page {
+  width: 100%;
+  min-height: 100vh;
+
+  display: grid;
+
+  grid-template-columns:
+    minmax(440px, 39%)
+    1fr;
+
+  background: var(--solventa-white);
+}
+
+/* =========================================================
+   PANEL DE MARCA
+   ========================================================= */
+
+.auth-brand {
+  position: relative;
+
+  min-height: 100vh;
+
+  padding:
+    48px
+    68px
+    54px;
+
+  display: flex;
+  flex-direction: column;
+
+  overflow: hidden;
+
+  color: var(--solventa-white);
+  background: var(--solventa-night);
+}
+
+/*
+  Elemento decorativo inspirado en
+  las formas circulares del Style Tile.
+*/
+.auth-brand::after {
+  content: "";
+
+  position: absolute;
+
+  width: 350px;
+  height: 350px;
+
+  top: -210px;
+  right: -170px;
+
+  border:
+    42px solid
+    rgba(167, 228, 81, 0.12);
+
+  border-radius: 50%;
+
+  pointer-events: none;
+}
+
+.brand-logo {
+  position: relative;
+  z-index: 1;
+
+  display: flex;
+  align-items: center;
+
+  gap: 10px;
+
+  font-family: var(--font-heading);
+
+  font-size: 21px;
+  font-weight: 700;
+}
+
+.brand-symbol {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  color: var(--solventa-lime);
+
+  font-size: 27px;
+}
+
+.brand-content {
+  position: relative;
+  z-index: 1;
+
+  width: 100%;
+  max-width: 470px;
+
+  margin: auto 0;
+}
+
+.brand-content h1 {
+  max-width: 440px;
+
+  margin:
+    0
+    0
+    28px;
+
+  font-family: var(--font-heading);
+
+  font-size: clamp(
+    32px,
+    3vw,
+    42px
+  );
+
+  font-weight: 800;
+
+  line-height: 1.12;
+
+  letter-spacing: -1px;
+}
+
+.brand-description {
+  max-width: 450px;
+
+  margin: 0;
+
+  color: #d8deea;
+
+  font-family: var(--font-body);
+
+  font-size: 16px;
+
+  line-height: 1.65;
+}
+
+.brand-benefits {
+  margin-top: 32px;
+}
+
+.brand-benefits p {
+  position: relative;
+
+  margin: 15px 0;
+
+  padding-left: 25px;
+
+  color: #e1e6ef;
+
+  font-family: var(--font-body);
+
+  font-size: 14px;
+
+  line-height: 1.5;
+}
+
+.brand-benefits p::before {
+  content: "✓";
+
+  position: absolute;
+
+  left: 0;
+
+  color: var(--solventa-lime);
+
+  font-weight: 700;
+}
+
+.brand-footer {
+  position: relative;
+  z-index: 1;
+
+  color: #99a6ba;
+
+  font-family: var(--font-body);
+
+  font-size: 12px;
+}
+
+/* =========================================================
+   CONTENIDO DERECHO
+   ========================================================= */
+
+.auth-content {
+  min-width: 0;
+  min-height: 100vh;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  padding:
+    48px
+    64px;
+
+  background: var(--solventa-white);
+}
+
+/* =========================================================
+   LOGIN
+   ========================================================= */
+
+.login-container {
+  width: 100%;
+  max-width: 410px;
+}
+
+.login-container h2,
+.register-container h2 {
+  margin:
+    0
+    0
+    8px;
+
+  color: var(--solventa-night);
+
+  font-family: var(--font-heading);
+
+  font-size: 28px;
+
+  font-weight: 700;
+
+  line-height: 1.2;
+
+  letter-spacing: -0.4px;
+}
+
+.login-subtitle,
+.register-subtitle {
+  margin:
+    0
+    0
+    30px;
+
+  color: var(--solventa-muted);
+
+  font-family: var(--font-body);
+
+  font-size: 14px;
+
+  line-height: 1.5;
+}
+
+.login-form {
+  width: 100%;
+
+  display: flex;
+  flex-direction: column;
+}
+
+/* =========================================================
+   CAMPOS
+   ========================================================= */
+
+.login-form label,
+.register-field label {
+  margin-bottom: 7px;
+
+  color: var(--solventa-night);
+
+  font-family: var(--font-body);
+
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.login-form input,
+.register-field input,
+.register-field select {
+  width: 100%;
+  height: 48px;
+
+  padding:
+    0
+    14px;
+
+  border:
+    1px solid
+    var(--solventa-border);
+
+  border-radius: 10px;
+
+  background: var(--solventa-white);
+
+  color: var(--solventa-night);
+
+  font-family: var(--font-body);
+
+  font-size: 14px;
+
+  outline: none;
+
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease,
+    background-color 0.15s ease;
+}
+
+.login-form input {
+  margin-bottom: 18px;
+}
+
+.login-form input::placeholder,
+.register-field input::placeholder {
+  color: #9ba5b5;
+}
+
+.login-form input:hover,
+.register-field input:hover,
+.register-field select:hover {
+  border-color: #bac5d5;
+}
+
+.login-form input:focus,
+.register-field input:focus,
+.register-field select:focus {
+  border-color: var(--solventa-blue);
+
+  box-shadow:
+    0 0 0 3px
+    rgba(56, 103, 242, 0.12);
+}
+
+/* =========================================================
+   ENLACES Y ACCIONES SECUNDARIAS
+   ========================================================= */
+
+.login-actions {
+  display: flex;
+
+  justify-content: flex-end;
+
+  margin-top: -3px;
+}
+
+.forgot-password {
+  padding: 0;
+
+  border: 0;
+
+  background: transparent;
+
+  color: var(--solventa-blue);
+
+  font-family: var(--font-body);
+
+  font-size: 13px;
+
+  font-weight: 500;
+
+  cursor: pointer;
+}
+
+.forgot-password:hover {
+  text-decoration: underline;
+}
+
+/* =========================================================
+   BOTÓN PRINCIPAL
+   ========================================================= */
+
+.primary-button {
+  width: 100%;
+  height: 50px;
+
+  margin-top: 28px;
+
+  border: 0;
+  border-radius: 10px;
+
+  background: var(--solventa-lime);
+
+  color: var(--solventa-night);
+
+  font-family: var(--font-heading);
+
+  font-size: 14px;
+
+  font-weight: 700;
+
+  cursor: pointer;
+
+  transition:
+    background-color 0.15s ease,
+    transform 0.1s ease,
+    box-shadow 0.15s ease;
+}
+
+.primary-button:hover {
+  background: #98d63f;
+
+  box-shadow:
+    0 5px 14px
+    rgba(167, 228, 81, 0.25);
+}
+
+.primary-button:focus-visible {
+  outline:
+    3px solid
+    rgba(56, 103, 242, 0.28);
+
+  outline-offset: 2px;
+}
+
+.primary-button:active {
+  transform: translateY(1px);
+}
+
+.primary-button:disabled {
+  background: #d6eab4;
+
+  color: #687258;
+
+  box-shadow: none;
+
+  cursor: not-allowed;
+}
+
+/* =========================================================
+   MENSAJES
+   ========================================================= */
+
+.login-error,
+.login-success {
+  margin-top: 18px;
+
+  padding:
+    12px
+    14px;
+
+  border-radius: 9px;
+
+  font-family: var(--font-body);
+
+  font-size: 13px;
+
+  line-height: 1.45;
+}
+
+.login-error {
+  border:
+    1px solid
+    rgba(246, 154, 74, 0.32);
+
+  background: #fff5ec;
+
+  color: #884812;
+}
+
+.login-success {
+  border:
+    1px solid
+    rgba(167, 228, 81, 0.5);
+
+  background: #f2fbe3;
+
+  color: #36591a;
+}
+
+/* =========================================================
+   LINKS INFERIORES
+   ========================================================= */
+
+.register-link {
+  margin-top: 28px;
+
+  text-align: center;
+
+  color: var(--solventa-muted);
+
+  font-family: var(--font-body);
+
+  font-size: 13px;
+}
+
+.register-link a {
+  color: var(--solventa-blue);
+
+  font-weight: 500;
+
+  text-decoration: none;
+}
+
+.register-link a:hover {
+  text-decoration: underline;
+}
+
+/* =========================================================
+   REGISTRO
+   ========================================================= */
+
+.register-container {
+  width: 100%;
+
+  max-width: 460px;
+}
+
+.register-subtitle {
+  margin-bottom: 24px;
+}
+
+.register-form {
+  width: 100%;
+}
+
+.register-row {
+  display: grid;
+
+  grid-template-columns:
+    1fr
+    1fr;
+
+  gap: 14px;
+}
+
+.register-field {
+  display: flex;
+  flex-direction: column;
+
+  margin-bottom: 14px;
+}
+
+.register-field select {
+  appearance: auto;
+}
+
+/* =========================================================
+   CONSENTIMIENTO
+   ========================================================= */
+
+.consent-checkbox {
+  display: flex;
+
+  align-items: flex-start;
+
+  gap: 10px;
+
+  margin-top: 5px;
+
+  padding:
+    11px
+    12px;
+
+  border:
+    1px solid
+    #e5e9f0;
+
+  border-radius: 9px;
+
+  background: #fafbfc;
+
+  color: var(--solventa-muted);
+
+  font-family: var(--font-body);
+
+  font-size: 12px;
+
+  line-height: 1.5;
+
+  cursor: pointer;
+}
+
+.consent-checkbox:hover {
+  border-color: #cad2df;
+
+  background: #f7f9fc;
+}
+
+.consent-checkbox input {
+  width: 17px;
+  height: 17px;
+
+  margin:
+    1px
+    0
+    0;
+
+  flex-shrink: 0;
+
+  accent-color: var(--solventa-blue);
+}
+
+.register-form .primary-button {
+  margin-top: 20px;
+}
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 1050px) {
+  .auth-page {
+    grid-template-columns:
+      minmax(370px, 40%)
+      1fr;
+  }
+
+  .auth-brand {
+    padding:
+      44px
+      46px;
+  }
+
+  .auth-content {
+    padding:
+      40px
+      44px;
+  }
+}
+
+@media (max-width: 760px) {
+  .auth-page {
+    display: block;
+  }
+
+  .auth-brand {
+    display: none;
+  }
+
+  .auth-content {
+    width: 100%;
+    min-height: 100vh;
+
+    padding:
+      32px
+      22px;
+  }
+
+  .login-container,
+  .register-container {
+    max-width: 440px;
+  }
+}
+
+@media (max-width: 520px) {
+  .register-row {
+    grid-template-columns: 1fr;
+
+    gap: 0;
+  }
+}

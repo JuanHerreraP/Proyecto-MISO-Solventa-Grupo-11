@@ -1,1 +1,1 @@
-#Módulo de identidad y autenticación de Solventa.
+# Módulo de identidad y autenticación de Solventa.

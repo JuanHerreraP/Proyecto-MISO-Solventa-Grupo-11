@@ -5,22 +5,21 @@ import os
 from sqlalchemy import create_engine
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
 
-
-DATABASE_URL = os.getenv(
-    "DATABASE_URL",
-    "postgresql+psycopg://solventa:solventa_dev@localhost:5432/solventa",
-)
+DATABASE_URL = os.getenv("DATABASE_URL") or "sqlite:///./solventa.db"
 
 
 class Base(DeclarativeBase):
     pass
 
 
+engine_kwargs = {"pool_pre_ping": True}
+if DATABASE_URL.startswith("sqlite"):
+    engine_kwargs["connect_args"] = {"check_same_thread": False}
+
 engine = create_engine(
     DATABASE_URL,
-    pool_pre_ping=True,
+    **engine_kwargs,
 )
-
 
 SessionLocal = sessionmaker(
     bind=engine,

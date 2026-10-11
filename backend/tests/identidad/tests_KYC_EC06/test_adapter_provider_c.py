@@ -4,9 +4,13 @@ particularidades del contrato externo (estado "PENDING", score 0-100) se
 traducen correctamente al modelo de dominio, y que esa traducción vive
 únicamente dentro del adaptador.
 """
+
 from datetime import date
 
-from app.identidad.adaptadores.kyc_provider_c import KYCProviderCAdapter, ProviderCClient
+from app.identidad.adaptadores.kyc_provider_c import (
+    KYCProviderCAdapter,
+    ProviderCClient,
+)
 from app.identidad.modelos import VerificationRequest, VerificationStatus
 
 
@@ -29,7 +33,7 @@ def _request(document_number: str = "123") -> VerificationRequest:
     )
 
 
-def test_traduce_pending_c_in_review_y_normaliza_el_score():
+def test_traduce_pending_a_in_review_y_normaliza_el_score():
     fake = FakeProviderCClient({"verificationId": "C-FAKE-1", "status": "PENDING", "score": 55})
     adapter = KYCProviderCAdapter(client=fake)
 
@@ -42,8 +46,12 @@ def test_traduce_pending_c_in_review_y_normaliza_el_score():
 
 
 def test_traduce_approved_y_rejected_correctamente():
-    fake_aprobado = FakeProviderCClient({"verificationId": "C-1", "status": "APPROVED", "score": 10})
-    fake_rechazado = FakeProviderCClient({"verificationId": "C-2", "status": "REJECTED", "score": 90})
+    fake_aprobado = FakeProviderCClient(
+        {"verificationId": "C-1", "status": "APPROVED", "score": 10}
+    )
+    fake_rechazado = FakeProviderCClient(
+        {"verificationId": "C-2", "status": "REJECTED", "score": 90}
+    )
 
     aprobado = KYCProviderCAdapter(client=fake_aprobado).verify(_request())
     rechazado = KYCProviderCAdapter(client=fake_rechazado).verify(_request())

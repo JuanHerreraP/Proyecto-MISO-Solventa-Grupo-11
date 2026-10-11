@@ -1,0 +1,68 @@
+:root {
+  /* Colores oficiales Solventa */
+  --solventa-night: #101b32;
+  --solventa-blue: #3867f2;
+  --solventa-lime: #a7e451;
+  --solventa-cyan: #29b4d3;
+  --solventa-orange: #f69a4a;
+
+  /* Neutros de soporte */
+  --solventa-white: #ffffff;
+  --solventa-background: #f8f9fc;
+  --solventa-border: #dde3ec;
+  --solventa-text: #101b32;
+  --solventa-muted: #69758b;
+
+  /* Tipografía */
+  --font-heading:
+    "Plus Jakarta Sans",
+    system-ui,
+    sans-serif;
+
+  --font-body:
+    "DM Sans",
+    system-ui,
+    sans-serif;
+
+  font-family: var(--font-body);
+  color: var(--solventa-text);
+  background: var(--solventa-white);
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  width: 100%;
+  min-width: 320px;
+  min-height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  min-height: 100vh;
+  background: var(--solventa-white);
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-heading);
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}

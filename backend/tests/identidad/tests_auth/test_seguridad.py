@@ -33,12 +33,8 @@ def _credentials(token="token-prueba"):
 
 def _request():
     return SimpleNamespace(
-        client=SimpleNamespace(
-            host="127.0.0.1"
-        ),
-        headers={
-            "user-agent": "pytest"
-        },
+        client=SimpleNamespace(host="127.0.0.1"),
+        headers={"user-agent": "pytest"},
     )
 
 
@@ -50,14 +46,10 @@ def test_get_current_user_rechaza_sin_token(
     monkeypatch.setattr(
         seguridad,
         "registrar_evento_auth",
-        lambda **kwargs: eventos.append(
-            kwargs
-        ),
+        lambda **kwargs: eventos.append(kwargs),
     )
 
-    with pytest.raises(
-        HTTPException
-    ) as exc:
+    with pytest.raises(HTTPException) as exc:
         seguridad.get_current_user(
             request=_request(),
             credentials=None,
@@ -66,17 +58,11 @@ def test_get_current_user_rechaza_sin_token(
 
     assert exc.value.status_code == 401
 
-    assert (
-        exc.value.detail["codigo"]
-        == "TOKEN_REQUIRED"
-    )
+    assert exc.value.detail["codigo"] == "TOKEN_REQUIRED"
 
     assert len(eventos) == 1
 
-    assert (
-        eventos[0]["tipo_evento"]
-        == seguridad.TipoEventoAuth.TOKEN_REQUIRED
-    )
+    assert eventos[0]["tipo_evento"] == seguridad.TipoEventoAuth.TOKEN_REQUIRED
 
 
 def test_get_current_user_rechaza_token_expirado(
@@ -85,9 +71,7 @@ def test_get_current_user_rechaza_token_expirado(
     eventos = []
 
     def fake_validar(token):
-        raise TokenExpiradoError(
-            "El token de acceso ha expirado."
-        )
+        raise TokenExpiradoError("El token de acceso ha expirado.")
 
     monkeypatch.setattr(
         seguridad,
@@ -98,14 +82,10 @@ def test_get_current_user_rechaza_token_expirado(
     monkeypatch.setattr(
         seguridad,
         "registrar_evento_auth",
-        lambda **kwargs: eventos.append(
-            kwargs
-        ),
+        lambda **kwargs: eventos.append(kwargs),
     )
 
-    with pytest.raises(
-        HTTPException
-    ) as exc:
+    with pytest.raises(HTTPException) as exc:
         seguridad.get_current_user(
             request=_request(),
             credentials=_credentials(),
@@ -114,17 +94,11 @@ def test_get_current_user_rechaza_token_expirado(
 
     assert exc.value.status_code == 401
 
-    assert (
-        exc.value.detail["codigo"]
-        == "TOKEN_EXPIRED"
-    )
+    assert exc.value.detail["codigo"] == "TOKEN_EXPIRED"
 
     assert len(eventos) == 1
 
-    assert (
-        eventos[0]["tipo_evento"]
-        == seguridad.TipoEventoAuth.TOKEN_EXPIRED
-    )
+    assert eventos[0]["tipo_evento"] == seguridad.TipoEventoAuth.TOKEN_EXPIRED
 
 
 def test_get_current_user_rechaza_token_invalido(
@@ -133,9 +107,7 @@ def test_get_current_user_rechaza_token_invalido(
     eventos = []
 
     def fake_validar(token):
-        raise TokenInvalidoError(
-            "El token de acceso no es válido."
-        )
+        raise TokenInvalidoError("El token de acceso no es válido.")
 
     monkeypatch.setattr(
         seguridad,
@@ -146,14 +118,10 @@ def test_get_current_user_rechaza_token_invalido(
     monkeypatch.setattr(
         seguridad,
         "registrar_evento_auth",
-        lambda **kwargs: eventos.append(
-            kwargs
-        ),
+        lambda **kwargs: eventos.append(kwargs),
     )
 
-    with pytest.raises(
-        HTTPException
-    ) as exc:
+    with pytest.raises(HTTPException) as exc:
         seguridad.get_current_user(
             request=_request(),
             credentials=_credentials(),
@@ -162,10 +130,7 @@ def test_get_current_user_rechaza_token_invalido(
 
     assert exc.value.status_code == 401
 
-    assert (
-        exc.value.detail["codigo"]
-        == "TOKEN_INVALID"
-    )
+    assert exc.value.detail["codigo"] == "TOKEN_INVALID"
 
     assert len(eventos) == 1
 
@@ -193,18 +158,12 @@ def test_get_current_user_rechaza_usuario_inexistente(
     monkeypatch.setattr(
         seguridad,
         "registrar_evento_auth",
-        lambda **kwargs: eventos.append(
-            kwargs
-        ),
+        lambda **kwargs: eventos.append(kwargs),
     )
 
-    db = SimpleNamespace(
-        usuario=None
-    )
+    db = SimpleNamespace(usuario=None)
 
-    with pytest.raises(
-        HTTPException
-    ) as exc:
+    with pytest.raises(HTTPException) as exc:
         seguridad.get_current_user(
             request=_request(),
             credentials=_credentials(),
@@ -213,10 +172,7 @@ def test_get_current_user_rechaza_usuario_inexistente(
 
     assert exc.value.status_code == 401
 
-    assert (
-        exc.value.detail["codigo"]
-        == "USER_NOT_FOUND"
-    )
+    assert exc.value.detail["codigo"] == "USER_NOT_FOUND"
 
 
 def test_get_current_user_rechaza_usuario_inactivo(
@@ -249,18 +205,12 @@ def test_get_current_user_rechaza_usuario_inactivo(
     monkeypatch.setattr(
         seguridad,
         "registrar_evento_auth",
-        lambda **kwargs: eventos.append(
-            kwargs
-        ),
+        lambda **kwargs: eventos.append(kwargs),
     )
 
-    db = SimpleNamespace(
-        usuario=usuario
-    )
+    db = SimpleNamespace(usuario=usuario)
 
-    with pytest.raises(
-        HTTPException
-    ) as exc:
+    with pytest.raises(HTTPException) as exc:
         seguridad.get_current_user(
             request=_request(),
             credentials=_credentials(),
@@ -269,15 +219,9 @@ def test_get_current_user_rechaza_usuario_inactivo(
 
     assert exc.value.status_code == 403
 
-    assert (
-        exc.value.detail["codigo"]
-        == "USER_INACTIVE"
-    )
+    assert exc.value.detail["codigo"] == "USER_INACTIVE"
 
-    assert (
-        eventos[0]["tipo_evento"]
-        == seguridad.TipoEventoAuth.ACCESS_DENIED
-    )
+    assert eventos[0]["tipo_evento"] == seguridad.TipoEventoAuth.ACCESS_DENIED
 
 
 def test_get_current_user_retorna_usuario_valido(
@@ -306,16 +250,12 @@ def test_get_current_user_retorna_usuario_valido(
         FakeRepositorioUsuarios,
     )
 
-    db = SimpleNamespace(
-        usuario=usuario
-    )
+    db = SimpleNamespace(usuario=usuario)
 
-    resultado = (
-        seguridad.get_current_user(
-            request=_request(),
-            credentials=_credentials(),
-            db=db,
-        )
+    resultado = seguridad.get_current_user(
+        request=_request(),
+        credentials=_credentials(),
+        db=db,
     )
 
     assert resultado is usuario
@@ -323,55 +263,34 @@ def test_get_current_user_retorna_usuario_valido(
     assert resultado.activo is True
 
 
-
 def test_rol_actual_se_obtiene_del_usuario():
-    usuario = SimpleNamespace(
-        rol="CLIENTE"
-    )
+    usuario = SimpleNamespace(rol="CLIENTE")
 
-    resultado = seguridad.rol_actual(
-        usuario=usuario
-    )
+    resultado = seguridad.rol_actual(usuario=usuario)
 
     assert resultado == Rol.CLIENTE
 
 
 def test_rol_actual_analista_riesgos():
-    usuario = SimpleNamespace(
-        rol="ANALISTA_RIESGOS"
-    )
+    usuario = SimpleNamespace(rol="ANALISTA_RIESGOS")
 
-    resultado = seguridad.rol_actual(
-        usuario=usuario
-    )
+    resultado = seguridad.rol_actual(usuario=usuario)
 
-    assert (
-        resultado
-        == Rol.ANALISTA_RIESGOS
-    )
+    assert resultado == Rol.ANALISTA_RIESGOS
 
 
 def test_rol_actual_rechaza_rol_desconocido():
-    usuario = SimpleNamespace(
-        rol="SUPER_ADMIN_INVENTADO"
-    )
+    usuario = SimpleNamespace(rol="SUPER_ADMIN_INVENTADO")
 
-    with pytest.raises(
-        HTTPException
-    ) as exc:
-        seguridad.rol_actual(
-            usuario=usuario
-        )
+    with pytest.raises(HTTPException) as exc:
+        seguridad.rol_actual(usuario=usuario)
 
     assert exc.value.status_code == 403
 
-    assert (
-        exc.value.detail["codigo"]
-        == "ROLE_INVALID"
-    )
+    assert exc.value.detail["codigo"] == "ROLE_INVALID"
 
     def test_requiere_roles_permite_rol_autorizado(
-    monkeypatch,
+        monkeypatch,
     ):
         usuario = SimpleNamespace(
             id="usuario-1",
@@ -379,11 +298,9 @@ def test_rol_actual_rechaza_rol_desconocido():
             rol="ANALISTA_RIESGOS",
         )
 
-        dependencia = (
-            seguridad.requiere_roles(
-                "ANALISTA_RIESGOS",
-                "OPERACIONES_SINIESTROS",
-            )
+        dependencia = seguridad.requiere_roles(
+            "ANALISTA_RIESGOS",
+            "OPERACIONES_SINIESTROS",
         )
 
         resultado = dependencia(
@@ -392,7 +309,6 @@ def test_rol_actual_rechaza_rol_desconocido():
         )
 
         assert resultado is usuario
-
 
     def test_requiere_roles_rechaza_rol_no_autorizado(
         monkeypatch,
@@ -408,20 +324,14 @@ def test_rol_actual_rechaza_rol_desconocido():
         monkeypatch.setattr(
             seguridad,
             "registrar_evento_auth",
-            lambda **kwargs: eventos.append(
-                kwargs
-            ),
+            lambda **kwargs: eventos.append(kwargs),
         )
 
-        dependencia = (
-            seguridad.requiere_roles(
-                "ANALISTA_RIESGOS",
-            )
+        dependencia = seguridad.requiere_roles(
+            "ANALISTA_RIESGOS",
         )
 
-        with pytest.raises(
-            HTTPException
-        ) as exc:
+        with pytest.raises(HTTPException) as exc:
             dependencia(
                 request=_request(),
                 usuario=usuario,
@@ -429,14 +339,8 @@ def test_rol_actual_rechaza_rol_desconocido():
 
         assert exc.value.status_code == 403
 
-        assert (
-            exc.value.detail["codigo"]
-            == "ACCESS_DENIED"
-        )
+        assert exc.value.detail["codigo"] == "ACCESS_DENIED"
 
         assert len(eventos) == 1
 
-        assert (
-            eventos[0]["tipo_evento"]
-            == seguridad.TipoEventoAuth.ACCESS_DENIED
-        )
+        assert eventos[0]["tipo_evento"] == seguridad.TipoEventoAuth.ACCESS_DENIED

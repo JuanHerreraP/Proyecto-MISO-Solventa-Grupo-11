@@ -10,7 +10,6 @@ from app.identidad.config import (
 from app.identidad.modelos import VerificationRequest
 from app.identidad.puertos import IdentityVerificationProvider
 
-
 router = APIRouter(
     prefix="/identidad",
     tags=["Identidad"],
@@ -39,11 +38,8 @@ class VerificacionIdentidadResponse(BaseModel):
 )
 def verificar_identidad(
     payload: VerificacionIdentidadRequest,
-    provider: IdentityVerificationProvider = Depends(
-        get_identity_verification_provider
-    ),
+    provider: IdentityVerificationProvider = Depends(get_identity_verification_provider),
 ):
-
     request = VerificationRequest(
         customer_id=payload.customer_id,
         consent_id=payload.consent_id,
@@ -67,6 +63,5 @@ def verificar_identidad(
 def salud_identidad():
     return {
         "status": "ok",
-        "proveedor_kyc_activo":
-            get_configured_provider_name(),
+        "proveedor_kyc_activo": get_configured_provider_name(),
     }

@@ -31,13 +31,8 @@ class FakeSession:
 
 def _request():
     return SimpleNamespace(
-        client=SimpleNamespace(
-            host="192.168.1.20"
-        ),
-        headers={
-            "user-agent":
-                "Mozilla/5.0 pytest"
-        },
+        client=SimpleNamespace(host="192.168.1.20"),
+        headers={"user-agent": "Mozilla/5.0 pytest"},
     )
 
 
@@ -55,9 +50,7 @@ def test_registra_evento_exitosamente(
     usuario_id = uuid4()
 
     auditoria.registrar_evento_auth(
-        tipo_evento=(
-            TipoEventoAuth.LOGIN_SUCCESS
-        ),
+        tipo_evento=(TipoEventoAuth.LOGIN_SUCCESS),
         exitoso=True,
         usuario_id=usuario_id,
         email="ANA@GMAIL.COM",
@@ -69,44 +62,26 @@ def test_registra_evento_exitosamente(
 
     assert evento is not None
 
-    assert (
-        evento.tipo_evento
-        == "LOGIN_SUCCESS"
-    )
+    assert evento.tipo_evento == "LOGIN_SUCCESS"
 
     assert evento.exitoso is True
 
-    assert (
-        evento.usuario_id
-        == usuario_id
-    )
+    assert evento.usuario_id == usuario_id
 
-    assert (
-        evento.email
-        == "ana@gmail.com"
-    )
+    assert evento.email == "ana@gmail.com"
 
-    assert (
-        evento.ip
-        == "192.168.1.20"
-    )
+    assert evento.ip == "192.168.1.20"
 
-    assert (
-        evento.user_agent
-        == "Mozilla/5.0 pytest"
-    )
+    assert evento.user_agent == "Mozilla/5.0 pytest"
 
-    assert (
-        evento.detalle
-        == "Inicio exitoso"
-    )
+    assert evento.detalle == "Inicio exitoso"
 
     assert session.commit_llamado is True
 
     assert session.close_llamado is True
 
     def test_registra_evento_sin_usuario(
-    monkeypatch,
+        monkeypatch,
     ):
         session = FakeSession()
 
@@ -117,9 +92,7 @@ def test_registra_evento_exitosamente(
         )
 
         auditoria.registrar_evento_auth(
-            tipo_evento=(
-                TipoEventoAuth.TOKEN_REQUIRED
-            ),
+            tipo_evento=(TipoEventoAuth.TOKEN_REQUIRED),
             exitoso=False,
             detalle="TOKEN_REQUIRED",
             request=_request(),
@@ -130,12 +103,10 @@ def test_registra_evento_exitosamente(
         assert evento.usuario_id is None
         assert evento.email is None
 
-        assert (
-            evento.tipo_evento
-            == "TOKEN_REQUIRED"
-        )
+        assert evento.tipo_evento == "TOKEN_REQUIRED"
 
         assert evento.exitoso is False
+
 
 def test_usuario_id_invalido_no_rompe_auditoria(
     monkeypatch,
@@ -149,9 +120,7 @@ def test_usuario_id_invalido_no_rompe_auditoria(
     )
 
     auditoria.registrar_evento_auth(
-        tipo_evento=(
-            TipoEventoAuth.ACCESS_DENIED
-        ),
+        tipo_evento=(TipoEventoAuth.ACCESS_DENIED),
         exitoso=False,
         usuario_id="esto-no-es-uuid",
         email="ana@gmail.com",
@@ -163,20 +132,14 @@ def test_usuario_id_invalido_no_rompe_auditoria(
 
     assert evento.usuario_id is None
 
-    assert (
-        evento.email
-        == "ana@gmail.com"
-    )
+    assert evento.email == "ana@gmail.com"
 
     assert session.commit_llamado is True
 
-class FakeSessionConError(
-    FakeSession
-):
+
+class FakeSessionConError(FakeSession):
     def commit(self):
-        raise SQLAlchemyError(
-            "BD auditoría caída"
-        )
+        raise SQLAlchemyError("BD auditoría caída")
 
 
 def test_error_de_auditoria_no_se_propaga(
@@ -193,24 +156,17 @@ def test_error_de_auditoria_no_se_propaga(
     # Si registrar_evento_auth lanza
     # excepción, esta prueba falla.
     auditoria.registrar_evento_auth(
-        tipo_evento=(
-            TipoEventoAuth.LOGIN_FAILED
-        ),
+        tipo_evento=(TipoEventoAuth.LOGIN_FAILED),
         exitoso=False,
         email="ana@gmail.com",
         detalle="INVALID_CREDENTIALS",
         request=_request(),
     )
 
-    assert (
-        session.rollback_llamado
-        is True
-    )
+    assert session.rollback_llamado is True
 
-    assert (
-        session.close_llamado
-        is True
-    )
+    assert session.close_llamado is True
+
 
 def test_evento_puede_registrarse_sin_request(
     monkeypatch,
@@ -224,9 +180,7 @@ def test_evento_puede_registrarse_sin_request(
     )
 
     auditoria.registrar_evento_auth(
-        tipo_evento=(
-            TipoEventoAuth.LOGIN_FAILED
-        ),
+        tipo_evento=(TipoEventoAuth.LOGIN_FAILED),
         exitoso=False,
         email="ana@gmail.com",
         detalle="INVALID_CREDENTIALS",
@@ -240,6 +194,7 @@ def test_evento_puede_registrarse_sin_request(
 
     assert session.commit_llamado is True
 
+
 def test_evento_no_contiene_campos_sensibles(
     monkeypatch,
 ):
@@ -252,9 +207,7 @@ def test_evento_no_contiene_campos_sensibles(
     )
 
     auditoria.registrar_evento_auth(
-        tipo_evento=(
-            TipoEventoAuth.LOGIN_SUCCESS
-        ),
+        tipo_evento=(TipoEventoAuth.LOGIN_SUCCESS),
         exitoso=True,
         email="ana@gmail.com",
         detalle="Inicio de sesión exitoso.",
@@ -263,17 +216,8 @@ def test_evento_no_contiene_campos_sensibles(
 
     evento = session.objeto_agregado
 
-    assert not hasattr(
-        evento,
-        "password"
-    )
+    assert not hasattr(evento, "password")
 
-    assert not hasattr(
-        evento,
-        "access_token"
-    )
+    assert not hasattr(evento, "access_token")
 
-    assert not hasattr(
-        evento,
-        "refresh_token"
-    )
+    assert not hasattr(evento, "refresh_token")
