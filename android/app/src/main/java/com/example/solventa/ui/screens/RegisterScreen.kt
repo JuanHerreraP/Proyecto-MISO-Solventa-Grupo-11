@@ -45,6 +45,7 @@ import com.example.solventa.ui.components.SolventaTextField
 import com.example.solventa.ui.theme.Navegacion
 import com.example.solventa.ui.theme.Offline
 import com.example.solventa.ui.theme.SolventaTheme
+import com.example.solventa.ui.validation.canSubmitRegistration
 
 @Composable
 fun RegisterScreen(
@@ -262,7 +263,7 @@ fun RegisterScreen(
             ) {
                 SolventaPrimaryButton(
                     text = "Continuar",
-                    enabled = termsAccepted && email.isNotBlank() && password.isNotBlank(),
+                    enabled = canSubmitRegistration(email, password, termsAccepted),
                     onClick = onRegisterSubmit
                 )
 

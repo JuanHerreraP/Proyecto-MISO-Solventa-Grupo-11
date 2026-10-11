@@ -43,6 +43,7 @@ import com.example.solventa.ui.components.SolventaSecondaryButton
 import com.example.solventa.ui.components.SolventaTextField
 import com.example.solventa.ui.theme.Navegacion
 import com.example.solventa.ui.theme.SolventaTheme
+import com.example.solventa.ui.validation.canSubmitCredentialsLogin
 
 @Composable
 fun CredentialsLoginScreen(
@@ -167,7 +168,7 @@ fun CredentialsLoginScreen(
             ) {
                 SolventaPrimaryButton(
                     text = "Ingresar",
-                    enabled = email.isNotBlank() && password.isNotBlank(),
+                    enabled = canSubmitCredentialsLogin(email, password),
                     onClick = { onLoginSubmit(email, password) }
                 )
 

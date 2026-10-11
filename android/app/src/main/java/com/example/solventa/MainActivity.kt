@@ -21,7 +21,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             SolventaTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    NavGraph()
+                    NavGraph(modifier = Modifier.padding(innerPadding))
                 }
             }
         }
