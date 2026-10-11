@@ -11,7 +11,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
-import com.example.solventa.ui.screens.WelcomeScreen
+import com.example.solventa.ui.navigation.NavGraph
 import com.example.solventa.ui.theme.SolventaTheme
 
 class MainActivity : ComponentActivity() {
@@ -21,9 +21,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             SolventaTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    WelcomeScreen(
-                        modifier = Modifier.padding(innerPadding) // Pass padding here
-                    )
+                    NavGraph()
                 }
             }
         }
