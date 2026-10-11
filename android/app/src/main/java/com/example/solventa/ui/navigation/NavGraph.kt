@@ -6,6 +6,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.example.solventa.ui.screens.RegisterScreen
 import com.example.solventa.ui.screens.WelcomeScreen
 import com.example.solventa.ui.screens.BiometricalLoginScreen
 import com.example.solventa.ui.screens.CredentialsLoginScreen
@@ -41,6 +42,9 @@ fun NavGraph(
                 },
                 onBackClick = {
                     navController.popBackStack()
+                },
+                onRegisterClick = {
+                    navController.navigate(ScreenRoute.Register.route)
                 }
             )
         }
@@ -49,6 +53,17 @@ fun NavGraph(
             CredentialsLoginScreen(
                 onBackClick = {
                     navController.popBackStack()
+                }
+            )
+        }
+
+        composable(route = ScreenRoute.Register.route) {
+            RegisterScreen(
+                onBackClick = {
+                    navController.popBackStack()
+                },
+                onLoginClick = {
+                    navController.navigate(ScreenRoute.BiometricalLogin.route)
                 }
             )
         }
