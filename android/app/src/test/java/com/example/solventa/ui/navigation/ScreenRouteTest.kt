@@ -10,7 +10,8 @@ class ScreenRouteTest {
             ScreenRoute.Welcome.route,
             ScreenRoute.BiometricalLogin.route,
             ScreenRoute.Register.route,
-            ScreenRoute.CredentialsLogin.route
+            ScreenRoute.CredentialsLogin.route,
+            ScreenRoute.Home.route
         )
 
         assertEquals(
@@ -18,7 +19,8 @@ class ScreenRouteTest {
                 "welcome_screen",
                 "biometrical_login_screen",
                 "register_screen",
-                "credentials_login_screen"
+                "credentials_login_screen",
+                "home_screen"
             ),
             routes
         )

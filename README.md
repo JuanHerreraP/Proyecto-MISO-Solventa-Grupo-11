@@ -118,6 +118,7 @@ Esta separación permite sustituir el proveedor KYC sin modificar el servicio co
 - [Registro, onboarding seguro y autenticación basada en tokens (HU19)](docs/identidad-autenticacion.md)
 - [Enriquecimiento del perfil con Open Finance y Open Data (HU10)](docs/enriquecimiento.md)
 - [Perfil de riesgo individualizado y pricing (HU11)](docs/perfil-de-riesgo.md)
+- [Inicio de sesión biométrico (HU02)](docs/inicio-sesion-biometrico.md)
 
 ## Integración continua
 

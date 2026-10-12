@@ -2,20 +2,25 @@ from pwdlib import PasswordHash
 
 from app.identidad.modelos import (
     RespuestaLogin,
+    RespuestaPerfil,
     RespuestaRegistro,
     Rol,
     SolicitudRegistro,
     VerificationRequest,
     VerificationStatus,
 )
-from app.identidad.modelos_db import UsuarioDB
+from app.identidad.modelos_db import SesionRefreshDB, UsuarioDB
 from app.identidad.puertos import IdentityVerificationProvider
 from app.identidad.tokens import (
     ACCESS_TOKEN_MINUTES,
     REFRESH_TOKEN_DAYS,
+    TokenExpiradoError,
     crear_access_token,
-    crear_refresh_token,
+    emitir_refresh_token,
+    validar_refresh_token,
 )
+
+MOTIVO_ROTACION = "ROTACION"
 
 
 class UsuarioYaExisteError(Exception):
@@ -42,14 +47,28 @@ class UsuarioInactivoError(Exception):
     pass
 
 
+class SesionInvalidaError(Exception):
+    """El refresh token no corresponde a una sesión emitida por Solventa."""
+
+
+class SesionReutilizadaError(Exception):
+    """Se presentó un refresh token ya rotado o revocado: posible robo de sesión."""
+
+    def __init__(self, mensaje: str, usuario_id: str):
+        super().__init__(mensaje)
+        self.usuario_id = usuario_id
+
+
 class ServicioIdentidad:
     def __init__(
         self,
         repositorio,
         provider: IdentityVerificationProvider | None = None,
+        repositorio_sesiones=None,
     ):
         self.repositorio = repositorio
         self.provider = provider
+        self.repositorio_sesiones = repositorio_sesiones
         self.password_hash = PasswordHash.recommended()
 
     def registrar_usuario(
@@ -165,22 +184,113 @@ class ServicioIdentidad:
                 "El usuario se encuentra inactivo y no puede iniciar sesión."
             )
 
+        respuesta, _ = self._emitir_tokens(usuario)
+        return respuesta
+
+    def renovar_sesion(self, refresh_token: str) -> RespuestaLogin:
+        """Cambia un refresh token vigente por un par nuevo y revoca el anterior.
+
+        Si el token ya había sido rotado o revocado, se interpreta como un posible
+        robo de sesión: se revocan todas las sesiones del usuario.
+        """
+
+        if self.repositorio_sesiones is None:
+            raise RuntimeError("Se requiere un repositorio de sesiones para renovar.")
+
+        payload = validar_refresh_token(refresh_token)
+        jti = payload.get("jti")
+        usuario_id = payload.get("sub")
+
+        sesion = self.repositorio_sesiones.buscar(jti) if jti else None
+        if sesion is None or str(sesion.usuario_id) != str(usuario_id):
+            raise SesionInvalidaError("La sesión no es válida. Inicie sesión de nuevo.")
+
+        if sesion.revocada and sesion.motivo_revocacion != MOTIVO_ROTACION:
+            # Cerrada por logout o por el sistema: no es un ataque, solo ya no sirve.
+            raise SesionInvalidaError("La sesión fue cerrada. Inicie sesión de nuevo.")
+
+        if sesion.revocada:
+            # Un token ya rotado se volvió a presentar: alguien más pudo copiarlo.
+            self.repositorio_sesiones.revocar_todas_de_usuario(
+                usuario_id, motivo="REUTILIZACION_DETECTADA"
+            )
+            raise SesionReutilizadaError(
+                "La sesión fue cerrada por seguridad. Inicie sesión de nuevo.",
+                usuario_id=str(usuario_id),
+            )
+
+        usuario = self.repositorio.buscar_por_id(str(usuario_id))
+        if usuario is None:
+            raise SesionInvalidaError("La sesión no es válida. Inicie sesión de nuevo.")
+
+        if not usuario.activo:
+            self.repositorio_sesiones.revocar(jti, motivo="USUARIO_INACTIVO")
+            raise UsuarioInactivoError(
+                "El usuario se encuentra inactivo y no puede iniciar sesión."
+            )
+
+        respuesta, nuevo_jti = self._emitir_tokens(usuario)
+        self.repositorio_sesiones.revocar(jti, motivo=MOTIVO_ROTACION, reemplazada_por=nuevo_jti)
+        return respuesta
+
+    def cerrar_sesion(self, refresh_token: str) -> str | None:
+        """Revoca la sesión del refresh token. Es idempotente.
+
+        Devuelve el id del usuario cuando la sesión existía, para auditoría.
+        Un token expirado no necesita revocarse: ya no sirve para renovar.
+        """
+
+        if self.repositorio_sesiones is None:
+            raise RuntimeError("Se requiere un repositorio de sesiones para cerrar sesión.")
+
+        try:
+            payload = validar_refresh_token(refresh_token)
+        except TokenExpiradoError:
+            return None
+
+        jti = payload.get("jti")
+        if jti:
+            self.repositorio_sesiones.revocar(jti, motivo="LOGOUT")
+
+        return payload.get("sub")
+
+    def obtener_perfil(self, usuario) -> RespuestaPerfil:
+        return RespuestaPerfil(
+            id=str(usuario.id),
+            nombre=usuario.nombre,
+            apellido=usuario.apellido,
+            email=usuario.email,
+            rol=Rol(usuario.rol),
+        )
+
+    def _emitir_tokens(self, usuario) -> tuple[RespuestaLogin, str]:
         access_token = crear_access_token(
             usuario_id=str(usuario.id),
             email=usuario.email,
             rol=usuario.rol,
         )
 
-        refresh_token = crear_refresh_token(
+        refresh = emitir_refresh_token(
             usuario_id=str(usuario.id),
             email=usuario.email,
             rol=usuario.rol,
         )
 
-        return RespuestaLogin(
+        if self.repositorio_sesiones is not None:
+            self.repositorio_sesiones.guardar(
+                SesionRefreshDB(
+                    jti=refresh.jti,
+                    usuario_id=usuario.id,
+                    fecha_expiracion=refresh.expira_en,
+                    revocada=False,
+                )
+            )
+
+        respuesta = RespuestaLogin(
             access_token=access_token,
-            refresh_token=refresh_token,
+            refresh_token=refresh.token,
             token_type="bearer",
             expires_in=ACCESS_TOKEN_MINUTES * 60,
             refresh_expires_in=REFRESH_TOKEN_DAYS * 86400,
         )
+        return respuesta, refresh.jti

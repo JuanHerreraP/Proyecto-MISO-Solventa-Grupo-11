@@ -1,9 +1,10 @@
+from datetime import datetime, timezone
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.orm import Session
 
-from app.identidad.modelos_db import UsuarioDB
+from app.identidad.modelos_db import SesionRefreshDB, UsuarioDB
 
 
 class RepositorioUsuariosPostgres:
@@ -41,3 +42,51 @@ class RepositorioUsuariosPostgres:
             UsuarioDB,
             UUID(usuario_id),
         )
+
+
+class RepositorioSesionesPostgres:
+    """Persistencia de los refresh tokens emitidos (tabla `sesiones_refresh`)."""
+
+    def __init__(self, db: Session):
+        self.db = db
+
+    def guardar(self, sesion: SesionRefreshDB) -> SesionRefreshDB:
+        self.db.add(sesion)
+        self.db.commit()
+        return sesion
+
+    def buscar(self, jti: str) -> SesionRefreshDB | None:
+        return self.db.get(SesionRefreshDB, jti)
+
+    def revocar(
+        self,
+        jti: str,
+        motivo: str,
+        reemplazada_por: str | None = None,
+    ) -> None:
+        sesion = self.buscar(jti)
+        if sesion is None or sesion.revocada:
+            return
+
+        sesion.revocada = True
+        sesion.fecha_revocacion = datetime.now(timezone.utc)
+        sesion.motivo_revocacion = motivo
+        sesion.reemplazada_por = reemplazada_por
+        self.db.commit()
+
+    def revocar_todas_de_usuario(self, usuario_id: str, motivo: str) -> int:
+        sentencia = (
+            update(SesionRefreshDB)
+            .where(
+                SesionRefreshDB.usuario_id == UUID(str(usuario_id)),
+                SesionRefreshDB.revocada.is_(False),
+            )
+            .values(
+                revocada=True,
+                fecha_revocacion=datetime.now(timezone.utc),
+                motivo_revocacion=motivo,
+            )
+        )
+        resultado = self.db.execute(sentencia)
+        self.db.commit()
+        return resultado.rowcount or 0

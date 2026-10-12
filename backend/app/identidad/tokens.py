@@ -1,6 +1,8 @@
 """Generación de tokens JWT para autenticación."""
 
 import os
+import uuid
+from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -95,15 +97,25 @@ def validar_access_token(
     return payload
 
 
-def crear_refresh_token(
+@dataclass(frozen=True)
+class RefreshTokenEmitido:
+    """Refresh token firmado junto con su identificador único (jti)."""
+
+    token: str
+    jti: str
+    expira_en: datetime
+
+
+def emitir_refresh_token(
     usuario_id: str,
     email: str,
     rol: str,
-) -> str:
+) -> RefreshTokenEmitido:
+    """Emite un refresh token con un `jti` único para poder rotarlo y revocarlo."""
 
     ahora = datetime.now(timezone.utc)
-
     expiracion = ahora + timedelta(days=REFRESH_TOKEN_DAYS)
+    jti = str(uuid.uuid4())
 
     payload = {
         "sub": usuario_id,
@@ -112,15 +124,26 @@ def crear_refresh_token(
         "iat": ahora,
         "exp": expiracion,
         "type": "refresh",
+        "jti": jti,
     }
 
     private_key = PRIVATE_KEY_PATH.read_text()
 
-    return jwt.encode(
+    token = jwt.encode(
         payload,
         private_key,
         algorithm="RS256",
     )
+
+    return RefreshTokenEmitido(token=token, jti=jti, expira_en=expiracion)
+
+
+def crear_refresh_token(
+    usuario_id: str,
+    email: str,
+    rol: str,
+) -> str:
+    return emitir_refresh_token(usuario_id=usuario_id, email=email, rol=rol).token
 
 
 def validar_refresh_token(

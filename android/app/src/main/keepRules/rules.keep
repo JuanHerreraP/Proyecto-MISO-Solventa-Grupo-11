@@ -10,3 +10,7 @@
 #-keepclassmembers class fqcn.of.javascript.interface.for.webview {
 #   public *;
 #}
+
+# HU02: Gson lee y escribe los DTO por reflexión.
+-keep class com.example.solventa.data.remote.** { *; }
+-keepattributes Signature, *Annotation*

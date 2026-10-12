@@ -51,6 +51,21 @@ La navegación utiliza **Jetpack Navigation Compose** mediante rutas selladas en
 | `biometrical_login_screen` | `BiometricalLoginScreen` | Inicio de sesión rápido mediante autenticación biométrica |
 | `credentials_login_screen` | `CredentialsLoginScreen` | Inicio de sesión tradicional con correo y contraseña |
 | `register_screen` | `RegisterScreen` | Registro de nuevos usuarios y captura de datos de identidad (BPM-22) |
+| `home_screen` | `HomeScreen` | Inicio del cliente; solo se muestra con sesión autenticada (BPM-23) |
+
+---
+
+## 🔐 Inicio de sesión biométrico (HU02, BPM-23)
+
+| Paquete | Contenido |
+|---|---|
+| `domain/auth` | `AuthCoordinator`: reglas del ingreso biométrico, el fallback, la expiración y el cierre de sesión. Sin dependencias de Android. |
+| `biometric` | `AutenticadorBiometrico` (`BiometricPrompt`) y la traducción de sus códigos de error. |
+| `data/session` | `KeystoreBovedaSesion`: guarda el refresh token cifrado con una llave del Keystore que exige biometría. |
+| `data/remote` | Cliente Retrofit de `/api/v1/auth` (login, refresh, logout, me). |
+| `ui/auth` | `AuthViewModel`, que expone el estado a las pantallas. |
+
+La URL del backend sale de `BuildConfig.API_BASE_URL` (por defecto `http://10.0.2.2:8000/`). Detalle completo en [docs/inicio-sesion-biometrico.md](../docs/inicio-sesion-biometrico.md).
 
 ---
 
