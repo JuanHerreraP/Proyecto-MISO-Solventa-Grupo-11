@@ -2,7 +2,7 @@
 
 from datetime import datetime
 
-from sqlalchemy import JSON, DateTime, ForeignKey, String
+from sqlalchemy import JSON, Boolean, DateTime, ForeignKey, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.infraestructura.database import Base
@@ -37,3 +37,21 @@ class EventoAuditoriaSocioDB(Base):
     accion: Mapped[str] = mapped_column(String(30), nullable=False)
     campos_modificados: Mapped[list[str]] = mapped_column(JSON, nullable=False)
     fecha: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+
+class CredencialSocioDB(Base):
+    """Credenciales técnicas utilizadas por un socio para acceder al gateway."""
+
+    __tablename__ = "credenciales_socios"
+
+    client_id: Mapped[str] = mapped_column(String(100), primary_key=True)
+    socio_id: Mapped[str] = mapped_column(
+        ForeignKey("socios_distribucion.socio_id"),
+        nullable=False,
+        index=True,
+    )
+    tenant_id: Mapped[str] = mapped_column(String(50), nullable=False, index=True)
+    secret_hash: Mapped[str] = mapped_column(String(512), nullable=False)
+    scopes: Mapped[list[str]] = mapped_column(JSON, nullable=False)
+    activo: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    creado_en: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
