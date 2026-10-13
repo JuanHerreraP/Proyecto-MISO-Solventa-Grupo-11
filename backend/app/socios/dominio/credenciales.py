@@ -23,6 +23,19 @@ class CredencialesSocio(BaseModel):
     creado_en: datetime
 
 
+class CredencialesEmitidas(BaseModel):
+    """Credenciales que se entregan una sola vez al aprovisionarlas."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    socio_id: str
+    tenant_id: str
+    client_id: str
+    client_secret: str
+    scopes: set[CodigoEndpoint]
+    creado_en: datetime
+
+
 password_hash = PasswordHash.recommended()
 
 
