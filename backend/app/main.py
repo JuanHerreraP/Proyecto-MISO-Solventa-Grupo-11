@@ -8,6 +8,7 @@ from app import __version__
 from app.api import (
     autenticacion,
     autorizacion_socios,
+    credenciales_socios,
     enriquecimiento,
     identidad,
     perfilamiento,
@@ -39,6 +40,7 @@ def crear_app() -> FastAPI:
     app.include_router(perfilamiento.router)
     app.include_router(enriquecimiento.router)
     app.include_router(socios.router)
+    app.include_router(credenciales_socios.router)
     app.include_router(autorizacion_socios.router)
     app.include_router(identidad.router)
     app.include_router(autenticacion.router)
