@@ -23,6 +23,7 @@ class VerificacionIdentidadRequest(BaseModel):
     document_number: str
     full_name: str
     birth_date: date
+    selfie_base64: str = ""
 
 
 class VerificacionIdentidadResponse(BaseModel):
@@ -47,6 +48,7 @@ def verificar_identidad(
         document_number=payload.document_number,
         full_name=payload.full_name,
         birth_date=payload.birth_date,
+        selfie_base64=payload.selfie_base64,
     )
 
     result = provider.verify(request)

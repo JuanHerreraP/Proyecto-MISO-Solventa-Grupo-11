@@ -17,6 +17,103 @@ class AuthCoordinatorTest {
         biometriaDisponible: Boolean = true
     ) = AuthCoordinator(gateway, boveda, reloj) { biometriaDisponible }
 
+    private val datosRegistro = DatosRegistro(
+        nombre = "Ana",
+        apellido = "Perez",
+        email = "ana@gmail.com",
+        password = "Password123!",
+        tipoDocumento = "CC",
+        numeroDocumento = "1000000001",
+        fechaNacimiento = "1999-01-01",
+        celular = "3001234567",
+        selfieBase64 = "/9j/2Q=="
+    )
+
+    @Test
+    fun registroAprobadoConfirmaCreacionSinAbrirSesion() {
+        val auth = coordinador()
+
+        ejecutar { auth.registrar(datosRegistro) }
+
+        assertEquals(listOf(datosRegistro), gateway.registros)
+        assertTrue(auth.estado.registroCompletado)
+        assertEquals(MensajesAuth.REGISTRO_COMPLETADO, auth.estado.mensaje)
+        assertNull(auth.estado.sesion)
+        assertFalse(auth.estado.cargando)
+    }
+
+    @Test
+    fun registroRechazadoPermiteReintentoSinMarcarCuentaCreada() {
+        gateway.respuestaRegistro = ResultadoApi.Fallo(
+            422,
+            "KYC_REJECTED",
+            "La validación de identidad no fue aprobada."
+        )
+        val auth = coordinador()
+
+        ejecutar { auth.registrar(datosRegistro) }
+
+        assertFalse(auth.estado.registroCompletado)
+        assertEquals("La validación de identidad no fue aprobada.", auth.estado.mensaje)
+        assertNull(auth.estado.sesion)
+    }
+
+    @Test
+    fun registroQueNoIncluyeAprobacionKycNoSeConfirma() {
+        gateway.respuestaRegistro = ResultadoApi.Exito(
+            RegistroCreado("ana@gmail.com", kycValidado = false)
+        )
+        val auth = coordinador()
+
+        ejecutar { auth.registrar(datosRegistro) }
+
+        assertFalse(auth.estado.registroCompletado)
+        assertEquals(MensajesAuth.KYC_NO_APROBADO, auth.estado.mensaje)
+        assertNull(auth.estado.sesion)
+    }
+
+    @Test
+    fun proveedorKycNoDisponibleSeInformaSinCrearCuenta() {
+        gateway.respuestaRegistro = ResultadoApi.Fallo(
+            503,
+            "KYC_PROVIDER_UNAVAILABLE",
+            "Proveedor no disponible."
+        )
+        val auth = coordinador()
+
+        ejecutar { auth.registrar(datosRegistro) }
+
+        assertFalse(auth.estado.registroCompletado)
+        assertEquals("Proveedor no disponible.", auth.estado.mensaje)
+        assertNull(auth.estado.sesion)
+    }
+
+    @Test
+    fun registroPendienteNoSeConfirmaComoCuentaCreada() {
+        gateway.respuestaRegistro = ResultadoApi.Fallo(202, "KYC_PENDING", "Pendiente")
+        val auth = coordinador()
+
+        ejecutar { auth.registrar(datosRegistro) }
+
+        assertFalse(auth.estado.registroCompletado)
+        assertEquals(MensajesAuth.KYC_PENDIENTE, auth.estado.mensaje)
+    }
+
+    @Test
+    fun registroSePuedeReintentarTrasUnRechazo() {
+        gateway.respuestaRegistro = ResultadoApi.Fallo(422, "KYC_REJECTED", "Rechazado")
+        val auth = coordinador()
+
+        ejecutar { auth.registrar(datosRegistro) }
+        assertFalse(auth.estado.registroCompletado)
+
+        gateway.respuestaRegistro = ResultadoApi.Exito(RegistroCreado("ana@gmail.com", true))
+        ejecutar { auth.registrar(datosRegistro) }
+
+        assertEquals(2, gateway.registros.size)
+        assertTrue(auth.estado.registroCompletado)
+    }
+
     // --- Ingreso con credenciales (fallback) ---
 
     @Test

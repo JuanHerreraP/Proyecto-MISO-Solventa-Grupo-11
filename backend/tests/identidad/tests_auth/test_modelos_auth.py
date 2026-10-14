@@ -17,7 +17,9 @@ def test_registro_rechaza_email_invalido():
             tipo_documento="CC",
             numero_documento="123456",
             fecha_nacimiento="1999-01-01",
+            celular="3001234567",
             acepta_validacion_identidad=True,
+            selfie_base64="/9j/2Q==",
         )
 
 
@@ -31,7 +33,24 @@ def test_registro_rechaza_password_menor_a_ocho():
             tipo_documento="CC",
             numero_documento="123456",
             fecha_nacimiento="1999-01-01",
+            celular="3001234567",
             acepta_validacion_identidad=True,
+            selfie_base64="/9j/2Q==",
+        )
+
+def test_registro_rechaza_selfie_jpeg_invalida():
+    with pytest.raises(ValidationError):
+        SolicitudRegistro(
+            nombre="Ana",
+            apellido="Perez",
+            email="ana@gmail.com",
+            password="Password123!",
+            tipo_documento="CC",
+            numero_documento="123456",
+            fecha_nacimiento="1999-01-01",
+            celular="3001234567",
+            acepta_validacion_identidad=True,
+            selfie_base64="no-es-una-imagen",
         )
 
 

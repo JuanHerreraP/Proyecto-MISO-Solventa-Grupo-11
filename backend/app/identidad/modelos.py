@@ -1,10 +1,13 @@
 """Modelos del dominio de identidad."""
 
+import base64
+import binascii
 from dataclasses import dataclass
 from datetime import date, datetime
 from enum import Enum
+from typing import Any
 
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, field_validator
 
 
 class Rol(str, Enum):
@@ -31,6 +34,7 @@ class VerificationRequest:
     document_number: str
     full_name: str
     birth_date: date
+    selfie_base64: str
 
 
 @dataclass(frozen=True)
@@ -50,10 +54,41 @@ class SolicitudRegistro(BaseModel):
     apellido: str = Field(min_length=2, max_length=100)
     email: EmailStr
     password: str = Field(min_length=8, max_length=128)
-    tipo_documento: str
-    numero_documento: str
+    tipo_documento: str = Field(min_length=2, max_length=20)
+    numero_documento: str = Field(min_length=3, max_length=50)
     fecha_nacimiento: date
+    celular: str | None = Field(default=None, min_length=7, max_length=30)
     acepta_validacion_identidad: bool
+    selfie_base64: str | None = Field(
+        default=None, min_length=4, max_length=4_194_304
+    )
+
+    @field_validator(
+        "nombre",
+        "apellido",
+        "tipo_documento",
+        "numero_documento",
+        "celular",
+        mode="before",
+    )
+    @classmethod
+    def quitar_espacios_exteriores(cls, valor: Any) -> Any:
+        return valor.strip() if isinstance(valor, str) else valor
+
+    @field_validator("selfie_base64")
+    @classmethod
+    def validar_selfie_jpeg(cls, valor: str | None) -> str | None:
+        if valor is None:
+            return None
+
+        try:
+            imagen = base64.b64decode(valor, validate=True)
+        except (binascii.Error, ValueError) as error:
+            raise ValueError("La selfie debe ser una imagen JPEG codificada en Base64.") from error
+
+        if not imagen.startswith(b"\xff\xd8\xff") or not imagen.endswith(b"\xff\xd9"):
+            raise ValueError("La selfie debe ser una imagen JPEG válida.")
+        return valor
 
 
 class Usuario(BaseModel):

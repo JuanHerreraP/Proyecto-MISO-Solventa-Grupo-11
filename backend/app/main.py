@@ -15,12 +15,13 @@ from app.api import (
     socios,
 )
 from app.identidad import modelos_db  # noqa: F401
-from app.infraestructura.database import Base, engine
+from app.infraestructura.database import Base, engine, preparar_esquema_registro
 from app.socios import modelos_db as modelos_db_socios  # noqa: F401
 
 
 def crear_app() -> FastAPI:
     Base.metadata.create_all(bind=engine)
+    preparar_esquema_registro()
 
     app = FastAPI(
         title="Solventa API",

@@ -19,6 +19,17 @@ class FakeRepositorioUsuarios:
     def buscar_por_email(self, email: str):
         return self.usuarios.get(email.strip().lower())
 
+    def buscar_por_documento(self, tipo_documento: str, numero_documento: str):
+        return next(
+            (
+                usuario
+                for usuario in self.usuarios.values()
+                if usuario.tipo_documento == tipo_documento.strip().upper()
+                and usuario.numero_documento == numero_documento.strip().upper()
+            ),
+            None,
+        )
+
     def guardar(self, usuario):
         if usuario.id is None:
             usuario.id = uuid4()
@@ -58,7 +69,9 @@ def solicitud_registro():
         tipo_documento="CC",
         numero_documento="1000000001",
         fecha_nacimiento="1999-01-01",
+        celular="3001234567",
         acepta_validacion_identidad=True,
+        selfie_base64="/9j/2Q==",
     )
 
 

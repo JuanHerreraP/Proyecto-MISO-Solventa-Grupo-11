@@ -124,11 +124,12 @@ Ejemplo:
   "tipo_documento": "CC",
   "numero_documento": "123456789",
   "fecha_nacimiento": "1995-06-15",
+  "celular": "3001234567",
   "acepta_validacion_identidad": true
 }
 ```
 
-Durante el registro, el backend realiza la validación de identidad mediante el proveedor KYC configurado.
+`celular` y `selfie_base64` son opcionales para mantener la compatibilidad de este flujo web. La app Android sí solicita una selfie JPEG y la envía codificada en Base64. El proveedor KYC de demostración no analiza la selfie ni ejecuta una prueba de vida; su resultado es determinista según el documento.
 
 El frontend valida adicionalmente:
 

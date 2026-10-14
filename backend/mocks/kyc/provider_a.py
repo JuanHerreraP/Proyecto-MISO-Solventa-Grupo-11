@@ -11,6 +11,7 @@ class VerificationRequest(BaseModel):
     documentNumber: str
     fullName: str
     birthDate: str
+    selfieBase64: str
 
 
 class VerificationResponse(BaseModel):
@@ -21,6 +22,7 @@ class VerificationResponse(BaseModel):
 
 @app.post("/kyc/verify", response_model=VerificationResponse)
 def verify(payload: VerificationRequest) -> VerificationResponse:
+    """Retorna un resultado determinista de demo; no analiza selfie ni prueba de vida."""
     digest = int(
         hashlib.sha256(payload.documentNumber.encode()).hexdigest(),
         16,

@@ -16,12 +16,18 @@ data class EstadoAuth(
     val biometriaActivada: Boolean = false,
     val ofrecerActivarBiometria: Boolean = false,
     /** Evento: la UI debe llevar al usuario al ingreso con correo y contraseña. */
-    val requiereCredenciales: Boolean = false
+    val requiereCredenciales: Boolean = false,
+    val registroCompletado: Boolean = false
 )
 
 object MensajesAuth {
     const val SIN_CONEXION = "No pudimos conectarnos con Solventa. Revisa tu conexión e inténtalo de nuevo."
     const val CREDENCIALES_INVALIDAS = "El correo electrónico o la contraseña son incorrectos."
+    const val REGISTRO_COMPLETADO =
+        "El proveedor KYC simulado aprobó la verificación y tu cuenta fue creada."
+    const val KYC_NO_APROBADO = "La verificación no fue aprobada. Revisa los datos e inténtalo de nuevo."
+    const val KYC_PENDIENTE =
+        "La verificación requiere una revisión adicional. Puedes volver a intentarlo más tarde."
     const val ERROR_GENERICO = "Algo salió mal. Inténtalo de nuevo en unos minutos."
     const val BIOMETRIA_NO_ACTIVADA =
         "Ingresa una vez con tu correo y contraseña para activar el ingreso con huella."

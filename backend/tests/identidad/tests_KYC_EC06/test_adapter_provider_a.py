@@ -18,7 +18,14 @@ class FakeProviderAClient(ProviderAClient):
     def __init__(self, response: dict):
         self._response = response
 
-    def verificar_identidad(self, document_type, document_number, full_name, birth_date):
+    def verificar_identidad(
+        self,
+        document_type,
+        document_number,
+        full_name,
+        birth_date,
+        selfie_base64,
+    ):
         return self._response
 
 
@@ -30,6 +37,7 @@ def _request(document_number: str = "123") -> VerificationRequest:
         document_number=document_number,
         full_name="Ana Pérez",
         birth_date=date(1995, 1, 1),
+        selfie_base64="/9j/2Q==",
     )
 
 

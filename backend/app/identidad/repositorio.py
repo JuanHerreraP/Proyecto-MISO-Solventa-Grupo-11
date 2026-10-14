@@ -2,6 +2,7 @@ from datetime import datetime, timezone
 from uuid import UUID
 
 from sqlalchemy import select, update
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.identidad.modelos_db import SesionRefreshDB, UsuarioDB
@@ -19,12 +20,27 @@ class RepositorioUsuariosPostgres:
 
         return self.db.scalar(sentencia)
 
+    def buscar_por_documento(
+        self,
+        tipo_documento: str,
+        numero_documento: str,
+    ) -> UsuarioDB | None:
+        sentencia = select(UsuarioDB).where(
+            UsuarioDB.tipo_documento == tipo_documento.strip().upper(),
+            UsuarioDB.numero_documento == numero_documento.strip().upper(),
+        )
+        return self.db.scalar(sentencia)
+
     def guardar(
         self,
         usuario: UsuarioDB,
     ) -> UsuarioDB:
         self.db.add(usuario)
-        self.db.commit()
+        try:
+            self.db.commit()
+        except IntegrityError:
+            self.db.rollback()
+            raise
         self.db.refresh(usuario)
 
         return usuario

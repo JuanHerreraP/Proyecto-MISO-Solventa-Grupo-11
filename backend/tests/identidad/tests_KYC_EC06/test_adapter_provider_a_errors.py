@@ -23,6 +23,7 @@ class FakeProviderAClient(ProviderAClient):
         document_number,
         full_name,
         birth_date,
+        selfie_base64,
     ):
         return self._response
 
@@ -39,6 +40,7 @@ def _request() -> VerificationRequest:
             1,
             1,
         ),
+        selfie_base64="/9j/2Q==",
     )
 
 

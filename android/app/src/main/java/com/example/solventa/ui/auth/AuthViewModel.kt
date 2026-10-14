@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.solventa.biometric.FalloBiometrico
 import com.example.solventa.domain.auth.AuthCoordinator
+import com.example.solventa.domain.auth.DatosRegistro
 import com.example.solventa.domain.auth.EstadoAuth
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -22,6 +23,10 @@ class AuthViewModel(private val coordinador: AuthCoordinator) : ViewModel() {
 
     fun ingresarConCredenciales(email: String, password: String) {
         viewModelScope.launch { coordinador.ingresarConCredenciales(email, password) }
+    }
+
+    fun registrar(datos: DatosRegistro) {
+        viewModelScope.launch { coordinador.registrar(datos) }
     }
 
     fun solicitarIngresoBiometrico(): Boolean = coordinador.solicitarIngresoBiometrico()
@@ -45,6 +50,8 @@ class AuthViewModel(private val coordinador: AuthCoordinator) : ViewModel() {
     fun credencialesMostradas() = coordinador.credencialesMostradas()
 
     fun consumirMensaje() = coordinador.consumirMensaje()
+
+    fun consumirRegistroCompletado() = coordinador.consumirRegistroCompletado()
 
     fun verificarExpiracion() = coordinador.verificarExpiracion()
 

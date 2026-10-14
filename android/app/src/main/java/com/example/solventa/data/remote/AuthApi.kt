@@ -1,5 +1,6 @@
 package com.example.solventa.data.remote
 
+import com.google.gson.JsonObject
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
@@ -8,6 +9,9 @@ import retrofit2.http.POST
 
 /** Endpoints de identidad del backend (HU19 y HU02). */
 interface AuthApi {
+    @POST("api/v1/auth/register")
+    suspend fun registrar(@Body solicitud: SolicitudRegistroDto): Response<JsonObject>
+
     @POST("api/v1/auth/login")
     suspend fun login(@Body solicitud: SolicitudLoginDto): Response<RespuestaTokensDto>
 

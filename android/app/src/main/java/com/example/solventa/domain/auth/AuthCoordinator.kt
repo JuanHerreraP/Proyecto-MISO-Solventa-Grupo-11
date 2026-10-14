@@ -31,6 +31,46 @@ class AuthCoordinator(
 
     private var tokens: Tokens? = null
 
+    suspend fun registrar(datos: DatosRegistro) {
+        if (estado.cargando) return
+        estado = estado.copy(cargando = true, mensaje = null, registroCompletado = false)
+
+        when (val resultado = gateway.registrar(datos)) {
+            is ResultadoApi.Exito -> {
+                if (resultado.valor.kycValidado) {
+                    estado = estado.copy(
+                        cargando = false,
+                        mensaje = MensajesAuth.REGISTRO_COMPLETADO,
+                        registroCompletado = true
+                    )
+                } else {
+                    estado = estado.copy(
+                        cargando = false,
+                        mensaje = MensajesAuth.KYC_NO_APROBADO
+                    )
+                }
+            }
+
+            is ResultadoApi.Fallo -> estado = estado.copy(
+                cargando = false,
+                mensaje = when {
+                    resultado.http == 202 -> MensajesAuth.KYC_PENDIENTE
+                    resultado.mensaje != null -> resultado.mensaje
+                    else -> MensajesAuth.ERROR_GENERICO
+                }
+            )
+
+            ResultadoApi.SinConexion -> estado = estado.copy(
+                cargando = false,
+                mensaje = MensajesAuth.SIN_CONEXION
+            )
+        }
+    }
+
+    fun consumirRegistroCompletado() {
+        if (estado.registroCompletado) estado = estado.copy(registroCompletado = false)
+    }
+
     suspend fun ingresarConCredenciales(email: String, password: String) {
         if (estado.cargando) return
         estado = estado.copy(cargando = true, mensaje = null)

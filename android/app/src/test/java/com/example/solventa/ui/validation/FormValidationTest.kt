@@ -5,6 +5,23 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class FormValidationTest {
+    private fun registrationIsValid(
+        email: String = "user@example.com",
+        selfieCaptured: Boolean = true,
+        termsAccepted: Boolean = true
+    ) = canSubmitRegistration(
+        nombre = "Ana",
+        apellido = "Perez",
+        tipoDocumento = "CC",
+        numeroDocumento = "123456789",
+        email = email,
+        celular = "3001234567",
+        password = "Password123!",
+        fechaNacimiento = "1999-01-01",
+        termsAccepted = termsAccepted,
+        selfieCaptured = selfieCaptured
+    )
+
     @Test
     fun credentialsLoginCanBeSubmittedWhenEmailAndPasswordArePresent() {
         assertTrue(canSubmitCredentialsLogin("user@example.com", "secret"))
@@ -17,14 +34,32 @@ class FormValidationTest {
     }
 
     @Test
-    fun registrationCanBeSubmittedWhenRequiredFieldsAndTermsArePresent() {
-        assertTrue(canSubmitRegistration("user@example.com", "secret", termsAccepted = true))
+    fun registrationCanBeSubmittedWhenRequiredFieldsTermsAndSelfieArePresent() {
+        assertTrue(registrationIsValid())
     }
 
     @Test
-    fun registrationCannotBeSubmittedWhenRequiredFieldIsBlankOrTermsAreNotAccepted() {
-        assertFalse(canSubmitRegistration("", "secret", termsAccepted = true))
-        assertFalse(canSubmitRegistration("user@example.com", " ", termsAccepted = true))
-        assertFalse(canSubmitRegistration("user@example.com", "secret", termsAccepted = false))
+    fun registrationRejectsInvalidEmailMissingTermsAndMissingSelfie() {
+        assertFalse(registrationIsValid(email = "not-an-email"))
+        assertFalse(registrationIsValid(termsAccepted = false))
+        assertFalse(registrationIsValid(selfieCaptured = false))
+    }
+
+    @Test
+    fun registrationRejectsMissingRequiredValues() {
+        assertFalse(
+            canSubmitRegistration(
+                nombre = " ",
+                apellido = "Perez",
+                tipoDocumento = "CC",
+                numeroDocumento = "123456789",
+                email = "user@example.com",
+                celular = "3001234567",
+                password = "Password123!",
+                fechaNacimiento = "1999-01-01",
+                termsAccepted = true,
+                selfieCaptured = true
+            )
+        )
     }
 }
