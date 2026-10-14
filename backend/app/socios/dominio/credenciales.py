@@ -3,8 +3,8 @@
 import secrets
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict, Field
 from pwdlib import PasswordHash
+from pydantic import BaseModel, ConfigDict, Field
 
 from app.socios.dominio.catalogo import CodigoEndpoint
 
@@ -45,6 +45,17 @@ class TokenAccesoSocio(BaseModel):
     token_type: str = "bearer"
     expires_in: int
     scope: str
+
+
+class SocioAutenticado(BaseModel):
+    """Identidad técnica extraída de un token válido de socio."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    client_id: str
+    socio_id: str
+    tenant_id: str
+    scopes: set[CodigoEndpoint]
 
 
 password_hash = PasswordHash.recommended()

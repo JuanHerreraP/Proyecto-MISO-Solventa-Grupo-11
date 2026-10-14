@@ -3,8 +3,10 @@
 from fastapi import APIRouter, Depends, Header, HTTPException, status
 from pydantic import BaseModel
 
+from app.api.seguridad_socios import socio_actual
 from app.api.socios import obtener_servicio
 from app.socios.dominio.catalogo import CodigoEndpoint
+from app.socios.dominio.credenciales import SocioAutenticado
 from app.socios.servicio import (
     CredencialesSocioInvalidas,
     EndpointNoAutorizado,
@@ -25,21 +27,15 @@ class AutorizacionConcedida(BaseModel):
 @router.post(
     "/socios",
     response_model=AutorizacionConcedida,
-    summary="Valida el tenant y el scope configurado para un socio",
+    summary="Valida el token y el scope configurado para un socio",
 )
 def autorizar_socio(
-    x_socio_id: str | None = Header(default=None),
-    x_tenant_id: str | None = Header(default=None),
     x_scope: str | None = Header(default=None),
+    identidad: SocioAutenticado = Depends(socio_actual),
     servicio: ServicioSocios = Depends(obtener_servicio),
 ) -> AutorizacionConcedida:
-    """Valida el tenant y el scope después de que el gateway autentica al socio."""
+    """Valida el scope solicitado contra el token y la configuración vigente."""
 
-    if not x_socio_id or not x_tenant_id:
-        raise HTTPException(
-            status.HTTP_401_UNAUTHORIZED,
-            "Faltan las credenciales del socio.",
-        )
     try:
         endpoint = CodigoEndpoint(x_scope)
     except (TypeError, ValueError):
@@ -48,8 +44,18 @@ def autorizar_socio(
             "El scope solicitado no está autorizado.",
         ) from None
 
+    if endpoint not in identidad.scopes:
+        raise HTTPException(
+            status.HTTP_403_FORBIDDEN,
+            "El scope solicitado no está autorizado.",
+        )
+
     try:
-        socio = servicio.autorizar_consumo(x_socio_id, x_tenant_id, endpoint)
+        socio = servicio.autorizar_consumo(
+            identidad.socio_id,
+            identidad.tenant_id,
+            endpoint,
+        )
     except CredencialesSocioInvalidas:
         raise HTTPException(
             status.HTTP_401_UNAUTHORIZED,

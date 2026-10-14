@@ -5,7 +5,12 @@ from datetime import datetime, timedelta, timezone
 
 import jwt
 
-from app.identidad.tokens import PRIVATE_KEY_PATH
+from app.identidad.tokens import (
+    PRIVATE_KEY_PATH,
+    PUBLIC_KEY_PATH,
+    TokenExpiradoError,
+    TokenInvalidoError,
+)
 from app.socios.dominio.catalogo import CodigoEndpoint
 from app.socios.dominio.credenciales import CredencialesSocio
 
@@ -36,3 +41,27 @@ def crear_access_token_socio(
         algorithm="RS256",
     )
     return token, expires_in
+
+
+def validar_access_token_socio(token: str) -> dict:
+    """Valida firma, expiración y claims mínimos de un token de socio."""
+
+    try:
+        payload = jwt.decode(
+            token,
+            PUBLIC_KEY_PATH.read_text(),
+            algorithms=["RS256"],
+        )
+    except jwt.ExpiredSignatureError as error:
+        raise TokenExpiradoError("El token del socio ha expirado.") from error
+    except jwt.InvalidTokenError as error:
+        raise TokenInvalidoError("El token del socio no es válido.") from error
+
+    if payload.get("type") != "partner_access":
+        raise TokenInvalidoError("El token no corresponde a una integración de socio.")
+
+    requeridos = ("sub", "socio_id", "tenant_id", "scope")
+    if any(not payload.get(claim) for claim in requeridos):
+        raise TokenInvalidoError("El token del socio no contiene los claims requeridos.")
+
+    return payload
