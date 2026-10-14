@@ -37,9 +37,7 @@ def obtener_servicio_autenticacion_socios(
 async def emitir_token(
     request: Request,
     credenciales_http: HTTPBasicCredentials | None = Depends(basic),
-    servicio: ServicioAutenticacionSocios = Depends(
-        obtener_servicio_autenticacion_socios
-    ),
+    servicio: ServicioAutenticacionSocios = Depends(obtener_servicio_autenticacion_socios),
 ) -> TokenAccesoSocio:
     content_type = request.headers.get("content-type", "")
     if "application/x-www-form-urlencoded" not in content_type:

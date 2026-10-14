@@ -23,8 +23,8 @@ class ServicioAutenticacionFalso:
 
 
 def test_endpoint_intercambia_client_credentials_por_token() -> None:
-    app.dependency_overrides[obtener_servicio_autenticacion_socios] = (
-        lambda: ServicioAutenticacionFalso()
+    app.dependency_overrides[obtener_servicio_autenticacion_socios] = lambda: (
+        ServicioAutenticacionFalso()
     )
     try:
         with TestClient(app) as cliente:
@@ -46,8 +46,8 @@ def test_endpoint_intercambia_client_credentials_por_token() -> None:
 
 
 def test_endpoint_rechaza_credenciales_invalidas() -> None:
-    app.dependency_overrides[obtener_servicio_autenticacion_socios] = (
-        lambda: ServicioAutenticacionFalso(valido=False)
+    app.dependency_overrides[obtener_servicio_autenticacion_socios] = lambda: (
+        ServicioAutenticacionFalso(valido=False)
     )
     try:
         with TestClient(app) as cliente:
@@ -64,8 +64,8 @@ def test_endpoint_rechaza_credenciales_invalidas() -> None:
 
 
 def test_endpoint_rechaza_un_grant_type_distinto() -> None:
-    app.dependency_overrides[obtener_servicio_autenticacion_socios] = (
-        lambda: ServicioAutenticacionFalso()
+    app.dependency_overrides[obtener_servicio_autenticacion_socios] = lambda: (
+        ServicioAutenticacionFalso()
     )
     try:
         with TestClient(app) as cliente:

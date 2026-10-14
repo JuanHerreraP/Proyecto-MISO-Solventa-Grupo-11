@@ -71,9 +71,7 @@ def test_intercambia_credenciales_validas_por_token() -> None:
 def test_rechaza_un_secreto_incorrecto() -> None:
     servicio = preparar_servicio(secreto_valido=False)
 
-    error = capturar_error(
-        lambda: servicio.autenticar("solv_cliente_001", "secreto-incorrecto")
-    )
+    error = capturar_error(lambda: servicio.autenticar("solv_cliente_001", "secreto-incorrecto"))
 
     assert isinstance(error, CredencialesIntegracionInvalidas)
 
@@ -81,8 +79,6 @@ def test_rechaza_un_secreto_incorrecto() -> None:
 def test_rechaza_credenciales_de_un_socio_inactivo() -> None:
     servicio = preparar_servicio(estado_socio=EstadoSocio.INACTIVO)
 
-    error = capturar_error(
-        lambda: servicio.autenticar("solv_cliente_001", "solv_secret_correcto")
-    )
+    error = capturar_error(lambda: servicio.autenticar("solv_cliente_001", "solv_secret_correcto"))
 
     assert isinstance(error, SocioIntegracionInactivo)

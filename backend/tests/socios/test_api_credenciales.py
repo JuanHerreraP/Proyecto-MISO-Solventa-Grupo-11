@@ -116,6 +116,4 @@ def test_endpoint_rechaza_un_socio_inactivo() -> None:
         limpiar_api()
 
     assert respuesta.status_code == 409
-    assert respuesta.json()["detail"] == (
-        "El socio debe estar activo para generar credenciales."
-    )
+    assert respuesta.json()["detail"] == ("El socio debe estar activo para generar credenciales.")
