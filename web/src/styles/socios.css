@@ -436,6 +436,122 @@
   font-size: 12px;
 }
 
+.socio-credentials {
+  margin: 0 0 24px;
+  padding: 20px;
+  background: #f7f9ff;
+  border: 1px solid #cfdafa;
+  border-radius: 14px;
+}
+
+.socio-credentials-heading {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.socio-credentials-heading > .material-symbols-outlined {
+  color: var(--solventa-blue);
+  font-size: 26px;
+}
+
+.socio-credentials-heading h3 {
+  margin: 0 0 4px;
+  color: var(--solventa-night);
+  font-size: 17px;
+}
+
+.socio-credentials-heading p {
+  margin: 0;
+  color: #975f13;
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.socio-credentials-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.socio-credentials-grid > div > span {
+  display: block;
+  margin-bottom: 7px;
+  color: var(--solventa-muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.socio-credential-value {
+  min-height: 48px;
+  padding: 8px 9px 8px 13px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  background: var(--solventa-white);
+  border: 1px solid var(--solventa-border);
+  border-radius: 10px;
+}
+
+.socio-credential-value code {
+  overflow-wrap: anywhere;
+  font-size: 13px;
+}
+
+.socio-credential-value button {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  color: var(--solventa-blue);
+  background: #edf2ff;
+  border: 0;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.socio-credential-value .material-symbols-outlined {
+  font-size: 18px;
+}
+
+.socio-copy-confirmation,
+.socio-credentials-loading {
+  margin: 12px 0 0;
+  color: #1d795c;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.socio-credentials-error {
+  margin-bottom: 24px;
+  padding: 14px 16px;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  color: #8e5510;
+  background: #fff8e8;
+  border: 1px solid #eed6a5;
+  border-radius: 12px;
+}
+
+.socio-credentials-error p {
+  margin: 0 0 8px;
+  color: inherit;
+  font-size: 14px;
+}
+
+.socio-credentials-error button {
+  padding: 0;
+  color: var(--solventa-blue);
+  background: transparent;
+  border: 0;
+  font-weight: 800;
+  cursor: pointer;
+}
+
 .socio-secondary-button {
   color: var(--solventa-blue);
   background: var(--solventa-white);
@@ -474,7 +590,8 @@
   .socio-contact-grid,
   .socio-choice-grid,
   .socio-endpoint-list,
-  .socio-result-grid {
+  .socio-result-grid,
+  .socio-credentials-grid {
     grid-template-columns: 1fr;
   }
 

@@ -4,8 +4,12 @@ import {
 } from "react";
 import { Link } from "react-router-dom";
 
-import { registrarSocio } from "../services/socios.service";
+import {
+  generarCredencialesSocio,
+  registrarSocio,
+} from "../services/socios.service";
 import type {
+  CredencialesSocioEmitidas,
   EndpointSocio,
   RespuestaRegistroSocio,
   SolicitudRegistroSocio,
@@ -66,6 +70,11 @@ export default function SocioRegistrationPage() {
   const [error, setError] = useState("");
   const [socioCreado, setSocioCreado] =
     useState<RespuestaRegistroSocio | null>(null);
+  const [credenciales, setCredenciales] =
+    useState<CredencialesSocioEmitidas | null>(null);
+  const [generandoCredenciales, setGenerandoCredenciales] = useState(false);
+  const [errorCredenciales, setErrorCredenciales] = useState("");
+  const [valorCopiado, setValorCopiado] = useState("");
 
   function updateContact(
     index: number,
@@ -126,10 +135,35 @@ export default function SocioRegistrationPage() {
     }));
   }
 
+  async function aprovisionarCredenciales(socioId: string) {
+    setGenerandoCredenciales(true);
+    setErrorCredenciales("");
+
+    try {
+      const response = await generarCredencialesSocio(socioId);
+      setCredenciales(response);
+    } catch (credentialsError) {
+      setErrorCredenciales(
+        credentialsError instanceof Error
+          ? credentialsError.message
+          : "No fue posible generar las credenciales del socio.",
+      );
+    } finally {
+      setGenerandoCredenciales(false);
+    }
+  }
+
+  async function copiarValor(nombre: string, valor: string) {
+    await navigator.clipboard.writeText(valor);
+    setValorCopiado(nombre);
+  }
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError("");
     setSocioCreado(null);
+    setCredenciales(null);
+    setErrorCredenciales("");
 
     if (form.tipos_seguros_autorizados.length === 0) {
       setError("Selecciona al menos un tipo de seguro autorizado.");
@@ -157,6 +191,7 @@ export default function SocioRegistrationPage() {
       });
 
       setSocioCreado(response);
+      await aprovisionarCredenciales(response.socio_id);
     } catch (submitError) {
       setError(
         submitError instanceof Error
@@ -171,7 +206,10 @@ export default function SocioRegistrationPage() {
   function resetForm() {
     setForm(INITIAL_FORM);
     setSocioCreado(null);
+    setCredenciales(null);
     setError("");
+    setErrorCredenciales("");
+    setValorCopiado("");
   }
 
   return (
@@ -249,10 +287,99 @@ export default function SocioRegistrationPage() {
                 </div>
               </dl>
 
+              {generandoCredenciales && (
+                <div className="socio-credentials-loading" role="status">
+                  Generando credenciales de integración...
+                </div>
+              )}
+
+              {credenciales && (
+                <section className="socio-credentials" aria-labelledby="credentials-title">
+                  <div className="socio-credentials-heading">
+                    <span className="material-symbols-outlined" aria-hidden="true">
+                      key
+                    </span>
+                    <div>
+                      <h3 id="credentials-title">Credenciales de integración</h3>
+                      <p>
+                        Guarda estas credenciales ahora. Por seguridad, el
+                        client secret no volverá a mostrarse.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="socio-credentials-grid">
+                    <div>
+                      <span>Client ID</span>
+                      <div className="socio-credential-value">
+                        <code>{credenciales.client_id}</code>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            copiarValor("Client ID", credenciales.client_id)
+                          }
+                          aria-label="Copiar Client ID"
+                        >
+                          <span className="material-symbols-outlined" aria-hidden="true">
+                            content_copy
+                          </span>
+                        </button>
+                      </div>
+                    </div>
+
+                    <div>
+                      <span>Client secret</span>
+                      <div className="socio-credential-value">
+                        <code>{credenciales.client_secret}</code>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            copiarValor(
+                              "Client secret",
+                              credenciales.client_secret,
+                            )
+                          }
+                          aria-label="Copiar Client secret"
+                        >
+                          <span className="material-symbols-outlined" aria-hidden="true">
+                            content_copy
+                          </span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {valorCopiado && (
+                    <p className="socio-copy-confirmation" role="status">
+                      {valorCopiado} copiado.
+                    </p>
+                  )}
+                </section>
+              )}
+
+              {errorCredenciales && (
+                <div className="socio-credentials-error" role="alert">
+                  <span className="material-symbols-outlined" aria-hidden="true">
+                    warning
+                  </span>
+                  <div>
+                    <p>{errorCredenciales}</p>
+                    <button
+                      type="button"
+                      onClick={() => aprovisionarCredenciales(socioCreado.socio_id)}
+                      disabled={generandoCredenciales}
+                    >
+                      Reintentar generación
+                    </button>
+                  </div>
+                </div>
+              )}
+
               <button
                 className="socio-secondary-button"
                 type="button"
                 onClick={resetForm}
+                disabled={generandoCredenciales}
               >
                 Registrar otro socio
               </button>

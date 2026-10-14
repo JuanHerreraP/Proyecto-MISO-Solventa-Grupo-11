@@ -32,3 +32,12 @@ export interface RespuestaRegistroSocio
   creado_en: string;
   actualizado_en: string;
 }
+
+export interface CredencialesSocioEmitidas {
+  socio_id: string;
+  tenant_id: string;
+  client_id: string;
+  client_secret: string;
+  scopes: EndpointSocio[];
+  creado_en: string;
+}

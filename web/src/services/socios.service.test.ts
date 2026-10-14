@@ -8,7 +8,10 @@ import {
 } from "vitest";
 
 import type { SolicitudRegistroSocio } from "../types/socios";
-import { registrarSocio } from "./socios.service";
+import {
+  generarCredencialesSocio,
+  registrarSocio,
+} from "./socios.service";
 
 const SOLICITUD: SolicitudRegistroSocio = {
   nit: "900123456-7",
@@ -114,5 +117,39 @@ describe("socios.service", () => {
     await expect(registrarSocio(SOLICITUD)).rejects.toThrow(
       "El usuario no tiene permisos para registrar socios.",
     );
+  });
+
+  it("genera las credenciales del socio con la sesión administrativa", async () => {
+    localStorage.setItem("access_token", "token-prueba");
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          socio_id: "socio-001",
+          tenant_id: "tenant-001",
+          client_id: "solv_cliente_001",
+          client_secret: "solv_secret_unico",
+          scopes: ["cotizaciones:crear"],
+          creado_en: "2026-10-13T00:00:00Z",
+        }),
+        {
+          status: 201,
+          headers: { "Content-Type": "application/json" },
+        },
+      ),
+    );
+
+    const respuesta = await generarCredencialesSocio("socio-001");
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      expect.stringContaining("/api/v1/socios/socio-001/credenciales"),
+      {
+        method: "POST",
+        headers: {
+          Authorization: "Bearer token-prueba",
+        },
+      },
+    );
+    expect(respuesta.client_id).toBe("solv_cliente_001");
+    expect(respuesta.client_secret).toBe("solv_secret_unico");
   });
 });

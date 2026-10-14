@@ -12,10 +12,14 @@ import {
   vi,
 } from "vitest";
 
-import { registrarSocio } from "../services/socios.service";
+import {
+  generarCredencialesSocio,
+  registrarSocio,
+} from "../services/socios.service";
 import SocioRegistrationPage from "./SocioRegistrationPage";
 
 vi.mock("../services/socios.service", () => ({
+  generarCredencialesSocio: vi.fn(),
   registrarSocio: vi.fn(),
 }));
 
@@ -114,6 +118,14 @@ describe("SocioRegistrationPage", () => {
       creado_en: "2026-10-13T00:00:00Z",
       actualizado_en: "2026-10-13T00:00:00Z",
     });
+    vi.mocked(generarCredencialesSocio).mockResolvedValue({
+      socio_id: "socio-001",
+      tenant_id: "tenant-001",
+      client_id: "solv_cliente_001",
+      client_secret: "solv_secret_unico",
+      scopes: ["cotizaciones:crear"],
+      creado_en: "2026-10-13T00:00:00Z",
+    });
 
     renderPage();
     const user = await completarDatosBasicos();
@@ -143,6 +155,12 @@ describe("SocioRegistrationPage", () => {
     ).toBeInTheDocument();
     expect(screen.getByText("socio-001")).toBeInTheDocument();
     expect(screen.getByText("tenant-001")).toBeInTheDocument();
+    expect(generarCredencialesSocio).toHaveBeenCalledWith("socio-001");
+    expect(screen.getByText("solv_cliente_001")).toBeInTheDocument();
+    expect(screen.getByText("solv_secret_unico")).toBeInTheDocument();
+    expect(
+      screen.getByText(/client secret no volverá a mostrarse/i),
+    ).toBeInTheDocument();
   });
 
   it("muestra el error entregado por el servicio", async () => {
