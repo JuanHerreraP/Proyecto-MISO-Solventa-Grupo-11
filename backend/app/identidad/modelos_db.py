@@ -144,3 +144,52 @@ class EventoAutenticacionDB(Base):
         server_default=func.now(),
         index=True,
     )
+
+
+class SesionRefreshDB(Base):
+    """Refresh token emitido. Permite rotarlo, revocarlo y detectar su reutilización."""
+
+    __tablename__ = "sesiones_refresh"
+
+    jti: Mapped[str] = mapped_column(
+        String(36),
+        primary_key=True,
+    )
+
+    usuario_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        nullable=False,
+        index=True,
+    )
+
+    fecha_emision: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=func.now(),
+    )
+
+    fecha_expiracion: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+    )
+
+    revocada: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        default=False,
+    )
+
+    fecha_revocacion: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+    )
+
+    motivo_revocacion: Mapped[str | None] = mapped_column(
+        String(50),
+        nullable=True,
+    )
+
+    reemplazada_por: Mapped[str | None] = mapped_column(
+        String(36),
+        nullable=True,
+    )

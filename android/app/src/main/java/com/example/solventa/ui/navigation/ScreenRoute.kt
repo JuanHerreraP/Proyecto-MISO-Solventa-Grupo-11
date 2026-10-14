@@ -5,4 +5,5 @@ sealed class ScreenRoute(val route: String) {
     object BiometricalLogin : ScreenRoute("biometrical_login_screen")
     object Register : ScreenRoute("register_screen")
     object CredentialsLogin : ScreenRoute("credentials_login_screen")
+    object Home : ScreenRoute("home_screen")
 }

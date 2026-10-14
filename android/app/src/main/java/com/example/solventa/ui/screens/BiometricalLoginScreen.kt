@@ -36,6 +36,7 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.solventa.R
+import com.example.solventa.ui.components.SolventaNoticePill
 import com.example.solventa.ui.components.SolventaPrimaryButton
 import com.example.solventa.ui.components.SolventaSecondaryButton
 import com.example.solventa.ui.theme.Navegacion
@@ -47,6 +48,9 @@ fun BiometricalLoginScreen(
     onBiometricClick: () -> Unit = {},
     onUseCredentialsClick: () -> Unit = {},
     onRegisterClick: () -> Unit = {},
+    biometriaDisponible: Boolean = true,
+    cargando: Boolean = false,
+    mensaje: String? = null,
     modifier: Modifier = Modifier
 ) {
     Surface(
@@ -182,9 +186,18 @@ fun BiometricalLoginScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
+                if (mensaje != null) {
+                    SolventaNoticePill(
+                        text = mensaje,
+                        icon = painterResource(id = R.drawable.ic_main_page)
+                    )
+                }
+
                 SolventaPrimaryButton(
                     text = "Ingresar con biometría",
-                    onClick = onBiometricClick
+                    onClick = onBiometricClick,
+                    enabled = biometriaDisponible,
+                    isLoading = cargando
                 )
 
                 SolventaSecondaryButton(

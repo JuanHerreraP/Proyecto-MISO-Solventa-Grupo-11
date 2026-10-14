@@ -1,28 +1,34 @@
 """Endpoints de registro y autenticación de usuarios."""
 
 import httpx
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from sqlalchemy.orm import Session
 
+from app.api.seguridad import get_current_user
 from app.identidad.auditoria import TipoEventoAuth, registrar_evento_auth
 from app.identidad.config import get_identity_verification_provider
 from app.identidad.modelos import (
     RespuestaLogin,
+    RespuestaPerfil,
     RespuestaRegistro,
     SolicitudLogin,
+    SolicitudRefresh,
     SolicitudRegistro,
 )
 from app.identidad.puertos import IdentityVerificationProvider
-from app.identidad.repositorio import RepositorioUsuariosPostgres
+from app.identidad.repositorio import RepositorioSesionesPostgres, RepositorioUsuariosPostgres
 from app.identidad.servicio import (
     ConsentimientoRequeridoError,
     CredencialesInvalidasError,
     KYCPendienteError,
     KYCRechazadoError,
     ServicioIdentidad,
+    SesionInvalidaError,
+    SesionReutilizadaError,
     UsuarioInactivoError,
     UsuarioYaExisteError,
 )
+from app.identidad.tokens import TokenExpiradoError, TokenInvalidoError
 from app.infraestructura.database import get_db
 
 router = APIRouter(
@@ -154,7 +160,10 @@ def login(
     db: Session = Depends(get_db),
 ) -> RespuestaLogin:
     repositorio = RepositorioUsuariosPostgres(db)
-    servicio = ServicioIdentidad(repositorio=repositorio)
+    servicio = ServicioIdentidad(
+        repositorio=repositorio,
+        repositorio_sesiones=RepositorioSesionesPostgres(db),
+    )
 
     try:
         resultado = servicio.autenticar_usuario(
@@ -206,3 +215,129 @@ def login(
                 "mensaje": str(error),
             },
         ) from error
+
+
+MENSAJE_SESION_EXPIRADA = "La sesión expiró. Inicie sesión de nuevo."
+MENSAJE_SESION_INVALIDA = "La sesión no es válida. Inicie sesión de nuevo."
+
+
+def _error_sesion(codigo: str, mensaje: str) -> HTTPException:
+    return HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail={"codigo": codigo, "mensaje": mensaje},
+    )
+
+
+@router.post(
+    "/refresh",
+    response_model=RespuestaLogin,
+    status_code=status.HTTP_200_OK,
+)
+def renovar_sesion(
+    solicitud: SolicitudRefresh,
+    request: Request,
+    db: Session = Depends(get_db),
+) -> RespuestaLogin:
+    """Cambia un refresh token vigente por un par nuevo (rotación).
+
+    La app Android lo usa después de validar la biometría del usuario (HU02).
+    """
+
+    servicio = ServicioIdentidad(
+        repositorio=RepositorioUsuariosPostgres(db),
+        repositorio_sesiones=RepositorioSesionesPostgres(db),
+    )
+
+    try:
+        resultado = servicio.renovar_sesion(solicitud.refresh_token)
+
+    except TokenExpiradoError as error:
+        registrar_evento_auth(
+            tipo_evento=TipoEventoAuth.REFRESH_FAILED,
+            exitoso=False,
+            detalle="REFRESH_EXPIRED",
+            request=request,
+        )
+        raise _error_sesion("REFRESH_EXPIRED", MENSAJE_SESION_EXPIRADA) from error
+
+    except (TokenInvalidoError, SesionInvalidaError) as error:
+        registrar_evento_auth(
+            tipo_evento=TipoEventoAuth.REFRESH_FAILED,
+            exitoso=False,
+            detalle="REFRESH_INVALID",
+            request=request,
+        )
+        raise _error_sesion("REFRESH_INVALID", MENSAJE_SESION_INVALIDA) from error
+
+    except SesionReutilizadaError as error:
+        registrar_evento_auth(
+            tipo_evento=TipoEventoAuth.REFRESH_REUSE_DETECTED,
+            exitoso=False,
+            usuario_id=error.usuario_id,
+            detalle="REFRESH_REUSED",
+            request=request,
+        )
+        raise _error_sesion("REFRESH_REUSED", str(error)) from error
+
+    except UsuarioInactivoError as error:
+        registrar_evento_auth(
+            tipo_evento=TipoEventoAuth.REFRESH_FAILED,
+            exitoso=False,
+            detalle="USER_INACTIVE",
+            request=request,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail={"codigo": "USER_INACTIVE", "mensaje": str(error)},
+        ) from error
+
+    registrar_evento_auth(
+        tipo_evento=TipoEventoAuth.TOKEN_REFRESHED,
+        exitoso=True,
+        detalle="Sesión renovada.",
+        request=request,
+    )
+    return resultado
+
+
+@router.post(
+    "/logout",
+    status_code=status.HTTP_204_NO_CONTENT,
+    response_class=Response,
+)
+def cerrar_sesion(
+    solicitud: SolicitudRefresh,
+    request: Request,
+    db: Session = Depends(get_db),
+) -> Response:
+    """Revoca el refresh token. Responde 204 aunque la sesión ya estuviera cerrada."""
+
+    servicio = ServicioIdentidad(
+        repositorio=RepositorioUsuariosPostgres(db),
+        repositorio_sesiones=RepositorioSesionesPostgres(db),
+    )
+
+    try:
+        usuario_id = servicio.cerrar_sesion(solicitud.refresh_token)
+    except TokenInvalidoError as error:
+        raise _error_sesion("REFRESH_INVALID", "La sesión no es válida.") from error
+
+    registrar_evento_auth(
+        tipo_evento=TipoEventoAuth.LOGOUT,
+        exitoso=True,
+        usuario_id=usuario_id,
+        detalle="Cierre de sesión.",
+        request=request,
+    )
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@router.get(
+    "/me",
+    response_model=RespuestaPerfil,
+    status_code=status.HTTP_200_OK,
+)
+def perfil_actual(usuario=Depends(get_current_user)) -> RespuestaPerfil:
+    """Datos del usuario dueño del token. Sin token válido responde 401 (HU02, EC08)."""
+
+    return ServicioIdentidad(repositorio=None).obtener_perfil(usuario)

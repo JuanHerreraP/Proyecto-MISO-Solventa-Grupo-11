@@ -41,6 +41,7 @@ import com.example.solventa.ui.components.SolventaNoticePill
 import com.example.solventa.ui.components.SolventaPrimaryButton
 import com.example.solventa.ui.components.SolventaSecondaryButton
 import com.example.solventa.ui.components.SolventaTextField
+import com.example.solventa.ui.theme.Atencion
 import com.example.solventa.ui.theme.Navegacion
 import com.example.solventa.ui.theme.SolventaTheme
 import com.example.solventa.ui.validation.canSubmitCredentialsLogin
@@ -51,6 +52,8 @@ fun CredentialsLoginScreen(
     onLoginSubmit: (email: String, pass: String) -> Unit = { _, _ -> },
     onSwitchToBiometric: () -> Unit = {},
     onForgotPasswordClick: () -> Unit = {},
+    cargando: Boolean = false,
+    mensaje: String? = null,
     modifier: Modifier = Modifier
 ) {
     var email by remember { mutableStateOf("") }
@@ -166,9 +169,19 @@ fun CredentialsLoginScreen(
                 modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
+                if (mensaje != null) {
+                    SolventaNoticePill(
+                        text = mensaje,
+                        icon = painterResource(id = R.drawable.ic_main_page),
+                        containerColor = Atencion.copy(alpha = 0.10f),
+                        contentColor = Atencion
+                    )
+                }
+
                 SolventaPrimaryButton(
                     text = "Ingresar",
                     enabled = canSubmitCredentialsLogin(email, password),
+                    isLoading = cargando,
                     onClick = { onLoginSubmit(email, password) }
                 )
 

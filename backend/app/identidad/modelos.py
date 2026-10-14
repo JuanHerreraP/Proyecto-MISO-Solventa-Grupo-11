@@ -94,4 +94,14 @@ class RespuestaLogin(BaseModel):
 
 
 class SolicitudRefresh(BaseModel):
-    refresh_token: str
+    refresh_token: str = Field(min_length=1)
+
+
+class RespuestaPerfil(BaseModel):
+    """Datos mínimos del usuario autenticado. Solo se entregan con un token válido."""
+
+    id: str
+    nombre: str
+    apellido: str
+    email: EmailStr
+    rol: Rol
