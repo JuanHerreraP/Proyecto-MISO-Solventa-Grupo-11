@@ -36,6 +36,17 @@ class CredencialesEmitidas(BaseModel):
     creado_en: datetime
 
 
+class TokenAccesoSocio(BaseModel):
+    """Token temporal entregado a un socio autenticado."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    access_token: str
+    token_type: str = "bearer"
+    expires_in: int
+    scope: str
+
+
 password_hash = PasswordHash.recommended()
 
 

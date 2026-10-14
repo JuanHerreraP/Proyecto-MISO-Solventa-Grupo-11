@@ -11,6 +11,7 @@ from app.api import (
     credenciales_socios,
     enriquecimiento,
     identidad,
+    oauth_socios,
     perfilamiento,
     salud,
     socios,
@@ -41,6 +42,7 @@ def crear_app() -> FastAPI:
     app.include_router(enriquecimiento.router)
     app.include_router(socios.router)
     app.include_router(credenciales_socios.router)
+    app.include_router(oauth_socios.router)
     app.include_router(autorizacion_socios.router)
     app.include_router(identidad.router)
     app.include_router(autenticacion.router)
