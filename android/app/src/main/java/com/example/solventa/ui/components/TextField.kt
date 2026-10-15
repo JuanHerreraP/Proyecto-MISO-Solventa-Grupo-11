@@ -26,12 +26,17 @@ fun SolventaTextField(
     singleLine: Boolean = true,
     visualTransformation: VisualTransformation = VisualTransformation.None,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
-    trailingIcon: @Composable (() -> Unit)? = null
+    trailingIcon: @Composable (() -> Unit)? = null,
+    error: String? = null,
+    readOnly: Boolean = false
 ) {
     OutlinedTextField(
         value = value,
         onValueChange = onValueChange,
         modifier = modifier.fillMaxWidth(),
+        readOnly = readOnly,
+        isError = error != null,
+        supportingText = error?.let { mensaje -> { Text(mensaje) } },
         label = {
             Text(
                 text = label.uppercase(),

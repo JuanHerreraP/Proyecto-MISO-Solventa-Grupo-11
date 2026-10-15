@@ -1,14 +1,19 @@
 package com.example.solventa
 
+import android.content.pm.PackageManager
+import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.view.WindowManager
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.ui.Modifier
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
 import com.example.solventa.biometric.AutenticadorBiometrico
 import com.example.solventa.biometric.DisponibilidadBiometrica
@@ -39,8 +44,12 @@ class MainActivity : FragmentActivity() {
         }
     }
 
+    private val solicitarRedLocal =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        pedirPermisoRedLocalSiAplica()
         // Evita capturas de pantalla y que la vista previa de recientes muestre datos del cliente.
         window.setFlags(WindowManager.LayoutParams.FLAG_SECURE, WindowManager.LayoutParams.FLAG_SECURE)
         enableEdgeToEdge()
@@ -61,5 +70,26 @@ class MainActivity : FragmentActivity() {
         super.onResume()
         // Al volver a la app se revisa si el access token venció mientras estaba en segundo plano.
         viewModel.verificarExpiracion()
+    }
+
+    /**
+     * Desde Android 17 (API 37) las conexiones a IPs de la red local (10.0.2.2, 192.168.x.x...)
+     * fallan sin ACCESS_LOCAL_NETWORK. Solo se pide cuando el backend configurado es local.
+     */
+    private fun pedirPermisoRedLocalSiAplica() {
+        if (Build.VERSION.SDK_INT < 37 || !esBackendLocal(BuildConfig.API_BASE_URL)) return
+        val permiso = "android.permission.ACCESS_LOCAL_NETWORK"
+        if (ContextCompat.checkSelfPermission(this, permiso) != PackageManager.PERMISSION_GRANTED) {
+            solicitarRedLocal.launch(permiso)
+        }
+    }
+
+    private fun esBackendLocal(url: String): Boolean {
+        val host = Uri.parse(url).host ?: return false
+        return host == "localhost" ||
+            host.startsWith("10.") ||
+            host.startsWith("192.168.") ||
+            host.startsWith("127.") ||
+            Regex("^172\\.(1[6-9]|2\\d|3[01])\\.").containsMatchIn(host)
     }
 }

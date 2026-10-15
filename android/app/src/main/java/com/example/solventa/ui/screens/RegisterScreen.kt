@@ -1,5 +1,7 @@
 package com.example.solventa.ui.screens
 
+import android.app.DatePickerDialog
+import android.content.Context
 import android.graphics.Bitmap
 import android.util.Base64
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -8,6 +10,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -22,10 +25,14 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
+import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -39,8 +46,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
@@ -55,9 +64,20 @@ import com.example.solventa.ui.theme.Navegacion
 import com.example.solventa.ui.theme.Offline
 import com.example.solventa.ui.theme.SolventaTheme
 import com.example.solventa.ui.validation.canSubmitRegistration
-import com.example.solventa.ui.validation.esCorreoValido
+import com.example.solventa.ui.validation.EDAD_MINIMA
+import com.example.solventa.ui.validation.FORMATO_FECHA
+import com.example.solventa.ui.validation.TipoDocumento
+import com.example.solventa.ui.validation.errorCelular
+import com.example.solventa.ui.validation.errorCorreo
+import com.example.solventa.ui.validation.errorFechaNacimiento
+import com.example.solventa.ui.validation.errorNombre
+import com.example.solventa.ui.validation.errorNumeroDocumento
+import com.example.solventa.ui.validation.errorPassword
 import com.example.solventa.ui.validation.esFormularioRegistroValido
 import java.io.ByteArrayOutputStream
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Locale
 
 @Composable
 fun RegisterScreen(
@@ -77,6 +97,8 @@ fun RegisterScreen(
     var password by remember { mutableStateOf("") }
     var fechaNacimiento by remember { mutableStateOf("") }
     var aceptaTerminos by remember { mutableStateOf(false) }
+    var menuDocumento by remember { mutableStateOf(false) }
+    val contexto = LocalContext.current
     var selfie by remember { mutableStateOf<Bitmap?>(null) }
     var errorCaptura by remember { mutableStateOf<String?>(null) }
 
@@ -160,82 +182,146 @@ fun RegisterScreen(
 
             SolventaTextField(
                 value = nombre,
-                onValueChange = { nombre = it },
+                onValueChange = { nombre = it.take(100) },
                 label = "Nombres",
                 placeholder = "Tus nombres",
-                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next)
+                keyboardOptions = KeyboardOptions(
+                    capitalization = KeyboardCapitalization.Words,
+                    imeAction = ImeAction.Next
+                ),
+                error = errorNombre(nombre, "nombres").takeIf { nombre.isNotBlank() }
             )
             SolventaTextField(
                 value = apellido,
-                onValueChange = { apellido = it },
+                onValueChange = { apellido = it.take(100) },
                 label = "Apellidos",
                 placeholder = "Tus apellidos",
-                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next)
+                keyboardOptions = KeyboardOptions(
+                    capitalization = KeyboardCapitalization.Words,
+                    imeAction = ImeAction.Next
+                ),
+                error = errorNombre(apellido, "apellidos").takeIf { apellido.isNotBlank() }
             )
-            SolventaTextField(
-                value = tipoDocumento,
-                onValueChange = { tipoDocumento = it },
-                label = "Tipo de documento",
-                placeholder = "CC",
-                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next)
-            )
+
+            Box {
+                SolventaTextField(
+                    value = TipoDocumento.desdeCodigo(tipoDocumento)?.etiqueta.orEmpty(),
+                    onValueChange = {},
+                    label = "Tipo de documento",
+                    placeholder = "Selecciona una opción",
+                    readOnly = true,
+                    trailingIcon = {
+                        Icon(
+                            imageVector = Icons.Filled.ArrowDropDown,
+                            contentDescription = "Abrir lista de tipos de documento"
+                        )
+                    }
+                )
+                Box(
+                    modifier = Modifier
+                        .matchParentSize()
+                        .clickable(enabled = !cargando) { menuDocumento = true }
+                )
+                DropdownMenu(
+                    expanded = menuDocumento,
+                    onDismissRequest = { menuDocumento = false }
+                ) {
+                    TipoDocumento.entries.forEach { tipo ->
+                        DropdownMenuItem(
+                            text = { Text("${tipo.codigo} · ${tipo.etiqueta}") },
+                            onClick = {
+                                if (tipo.codigo != tipoDocumento) numeroDocumento = ""
+                                tipoDocumento = tipo.codigo
+                                menuDocumento = false
+                            }
+                        )
+                    }
+                }
+            }
             SolventaTextField(
                 value = numeroDocumento,
-                onValueChange = { numeroDocumento = it },
+                onValueChange = { nuevo ->
+                    val tipo = TipoDocumento.desdeCodigo(tipoDocumento)
+                    numeroDocumento = if (tipo?.soloDigitos == false) {
+                        nuevo.filter { it.isLetterOrDigit() }.take(12)
+                    } else {
+                        nuevo.filter { it.isDigit() }.take(12)
+                    }
+                },
                 label = "Número de documento",
-                placeholder = "Número",
+                placeholder = if (tipoDocumento == TipoDocumento.PAS.codigo) "Pasaporte" else "Solo números",
                 keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Number,
+                    keyboardType = if (tipoDocumento == TipoDocumento.PAS.codigo) {
+                        KeyboardType.Ascii
+                    } else {
+                        KeyboardType.Number
+                    },
                     imeAction = ImeAction.Next
-                )
+                ),
+                error = if (tipoDocumento.isEmpty()) {
+                    null
+                } else {
+                    errorNumeroDocumento(tipoDocumento, numeroDocumento).takeIf { numeroDocumento.isNotEmpty() }
+                }
             )
-            SolventaTextField(
-                value = fechaNacimiento,
-                onValueChange = { fechaNacimiento = it },
-                label = "Fecha de nacimiento",
-                placeholder = "AAAA-MM-DD",
-                keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Ascii,
-                    imeAction = ImeAction.Next
+
+            Box {
+                SolventaTextField(
+                    value = fechaNacimiento,
+                    onValueChange = {},
+                    label = "Fecha de nacimiento",
+                    placeholder = "AAAA-MM-DD",
+                    readOnly = true,
+                    trailingIcon = {
+                        Icon(
+                            imageVector = Icons.Filled.DateRange,
+                            contentDescription = "Seleccionar fecha"
+                        )
+                    },
+                    error = errorFechaNacimiento(fechaNacimiento).takeIf { fechaNacimiento.isNotEmpty() }
                 )
-            )
+                Box(
+                    modifier = Modifier
+                        .matchParentSize()
+                        .clickable(enabled = !cargando) {
+                            mostrarSelectorFecha(contexto, fechaNacimiento) { fechaNacimiento = it }
+                        }
+                )
+            }
+
             SolventaTextField(
                 value = email,
-                onValueChange = { email = it },
+                onValueChange = { email = it.trim().take(254) },
                 label = "Correo electrónico",
                 placeholder = "tu.correo@ejemplo.com",
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Email,
                     imeAction = ImeAction.Next
-                )
+                ),
+                error = errorCorreo(email).takeIf { email.isNotBlank() }
             )
-            if (email.isNotBlank() && !esCorreoValido(email)) {
-                Text(
-                    text = "Ingresa un correo electrónico válido.",
-                    color = Atencion,
-                    style = MaterialTheme.typography.bodySmall
-                )
-            }
             SolventaTextField(
                 value = celular,
-                onValueChange = { celular = it },
+                onValueChange = { celular = it.filter { c -> c.isDigit() }.take(10) },
                 label = "Celular",
-                placeholder = "300 000 0000",
+                placeholder = "3001234567",
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Phone,
                     imeAction = ImeAction.Next
-                )
+                ),
+                error = errorCelular(celular).takeIf { celular.isNotEmpty() }
             )
             SolventaTextField(
                 value = password,
-                onValueChange = { password = it },
+                onValueChange = { password = it.take(128) },
                 label = "Contraseña",
-                placeholder = "Mínimo 8 caracteres",
+                placeholder = "Mínimo 8 caracteres, letras y números",
                 visualTransformation = PasswordVisualTransformation(),
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Password,
                     imeAction = ImeAction.Done
-                )
+                ),
+                error = errorPassword(password).takeIf { password.isNotEmpty() }
             )
 
             Surface(
@@ -257,13 +343,6 @@ fun RegisterScreen(
                     )
                 }
             }
-
-            Text(
-                text = "Demostración KYC: la selfie se envía al proveedor simulado. No se realiza reconocimiento facial ni prueba de vida real.",
-                style = MaterialTheme.typography.bodySmall,
-                color = Atencion,
-                textAlign = TextAlign.Start
-            )
 
             if (selfie != null) {
                 Image(
@@ -292,7 +371,7 @@ fun RegisterScreen(
                 )
             } else if (!formularioValido) {
                 Text(
-                    text = "Completa todos los campos, usa una fecha AAAA-MM-DD, una contraseña de al menos 8 caracteres y acepta los términos.",
+                    text = "Completa todos los campos, usa corrige los campos marcados (mayor de 18 años, celular de 10 dígitos, contraseña con letras y números) y acepta los términos.",
                     color = Atencion,
                     style = MaterialTheme.typography.bodySmall
                 )
@@ -334,6 +413,32 @@ fun RegisterScreen(
             )
         }
     }
+}
+
+/** Abre el calendario del sistema; entrega la fecha ya formateada como AAAA-MM-DD. */
+private fun mostrarSelectorFecha(
+    contexto: Context,
+    actual: String,
+    alElegir: (String) -> Unit
+) {
+    val formato = SimpleDateFormat(FORMATO_FECHA, Locale.US)
+    val maxima = Calendar.getInstance().apply { add(Calendar.YEAR, -EDAD_MINIMA) }
+    val inicial = Calendar.getInstance().apply {
+        time = runCatching { formato.parse(actual) }.getOrNull() ?: maxima.time
+    }
+    DatePickerDialog(
+        contexto,
+        { _, anio, mes, dia ->
+            val elegida = Calendar.getInstance().apply { set(anio, mes, dia) }
+            alElegir(formato.format(elegida.time))
+        },
+        inicial.get(Calendar.YEAR),
+        inicial.get(Calendar.MONTH),
+        inicial.get(Calendar.DAY_OF_MONTH)
+    ).apply {
+        datePicker.maxDate = maxima.timeInMillis
+        datePicker.minDate = Calendar.getInstance().apply { add(Calendar.YEAR, -120) }.timeInMillis
+    }.show()
 }
 
 private fun Bitmap.aBase64Jpeg(): String {
