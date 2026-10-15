@@ -38,6 +38,7 @@ def test_registro_rechaza_password_menor_a_ocho():
             selfie_base64="/9j/2Q==",
         )
 
+
 def test_registro_rechaza_selfie_jpeg_invalida():
     with pytest.raises(ValidationError):
         SolicitudRegistro(

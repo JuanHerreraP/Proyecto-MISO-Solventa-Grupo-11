@@ -198,10 +198,7 @@ def test_envia_selfie_al_proveedor_sin_persistirla(
     )
 
     assert provider.llamadas[0].selfie_base64 == solicitud_registro.selfie_base64
-    assert all(
-        not hasattr(usuario, "selfie_base64")
-        for usuario in repositorio.usuarios.values()
-    )
+    assert all(not hasattr(usuario, "selfie_base64") for usuario in repositorio.usuarios.values())
 
 
 def test_registro_legacy_sin_celular_ni_selfie_sigue_compatible(

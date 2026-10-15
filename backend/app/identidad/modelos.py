@@ -59,9 +59,7 @@ class SolicitudRegistro(BaseModel):
     fecha_nacimiento: date
     celular: str | None = Field(default=None, min_length=7, max_length=30)
     acepta_validacion_identidad: bool
-    selfie_base64: str | None = Field(
-        default=None, min_length=4, max_length=4_194_304
-    )
+    selfie_base64: str | None = Field(default=None, min_length=4, max_length=4_194_304)
 
     @field_validator(
         "nombre",
