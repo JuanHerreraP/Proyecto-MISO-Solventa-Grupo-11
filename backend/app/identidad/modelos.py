@@ -15,8 +15,10 @@ class Rol(str, Enum):
     ANALISTA_RIESGOS = "ANALISTA_RIESGOS"
     OPERACIONES_SINIESTROS = "OPERACIONES_SINIESTROS"
     SOCIO_DISTRIBUCION = "SOCIO_DISTRIBUCION"
-    INGENIERO_INTEGRACIONES = "INGENIERO_INTEGRACIONES" #Puede crear usuarios de socios y ver sus credenciales
-    SERVICIO_INTERNO = "SERVICIO_INTERNO" #Puede crear usuarios de socios y ver sus credenciales, además de generar perfiles de riesgo y ver el detalle de los mismos
+    # Administra socios de distribución y genera sus credenciales de integración.
+    INGENIERO_INTEGRACIONES = "INGENIERO_INTEGRACIONES"
+    # Administra usuarios y socios; puede generar perfiles de riesgo y consultar su detalle.
+    SERVICIO_INTERNO = "SERVICIO_INTERNO"
     CLIENTE = "CLIENTE"
 
 
