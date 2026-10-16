@@ -7,6 +7,7 @@ import {
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import HomePage from "./pages/HomePage";
+import SocioRegistrationPage from "./pages/SocioRegistrationPage";
 
 function App() {
   return (
@@ -29,6 +30,11 @@ function App() {
       <Route
         path="/home"
         element={<HomePage />}
+      />
+
+      <Route
+        path="/admin/socios/nuevo"
+        element={<SocioRegistrationPage />}
       />
     </Routes>
   );
