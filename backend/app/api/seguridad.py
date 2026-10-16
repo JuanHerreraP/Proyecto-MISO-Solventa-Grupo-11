@@ -92,7 +92,9 @@ def get_current_user(
         )
 
     request.state.usuario_autenticado = SimpleNamespace(
-        id=usuario.id, email=usuario.email, rol=usuario.rol,
+        id=usuario.id,
+        email=usuario.email,
+        rol=usuario.rol,
     )
 
     if not usuario.activo:

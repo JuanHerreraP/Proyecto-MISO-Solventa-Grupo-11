@@ -90,7 +90,8 @@ def _crear_usuario(solicitud, request, db, provider, manager=None) -> RespuestaR
             usuario_id=str(resultado.id),
             email=str(resultado.email),
             detalle=(
-                "Registro exitoso." if manager is None
+                "Registro exitoso."
+                if manager is None
                 else f"Creado por manager:{manager.id};rol:{resultado.rol.value}"
             ),
             request=request,

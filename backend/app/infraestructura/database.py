@@ -35,12 +35,12 @@ def preparar_esquema_registro() -> None:
         columnas = {c["name"] for c in inspector.get_columns("sesiones_refresh")}
         if "ultima_actividad" not in columnas:
             with engine.begin() as conexion:
-                conexion.execute(text(
-                    "ALTER TABLE sesiones_refresh ADD COLUMN ultima_actividad TIMESTAMP"
-                ))
-                conexion.execute(text(
-                    "UPDATE sesiones_refresh SET ultima_actividad = fecha_emision"
-                ))
+                conexion.execute(
+                    text("ALTER TABLE sesiones_refresh ADD COLUMN ultima_actividad TIMESTAMP")
+                )
+                conexion.execute(
+                    text("UPDATE sesiones_refresh SET ultima_actividad = fecha_emision")
+                )
     if not inspector.has_table("usuarios"):
         return
 

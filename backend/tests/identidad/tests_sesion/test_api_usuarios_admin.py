@@ -24,8 +24,11 @@ def cliente(fabrica_sesiones, monkeypatch):
     class Provider:
         def verify(self, solicitud):
             return VerificationResult(
-                "KYC-ADMIN", VerificationStatus.APPROVED, 0.1,
-                "test", datetime.now(timezone.utc),
+                "KYC-ADMIN",
+                VerificationStatus.APPROVED,
+                0.1,
+                "test",
+                datetime.now(timezone.utc),
             )
 
     def obtener_db():
@@ -50,10 +53,15 @@ def cabecera(db, rol):
 
 def solicitud(rol):
     return {
-        "nombre": "Nuevo", "apellido": "Usuario", "email": "nuevo@example.com",
-        "password": "Password123!", "tipo_documento": "CC",
-        "numero_documento": "123456789", "fecha_nacimiento": "1990-01-01",
-        "acepta_validacion_identidad": True, "rol": rol,
+        "nombre": "Nuevo",
+        "apellido": "Usuario",
+        "email": "nuevo@example.com",
+        "password": "Password123!",
+        "tipo_documento": "CC",
+        "numero_documento": "123456789",
+        "fecha_nacimiento": "1990-01-01",
+        "acepta_validacion_identidad": True,
+        "rol": rol,
     }
 
 

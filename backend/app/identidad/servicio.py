@@ -316,7 +316,9 @@ class ServicioIdentidad:
         )
 
         access_token = crear_access_token(
-            usuario_id=str(usuario.id), email=usuario.email, rol=usuario.rol,
+            usuario_id=str(usuario.id),
+            email=usuario.email,
+            rol=usuario.rol,
             sesion_id=refresh.jti if self.repositorio_sesiones is not None else None,
         )
 
