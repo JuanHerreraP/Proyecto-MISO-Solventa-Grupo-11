@@ -3,6 +3,7 @@
 import time
 
 from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
 
 from app import __version__
 from app.api import (
@@ -30,7 +31,13 @@ def crear_app() -> FastAPI:
         version=__version__,
         description="Backend de la plataforma de seguros embebidos Solventa.",
     )
-
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
     @app.middleware("http")
     async def medir_latencia(request: Request, call_next):
         inicio = time.perf_counter()
