@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { login, register } from "./auth.service";
+import { guardarAccessToken } from "./session";
+import { login, register, obtenerPerfil } from "./auth.service";
 
 const credenciales = { email: "maria@solventa.com", password: "Password123!" };
 const solicitud = { ...credenciales, nombre: "Maria", apellido: "Torres", tipo_documento: "CC",
@@ -49,4 +50,22 @@ describe("auth.service", () => {
     simular(new Response("respuesta-no-json", { status: 500 }));
     await expect(register(solicitud)).rejects.toThrow("No fue posible comunicarse correctamente con el servidor.");
   });
+});
+
+
+it("consulta el perfil con Bearer y devuelve el rol del servidor", async () => {
+  guardarAccessToken("token-perfil");
+  const fetch = simular(json({ id: "usuario-1", rol: "CLIENTE" }));
+  expect(await obtenerPerfil()).toMatchObject({ rol: "CLIENTE" });
+  expect(fetch).toHaveBeenCalledWith(expect.stringContaining("/auth/me"), expect.objectContaining({
+    credentials: "omit", headers: { authorization: "Bearer token-perfil" },
+  }));
+  guardarAccessToken(null);
+});
+
+it("muestra el error de la API al consultar un perfil no autorizado", async () => {
+  guardarAccessToken("token-perfil");
+  simular(json({ detail: { mensaje: "Usuario inactivo." } }, 403));
+  await expect(obtenerPerfil()).rejects.toThrow("Usuario inactivo.");
+  guardarAccessToken(null);
 });

@@ -167,3 +167,28 @@ describe("socios.service", () => {
     expect(respuesta.client_secret).toBe("solv_secret_unico");
   });
 });
+
+
+describe("errores de integración con socios", () => {
+  beforeEach(() => guardarAccessToken("token-prueba"));
+  afterEach(() => { vi.restoreAllMocks(); guardarAccessToken(null); });
+
+  it.each([
+    [{}, "No fue posible registrar el socio."],
+    [{ detail: [{}] }, "Datos del socio: Valor inválido."],
+    [{ detail: [{ loc: ["body", "campo_nuevo"], msg: "Inválido" }] }, "campo_nuevo: Inválido"],
+  ])("presenta errores con estructuras incompletas", async (body, mensaje) => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(JSON.stringify(body), { status: 422 }));
+    await expect(registrarSocio(SOLICITUD)).rejects.toThrow(mensaje as string);
+  });
+
+  it("informa una respuesta ilegible del servidor", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response("<html>Error</html>", { status: 502 }));
+    await expect(registrarSocio(SOLICITUD)).rejects.toThrow("No fue posible comunicarse correctamente");
+  });
+
+  it("explica que el socio existe aunque haya fallado generar sus credenciales", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response("{}", { status: 503 }));
+    await expect(generarCredencialesSocio("socio-001")).rejects.toThrow("El socio fue registrado, pero no fue posible generar sus credenciales.");
+  });
+});

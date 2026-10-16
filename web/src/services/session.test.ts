@@ -22,6 +22,7 @@ afterEach(async () => {
   guardarAccessToken(null);
   await vi.advanceTimersByTimeAsync(0);
   vi.restoreAllMocks();
+  vi.unstubAllGlobals();
   vi.useRealTimers();
 });
 
@@ -115,4 +116,128 @@ it("logout usa CSRF y limpia el token en memoria", async () => {
   await cerrarSesion();
   expect(obtenerAccessToken()).toBeNull();
   expect(fetch.mock.calls.at(-1)?.[1]).toMatchObject({ credentials: "include", headers: { "X-CSRF-Token": "reto-csrf" } });
+});
+
+it("no restaura una sesión que ya tiene access token", async () => {
+  const fetch = simular(() => json({}));
+  expect(await restaurarSesion()).toBe(true);
+  expect(fetch).not.toHaveBeenCalled();
+});
+
+it("logout fallido conserva la sesión para permitir reintentar", async () => {
+  vi.spyOn(globalThis, "fetch").mockImplementation(async (url) =>
+    String(url).endsWith("/csrf") ? json({ csrf_token: "csrf" }) : json({}, 503));
+  await expect(cerrarSesion()).rejects.toThrow("cerrar la sesión");
+  expect(obtenerAccessToken()).toBe("access-1");
+});
+
+it("una petición sin sesión no llega a la red", async () => {
+  guardarAccessToken(null);
+  const fetch = simular(() => json({}));
+  await expect(fetchAutenticado("/protegido")).rejects.toThrow("Inicia sesión");
+  expect(fetch).not.toHaveBeenCalled();
+});
+
+it("no reactiva la sesión después de una suspensión superior a 30 minutos", async () => {
+  const fetch = simular(() => json({}));
+  detener = iniciarControlSesion();
+  vi.setSystemTime(Date.now() + 31 * 60_000);
+  window.dispatchEvent(new Event("pointerdown"));
+  expect(obtenerAccessToken()).toBeNull();
+  await expect(fetchAutenticado("/protegido")).rejects.toThrow("Inicia sesión");
+  expect(fetch.mock.calls.some(([url]) => url === "/protegido")).toBe(false);
+});
+
+it("un 401 que no contiene JSON limpia la sesión sin renovar", async () => {
+  const fetch = simular(() => new Response("no-json", { status: 401 }));
+  expect((await fetchAutenticado("/protegido")).status).toBe(401);
+  expect(obtenerAccessToken()).toBeNull();
+  expect(fetch.mock.calls.some(([url]) => String(url).endsWith("/refresh"))).toBe(false);
+});
+
+it("un segundo 401 finaliza la sesión sin reintentos infinitos", async () => {
+  const fetch = simular((url) => url.endsWith("/refresh")
+    ? json(sesion) : json({ detail: { codigo: "TOKEN_EXPIRED" } }, 401));
+  expect((await fetchAutenticado("/protegido")).status).toBe(401);
+  expect(obtenerAccessToken()).toBeNull();
+  expect(fetch.mock.calls.filter(([url]) => url === "/protegido")).toHaveLength(2);
+});
+
+it("una respuesta de refresh antigua no reemplaza una sesión nueva", async () => {
+  let terminar!: (respuesta: Response) => void;
+  const pendiente = new Promise<Response>((resolve) => { terminar = resolve; });
+  const fetch = simular((url) => url.endsWith("/refresh") ? pendiente : json({}));
+  vi.setSystemTime(Date.now() + 29 * 60_000);
+  const peticion = fetchAutenticado("/protegido");
+  await vi.waitFor(() => expect(fetch.mock.calls.some(([url]) => String(url).endsWith("/refresh"))).toBe(true));
+  guardarSesion({ ...sesion, access_token: "nuevo-login" });
+  const rechazada = expect(peticion).rejects.toThrow("La sesión cambió");
+  terminar(json({ ...sesion, access_token: "respuesta-antigua" }));
+  await rechazada;
+  expect(obtenerAccessToken()).toBe("nuevo-login");
+});
+
+it("coordina un 401 recibido mientras otra petición está renovando", async () => {
+  let devolverLenta!: (respuesta: Response) => void;
+  let devolverRefresh!: (respuesta: Response) => void;
+  const lenta = new Promise<Response>((resolve) => { devolverLenta = resolve; });
+  const refresh = new Promise<Response>((resolve) => { devolverRefresh = resolve; });
+  let intentosLenta = 0;
+  const fetch = simular((url) => {
+    if (url.endsWith("/refresh")) return refresh;
+    if (url === "/lenta" && ++intentosLenta === 1) return lenta;
+    return json({ ok: true });
+  });
+  const primera = fetchAutenticado("/lenta");
+  vi.setSystemTime(Date.now() + 29 * 60_000);
+  const segunda = fetchAutenticado("/rapida");
+  await vi.waitFor(() => expect(fetch.mock.calls.some(([url]) => String(url).endsWith("/refresh"))).toBe(true));
+  devolverLenta(json({ detail: { codigo: "SESSION_EXPIRED" } }, 401));
+  await Promise.resolve();
+  devolverRefresh(json({ ...sesion, access_token: "renovado" }));
+  const respuestas = await Promise.all([primera, segunda]);
+  expect(respuestas.every((respuesta) => respuesta.status === 200)).toBe(true);
+  expect(fetch.mock.calls.filter(([url]) => String(url).endsWith("/refresh"))).toHaveLength(1);
+});
+
+class CanalSimulado {
+  static ultimo: CanalSimulado;
+  onmessage: ((event: MessageEvent) => void) | null = null;
+  postMessage = vi.fn();
+  close = vi.fn();
+  constructor() { CanalSimulado.ultimo = this; }
+  recibir(data: unknown) { this.onmessage?.({ data } as MessageEvent); }
+}
+
+it("comparte actividad entre pestañas y libera el canal al desmontar", async () => {
+  vi.stubGlobal("BroadcastChannel", CanalSimulado);
+  const fetch = simular((url) => url.endsWith("/refresh") ? json(sesion) : json({}));
+  detener = iniciarControlSesion();
+  const canal = CanalSimulado.ultimo;
+  window.dispatchEvent(new Event("keydown"));
+  expect(canal.postMessage).toHaveBeenCalledWith({ tipo: "actividad", cuando: Date.now() });
+  vi.setSystemTime(Date.now() + 29 * 60_000);
+  canal.recibir({ tipo: "actividad", cuando: Date.now() });
+  canal.recibir({ tipo: "actividad", cuando: "inválido" });
+  canal.recibir({ tipo: "desconocido" });
+  await vi.advanceTimersByTimeAsync(2 * 60_000);
+  expect(obtenerAccessToken()).toBe("access-1");
+  detener();
+  detener = undefined;
+  expect(canal.close).toHaveBeenCalledOnce();
+  const cantidad = fetch.mock.calls.length;
+  window.dispatchEvent(new Event("scroll"));
+  await vi.advanceTimersByTimeAsync(60_000);
+  expect(fetch).toHaveBeenCalledTimes(cantidad);
+});
+
+it("el cierre en otra pestaña limpia la sesión sin enviar otro logout", async () => {
+  vi.stubGlobal("BroadcastChannel", CanalSimulado);
+  const fetch = simular(() => json({}));
+  detener = iniciarControlSesion();
+  CanalSimulado.ultimo.recibir({ tipo: "cerrada" });
+  window.dispatchEvent(new Event("keydown"));
+  await vi.advanceTimersByTimeAsync(15_000);
+  expect(obtenerAccessToken()).toBeNull();
+  expect(fetch).not.toHaveBeenCalled();
 });
