@@ -31,6 +31,16 @@ SessionLocal = sessionmaker(
 def preparar_esquema_registro() -> None:
     """Aplica los cambios aditivos requeridos por el registro en bases ya existentes."""
     inspector = inspect(engine)
+    if inspector.has_table("sesiones_refresh"):
+        columnas = {c["name"] for c in inspector.get_columns("sesiones_refresh")}
+        if "ultima_actividad" not in columnas:
+            with engine.begin() as conexion:
+                conexion.execute(text(
+                    "ALTER TABLE sesiones_refresh ADD COLUMN ultima_actividad TIMESTAMP"
+                ))
+                conexion.execute(text(
+                    "UPDATE sesiones_refresh SET ultima_actividad = fecha_emision"
+                ))
     if not inspector.has_table("usuarios"):
         return
 

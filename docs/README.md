@@ -1,8 +1,52 @@
 # Documentación técnica
 
-Notas técnicas que acompañan el código. La arquitectura y las entregas están en la wiki.
+## Qué contiene
 
-- [Enriquecimiento del perfil](enriquecimiento.md)
-- [Perfil de riesgo y pricing](perfil-de-riesgo.md)
-- [Administración de socios de distribución](socios-distribucion.md)
-- [Aplicación Móvil Android](../android/README.md)
+Documentos que acompañan la implementación de Solventa: comportamiento, flujos,
+contratos de API, permisos, configuración y pruebas. La arquitectura y las entregas
+se mantienen en la [wiki del proyecto](https://github.com/JuanHerreraP/Proyecto-MISO-Solventa-Grupo-11/wiki).
+
+## Identidad, sesión y control de acceso
+
+| Documento | Contenido |
+| --- | --- |
+| [Registro y autenticación](identidad-autenticacion.md) | HU19: onboarding, KYC desacoplado, credenciales y JWT RS256 |
+| [Administración de usuarios](administracion-usuarios.md) | Alta y listado por el manager; asignación de roles |
+| [Sesión web](sesiones-web.md) | Cookies protegidas, CSRF, CORS, restauración, renovación e inactividad |
+| [Control de acceso y auditoría](control-acceso-auditoria.md) | Matriz de permisos, pertenencia de recursos, rutas web y eventos |
+| [Inicio de sesión biométrico](inicio-sesion-biometrico.md) | HU02: biometría Android, Keystore, refresh y fallback |
+
+## Perfilamiento e integraciones
+
+| Documento | Contenido |
+| --- | --- |
+| [Enriquecimiento del perfil](enriquecimiento.md) | HU10: consentimiento, Open Finance, Open Data y señales consolidadas |
+| [Perfil de riesgo y pricing](perfil-de-riesgo.md) | HU11: puntaje, dictamen, extraprima y reglas |
+| [Socios de distribución](socios-distribucion.md) | HU24: alta, tenant lógico, credenciales, OAuth y scopes |
+
+## Clientes, ejecución y evidencias
+
+- [Cliente web](../web/README.md): pantallas, ejecución, configuración y pruebas.
+- [Aplicación Android](../android/README.md): construcción y ejecución de la app.
+- [Backend y proveedores KYC locales](../README.md#backend-en-local).
+- [Infraestructura](../infra/README.md).
+- [Evidencias de HU02](evidencias/hu02/README.md).
+
+Los contratos ejecutables de la API están disponibles en `/docs` y `/openapi.json`
+al iniciar el backend; las rutas de este directorio describen su uso y contexto.
+
+## Estructura de los documentos
+
+Para nuevos documentos de funcionalidad, mantener esta organización y adaptar las
+secciones complementarias según corresponda:
+
+1. **Qué hace:** propósito, alcance e historia relacionada.
+2. **Flujo:** pasos desde la entrada hasta el resultado.
+3. **Endpoints:** método, ruta, permisos, entrada y respuesta; ejemplos cuando ayuden.
+4. **Seguridad o reglas:** validaciones y decisiones específicas del módulo.
+5. **Configuración y cómo probar en local:** dependencias, variables y comandos.
+6. **Pruebas:** escenarios cubiertos y ubicación de las suites.
+7. **Pendientes conocidos:** limitaciones vigentes, sin presentar simuladores como integraciones reales.
+
+En documentos transversales, indicar si reutilizan endpoints y si no exponen una
+API propia. Enlazar los contratos compartidos para evitar descripciones contradictorias.

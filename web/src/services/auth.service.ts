@@ -4,9 +4,19 @@ import type {
   RegisterRequest,
   RegisterResponse,
 } from "../types/auth";
+import { postSesionWeb } from "./web-session";
+import { fetchAutenticado } from "./session";
 
 const API_URL =
   import.meta.env.VITE_API_URL ?? "http://localhost:8000";
+
+export async function obtenerPerfil(): Promise<{ rol: string }> {
+  const response = await fetchAutenticado(`${API_URL}/api/v1/auth/me`);
+  if (!response.ok) {
+    throw new Error(await obtenerMensajeError(response));
+  }
+  return response.json();
+}
 
 async function obtenerMensajeError(response: Response): Promise<string> {
   try {
@@ -29,13 +39,7 @@ async function obtenerMensajeError(response: Response): Promise<string> {
 export async function login(
   data: LoginRequest,
 ): Promise<LoginResponse> {
-  const response = await fetch(`${API_URL}/api/v1/auth/login`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(data),
-  });
+  const response = await postSesionWeb("login", data);
 
   if (!response.ok) {
     throw new Error(await obtenerMensajeError(response));

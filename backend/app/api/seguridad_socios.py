@@ -1,6 +1,6 @@
 """Validación de tokens Bearer utilizados por integraciones de socios."""
 
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import ValidationError
 
@@ -12,6 +12,7 @@ bearer_socio = HTTPBearer(auto_error=False)
 
 
 def socio_actual(
+    request: Request,
     credentials: HTTPAuthorizationCredentials | None = Depends(bearer_socio),
 ) -> SocioAutenticado:
     if credentials is None:
@@ -23,19 +24,21 @@ def socio_actual(
 
     try:
         payload = validar_access_token_socio(credentials.credentials)
-        return SocioAutenticado(
+        identidad = SocioAutenticado(
             client_id=payload["sub"],
             socio_id=payload["socio_id"],
             tenant_id=payload["tenant_id"],
             scopes=set(payload["scope"]),
         )
+        request.state.socio_autenticado = identidad
+        return identidad
     except TokenExpiradoError as error:
         raise HTTPException(
             status.HTTP_401_UNAUTHORIZED,
             str(error),
             headers={"WWW-Authenticate": "Bearer"},
         ) from error
-    except (TokenInvalidoError, ValidationError, TypeError) as error:
+    except (TokenInvalidoError, ValidationError, TypeError, KeyError) as error:
         raise HTTPException(
             status.HTTP_401_UNAUTHORIZED,
             "El token del socio no es válido.",

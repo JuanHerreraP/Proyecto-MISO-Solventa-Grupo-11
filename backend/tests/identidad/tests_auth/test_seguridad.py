@@ -33,6 +33,7 @@ def _credentials(token="token-prueba"):
 
 def _request():
     return SimpleNamespace(
+        state=SimpleNamespace(),
         client=SimpleNamespace(host="127.0.0.1"),
         headers={"user-agent": "pytest"},
     )

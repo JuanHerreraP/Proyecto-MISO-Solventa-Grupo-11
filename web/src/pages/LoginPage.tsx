@@ -10,6 +10,7 @@ import {
 
 import AuthLayout from "../components/auth/AuthLayout";
 import { login } from "../services/auth.service";
+import { guardarAccessToken, guardarSesion } from "../services/session";
 
 
 export default function LoginPage() {
@@ -39,6 +40,7 @@ export default function LoginPage() {
     setError("");
     setSuccess(false);
     setLoading(true);
+    guardarAccessToken(null);
 
     try {
       const response = await login({
@@ -46,10 +48,7 @@ export default function LoginPage() {
         password,
       });
 
-      console.log(
-        "Login exitoso:",
-        response,
-      );
+      guardarSesion(response);
 
       setSuccess(true);
       navigate("/home");

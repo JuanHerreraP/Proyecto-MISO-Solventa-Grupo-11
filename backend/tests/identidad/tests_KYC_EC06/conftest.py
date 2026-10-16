@@ -2,10 +2,13 @@ import socket
 import subprocess
 import sys
 import time
+from types import SimpleNamespace
 
 import pytest
 from fastapi.testclient import TestClient
 
+from app.api.seguridad import get_current_user
+from app.identidad.modelos import Rol
 from app.main import app
 
 
@@ -103,4 +106,8 @@ def client_with_provider(monkeypatch):
 
         return TestClient(app)
 
-    return _build
+    app.dependency_overrides[get_current_user] = lambda: SimpleNamespace(
+        id="kyc-test", rol=Rol.SERVICIO_INTERNO, email="test@example.com"
+    )
+    yield _build
+    app.dependency_overrides.pop(get_current_user, None)

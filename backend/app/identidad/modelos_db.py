@@ -164,6 +164,10 @@ class SesionRefreshDB(Base):
 
     __tablename__ = "sesiones_refresh"
 
+    ultima_actividad: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now(),
+    )
+
     jti: Mapped[str] = mapped_column(
         String(36),
         primary_key=True,

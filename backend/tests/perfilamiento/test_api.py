@@ -113,7 +113,7 @@ def test_campo_no_previsto_en_el_contrato_se_rechaza(cliente):
 
 def test_perfil_inexistente_devuelve_no_encontrado(cliente):
     assert cliente.get(f"{RUTA}/NO-EXISTE", headers=ANALISTA).status_code == 404
-    assert cliente.get(f"{RUTA}/NO-EXISTE/oferta", headers=CLIENTE).status_code == 404
+    assert cliente.get(f"{RUTA}/NO-EXISTE/oferta", headers=SERVICIO).status_code == 404
 
 
 def test_humo_de_latencia_del_calculo_frente_a_ec02(cliente):

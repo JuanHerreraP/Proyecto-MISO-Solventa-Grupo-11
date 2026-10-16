@@ -62,7 +62,8 @@ Authorization: Bearer <access_token>
 | --- | --- | --- |
 | `POST /api/v1/auth/register` | Registro y onboarding del usuario | No |
 | `POST /api/v1/auth/login` | Inicio de sesión y generación de tokens | No |
-| `GET /api/v1/auth/users` | Lista de usuarios registrados | Actualmente no protegida |
+| `GET /api/v1/auth/users` | Lista de usuarios registrados | Solo `SERVICIO_INTERNO` |
+| `POST /api/v1/auth/users` | Crea usuarios con un rol definido | Solo `SERVICIO_INTERNO` |
 
 ### Registro
 
@@ -467,11 +468,13 @@ python -m pytest tests/identidad/tests_KYC_EC06 -v
 
 ## Pendientes conocidos
 
-- **Refresh Token:** actualmente se genera y se puede validar internamente, pero todavía no existe un endpoint `POST /api/v1/auth/refresh` que permita renovar el Access Token desde el cliente.
-- **Almacenamiento seguro en web:** el frontend deberá definir el manejo seguro de sesión. El Refresh Token no debe almacenarse de forma permanente en `localStorage`; se debe implementar una estrategia acorde con los criterios de seguridad definidos para HU19.
+- **Sesión web:** implementada mediante cookie HttpOnly para refresh, access token en memoria, CSRF y CORS explícito. Ver [sesiones web](sesiones-web.md).
 - **Llaves JWT:** la llave privada no debe almacenarse en el repositorio. En AWS deberá administrarse mediante un mecanismo seguro de secretos.
-- **Endpoint de usuarios:** `GET /api/v1/auth/users` actualmente no tiene una dependencia de autenticación o autorización asociada y debe protegerse antes de considerarlo un endpoint administrativo definitivo.
 - **Base de datos local:** cuando `DATABASE_URL` no está definida se utiliza SQLite para facilitar la ejecución local. El ambiente desplegado utilizará PostgreSQL.
 - **Migraciones:** las tablas se crean actualmente mediante `Base.metadata.create_all`; la evolución del esquema deberá gestionarse mediante migraciones cuando el modelo se estabilice.
 - **KYC real:** los proveedores A, B y C actuales son simuladores utilizados para validar el desacoplamiento EC06. Los contratos deberán adaptarse cuando exista un proveedor real.
-- **Manejo de sesión:** el Access Token tiene expiración de 30 minutos, pero una política completa de expiración por inactividad requiere integrar el mecanismo de renovación y manejo de sesión del cliente.
+
+
+## Contrato del navegador
+
+La web usa `/api/v1/auth/web/login`, `/web/refresh` y `/web/logout` con cookie HttpOnly y reto CSRF. Los endpoints JSON descritos arriba conservan el contrato nativo para Android. Ver [sesiones web y configuración](sesiones-web.md).

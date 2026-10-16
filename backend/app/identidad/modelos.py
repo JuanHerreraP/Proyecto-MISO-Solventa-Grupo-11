@@ -89,6 +89,10 @@ class SolicitudRegistro(BaseModel):
         return valor
 
 
+class SolicitudCreacionUsuarioAdministrativa(SolicitudRegistro):
+    rol: Rol
+
+
 class Usuario(BaseModel):
     id: str
     nombre: str
