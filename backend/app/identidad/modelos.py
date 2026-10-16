@@ -15,9 +15,11 @@ class Rol(str, Enum):
     ANALISTA_RIESGOS = "ANALISTA_RIESGOS"
     OPERACIONES_SINIESTROS = "OPERACIONES_SINIESTROS"
     SOCIO_DISTRIBUCION = "SOCIO_DISTRIBUCION"
+    # Administra socios de distribución y genera sus credenciales de integración.
     INGENIERO_INTEGRACIONES = "INGENIERO_INTEGRACIONES"
-    CLIENTE = "CLIENTE"
+    # Administra usuarios y socios; puede generar perfiles de riesgo y consultar su detalle.
     SERVICIO_INTERNO = "SERVICIO_INTERNO"
+    CLIENTE = "CLIENTE"
 
 
 class VerificationStatus(str, Enum):
@@ -87,6 +89,10 @@ class SolicitudRegistro(BaseModel):
         if not imagen.startswith(b"\xff\xd8\xff") or not imagen.endswith(b"\xff\xd9"):
             raise ValueError("La selfie debe ser una imagen JPEG válida.")
         return valor
+
+
+class SolicitudCreacionUsuarioAdministrativa(SolicitudRegistro):
+    rol: Rol
 
 
 class Usuario(BaseModel):

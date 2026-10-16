@@ -180,12 +180,14 @@ export default function SocioRegistrationPage() {
     try {
       const response = await registrarSocio({
         ...form,
+        nit: form.nit.trim(),
+        razon_social: form.razon_social.trim(),
         pais_operacion: form.pais_operacion.toUpperCase(),
         contactos_tecnicos: form.contactos_tecnicos.map((contact) => ({
-          nombre: contact.nombre,
-          correo: contact.correo,
-          ...(contact.telefono
-            ? { telefono: contact.telefono }
+          nombre: contact.nombre.trim(),
+          correo: contact.correo.trim(),
+          ...(contact.telefono?.trim()
+            ? { telefono: contact.telefono.trim() }
             : {}),
         })),
       });
@@ -403,6 +405,8 @@ export default function SocioRegistrationPage() {
                   NIT
                   <input
                     name="nit"
+                    minLength={5}
+                    maxLength={20}
                     placeholder="900123456-7"
                     pattern="[0-9]+(-[0-9])?"
                     value={form.nit}
@@ -421,6 +425,8 @@ export default function SocioRegistrationPage() {
                   Razón social
                   <input
                     name="razon_social"
+                    minLength={2}
+                    maxLength={160}
                     placeholder="Banco Andes S.A."
                     value={form.razon_social}
                     onChange={(event) =>
@@ -475,6 +481,8 @@ export default function SocioRegistrationPage() {
                         Nombre completo
                         <input
                           name={`contacto_nombre_${index}`}
+                          minLength={2}
+                          maxLength={120}
                           placeholder="María Torres"
                           value={contact.nombre}
                           onChange={(event) =>
@@ -488,6 +496,8 @@ export default function SocioRegistrationPage() {
                         Correo corporativo
                         <input
                           name={`contacto_correo_${index}`}
+                          minLength={5}
+                          maxLength={254}
                           type="email"
                           placeholder="maria.torres@bancoandes.com"
                           value={contact.correo}
@@ -505,6 +515,10 @@ export default function SocioRegistrationPage() {
                         <input
                           name={`contacto_telefono_${index}`}
                           type="tel"
+                          minLength={7}
+                          maxLength={20}
+                          pattern={String.raw`\+?[0-9][0-9 \(\)\-]{5,18}[0-9]`}
+                          title="Usa entre 7 y 20 caracteres: números, espacios, paréntesis o guiones; el + solo al inicio."
                           placeholder="+57 300 123 4567"
                           value={contact.telefono}
                           onChange={(event) =>

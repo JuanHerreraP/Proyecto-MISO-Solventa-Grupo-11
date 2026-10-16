@@ -38,6 +38,7 @@ def test_login_exitoso_devuelve_token(
         usuario_id,
         email,
         rol,
+        sesion_id=None,
     ):
         return "jwt-falso-para-prueba"
 
@@ -114,7 +115,7 @@ def test_login_no_necesita_proveedor_kyc(
 
     monkeypatch.setattr(
         "app.identidad.servicio.crear_access_token",
-        lambda usuario_id, email, rol: "token",
+        lambda usuario_id, email, rol, sesion_id=None: "token",
     )
 
     servicio = ServicioIdentidad(

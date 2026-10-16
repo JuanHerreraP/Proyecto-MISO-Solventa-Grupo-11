@@ -3,17 +3,21 @@ from datetime import date
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 
+from app.api.seguridad import requiere_roles
 from app.identidad.config import (
     get_configured_provider_name,
     get_identity_verification_provider,
 )
-from app.identidad.modelos import VerificationRequest
+from app.identidad.modelos import Rol, VerificationRequest
 from app.identidad.puertos import IdentityVerificationProvider
 
 router = APIRouter(
     prefix="/identidad",
     tags=["Identidad"],
 )
+
+
+verificador_actual = requiere_roles(Rol.SERVICIO_INTERNO)
 
 
 class VerificacionIdentidadRequest(BaseModel):
@@ -39,6 +43,7 @@ class VerificacionIdentidadResponse(BaseModel):
 )
 def verificar_identidad(
     payload: VerificacionIdentidadRequest,
+    _usuario=Depends(verificador_actual),
     provider: IdentityVerificationProvider = Depends(get_identity_verification_provider),
 ):
     request = VerificationRequest(

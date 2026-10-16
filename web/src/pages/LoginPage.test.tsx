@@ -127,7 +127,7 @@ describe(
             access_token:
               "access-token-prueba",
 
-            refresh_token:
+            csrf_token:
               "refresh-token-prueba",
 
             token_type:
@@ -136,8 +136,6 @@ describe(
             expires_in:
               1800,
 
-            refresh_expires_in:
-              604800,
           });
 
         renderLogin();

@@ -1,5 +1,10 @@
+import RutaProtegida from "./components/auth/RutaProtegida";
+import { ROLES_ADMINISTRACION_SOCIOS } from "./types/permisos";
+import { useEffect, useState } from "react";
+import { iniciarControlSesion, restaurarSesion } from "./services/session";
 import {
   Navigate,
+  useNavigate,
   Route,
   Routes,
 } from "react-router-dom";
@@ -10,6 +15,23 @@ import HomePage from "./pages/HomePage";
 import SocioRegistrationPage from "./pages/SocioRegistrationPage";
 
 function App() {
+  const navigate = useNavigate();
+  const [sesionLista, setSesionLista] = useState(false);
+  useEffect(() => {
+    let activo = true;
+    void restaurarSesion().finally(() => { if (activo) setSesionLista(true); });
+    return () => { activo = false; };
+  }, []);
+  useEffect(() => {
+    const detener = iniciarControlSesion();
+    const expirada = () => navigate("/login", { replace: true });
+    window.addEventListener("sesion-expirada", expirada);
+    return () => {
+      detener();
+      window.removeEventListener("sesion-expirada", expirada);
+    };
+  }, [navigate]);
+  if (!sesionLista) return <p role="status">Cargando sesión…</p>;
   return (
     <Routes>
       <Route
@@ -29,12 +51,16 @@ function App() {
 
       <Route
         path="/home"
-        element={<HomePage />}
+        element={<RutaProtegida><HomePage /></RutaProtegida>}
       />
 
       <Route
         path="/admin/socios/nuevo"
-        element={<SocioRegistrationPage />}
+        element={
+          <RutaProtegida roles={ROLES_ADMINISTRACION_SOCIOS}>
+            <SocioRegistrationPage />
+          </RutaProtegida>
+        }
       />
     </Routes>
   );

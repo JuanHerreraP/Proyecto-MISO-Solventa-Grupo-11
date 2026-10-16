@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from uuid import UUID
 
 from sqlalchemy import select, update
@@ -73,6 +73,22 @@ class RepositorioSesionesPostgres:
 
     def buscar(self, jti: str) -> SesionRefreshDB | None:
         return self.db.get(SesionRefreshDB, jti)
+
+    def registrar_actividad(self, jti: str, usuario_id: str) -> bool:
+        """Una sesión inactiva durante 30 minutos no puede reactivarse."""
+        sesion = self.buscar(jti)
+        if sesion is None or str(sesion.usuario_id) != str(usuario_id) or sesion.revocada:
+            return False
+        ahora = datetime.now(timezone.utc)
+        ultima = sesion.ultima_actividad or sesion.fecha_emision
+        if ultima.tzinfo is None:
+            ultima = ultima.replace(tzinfo=timezone.utc)
+        if ahora - ultima >= timedelta(minutes=30):
+            self.revocar(jti, motivo="INACTIVIDAD")
+            return False
+        sesion.ultima_actividad = ahora
+        self.db.commit()
+        return True
 
     def revocar(
         self,

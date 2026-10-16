@@ -28,7 +28,7 @@ Recibe las señales consolidadas de Open Finance y Open Data, calcula un puntaje
 |---|---|---|
 | `POST /api/v1/perfiles-riesgo` | Servicio interno, Asesor de Ventas | Perfil completo |
 | `GET /api/v1/perfiles-riesgo/{cliente_id}` | Analista de Riesgos, servicio interno | Perfil completo con puntaje y reglas aplicadas |
-| `GET /api/v1/perfiles-riesgo/{cliente_id}/oferta` | Cualquier rol identificado | Dictamen, extraprima y explicación, sin reglas internas |
+| `GET /api/v1/perfiles-riesgo/{cliente_id}/oferta` | Servicio interno, Asesor de Ventas, Analista de Riesgos; Cliente solo su propia oferta | Dictamen, extraprima y explicación, sin reglas internas |
 
 Todas las respuestas llevan la cabecera `X-Tiempo-Proceso-Ms`.
 
@@ -54,9 +54,12 @@ Todas las respuestas llevan la cabecera `X-Tiempo-Proceso-Ms`.
 
 Los pesos y umbrales son valores iniciales definidos por el equipo de desarrollo; no vienen de un modelo actuarial. Están como constantes en `backend/app/perfilamiento/dominio/reglas.py` y cualquier cambio debe subir `VERSION_REGLAS`.
 
+## Seguridad y acceso
+
+Se valida JWT Bearer y el rol vigente del usuario. `CLIENTE` solo puede consultar su propia oferta, usando su `id` de `/api/v1/auth/me` como `cliente_id`. Ver [control de acceso y auditoría](control-acceso-auditoria.md).
+
 ## Pendientes conocidos
 
-- **Autenticación:** el rol se lee de la cabecera `X-Rol` de forma provisional. Debe reemplazarse por el rol del token cuando la HU19 (BPM-54) esté lista. Hasta entonces tampoco se puede comprobar que un cliente consulte solo su propia oferta.
 - **Persistencia:** el perfil se guarda en memoria con vigencia de una hora, detrás del puerto `RepositorioPerfiles`. Falta el adaptador de ElastiCache Redis.
 - **EC02:** el script `backend/tests/k6/perfil_riesgo.js` trae los umbrales p95 ≤ 400 ms y p99 ≤ 800 ms, pero no se ha corrido contra un ambiente desplegado. La prueba local solo mide el cálculo en proceso.
 - **Integración con la HU10:** conectada. `POST /api/v1/enriquecimientos` consolida las señales y genera el perfil con este contrato. Ver [enriquecimiento.md](enriquecimiento.md).

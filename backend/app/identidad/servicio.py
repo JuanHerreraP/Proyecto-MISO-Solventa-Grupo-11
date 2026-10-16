@@ -6,6 +6,7 @@ from app.identidad.modelos import (
     RespuestaPerfil,
     RespuestaRegistro,
     Rol,
+    SolicitudCreacionUsuarioAdministrativa,
     SolicitudRegistro,
     VerificationRequest,
     VerificationStatus,
@@ -80,6 +81,19 @@ class ServicioIdentidad:
         self,
         solicitud: SolicitudRegistro,
     ) -> RespuestaRegistro:
+        return self._registrar_usuario(solicitud, Rol.CLIENTE)
+
+    def crear_usuario_administrativo(
+        self,
+        solicitud: SolicitudCreacionUsuarioAdministrativa,
+    ) -> RespuestaRegistro:
+        return self._registrar_usuario(solicitud, solicitud.rol)
+
+    def _registrar_usuario(
+        self,
+        solicitud: SolicitudRegistro,
+        rol: Rol,
+    ) -> RespuestaRegistro:
         if not solicitud.acepta_validacion_identidad:
             raise ConsentimientoRequeridoError(
                 "Se requiere autorización para validar la identidad."
@@ -133,7 +147,7 @@ class ServicioIdentidad:
             apellido=solicitud.apellido,
             email=str(solicitud.email).lower(),
             password_hash=self.password_hash.hash(solicitud.password),
-            rol=Rol.CLIENTE.value,
+            rol=rol.value,
             activo=True,
             tipo_documento=tipo_documento,
             numero_documento=numero_documento,
@@ -257,6 +271,9 @@ class ServicioIdentidad:
                 "El usuario se encuentra inactivo y no puede iniciar sesión."
             )
 
+        if not self.repositorio_sesiones.registrar_actividad(jti, str(usuario_id)):
+            raise SesionInvalidaError("La sesión expiró por inactividad. Inicie sesión de nuevo.")
+
         respuesta, nuevo_jti = self._emitir_tokens(usuario)
         self.repositorio_sesiones.revocar(jti, motivo=MOTIVO_ROTACION, reemplazada_por=nuevo_jti)
         return respuesta
@@ -292,16 +309,17 @@ class ServicioIdentidad:
         )
 
     def _emitir_tokens(self, usuario) -> tuple[RespuestaLogin, str]:
-        access_token = crear_access_token(
+        refresh = emitir_refresh_token(
             usuario_id=str(usuario.id),
             email=usuario.email,
             rol=usuario.rol,
         )
 
-        refresh = emitir_refresh_token(
+        access_token = crear_access_token(
             usuario_id=str(usuario.id),
             email=usuario.email,
             rol=usuario.rol,
+            sesion_id=refresh.jti if self.repositorio_sesiones is not None else None,
         )
 
         if self.repositorio_sesiones is not None:

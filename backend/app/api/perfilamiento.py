@@ -4,7 +4,7 @@ from functools import lru_cache
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from app.api.seguridad import rol_actual
+from app.api.seguridad import requiere_roles, verificar_propietario
 from app.identidad.modelos import Rol
 from app.perfilamiento.dominio.modelos import OfertaCliente, PerfilRiesgo, SenalesPerfilamiento
 from app.perfilamiento.repositorio import RepositorioPerfilesEnMemoria
@@ -20,6 +20,16 @@ ROLES_QUE_GENERAN = {Rol.SERVICIO_INTERNO, Rol.ASESOR_VENTAS}
 ROLES_QUE_VEN_EL_DETALLE = {Rol.ANALISTA_RIESGOS, Rol.SERVICIO_INTERNO}
 
 
+generador_actual = requiere_roles(*ROLES_QUE_GENERAN)
+analista_actual = requiere_roles(*ROLES_QUE_VEN_EL_DETALLE)
+lector_oferta_actual = requiere_roles(
+    Rol.CLIENTE,
+    Rol.ASESOR_VENTAS,
+    Rol.ANALISTA_RIESGOS,
+    Rol.SERVICIO_INTERNO,
+)
+
+
 @lru_cache
 def obtener_servicio() -> ServicioPerfilamiento:
     return ServicioPerfilamiento(RepositorioPerfilesEnMemoria())
@@ -33,11 +43,9 @@ def obtener_servicio() -> ServicioPerfilamiento:
 )
 def generar_perfil(
     senales: SenalesPerfilamiento,
-    rol: Rol = Depends(rol_actual),
+    usuario=Depends(generador_actual),
     servicio: ServicioPerfilamiento = Depends(obtener_servicio),
 ) -> PerfilRiesgo:
-    if rol not in ROLES_QUE_GENERAN:
-        raise HTTPException(status.HTTP_403_FORBIDDEN, "El rol no puede generar perfiles.")
     try:
         return servicio.generar_perfil(senales)
     except ConsentimientoNoVigente:
@@ -54,11 +62,9 @@ def generar_perfil(
 )
 def consultar_perfil(
     cliente_id: str,
-    rol: Rol = Depends(rol_actual),
+    usuario=Depends(analista_actual),
     servicio: ServicioPerfilamiento = Depends(obtener_servicio),
 ) -> PerfilRiesgo:
-    if rol not in ROLES_QUE_VEN_EL_DETALLE:
-        raise HTTPException(status.HTTP_403_FORBIDDEN, "El rol no puede ver el detalle del perfil.")
     perfil = servicio.consultar_perfil(cliente_id)
     if perfil is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "No hay un perfil vigente para el cliente.")
@@ -72,9 +78,10 @@ def consultar_perfil(
 )
 def consultar_oferta(
     cliente_id: str,
-    rol: Rol = Depends(rol_actual),
+    usuario=Depends(lector_oferta_actual),
     servicio: ServicioPerfilamiento = Depends(obtener_servicio),
 ) -> OfertaCliente:
+    verificar_propietario(cliente_id, usuario)
     perfil = servicio.consultar_perfil(cliente_id)
     if perfil is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "No hay un perfil vigente para el cliente.")

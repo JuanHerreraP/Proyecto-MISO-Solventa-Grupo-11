@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, ConfigDict, Field
 
 from app.api.perfilamiento import obtener_servicio as obtener_servicio_perfilamiento
-from app.api.seguridad import Rol, rol_actual
+from app.api.seguridad import Rol, requiere_roles, verificar_propietario
 from app.perfilamiento.dominio.modelos import Dictamen
 from app.perfilamiento.enriquecimiento.configuracion import crear_servicio
 from app.perfilamiento.enriquecimiento.memoria import RepositorioConsentimientosEnMemoria
@@ -24,6 +24,11 @@ router = APIRouter(prefix="/api/v1", tags=["enriquecimiento"])
 ROLES_QUE_INICIAN = {Rol.ASESOR_VENTAS, Rol.SERVICIO_INTERNO}
 ROLES_QUE_CONSULTAN = {Rol.ANALISTA_RIESGOS, Rol.SERVICIO_INTERNO}
 ROLES_QUE_REGISTRAN_CONSENTIMIENTO = {Rol.CLIENTE, Rol.ASESOR_VENTAS, Rol.SERVICIO_INTERNO}
+
+
+registrador_actual = requiere_roles(*ROLES_QUE_REGISTRAN_CONSENTIMIENTO)
+iniciador_actual = requiere_roles(*ROLES_QUE_INICIAN)
+consultor_actual = requiere_roles(*ROLES_QUE_CONSULTAN)
 
 
 @lru_cache
@@ -62,11 +67,10 @@ class RespuestaEnriquecimiento(BaseModel):
 )
 def registrar_consentimiento(
     consentimiento: Consentimiento,
-    rol: Rol = Depends(rol_actual),
+    usuario=Depends(registrador_actual),
     consentimientos: RepositorioConsentimientos = Depends(obtener_consentimientos),
 ) -> Consentimiento:
-    if rol not in ROLES_QUE_REGISTRAN_CONSENTIMIENTO:
-        raise HTTPException(status.HTTP_403_FORBIDDEN, "El rol no puede registrar consentimientos.")
+    verificar_propietario(consentimiento.cliente_id, usuario)
     consentimientos.registrar(consentimiento)
     return consentimiento
 
@@ -79,14 +83,10 @@ def registrar_consentimiento(
 )
 async def enriquecer(
     solicitud: SolicitudEnriquecimiento,
-    rol: Rol = Depends(rol_actual),
+    usuario=Depends(iniciador_actual),
     servicio: ServicioEnriquecimiento = Depends(obtener_servicio),
     perfilamiento: ServicioPerfilamiento = Depends(obtener_servicio_perfilamiento),
 ) -> RespuestaEnriquecimiento:
-    if rol not in ROLES_QUE_INICIAN:
-        raise HTTPException(
-            status.HTTP_403_FORBIDDEN, "El rol no puede iniciar el enriquecimiento."
-        )
     try:
         resultado = await servicio.enriquecer(solicitud.cliente_id, solicitud.cotizacion_id)
     except SinConsentimientoVigente:
@@ -112,11 +112,9 @@ async def enriquecer(
 )
 def consultar_enriquecimiento(
     cliente_id: str,
-    rol: Rol = Depends(rol_actual),
+    usuario=Depends(consultor_actual),
     servicio: ServicioEnriquecimiento = Depends(obtener_servicio),
 ) -> ResultadoEnriquecimiento:
-    if rol not in ROLES_QUE_CONSULTAN:
-        raise HTTPException(status.HTTP_403_FORBIDDEN, "El rol no puede ver las señales.")
     resultado = servicio.ultimo(cliente_id)
     if resultado is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "No hay señales para el cliente.")

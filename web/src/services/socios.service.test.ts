@@ -1,3 +1,4 @@
+import { guardarAccessToken } from "./session";
 import {
   afterEach,
   beforeEach,
@@ -28,8 +29,19 @@ const SOLICITUD: SolicitudRegistroSocio = {
 };
 
 describe("socios.service", () => {
+  it("identifica los campos rechazados por la validación del backend", async () => {
+    guardarAccessToken("token-prueba");
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(JSON.stringify({
+      detail: [{ loc: ["body", "contactos_tecnicos", 0, "telefono"],
+        msg: "String should have at least 7 characters" }],
+    }), { status: 422, headers: { "Content-Type": "application/json" } }));
+    await expect(registrarSocio(SOLICITUD)).rejects.toThrow(
+      "Contacto técnico / 1 / Teléfono: String should have at least 7 characters",
+    );
+  });
+
   beforeEach(() => {
-    localStorage.clear();
+    guardarAccessToken(null);
   });
 
   afterEach(() => {
@@ -43,7 +55,7 @@ describe("socios.service", () => {
   });
 
   it("envía el registro al endpoint de socios con el token de acceso", async () => {
-    localStorage.setItem("access_token", "token-prueba");
+    guardarAccessToken("token-prueba");
     const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(
       new Response(
         JSON.stringify({
@@ -67,9 +79,10 @@ describe("socios.service", () => {
       expect.stringContaining("/api/v1/socios"),
       {
         method: "POST",
+        credentials: "omit",
         headers: {
-          Authorization: "Bearer token-prueba",
-          "Content-Type": "application/json",
+          authorization: "Bearer token-prueba",
+          "content-type": "application/json",
         },
         body: JSON.stringify(SOLICITUD),
       },
@@ -79,7 +92,7 @@ describe("socios.service", () => {
   });
 
   it("muestra el mensaje estructurado entregado por el backend", async () => {
-    localStorage.setItem("access_token", "token-prueba");
+    guardarAccessToken("token-prueba");
     vi.spyOn(globalThis, "fetch").mockResolvedValue(
       new Response(
         JSON.stringify({
@@ -101,7 +114,7 @@ describe("socios.service", () => {
   });
 
   it("muestra el mensaje textual entregado por el backend", async () => {
-    localStorage.setItem("access_token", "token-prueba");
+    guardarAccessToken("token-prueba");
     vi.spyOn(globalThis, "fetch").mockResolvedValue(
       new Response(
         JSON.stringify({
@@ -120,7 +133,7 @@ describe("socios.service", () => {
   });
 
   it("genera las credenciales del socio con la sesión administrativa", async () => {
-    localStorage.setItem("access_token", "token-prueba");
+    guardarAccessToken("token-prueba");
     const fetchMock = vi.spyOn(globalThis, "fetch").mockResolvedValue(
       new Response(
         JSON.stringify({
@@ -144,12 +157,38 @@ describe("socios.service", () => {
       expect.stringContaining("/api/v1/socios/socio-001/credenciales"),
       {
         method: "POST",
+        credentials: "omit",
         headers: {
-          Authorization: "Bearer token-prueba",
+          authorization: "Bearer token-prueba",
         },
       },
     );
     expect(respuesta.client_id).toBe("solv_cliente_001");
     expect(respuesta.client_secret).toBe("solv_secret_unico");
+  });
+});
+
+
+describe("errores de integración con socios", () => {
+  beforeEach(() => guardarAccessToken("token-prueba"));
+  afterEach(() => { vi.restoreAllMocks(); guardarAccessToken(null); });
+
+  it.each([
+    [{}, "No fue posible registrar el socio."],
+    [{ detail: [{}] }, "Datos del socio: Valor inválido."],
+    [{ detail: [{ loc: ["body", "campo_nuevo"], msg: "Inválido" }] }, "campo_nuevo: Inválido"],
+  ])("presenta errores con estructuras incompletas", async (body, mensaje) => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response(JSON.stringify(body), { status: 422 }));
+    await expect(registrarSocio(SOLICITUD)).rejects.toThrow(mensaje as string);
+  });
+
+  it("informa una respuesta ilegible del servidor", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response("<html>Error</html>", { status: 502 }));
+    await expect(registrarSocio(SOLICITUD)).rejects.toThrow("No fue posible comunicarse correctamente");
+  });
+
+  it("explica que el socio existe aunque haya fallado generar sus credenciales", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response("{}", { status: 503 }));
+    await expect(generarCredencialesSocio("socio-001")).rejects.toThrow("El socio fue registrado, pero no fue posible generar sus credenciales.");
   });
 });
