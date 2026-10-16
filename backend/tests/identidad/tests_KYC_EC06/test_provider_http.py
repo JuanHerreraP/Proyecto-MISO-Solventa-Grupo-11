@@ -53,6 +53,7 @@ def test_provider_a_envia_el_contrato_http_correcto(monkeypatch):
         document_number="123456789",
         full_name="Ana Perez",
         birth_date="1995-01-01",
+        selfie_base64="/9j/2Q==",
     )
 
     assert llamada["url"] == ("http://provider-a.test/kyc/verify")
@@ -62,6 +63,7 @@ def test_provider_a_envia_el_contrato_http_correcto(monkeypatch):
         "documentNumber": "123456789",
         "fullName": "Ana Perez",
         "birthDate": "1995-01-01",
+        "selfieBase64": "/9j/2Q==",
     }
 
     assert llamada["timeout"] == 2.5
@@ -105,6 +107,7 @@ def test_provider_a_propaga_error_de_conexion(monkeypatch):
             document_number="123456789",
             full_name="Ana Perez",
             birth_date="1995-01-01",
+            selfie_base64="/9j/2Q==",
         )
 
 
@@ -141,6 +144,7 @@ def test_provider_a_propaga_timeout(monkeypatch):
             document_number="123456789",
             full_name="Ana Perez",
             birth_date="1995-01-01",
+            selfie_base64="/9j/2Q==",
         )
 
 
@@ -177,4 +181,5 @@ def test_provider_a_propaga_error_http_500(monkeypatch):
             document_number="123456789",
             full_name="Ana Perez",
             birth_date="1995-01-01",
+            selfie_base64="/9j/2Q==",
         )

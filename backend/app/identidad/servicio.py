@@ -1,4 +1,5 @@
 from pwdlib import PasswordHash
+from sqlalchemy.exc import IntegrityError
 
 from app.identidad.modelos import (
     RespuestaLogin,
@@ -24,6 +25,10 @@ MOTIVO_ROTACION = "ROTACION"
 
 
 class UsuarioYaExisteError(Exception):
+    pass
+
+
+class DocumentoYaExisteError(Exception):
     pass
 
 
@@ -84,6 +89,14 @@ class ServicioIdentidad:
         if existente is not None:
             raise UsuarioYaExisteError("Ya existe un usuario registrado con este correo.")
 
+        tipo_documento = solicitud.tipo_documento.strip().upper()
+        numero_documento = solicitud.numero_documento.strip().upper()
+        existente = self.repositorio.buscar_por_documento(tipo_documento, numero_documento)
+        if existente is not None:
+            raise DocumentoYaExisteError(
+                "Ya existe una cuenta con este tipo y número de documento."
+            )
+
         if self.provider is None:
             raise RuntimeError("Se requiere un proveedor KYC para registrar usuarios.")
 
@@ -91,10 +104,11 @@ class ServicioIdentidad:
             VerificationRequest(
                 customer_id=str(solicitud.email),
                 consent_id=f"registro-{solicitud.numero_documento}",
-                document_type=solicitud.tipo_documento,
-                document_number=solicitud.numero_documento,
+                document_type=tipo_documento,
+                document_number=numero_documento,
                 full_name=f"{solicitud.nombre} {solicitud.apellido}",
                 birth_date=solicitud.fecha_nacimiento,
+                selfie_base64=solicitud.selfie_base64 or "",
             )
         )
 
@@ -121,15 +135,29 @@ class ServicioIdentidad:
             password_hash=self.password_hash.hash(solicitud.password),
             rol=Rol.CLIENTE.value,
             activo=True,
-            tipo_documento=solicitud.tipo_documento,
-            numero_documento=solicitud.numero_documento,
+            tipo_documento=tipo_documento,
+            numero_documento=numero_documento,
             fecha_nacimiento=solicitud.fecha_nacimiento,
+            celular=solicitud.celular or None,
             kyc_validado=True,
             referencia_kyc=resultado_kyc.verification_id,
             consentimiento_kyc=solicitud.acepta_validacion_identidad,
         )
 
-        usuario = self.repositorio.guardar(usuario)
+        try:
+            usuario = self.repositorio.guardar(usuario)
+        except IntegrityError:
+            existente = self.repositorio.buscar_por_documento(tipo_documento, numero_documento)
+            if existente is not None:
+                raise DocumentoYaExisteError(
+                    "Ya existe una cuenta con este tipo y número de documento."
+                ) from None
+            existente = self.repositorio.buscar_por_email(str(solicitud.email))
+            if existente is not None:
+                raise UsuarioYaExisteError(
+                    "Ya existe un usuario registrado con este correo."
+                ) from None
+            raise
 
         return RespuestaRegistro(
             id=str(usuario.id),

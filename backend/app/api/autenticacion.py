@@ -20,6 +20,7 @@ from app.identidad.repositorio import RepositorioSesionesPostgres, RepositorioUs
 from app.identidad.servicio import (
     ConsentimientoRequeridoError,
     CredencialesInvalidasError,
+    DocumentoYaExisteError,
     KYCPendienteError,
     KYCRechazadoError,
     ServicioIdentidad,
@@ -76,7 +77,20 @@ def registrar_usuario(
         )
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail=str(error),
+            detail={"codigo": "EMAIL_ALREADY_EXISTS", "mensaje": str(error)},
+        ) from error
+
+    except DocumentoYaExisteError as error:
+        registrar_evento_auth(
+            tipo_evento=TipoEventoAuth.REGISTRATION_REJECTED,
+            exitoso=False,
+            email=str(solicitud.email),
+            detalle="DOCUMENT_ALREADY_EXISTS",
+            request=request,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail={"codigo": "DOCUMENT_ALREADY_EXISTS", "mensaje": str(error)},
         ) from error
 
     except ConsentimientoRequeridoError as error:
@@ -89,7 +103,7 @@ def registrar_usuario(
         )
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail=str(error),
+            detail={"codigo": "CONSENT_REQUIRED", "mensaje": str(error)},
         ) from error
 
     except KYCRechazadoError as error:
@@ -102,7 +116,7 @@ def registrar_usuario(
         )
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail=str(error),
+            detail={"codigo": "KYC_REJECTED", "mensaje": str(error)},
         ) from error
 
     except KYCPendienteError as error:
@@ -115,7 +129,7 @@ def registrar_usuario(
         )
         raise HTTPException(
             status_code=status.HTTP_202_ACCEPTED,
-            detail=str(error),
+            detail={"codigo": "KYC_PENDING", "mensaje": str(error)},
         ) from error
 
     except httpx.HTTPError as error:
@@ -128,7 +142,10 @@ def registrar_usuario(
         )
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="El servicio de validación de identidad no está disponible.",
+            detail={
+                "codigo": "KYC_PROVIDER_UNAVAILABLE",
+                "mensaje": "El servicio de validación de identidad no está disponible.",
+            },
         ) from error
 
 

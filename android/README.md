@@ -67,14 +67,39 @@ La navegación utiliza **Jetpack Navigation Compose** mediante rutas selladas en
 
 La URL del backend sale de `BuildConfig.API_BASE_URL` (por defecto `http://10.0.2.2:8000/`). Detalle completo en [docs/inicio-sesion-biometrico.md](../docs/inicio-sesion-biometrico.md).
 
+## 🪪 Registro desde Android (BPM-16)
+
+El formulario recoge nombres, apellidos, tipo/número de documento, fecha de
+nacimiento, correo, celular y contraseña. Solicita una selfie y envía los datos
+a `POST /api/v1/auth/register` a través del mismo `AuthCoordinator` y gateway
+remoto usados por autenticación. La app navega al inicio de sesión solo si el
+backend responde con una cuenta creada y `kyc_validado=true`.
+
+El flujo KYC incluido es **solo una demostración**: el mock responde
+determinísticamente usando el número de documento, ignora el contenido de la
+selfie y no hace reconocimiento facial ni prueba de vida. No debe utilizarse
+para verificar identidades reales.
+
+Para ejecutar la demo, desde `backend/` levanta el proveedor y el backend en
+terminales separadas:
+
+```powershell
+uvicorn mocks.kyc.provider_a:app --reload --port 8001
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+```
+
+En el emulador Android, la app usa `http://10.0.2.2:8000/`. Para un dispositivo
+físico conectado por USB, puedes usar `adb reverse tcp:8000 tcp:8000` y compilar
+con `-Psolventa.apiBaseUrl=http://127.0.0.1:8000/`.
+
 ---
 
 ## 🚀 Cómo Ejecutar en Local
 
 ### Requisitos previos
 - **Android Studio** (Ladybug / Jellyfish o superior).
-- **JDK 11** o superior.
-- **Android SDK** con soporte para `minSdk 24` y `compileSdk 35`.
+- **JDK 17**.
+- **Android SDK** con soporte para `minSdk 24` y `compileSdk 37`.
 
 ### Pasos para ejecutar
 1. Abrir la carpeta `android/` en Android Studio.
@@ -83,29 +108,12 @@ La URL del backend sale de `BuildConfig.API_BASE_URL` (por defecto `http://10.0.
 4. Ejecutar la aplicación mediante el botón **Run (`app`)** o desde la terminal:
 
 ```bash
-# Compilar versión de depuración
-./gradlew assembleDebug
-
-# Ejecutar pruebas unitarias
-./gradlew test
-```
-# Android
-
-Aplicación móvil de Solventa, desarrollada con Kotlin y Jetpack Compose.
-
-## Pruebas locales
-
-Con JDK 17 y Android SDK instalados, ejecuta desde esta carpeta:
-
-```bash
+# Mismos chequeos que el pipeline
 ./gradlew lint testDebugUnitTest
 ```
 
-En Windows PowerShell, usa:
+En Windows PowerShell:
 
 ```powershell
 .\gradlew.bat lint testDebugUnitTest
 ```
-
-Las pruebas unitarias verifican las condiciones para enviar los formularios de
-inicio de sesión y registro, así como los identificadores de navegación.

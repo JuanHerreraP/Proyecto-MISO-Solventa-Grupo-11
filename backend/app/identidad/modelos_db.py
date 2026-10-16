@@ -3,7 +3,7 @@
 import uuid
 from datetime import date, datetime
 
-from sqlalchemy import Boolean, Date, DateTime, String, func
+from sqlalchemy import Boolean, Date, DateTime, Index, String, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -12,6 +12,14 @@ from app.infraestructura.database import Base
 
 class UsuarioDB(Base):
     __tablename__ = "usuarios"
+    __table_args__ = (
+        Index(
+            "uq_usuarios_tipo_documento_numero_documento",
+            "tipo_documento",
+            "numero_documento",
+            unique=True,
+        ),
+    )
 
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
@@ -61,6 +69,11 @@ class UsuarioDB(Base):
         String(50),
         nullable=False,
         index=True,
+    )
+
+    celular: Mapped[str | None] = mapped_column(
+        String(30),
+        nullable=True,
     )
 
     fecha_nacimiento: Mapped[date] = mapped_column(

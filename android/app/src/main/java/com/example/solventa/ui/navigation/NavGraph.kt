@@ -52,6 +52,16 @@ fun NavGraph(
         }
     }
 
+    LaunchedEffect(estado.registroCompletado) {
+        if (estado.registroCompletado) {
+            viewModel.consumirRegistroCompletado()
+            navController.navigate(ScreenRoute.CredentialsLogin.route) {
+                popUpTo(ScreenRoute.Register.route) { inclusive = true }
+                launchSingleTop = true
+            }
+        }
+    }
+
     NavHost(
         navController = navController,
         startDestination = startDestination,
@@ -63,6 +73,7 @@ fun NavGraph(
                     navController.navigate(ScreenRoute.BiometricalLogin.route)
                 },
                 onRegisterClick = {
+                    viewModel.consumirMensaje()
                     navController.navigate(ScreenRoute.Register.route)
                 }
             )
@@ -107,6 +118,7 @@ fun NavGraph(
                     }
                 },
                 onRegisterClick = {
+                    viewModel.consumirMensaje()
                     navController.navigate(ScreenRoute.Register.route)
                 }
             )
@@ -135,7 +147,11 @@ fun NavGraph(
                 onBackClick = {
                     navController.popBackStack()
                 },
+                onRegisterSubmit = viewModel::registrar,
+                cargando = estado.cargando,
+                mensaje = estado.mensaje,
                 onLoginClick = {
+                    viewModel.consumirMensaje()
                     navController.navigate(ScreenRoute.BiometricalLogin.route)
                 }
             )

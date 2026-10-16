@@ -27,6 +27,8 @@ fun tokens(n: Int, expiraEnSegundos: Long = 1800) = Tokens(
 )
 
 class GatewayFalso : AuthGateway {
+    var respuestaRegistro: ResultadoApi<RegistroCreado> =
+        ResultadoApi.Exito(RegistroCreado("ana@gmail.com", true))
     var respuestaLogin: ResultadoApi<Tokens> = ResultadoApi.Exito(tokens(1))
     var respuestaRenovar: ResultadoApi<Tokens> = ResultadoApi.Exito(tokens(2))
     var respuestaPerfil: ResultadoApi<Perfil> = ResultadoApi.Exito(PERFIL_ANA)
@@ -34,7 +36,12 @@ class GatewayFalso : AuthGateway {
     val renovados = mutableListOf<String>()
     val cerrados = mutableListOf<String>()
     val perfilesPedidos = mutableListOf<String>()
+    val registros = mutableListOf<DatosRegistro>()
 
+    override suspend fun registrar(datos: DatosRegistro): ResultadoApi<RegistroCreado> {
+        registros += datos
+        return respuestaRegistro
+    }
     override suspend fun login(email: String, password: String) = respuestaLogin
 
     override suspend fun renovar(refreshToken: String): ResultadoApi<Tokens> {

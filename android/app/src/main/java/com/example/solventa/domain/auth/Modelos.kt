@@ -16,6 +16,24 @@ data class Perfil(
     val rol: String
 )
 
+/** Datos transitorios del formulario de alta; la selfie solo se envía al KYC. */
+data class DatosRegistro(
+    val nombre: String,
+    val apellido: String,
+    val email: String,
+    val password: String,
+    val tipoDocumento: String,
+    val numeroDocumento: String,
+    val fechaNacimiento: String,
+    val celular: String,
+    val selfieBase64: String
+)
+
+data class RegistroCreado(
+    val email: String,
+    val kycValidado: Boolean
+)
+
 /** Resultado de una llamada al backend, sin excepciones hacia la UI. */
 sealed interface ResultadoApi<out T> {
     data class Exito<T>(val valor: T) : ResultadoApi<T>
@@ -37,6 +55,7 @@ inline fun <T, R> ResultadoApi<T>.mapear(transformar: (T) -> R): ResultadoApi<R>
 
 /** Puerto hacia el backend de identidad. */
 interface AuthGateway {
+    suspend fun registrar(datos: DatosRegistro): ResultadoApi<RegistroCreado>
     suspend fun login(email: String, password: String): ResultadoApi<Tokens>
     suspend fun renovar(refreshToken: String): ResultadoApi<Tokens>
     suspend fun cerrarSesion(refreshToken: String): ResultadoApi<Unit>

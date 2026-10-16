@@ -79,9 +79,13 @@ Ejemplo de solicitud:
   "tipo_documento": "CC",
   "numero_documento": "123456789",
   "fecha_nacimiento": "1995-06-15",
+  "celular": "3001234567",
+  "selfie_base64": "<JPEG codificado en Base64>",
   "acepta_validacion_identidad": true
 }
 ```
+
+`celular` y `selfie_base64` son opcionales para mantener la compatibilidad con clientes existentes; la app Android recopila ambos y envía la selfie como JPEG codificado en Base64. El proveedor KYC de demostración no analiza la imagen ni ejecuta una prueba de vida: su resultado es determinista según el documento y no sirve para verificar identidades reales.
 
 Ejemplo de respuesta exitosa:
 
@@ -101,7 +105,7 @@ Ejemplo de respuesta exitosa:
 | --- | --- |
 | `201` | Usuario registrado y KYC aprobado |
 | `202` | La validación KYC requiere revisión adicional |
-| `409` | Ya existe un usuario con el correo electrónico |
+| `409` | Ya existe un usuario con el correo electrónico o documento |
 | `422` | No se autorizó la validación de identidad o el KYC fue rechazado |
 | `503` | El proveedor KYC no se encuentra disponible |
 

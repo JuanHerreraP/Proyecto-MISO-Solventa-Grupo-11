@@ -113,6 +113,11 @@ Las URL pueden sobrescribirse mediante variables de entorno:
 
 Esta separación permite sustituir el proveedor KYC sin modificar el servicio consumidor, de acuerdo con el experimento arquitectónico EC06.
 
+El alta desde Android envía los datos del cliente y una selfie en Base64 al
+endpoint de registro. En esta versión local, los proveedores KYC son mocks: no
+analizan la selfie ni ejecutan una prueba de vida. No usar este flujo como
+verificación de identidad real.
+
 ## Funcionalidades
 
 - [Registro, onboarding seguro y autenticación basada en tokens (HU19)](docs/identidad-autenticacion.md)

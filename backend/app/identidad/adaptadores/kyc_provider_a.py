@@ -36,6 +36,7 @@ class ProviderAClient:
         document_number: str,
         full_name: str,
         birth_date: str,
+        selfie_base64: str,
     ) -> dict:
 
         response = httpx.post(
@@ -45,6 +46,7 @@ class ProviderAClient:
                 "documentNumber": document_number,
                 "fullName": full_name,
                 "birthDate": birth_date,
+                "selfieBase64": selfie_base64,
             },
             timeout=self._timeout,
         )
@@ -79,6 +81,7 @@ class KYCProviderAAdapter(IdentityVerificationProvider):
             document_number=request.document_number,
             full_name=request.full_name,
             birth_date=request.birth_date.isoformat(),
+            selfie_base64=request.selfie_base64,
         )
 
         return VerificationResult(

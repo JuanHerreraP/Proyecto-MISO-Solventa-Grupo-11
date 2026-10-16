@@ -9,6 +9,7 @@ from app.identidad.modelos import (
 )
 from app.identidad.servicio import (
     ConsentimientoRequeridoError,
+    DocumentoYaExisteError,
     KYCPendienteError,
     KYCRechazadoError,
     ServicioIdentidad,
@@ -53,6 +54,7 @@ def test_registro_exitoso_crea_usuario(
     assert resultado.kyc_validado is True
 
     assert usuario_guardado.referencia_kyc == "A-1000000001-123"
+    assert usuario_guardado.celular == "3001234567"
 
 
 def test_registro_consulta_el_kyc(
@@ -142,6 +144,27 @@ def test_no_permite_email_duplicado(
         servicio.registrar_usuario(solicitud_registro)
 
 
+def test_no_consulta_kyc_ni_crea_usuario_con_documento_duplicado(
+    repositorio,
+    solicitud_registro,
+    resultado_kyc_aprobado,
+):
+    provider = FakeProviderKYC(resultado_kyc_aprobado)
+    servicio = ServicioIdentidad(repositorio=repositorio, provider=provider)
+    servicio.registrar_usuario(solicitud_registro)
+    provider.llamadas.clear()
+
+    solicitud_otro_email = solicitud_registro.model_copy(
+        update={"email": "otra@gmail.com", "numero_documento": " 1000000001 "}
+    )
+
+    with pytest.raises(DocumentoYaExisteError):
+        servicio.registrar_usuario(solicitud_otro_email)
+
+    assert provider.llamadas == []
+    assert len(repositorio.usuarios) == 1
+
+
 def test_sin_consentimiento_no_consulta_kyc(
     repositorio,
     solicitud_registro,
@@ -162,6 +185,39 @@ def test_sin_consentimiento_no_consulta_kyc(
     assert provider.llamadas == []
 
     assert repositorio.usuarios == {}
+
+
+def test_envia_selfie_al_proveedor_sin_persistirla(
+    repositorio,
+    solicitud_registro,
+    resultado_kyc_aprobado,
+):
+    provider = FakeProviderKYC(resultado_kyc_aprobado)
+    ServicioIdentidad(repositorio=repositorio, provider=provider).registrar_usuario(
+        solicitud_registro
+    )
+
+    assert provider.llamadas[0].selfie_base64 == solicitud_registro.selfie_base64
+    assert all(not hasattr(usuario, "selfie_base64") for usuario in repositorio.usuarios.values())
+
+
+def test_registro_legacy_sin_celular_ni_selfie_sigue_compatible(
+    repositorio,
+    solicitud_registro,
+    resultado_kyc_aprobado,
+):
+    provider = FakeProviderKYC(resultado_kyc_aprobado)
+    solicitud_legacy = solicitud_registro.model_copy(
+        update={"celular": None, "selfie_base64": None}
+    )
+
+    ServicioIdentidad(repositorio=repositorio, provider=provider).registrar_usuario(
+        solicitud_legacy
+    )
+
+    usuario = repositorio.buscar_por_email("ana@gmail.com")
+    assert usuario.celular is None
+    assert provider.llamadas[0].selfie_base64 == ""
 
 
 def test_kyc_rechazado_no_crea_usuario(

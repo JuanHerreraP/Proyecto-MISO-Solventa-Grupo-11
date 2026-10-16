@@ -1,15 +1,38 @@
 package com.example.solventa.data.remote
 
 import com.example.solventa.domain.auth.AuthGateway
+import com.example.solventa.domain.auth.DatosRegistro
 import com.example.solventa.domain.auth.Perfil
+import com.example.solventa.domain.auth.RegistroCreado
 import com.example.solventa.domain.auth.ResultadoApi
 import com.example.solventa.domain.auth.Tokens
 import com.example.solventa.domain.auth.mapear
 import com.google.gson.JsonParser
+import com.google.gson.Gson
 import java.io.IOException
 import retrofit2.Response
 
 class RemoteAuthGateway(private val api: AuthApi) : AuthGateway {
+
+    override suspend fun registrar(datos: DatosRegistro): ResultadoApi<RegistroCreado> = try {
+        val respuesta = api.registrar(SolicitudRegistroDto.desde(datos))
+        val cuerpo = if (respuesta.isSuccessful) {
+            respuesta.body()?.toString()
+        } else {
+            respuesta.errorBody()?.string()
+        }
+
+        if (respuesta.code() == 201 && cuerpo != null) {
+            ResultadoApi.Exito(
+                Gson().fromJson(cuerpo, RespuestaRegistroDto::class.java).aRegistroCreado()
+            )
+        } else {
+            val (codigo, mensaje) = leerError(cuerpo)
+            ResultadoApi.Fallo(respuesta.code(), codigo, mensaje)
+        }
+    } catch (error: IOException) {
+        ResultadoApi.SinConexion
+    }
 
     override suspend fun login(email: String, password: String): ResultadoApi<Tokens> =
         llamar { api.login(SolicitudLoginDto(email, password)) }.mapear { it.aTokens() }
@@ -61,6 +84,18 @@ class RemoteAuthGateway(private val api: AuthApi) : AuthGateway {
                         val codigo = objeto.get("codigo")?.takeIf { it.isJsonPrimitive }?.asString
                         val mensaje = objeto.get("mensaje")?.takeIf { it.isJsonPrimitive }?.asString
                         codigo to mensaje
+                    }
+                    detalle.isJsonArray -> {
+                        val mensaje = detalle.asJsonArray
+                            .mapNotNull { elemento ->
+                                elemento.takeIf { it.isJsonObject }
+                                    ?.asJsonObject
+                                    ?.get("msg")
+                                    ?.takeIf { it.isJsonPrimitive }
+                                    ?.asString
+                            }
+                            .firstOrNull()
+                        null to mensaje
                     }
                     else -> null to null
                 }

@@ -26,4 +26,10 @@ class RepositorioUsuarios(Protocol):
 
     def buscar_por_email(self, email: str) -> Usuario | None: ...
 
+    def buscar_por_documento(
+        self,
+        tipo_documento: str,
+        numero_documento: str,
+    ) -> Usuario | None: ...
+
     def buscar_por_id(self, usuario_id: str) -> Usuario | None: ...
