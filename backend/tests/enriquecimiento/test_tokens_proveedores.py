@@ -1,11 +1,17 @@
+import asyncio
 from datetime import datetime, timezone
 
+import httpx
 import jwt
 import pytest
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 
-from app.perfilamiento.enriquecimiento.tokens_proveedores import crear_token_proveedor
+from app.perfilamiento.enriquecimiento.cliente_http import crear_cliente
+from app.perfilamiento.enriquecimiento.tokens_proveedores import (
+    AutenticacionProveedor,
+    crear_token_proveedor,
+)
 
 
 def _crear_llaves() -> tuple[str, str]:
@@ -83,3 +89,42 @@ def test_token_proveedor_rechaza_configuracion_incompleta(campo: str) -> None:
 
     with pytest.raises(ValueError, match="configuración completa"):
         crear_token_proveedor(**parametros)
+
+
+def test_cliente_genera_un_token_firmado_para_cada_solicitud() -> None:
+    privada, publica = _crear_llaves()
+    tokens_enviados = []
+
+    def responder(request: httpx.Request) -> httpx.Response:
+        tokens_enviados.append(request.headers["Authorization"].removeprefix("Bearer "))
+        return httpx.Response(200, json={})
+
+    cliente = crear_cliente(
+        "https://proveedor.example",
+        autenticacion=AutenticacionProveedor(
+            llave_privada=privada,
+            emisor="solventa",
+            audiencia="open-finance",
+        ),
+        transporte=httpx.MockTransport(responder),
+    )
+
+    async def consultar() -> None:
+        async with cliente:
+            await cliente.get("/primera")
+            await cliente.get("/segunda")
+
+    asyncio.run(consultar())
+
+    payloads = [
+        jwt.decode(
+            token,
+            publica,
+            algorithms=["RS256"],
+            issuer="solventa",
+            audience="open-finance",
+        )
+        for token in tokens_enviados
+    ]
+    assert len(payloads) == 2
+    assert payloads[0]["jti"] != payloads[1]["jti"]

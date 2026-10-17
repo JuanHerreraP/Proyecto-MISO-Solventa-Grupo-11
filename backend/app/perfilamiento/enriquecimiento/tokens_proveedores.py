@@ -3,6 +3,7 @@
 import uuid
 from datetime import datetime, timedelta, timezone
 
+import httpx
 import jwt
 
 DURACION_TOKEN_SEGUNDOS = 60
@@ -32,3 +33,21 @@ def crear_token_proveedor(
         "type": "provider_access",
     }
     return jwt.encode(payload, llave_privada, algorithm="RS256")
+
+
+class AutenticacionProveedor(httpx.Auth):
+    """Añade un JWT firmado y de corta duración a cada solicitud saliente."""
+
+    def __init__(self, *, llave_privada: str, emisor: str, audiencia: str) -> None:
+        self._llave_privada = llave_privada
+        self._emisor = emisor
+        self._audiencia = audiencia
+
+    def auth_flow(self, request: httpx.Request):
+        token = crear_token_proveedor(
+            llave_privada=self._llave_privada,
+            emisor=self._emisor,
+            audiencia=self._audiencia,
+        )
+        request.headers["Authorization"] = f"Bearer {token}"
+        yield request

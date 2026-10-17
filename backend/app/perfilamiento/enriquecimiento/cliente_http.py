@@ -24,22 +24,30 @@ def contexto_tls() -> ssl.SSLContext:
 
 def crear_cliente(
     url_base: str,
-    token: str,
+    token: str | None = None,
     *,
+    autenticacion: httpx.Auth | None = None,
     tiempo_limite: float = TIEMPO_LIMITE_SEGUNDOS,
     permitir_http: bool = False,
     transporte: httpx.AsyncBaseTransport | None = None,
 ) -> httpx.AsyncClient:
-    if not token:
+    if not token and autenticacion is None:
         raise ConfiguracionInsegura("La integración requiere un token de autenticación.")
+    if token and autenticacion is not None:
+        raise ConfiguracionInsegura("La integración solo admite un mecanismo de autenticación.")
     if not url_base.startswith("https://") and not (
         permitir_http and url_base.startswith("http://")
     ):
         raise ConfiguracionInsegura("La integración requiere una URL https://.")
 
+    headers = {"Accept": "application/json"}
+    if token:
+        headers["Authorization"] = f"Bearer {token}"
+
     return httpx.AsyncClient(
         base_url=url_base,
-        headers={"Authorization": f"Bearer {token}", "Accept": "application/json"},
+        headers=headers,
+        auth=autenticacion,
         timeout=httpx.Timeout(tiempo_limite),
         limits=httpx.Limits(max_keepalive_connections=50, max_connections=200),
         verify=contexto_tls(),
