@@ -143,7 +143,7 @@ def test_con_la_configuracion_por_defecto_el_flujo_corre_con_simuladores():
         "cliente_id": "CLI-SIM",
         "vence_en": "2999-01-01T00:00:00Z",
     }
-    api.post("/api/v1/consentimientos", json=vigente, headers=CLIENTE)
+    api.post("/api/v1/consentimientos", json=vigente, headers={**CLIENTE, "X-Usuario": "CLI-SIM"})
 
     respuesta = api.post(
         "/api/v1/enriquecimientos",

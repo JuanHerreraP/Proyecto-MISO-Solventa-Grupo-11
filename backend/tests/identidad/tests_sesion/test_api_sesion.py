@@ -155,3 +155,84 @@ def test_logout_con_token_invalido_responde_401(cliente):
     respuesta = cliente.post(f"{RUTA}/logout", json={"refresh_token": "basura"})
 
     assert respuesta.status_code == 401
+
+
+@pytest.mark.parametrize("minutos", [30, 31])
+def test_inactividad_impide_access_y_refresh(cliente, db, minutos):
+    from datetime import datetime, timedelta, timezone
+
+    from app.identidad.modelos_db import SesionRefreshDB
+    from app.identidad.tokens import validar_refresh_token
+
+    crear_usuario(db)
+    sesion = _login(cliente)
+    jti = validar_refresh_token(sesion["refresh_token"])["jti"]
+    almacenada = db.get(SesionRefreshDB, jti)
+    almacenada.ultima_actividad = datetime.now(timezone.utc) - timedelta(minutes=minutos)
+    db.commit()
+    respuesta = cliente.get(
+        f"{RUTA}/me", headers={"Authorization": f"Bearer {sesion['access_token']}"}
+    )
+    assert respuesta.status_code == 401
+    assert respuesta.json()["detail"]["codigo"] == "SESSION_EXPIRED"
+    assert (
+        cliente.post(f"{RUTA}/refresh", json={"refresh_token": sesion["refresh_token"]}).status_code
+        == 401
+    )
+
+
+def test_refresh_no_reactiva_sesion_inactiva(cliente, db):
+    from datetime import datetime, timedelta, timezone
+
+    from app.identidad.modelos_db import SesionRefreshDB
+    from app.identidad.tokens import validar_refresh_token
+
+    crear_usuario(db)
+    sesion = _login(cliente)
+    almacenada = db.get(SesionRefreshDB, validar_refresh_token(sesion["refresh_token"])["jti"])
+    almacenada.ultima_actividad = datetime.now(timezone.utc) - timedelta(minutes=30)
+    db.commit()
+    assert (
+        cliente.post(f"{RUTA}/refresh", json={"refresh_token": sesion["refresh_token"]}).status_code
+        == 401
+    )
+    db.refresh(almacenada)
+    assert almacenada.motivo_revocacion == "INACTIVIDAD"
+
+
+def test_peticion_autenticada_actualiza_actividad(cliente, db):
+    from datetime import datetime, timedelta, timezone
+
+    from app.identidad.modelos_db import SesionRefreshDB
+    from app.identidad.tokens import validar_refresh_token
+
+    crear_usuario(db)
+    sesion = _login(cliente)
+    almacenada = db.get(SesionRefreshDB, validar_refresh_token(sesion["refresh_token"])["jti"])
+    anterior = datetime.now(timezone.utc) - timedelta(minutes=29)
+    almacenada.ultima_actividad = anterior
+    db.commit()
+    assert (
+        cliente.get(
+            f"{RUTA}/me", headers={"Authorization": f"Bearer {sesion['access_token']}"}
+        ).status_code
+        == 200
+    )
+    db.refresh(almacenada)
+    assert almacenada.ultima_actividad.replace(tzinfo=timezone.utc) > anterior
+    assert (
+        cliente.post(f"{RUTA}/refresh", json={"refresh_token": sesion["refresh_token"]}).status_code
+        == 200
+    )
+
+
+def test_logout_invalida_access_de_la_sesion(cliente, db):
+    crear_usuario(db)
+    sesion = _login(cliente)
+    cliente.post(f"{RUTA}/logout", json={"refresh_token": sesion["refresh_token"]})
+    assert (
+        cliente.get(
+            f"{RUTA}/me", headers={"Authorization": f"Bearer {sesion['access_token']}"}
+        ).status_code
+        == 401
+    )

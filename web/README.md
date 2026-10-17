@@ -1,438 +1,193 @@
 # Solventa Web
 
-Portal web de **Solventa**, desarrollado con **React, TypeScript y Vite**.
+## Qué hace
 
-Esta aplicación corresponde al cliente web de la plataforma y permite implementar la experiencia de registro, autenticación y posteriormente los diferentes procesos de gestión de seguros.
+Portal web de Solventa desarrollado con React, TypeScript y Vite. Incluye registro
+con validación KYC, inicio de sesión, restauración y renovación de sesión, Home
+según el rol y alta de socios de distribución con generación de credenciales.
 
-Actualmente el frontend incluye la implementación de la **HU19 - Registro, onboarding seguro y autenticación basada en tokens**, con pantallas de inicio de sesión y creación de cuenta integradas con el backend de Solventa.
+El registro público crea cuentas `CLIENTE`. Los usuarios internos se crean desde
+la API administrativa por un manager con rol `SERVICIO_INTERNO`; todavía no hay una
+pantalla web para administrar usuarios.
 
----
+## Flujo
 
-## Tecnologías
+1. El usuario se registra en `/registro`, autoriza la validación de identidad y
+   recibe el resultado del backend. Si el registro es exitoso, vuelve al login.
+2. En `/login`, la web obtiene un reto CSRF y envía correo y contraseña. El backend
+   establece el refresh token en una cookie HttpOnly y devuelve el access token.
+3. La web conserva el access token en memoria y consulta `/api/v1/auth/me` para
+   verificar la sesión y el rol antes de mostrar una ruta protegida.
+4. Home permite cerrar sesión. `INGENIERO_INTEGRACIONES` y `SERVICIO_INTERNO` ven
+   además “Crear un nuevo socio”.
+5. El formulario registra la ficha técnica del socio y solicita sus credenciales.
+   El secreto se muestra únicamente en el resultado de generación.
+6. Al recargar, la web restaura la sesión mediante la cookie. Mientras hay actividad,
+   renueva el access token; tras 30 minutos de inactividad vuelve al login.
 
-El proyecto utiliza:
+## Pantallas y roles
 
-- **React**
-- **TypeScript**
-- **Vite**
-- **React Router DOM**
-- **Vitest**
-- **React Testing Library**
-- **Testing Library User Event**
-- **V8 Coverage**
-- **ESLint**
+| Ruta | Acceso | Función |
+| --- | --- | --- |
+| `/` | Público | Redirige a `/login` |
+| `/login` | Público | Ingreso con correo y contraseña |
+| `/registro` | Público | Registro de un cliente con consentimiento KYC |
+| `/home` | Cualquier usuario con sesión válida | Inicio, cierre de sesión y navegación según rol |
+| `/admin/socios/nuevo` | `INGENIERO_INTEGRACIONES`, `SERVICIO_INTERNO` | Alta de socios y generación de credenciales |
 
-Para el sistema visual se utilizan:
+`RutaProtegida` consulta `/me` antes de montar las pantallas. Sin sesión redirige
+al login; sin el rol requerido vuelve a Home con un aviso. La misma comprobación
+se aplica al escribir la URL directamente, recargar y navegar con atrás/adelante.
+El backend valida sus propios permisos en cada operación.
 
-- **Plus Jakarta Sans** para títulos y elementos de jerarquía.
-- **DM Sans** para textos descriptivos y ayudas.
-- **Material Symbols Outlined** para iconografía.
+## Endpoints
 
----
+| Método y ruta | Uso en la web |
+| --- | --- |
+| `POST /api/v1/auth/register` | Registro público; KYC y asignación de `CLIENTE` |
+| `GET /api/v1/auth/web/csrf` | Obtener el reto CSRF |
+| `POST /api/v1/auth/web/login` | Iniciar sesión con cookies protegidas |
+| `POST /api/v1/auth/web/refresh` | Restaurar o renovar la sesión y rotar el refresh |
+| `POST /api/v1/auth/web/logout` | Revocar la sesión y eliminar las cookies |
+| `GET /api/v1/auth/me` | Consultar el usuario autenticado y su rol |
+| `POST /api/v1/socios` | Registrar y aprovisionar un socio |
+| `POST /api/v1/socios/{socio_id}/credenciales` | Generar sus credenciales de integración |
 
-## Sistema visual
+El login web recibe `email` y `password`. La respuesta contiene `access_token`,
+`token_type`, `expires_in` y `csrf_token`; el refresh no aparece en el JSON.
+Los endpoints nativos `/api/v1/auth/login`, `/refresh` y `/logout` mantienen el
+contrato para Android, pero no son los que utiliza este cliente web.
 
-El frontend utiliza el sistema visual definido para Solventa.
+Los contratos completos están en [sesiones web](../docs/sesiones-web.md),
+[identidad](../docs/identidad-autenticacion.md) y
+[socios de distribución](../docs/socios-distribucion.md).
 
-### Paleta principal
+## Manejo de sesión y seguridad
 
-| Uso | Color |
-|---|---|
-| Noche / estructura principal | `#101B32` |
-| Navegación | `#3867F2` |
-| Avance / acción principal | `#A7E451` |
-| Información | `#29B4D3` |
-| Atención | `#F69A4A` |
+- Access token en memoria; refresh en cookie `HttpOnly`, `Secure` y `SameSite`.
+  No se guardan tokens en localStorage ni sessionStorage.
+- Las operaciones de sesión usan `credentials: include` y `X-CSRF-Token`; el
+  backend valida el reto y el origen. Las APIs protegidas usan Bearer y omiten cookies.
+- La aplicación espera la restauración antes de montar las páginas. Las rutas
+  protegidas vuelven a comprobar el rol vigente mediante `/me`.
+- El access token dura 30 minutos. Se renueva cuando queda un minuto o se detecta
+  expiración; las peticiones concurrentes comparten la renovación.
+- La web mide interacción y el backend registra actividad por sesión. Tras 30
+  minutos de inactividad, la sesión ya no puede renovarse.
+- Logout revoca la sesión, elimina las cookies y limpia la memoria. Si falla,
+  Home muestra un error y permite reintentar.
 
-La interfaz utiliza el color **Noche** para elementos estructurales, **Azul** para navegación y estados de foco, y **Lima** para las acciones principales del usuario.
+## Configuración y ejecución local
 
----
+### Requisitos
 
-## Funcionalidades implementadas
+Node.js 24 y npm; Python 3.12 para el backend. Las dependencias se instalan desde
+los archivos de bloqueo y requisitos del repositorio.
 
-### Inicio de sesión
+### Backend y KYC
 
-Ruta:
+Preparar el backend siguiendo el [README principal](../README.md#backend-en-local).
+Para probar el registro, iniciar también el proveedor KYC A en otra terminal,
+desde `backend`:
 
-```text
-/login
+```bash
+.venv/bin/uvicorn mocks.kyc.provider_a:app --reload --port 8001
 ```
 
-Permite al usuario:
+Levantar la API para desarrollo HTTP local, también desde `backend`:
 
-- Ingresar correo electrónico.
-- Ingresar contraseña.
-- Consumir el servicio de autenticación del backend.
-- Mostrar mensajes de error cuando las credenciales no son válidas.
-- Mostrar estado de carga durante el inicio de sesión.
-- Redirigir al usuario a `/home` cuando la autenticación es exitosa.
-- Navegar hacia la pantalla de creación de cuenta.
-
-Endpoint utilizado:
-
-```http
-POST /api/v1/auth/login
+```bash
+WEB_COOKIE_SECURE=false WEB_ALLOWED_ORIGINS=http://localhost:5173 .venv/bin/uvicorn app.main:app --reload
 ```
 
-Ejemplo de solicitud:
+La API queda en `http://localhost:8000` y Swagger en `http://localhost:8000/docs`.
+Los proveedores KYC incluidos son simuladores; no verifican identidades reales.
 
-```json
-{
-  "email": "maria.torres@correo.com",
-  "password": "Password123!"
-}
+### Cliente web
+
+Desde `web`:
+
+```bash
+npm ci
+cp .env.example .env
+npm run dev
 ```
 
-El backend retorna un `access_token` y un `refresh_token`.
-
----
-
-### Registro de usuario
-
-Ruta:
-
-```text
-/registro
-```
-
-Permite registrar un nuevo cliente proporcionando:
-
-- Nombre.
-- Apellido.
-- Correo electrónico.
-- Tipo de documento.
-- Número de documento.
-- Fecha de nacimiento.
-- Contraseña.
-- Confirmación de contraseña.
-- Consentimiento para tratamiento de datos y validación de identidad.
-
-Endpoint utilizado:
-
-```http
-POST /api/v1/auth/register
-```
-
-Ejemplo:
-
-```json
-{
-  "nombre": "Maria",
-  "apellido": "Torres",
-  "email": "maria.torres@correo.com",
-  "password": "Password123!",
-  "tipo_documento": "CC",
-  "numero_documento": "123456789",
-  "fecha_nacimiento": "1995-06-15",
-  "celular": "3001234567",
-  "acepta_validacion_identidad": true
-}
-```
-
-`celular` y `selfie_base64` son opcionales para mantener la compatibilidad de este flujo web. La app Android sí solicita una selfie JPEG y la envía codificada en Base64. El proveedor KYC de demostración no analiza la selfie ni ejecuta una prueba de vida; su resultado es determinista según el documento.
-
-El frontend valida adicionalmente:
-
-- Contraseña mínima de 8 caracteres.
-- Coincidencia entre contraseña y confirmación.
-- Autorización de validación de identidad.
-- Campos obligatorios.
-- Formato válido de correo electrónico.
-
-Cuando el registro finaliza correctamente, se informa al usuario y posteriormente se redirige hacia `/login`.
-
----
-
-## Integración con el backend
-
-La URL del backend se configura mediante una variable de entorno.
-
-Crear un archivo:
-
-```text
-.env
-```
-
-con:
+El archivo `.env` debe contener:
 
 ```env
 VITE_API_URL=http://localhost:8000
 ```
 
-Existe también:
+Abrir `http://localhost:5173`. Usar el mismo hostname para web y API: no mezclar
+localhost con 127.0.0.1. Si cambia el puerto u origen de la web, actualizar
+`WEB_ALLOWED_ORIGINS` y reiniciar el backend. Reiniciar Vite tras cambiar `.env`.
 
-```text
-.env.example
-```
+### Producción
 
-como referencia para configurar nuevos ambientes.
+Usar HTTPS, `APP_ENV=production`, `WEB_COOKIE_SECURE=true` y una lista explícita
+de orígenes en `WEB_ALLOWED_ORIGINS`; no se admiten comodines. El valor predeterminado
+de `WEB_COOKIE_SAMESITE` es `lax`. Configurar `VITE_API_URL` antes de compilar.
+No colocar secretos en variables `VITE_*`, que forman parte del cliente distribuido.
 
-El servicio encargado de realizar las llamadas de autenticación se encuentra en:
-
-```text
-src/services/auth.service.ts
-```
-
-Actualmente expone:
-
-```ts
-login()
-register()
-```
-
----
+Ver [configuración de cookies y CORS](../docs/sesiones-web.md#configuración) y
+[backend/.env.example](../backend/.env.example). El backend no carga `.env`
+automáticamente; las variables deben pasarse al proceso.
 
 ## Estructura principal
 
-```text
-web/
-├── public/
-├── src/
-│   ├── assets/
-│   │
-│   ├── components/
-│   │   └── auth/
-│   │       └── AuthLayout.tsx
-│   │
-│   ├── pages/
-│   │   ├── HomePage.tsx
-│   │   ├── LoginPage.tsx
-│   │   ├── LoginPage.test.tsx
-│   │   ├── RegisterPage.tsx
-│   │   └── RegisterPage.test.tsx
-│   │
-│   ├── services/
-│   │   ├── auth.service.ts
-│   │   └── auth.service.test.ts
-│   │
-│   ├── styles/
-│   │   └── auth.css
-│   │
-│   ├── test/
-│   │   └── setup.ts
-│   │
-│   ├── types/
-│   │   └── auth.ts
-│   │
-│   ├── App.tsx
-│   ├── index.css
-│   └── main.tsx
-│
-├── .env.example
-├── eslint.config.js
-├── index.html
-├── package.json
-├── tsconfig.app.json
-├── tsconfig.json
-├── tsconfig.node.json
-└── vite.config.ts
-```
+| Archivo o carpeta | Responsabilidad |
+| --- | --- |
+| `src/App.tsx` | Restauración inicial, control de sesión y rutas |
+| `src/components/auth/AuthLayout.tsx` | Presentación compartida de login y registro |
+| `src/components/auth/RutaProtegida.tsx` | Validación de sesión y roles antes de montar una pantalla |
+| `src/pages/` | Login, registro, Home y alta de socios |
+| `src/services/auth.service.ts` | Registro, login y consulta de `/me` |
+| `src/services/session.ts` | Access token en memoria, renovación, inactividad y logout |
+| `src/services/web-session.ts` | Cookies, reto CSRF y coordinación de operaciones de sesión |
+| `src/services/socios.service.ts` | Alta del socio y generación de credenciales |
+| `src/types/` | Contratos TypeScript y roles habilitados para administrar socios |
+| `src/styles/` | Estilos de autenticación y socios |
+| `src/test/setup.ts` | Configuración compartida de pruebas |
 
----
+## Tecnologías y sistema visual
 
-## Componentes principales
+React, TypeScript, Vite y React Router; Vitest, React Testing Library, User Event
+y jsdom para pruebas; ESLint para análisis y V8 para cobertura.
 
-### `AuthLayout`
+La interfaz utiliza Plus Jakarta Sans y DM Sans, con Material Symbols Outlined.
 
-```text
-src/components/auth/AuthLayout.tsx
-```
+| Uso | Color |
+| --- | --- |
+| Estructura principal | `#101B32` |
+| Navegación y foco | `#3867F2` |
+| Acción principal | `#A7E451` |
+| Información | `#29B4D3` |
+| Atención | `#F69A4A` |
 
-Define el layout reutilizable para las pantallas relacionadas con autenticación.
+## Pruebas y validación
 
-Está compuesto por:
-
-- Panel institucional de Solventa.
-- Título y descripción configurables.
-- Beneficios del proceso.
-- Área destinada al formulario.
-- Diseño responsive para dispositivos de menor tamaño.
-
-Es utilizado tanto por:
-
-```text
-LoginPage
-RegisterPage
-```
-
----
-
-### `LoginPage`
-
-```text
-src/pages/LoginPage.tsx
-```
-
-Gestiona:
-
-- Estado de correo y contraseña.
-- Estado de carga.
-- Errores de autenticación.
-- Consumo del servicio `login`.
-- Redirección posterior al inicio de sesión.
-
----
-
-### `RegisterPage`
-
-```text
-src/pages/RegisterPage.tsx
-```
-
-Gestiona:
-
-- Datos personales.
-- Datos de identificación.
-- Fecha de nacimiento.
-- Contraseña.
-- Confirmación de contraseña.
-- Consentimiento.
-- Validaciones del formulario.
-- Consumo del servicio `register`.
-- Mensajes de éxito y error.
-- Redirección al inicio de sesión.
-
----
-
-### `auth.service`
-
-```text
-src/services/auth.service.ts
-```
-
-Centraliza el acceso a los endpoints de autenticación del backend.
-
-Esto evita realizar llamadas `fetch` directamente desde las páginas y permite mantener separada la lógica de presentación de la lógica de comunicación HTTP.
-
----
-
-## Instalación
-
-Se recomienda utilizar **Node.js 20**.
-
-Verificar las versiones:
-
-```bash
-node --version
-npm --version
-```
-
-Instalar las dependencias:
-
-```bash
-npm install
-```
-
----
-
-## Ejecutar en desarrollo
-
-Desde la carpeta:
-
-```text
-web/
-```
-
-ejecutar:
-
-```bash
-npm run dev
-```
-
-Vite iniciará normalmente el frontend en:
-
-```text
-http://localhost:5173
-```
-
-La aplicación redirige inicialmente hacia:
-
-```text
-http://localhost:5173/login
-```
-
----
-
-
-## Pruebas
-
-Los tests del frontend utilizan:
-
-- **Vitest**
-- **React Testing Library**
-- **User Event**
-- **jsdom**
-
-Actualmente existen pruebas para:
-
-### Login
-
-- Renderización del formulario.
-- Ingreso de credenciales.
-- Login exitoso.
-- Redirección a `/home`.
-- Credenciales incorrectas.
-- Manejo de errores inesperados.
-- Navegación hacia registro.
-
-### Registro
-
-- Renderización del formulario.
-- Validación de contraseña.
-- Contraseñas diferentes.
-- Consentimiento requerido.
-- Cambio del tipo de documento.
-- Registro exitoso.
-- Manejo de errores retornados por el backend.
-- Manejo de errores inesperados.
-- Redirección posterior al registro.
-
-### Servicio de autenticación
-
-Se verifica:
-
-- Endpoint utilizado para login.
-- Endpoint utilizado para registro.
-- Solicitudes HTTP `POST`.
-- Serialización del body.
-- Errores con `detail`.
-- Errores con `detail.mensaje`.
-- Errores sin mensaje.
-- Respuestas inválidas del servidor.
-
----
-
-## Ejecutar pruebas
-
-Ejecutar Vitest en modo interactivo:
-
-```bash
-npm test
-```
-
-Ejecutar los tests una sola vez:
+Desde `web`:
 
 ```bash
 npm test -- --run
-```
-
-Ejecutar tests con cobertura:
-
-```bash
 npm test -- --run --coverage
+npm run lint
+npm run build
 ```
 
-El reporte HTML se genera en:
+`npm test` abre el modo interactivo. La cobertura HTML queda en `coverage/` y la
+compilación en `dist/`; `npm run preview` permite revisar esa compilación localmente.
 
-```text
-coverage/
-```
+Las pruebas cubren registro y errores, login con CSRF, restauración, renovación,
+inactividad, logout, botones por rol, acceso directo a rutas protegidas, alta de
+socios y llamadas autenticadas. El backend tiene pruebas independientes para los
+atributos de cookies, CORS, CSRF, permisos y persistencia de auditoría.
 
+## Documentación relacionada
 
-## Proyecto
-
-**Solventa**  
-Proyecto Final — Maestría en Ingeniería de Software  
-Universidad de los Andes
-
-**Grupo 11**
+- [Índice técnico](../docs/README.md).
+- [Administración de usuarios y roles](../docs/administracion-usuarios.md).
+- [Control de acceso y auditoría](../docs/control-acceso-auditoria.md).
+- [Sesión web](../docs/sesiones-web.md).
+- [Cliente Android e ingreso biométrico](../docs/inicio-sesion-biometrico.md).

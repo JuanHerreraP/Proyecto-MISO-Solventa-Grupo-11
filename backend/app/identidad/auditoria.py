@@ -29,6 +29,7 @@ class TipoEventoAuth(str, Enum):
     LOGOUT = "LOGOUT"
 
     ACCESS_DENIED = "ACCESS_DENIED"
+    SENSITIVE_OPERATION = "SENSITIVE_OPERATION"
 
 
 def registrar_evento_auth(
@@ -50,7 +51,12 @@ def registrar_evento_auth(
             if request.client is not None:
                 ip = request.client.host
 
-            user_agent = request.headers.get("user-agent")
+            user_agent = (request.headers.get("user-agent") or "")[:500] or None
+            if hasattr(request, "state"):
+                # Evita duplicar en el middleware un evento ya auditado en la dependencia.
+                request.state.evento_auth_registrado = True
+                recurso = request.url.path[:300]
+                detalle = f"{request.method} {recurso}; {detalle or tipo_evento.value}"[:500]
 
         usuario_uuid = None
 

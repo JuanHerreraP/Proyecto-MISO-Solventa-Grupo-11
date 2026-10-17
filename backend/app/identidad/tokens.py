@@ -38,6 +38,7 @@ def crear_access_token(
     usuario_id: str,
     email: str,
     rol: str,
+    sesion_id: str | None = None,
 ) -> str:
 
     ahora = datetime.now(timezone.utc)
@@ -53,6 +54,9 @@ def crear_access_token(
     }
 
     private_key = PRIVATE_KEY_PATH.read_text()
+
+    if sesion_id is not None:
+        payload["sid"] = sesion_id
 
     return jwt.encode(
         payload,

@@ -1,10 +1,12 @@
+from types import SimpleNamespace
+
 from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
 
 from app.identidad.auditoria import TipoEventoAuth, registrar_evento_auth
 from app.identidad.modelos import Rol
-from app.identidad.repositorio import RepositorioUsuariosPostgres
+from app.identidad.repositorio import RepositorioSesionesPostgres, RepositorioUsuariosPostgres
 from app.identidad.tokens import TokenExpiradoError, TokenInvalidoError, validar_access_token
 from app.infraestructura.database import get_db
 
@@ -66,7 +68,10 @@ def get_current_user(
         ) from error
 
     repositorio = RepositorioUsuariosPostgres(db)
-    usuario = repositorio.buscar_por_id(payload["sub"])
+    try:
+        usuario = repositorio.buscar_por_id(payload["sub"])
+    except (ValueError, TypeError, AttributeError):
+        usuario = None
 
     if usuario is None:
         registrar_evento_auth(
@@ -86,6 +91,12 @@ def get_current_user(
             },
         )
 
+    request.state.usuario_autenticado = SimpleNamespace(
+        id=usuario.id,
+        email=usuario.email,
+        rol=usuario.rol,
+    )
+
     if not usuario.activo:
         registrar_evento_auth(
             tipo_evento=TipoEventoAuth.ACCESS_DENIED,
@@ -104,6 +115,21 @@ def get_current_user(
             },
         )
 
+    if payload.get("sid") and not RepositorioSesionesPostgres(db).registrar_actividad(
+        payload["sid"],
+        str(usuario.id),
+    ):
+        registrar_evento_auth(
+            tipo_evento=TipoEventoAuth.ACCESS_DENIED,
+            exitoso=False,
+            usuario_id=usuario.id,
+            detalle="SESSION_EXPIRED_OR_REVOKED",
+            request=request,
+        )
+        raise HTTPException(
+            status_code=401,
+            detail={"codigo": "SESSION_EXPIRED", "mensaje": "La sesión expiró. Inicie sesión."},
+        )
     return usuario
 
 
@@ -148,3 +174,12 @@ def rol_actual(
                 "mensaje": "El usuario tiene un rol no reconocido.",
             },
         ) from error
+
+
+def verificar_propietario(cliente_id: str, usuario) -> None:
+    """El cliente asegurado solo puede operar sobre su propio identificador."""
+    if usuario.rol == Rol.CLIENTE and str(usuario.id) != cliente_id:
+        raise HTTPException(
+            status_code=403,
+            detail={"codigo": "ACCESS_DENIED", "mensaje": "No tiene acceso a este cliente."},
+        )

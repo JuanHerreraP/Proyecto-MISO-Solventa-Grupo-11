@@ -72,7 +72,7 @@ Sin URL configurada se usan simuladores en proceso, deterministas por cliente, p
 
 - **Consentimiento provisional:** el registro y la consulta de consentimientos pertenecen al servicio de Identidad, KYC y Consentimiento. Aquí están en memoria detrás del puerto `RepositorioConsentimientos`.
 - **Proceso de cotización autorizado:** solo se exige que la solicitud traiga `cotizacion_id`. No se valida contra el servicio de cotización, que es de la HU03 (Sprint 2).
-- **Autenticación provisional:** el rol se lee de la cabecera `X-Rol` hasta que la HU19 entregue el token.
+- **Autenticación:** se requiere JWT Bearer y se autoriza con el rol vigente del usuario. `X-Rol` no concede permisos. Los clientes solo pueden registrar su propio consentimiento. Ver [control de acceso y auditoría](control-acceso-auditoria.md).
 - **EC07 parcial:** la autenticación es por token de portador. No hay mTLS ni tokens firmados por solicitud, y no se han hecho pruebas de intrusión.
 - **EC12 parcial:** el comportamiento está probado, pero la disponibilidad del 99,9 % no se ha medido en un ambiente desplegado.
 - **Caché en memoria:** falta el adaptador de ElastiCache Redis; hoy la caché no se comparte entre instancias ni sobrevive a un reinicio.

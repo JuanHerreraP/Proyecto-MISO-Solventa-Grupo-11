@@ -4,13 +4,15 @@ import httpx
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from sqlalchemy.orm import Session
 
-from app.api.seguridad import get_current_user
+from app.api.seguridad import get_current_user, requiere_roles
 from app.identidad.auditoria import TipoEventoAuth, registrar_evento_auth
 from app.identidad.config import get_identity_verification_provider
 from app.identidad.modelos import (
     RespuestaLogin,
     RespuestaPerfil,
     RespuestaRegistro,
+    Rol,
+    SolicitudCreacionUsuarioAdministrativa,
     SolicitudLogin,
     SolicitudRefresh,
     SolicitudRegistro,
@@ -37,6 +39,8 @@ router = APIRouter(
     tags=["Autenticación"],
 )
 
+manager_actual = requiere_roles(Rol.SERVICIO_INTERNO.value)
+
 
 @router.post(
     "/register",
@@ -49,6 +53,26 @@ def registrar_usuario(
     db: Session = Depends(get_db),
     provider: IdentityVerificationProvider = Depends(get_identity_verification_provider),
 ) -> RespuestaRegistro:
+    return _crear_usuario(solicitud, request, db, provider)
+
+
+@router.post(
+    "/users",
+    response_model=RespuestaRegistro,
+    status_code=status.HTTP_201_CREATED,
+    summary="Crea un usuario con un rol definido; exclusivo de SERVICIO_INTERNO",
+)
+def crear_usuario_administrativo(
+    solicitud: SolicitudCreacionUsuarioAdministrativa,
+    request: Request,
+    _manager=Depends(manager_actual),
+    db: Session = Depends(get_db),
+    provider: IdentityVerificationProvider = Depends(get_identity_verification_provider),
+) -> RespuestaRegistro:
+    return _crear_usuario(solicitud, request, db, provider, manager=_manager)
+
+
+def _crear_usuario(solicitud, request, db, provider, manager=None) -> RespuestaRegistro:
     repositorio = RepositorioUsuariosPostgres(db)
     servicio = ServicioIdentidad(
         repositorio=repositorio,
@@ -56,13 +80,20 @@ def registrar_usuario(
     )
 
     try:
-        resultado = servicio.registrar_usuario(solicitud)
+        if manager is None:
+            resultado = servicio.registrar_usuario(solicitud)
+        else:
+            resultado = servicio.crear_usuario_administrativo(solicitud)
         registrar_evento_auth(
             tipo_evento=TipoEventoAuth.USER_REGISTERED,
             exitoso=True,
             usuario_id=str(resultado.id),
             email=str(resultado.email),
-            detalle="Registro exitoso.",
+            detalle=(
+                "Registro exitoso."
+                if manager is None
+                else f"Creado por manager:{manager.id};rol:{resultado.rol.value}"
+            ),
             request=request,
         )
         return resultado
@@ -155,12 +186,12 @@ def registrar_usuario(
     status_code=status.HTTP_200_OK,
 )
 def listar_usuarios(
+    _manager=Depends(manager_actual),
     db: Session = Depends(get_db),
 ) -> list[RespuestaRegistro]:
     repositorio = RepositorioUsuariosPostgres(db)
     servicio = ServicioIdentidad(
         repositorio=repositorio,
-        provider=get_identity_verification_provider(),
     )
 
     return servicio.listar_usuarios()

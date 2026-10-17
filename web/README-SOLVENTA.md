@@ -1,5 +1,4 @@
-# Web
+# Solventa Web
 
-Portal web de Solventa (React + TypeScript + Vite). Pendiente de crear el proyecto.
-
-El trabajo `web` del pipeline se activa solo cuando exista `web/package.json`. Debe exponer los scripts `lint`, `test` y `build`.
+La documentación del portal, su ejecución local, configuración de sesión,
+endpoints y pruebas se mantiene en [README.md](README.md).
