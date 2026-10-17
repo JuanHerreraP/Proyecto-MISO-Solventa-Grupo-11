@@ -3,6 +3,7 @@ import asyncio
 import httpx
 import pytest
 
+from app.identidad.tokens import PRIVATE_KEY_PATH
 from app.perfilamiento.dominio.modelos import NivelRiesgoZona
 from app.perfilamiento.enriquecimiento.adaptadores import (
     AdaptadorOpenData,
@@ -175,9 +176,10 @@ def test_sin_url_configurada_se_usan_los_simuladores():
 def test_con_url_configurada_se_usan_los_adaptadores_http():
     entorno = {
         "OPEN_FINANCE_URL": "https://of.example",
-        "OPEN_FINANCE_TOKEN": "t1",
+        "OPEN_FINANCE_AUDIENCE": "open-finance",
         "OPEN_DATA_URL": "https://od.example",
-        "OPEN_DATA_TOKEN": "t2",
+        "OPEN_DATA_AUDIENCE": "open-data",
+        "FUENTES_JWT_PRIVATE_KEY_PATH": str(PRIVATE_KEY_PATH),
     }
 
     fuentes = crear_fuentes(entorno, tiempo_limite=0.25)
@@ -185,6 +187,6 @@ def test_con_url_configurada_se_usan_los_adaptadores_http():
     assert [type(f) for f in fuentes] == [AdaptadorOpenFinance, AdaptadorOpenData]
 
 
-def test_url_configurada_sin_token_no_arranca():
+def test_url_configurada_sin_autenticacion_firmada_no_arranca():
     with pytest.raises(ConfiguracionInsegura):
         crear_fuentes({"OPEN_FINANCE_URL": "https://of.example"}, tiempo_limite=0.25)
