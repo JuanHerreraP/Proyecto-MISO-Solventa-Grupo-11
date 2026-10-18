@@ -49,9 +49,7 @@ def esperar_base_disponible(intentos: int = 30, espera_segundos: float = 2.0) ->
             return
         except OperationalError as error:
             if intento == intentos:
-                logger.error(
-                    "No se pudo conectar a la base tras %s intentos", intentos
-                )
+                logger.error("No se pudo conectar a la base tras %s intentos", intentos)
                 raise
             logger.warning(
                 "Base no disponible (intento %s/%s): %s. Reintentando en %ss",
