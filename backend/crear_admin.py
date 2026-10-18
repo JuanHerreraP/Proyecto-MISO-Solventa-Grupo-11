@@ -83,7 +83,10 @@ def main() -> int:
             existente.activo = True
             existente.password_hash = hasher.hash(password)
             db.commit()
-            print(f"Usuario ya existia; actualizado a rol {rol.value} y reactivado: {email_normalizado}")
+            print(
+                f"Usuario ya existia; actualizado a rol {rol.value} "
+                f"y reactivado: {email_normalizado}"
+            )
             return 0
 
         usuario = UsuarioDB(
