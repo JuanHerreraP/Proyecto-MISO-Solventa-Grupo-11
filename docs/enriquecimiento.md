@@ -55,14 +55,20 @@ Cuenta como falla: tiempo agotado, error de conexión, código HTTP distinto de 
 El cliente HTTP compartido:
 - rechaza URL que no sean `https://`, salvo permiso explícito para desarrollo local;
 - exige TLS 1.2 o superior y valida el certificado del proveedor;
-- envía un token de portador en cada solicitud y no arranca sin token.
+- genera para cada solicitud un JWT RS256 de 60 segundos con emisor, audiencia y `jti`;
+- no permite crear integraciones reales sin autenticación firmada.
+
+Las pruebas de suplantación verifican que el proveedor rechace solicitudes sin token,
+firmadas por otro actor, vencidas, alteradas o dirigidas a otra audiencia.
 
 ## Configuración
 
 | Variable | Uso | Por defecto |
 |---|---|---|
-| `OPEN_FINANCE_URL`, `OPEN_FINANCE_TOKEN` | Agregador de Open Finance | Simulador en proceso |
-| `OPEN_DATA_URL`, `OPEN_DATA_TOKEN` | Fuente de Open Data | Simulador en proceso |
+| `OPEN_FINANCE_URL`, `OPEN_FINANCE_AUDIENCE` | Agregador de Open Finance | Simulador en proceso |
+| `OPEN_DATA_URL`, `OPEN_DATA_AUDIENCE` | Fuente de Open Data | Simulador en proceso |
+| `FUENTES_JWT_PRIVATE_KEY_PATH` | Llave privada exclusiva para proveedores | Obligatoria con URL real |
+| `FUENTES_JWT_ISSUER` | Emisor de los JWT de proveedores | `solventa` |
 | `FUENTES_TIEMPO_LIMITE_SEGUNDOS` | Tiempo límite por fuente | 0.25 |
 | `FUENTES_PERMITIR_HTTP` | `true` permite `http://` | No permitido |
 
@@ -73,7 +79,6 @@ Sin URL configurada se usan simuladores en proceso, deterministas por cliente, p
 - **Consentimiento provisional:** el registro y la consulta de consentimientos pertenecen al servicio de Identidad, KYC y Consentimiento. Aquí están en memoria detrás del puerto `RepositorioConsentimientos`.
 - **Proceso de cotización autorizado:** solo se exige que la solicitud traiga `cotizacion_id`. No se valida contra el servicio de cotización, que es de la HU03 (Sprint 2).
 - **Autenticación:** se requiere JWT Bearer y se autoriza con el rol vigente del usuario. `X-Rol` no concede permisos. Los clientes solo pueden registrar su propio consentimiento. Ver [control de acceso y auditoría](control-acceso-auditoria.md).
-- **EC07 parcial:** la autenticación es por token de portador. No hay mTLS ni tokens firmados por solicitud, y no se han hecho pruebas de intrusión.
 - **EC12 parcial:** el comportamiento está probado, pero la disponibilidad del 99,9 % no se ha medido en un ambiente desplegado.
 - **Caché en memoria:** falta el adaptador de ElastiCache Redis; hoy la caché no se comparte entre instancias ni sobrevive a un reinicio.
 - **Proveedores reales:** los adaptadores HTTP están probados contra respuestas simuladas, no contra un proveedor real.

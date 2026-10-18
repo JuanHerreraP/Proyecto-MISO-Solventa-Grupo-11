@@ -2,7 +2,7 @@
 
 - Solo acepta URL `https://`, salvo que se permita HTTP de forma explícita para desarrollo.
 - Exige TLS 1.2 o superior y valida el certificado del proveedor.
-- Autentica cada solicitud con un token de portador.
+- Autentica cada solicitud con un JWT firmado y de corta duración.
 """
 
 import ssl
@@ -24,14 +24,14 @@ def contexto_tls() -> ssl.SSLContext:
 
 def crear_cliente(
     url_base: str,
-    token: str,
     *,
+    autenticacion: httpx.Auth | None = None,
     tiempo_limite: float = TIEMPO_LIMITE_SEGUNDOS,
     permitir_http: bool = False,
     transporte: httpx.AsyncBaseTransport | None = None,
 ) -> httpx.AsyncClient:
-    if not token:
-        raise ConfiguracionInsegura("La integración requiere un token de autenticación.")
+    if autenticacion is None:
+        raise ConfiguracionInsegura("La integración requiere autenticación firmada.")
     if not url_base.startswith("https://") and not (
         permitir_http and url_base.startswith("http://")
     ):
@@ -39,7 +39,8 @@ def crear_cliente(
 
     return httpx.AsyncClient(
         base_url=url_base,
-        headers={"Authorization": f"Bearer {token}", "Accept": "application/json"},
+        headers={"Accept": "application/json"},
+        auth=autenticacion,
         timeout=httpx.Timeout(tiempo_limite),
         limits=httpx.Limits(max_keepalive_connections=50, max_connections=200),
         verify=contexto_tls(),
