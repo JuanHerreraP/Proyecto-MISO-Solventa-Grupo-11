@@ -3,6 +3,7 @@ import asyncio
 import httpx
 import pytest
 
+from app.identidad.tokens import PRIVATE_KEY_PATH
 from app.perfilamiento.dominio.modelos import NivelRiesgoZona
 from app.perfilamiento.enriquecimiento.adaptadores import (
     AdaptadorOpenData,
@@ -14,6 +15,7 @@ from app.perfilamiento.enriquecimiento.adaptadores import (
 from app.perfilamiento.enriquecimiento.cliente_http import ConfiguracionInsegura, crear_cliente
 from app.perfilamiento.enriquecimiento.configuracion import crear_fuentes
 from app.perfilamiento.enriquecimiento.puertos import FuenteNoDisponible
+from app.perfilamiento.enriquecimiento.tokens_proveedores import AutenticacionProveedor
 
 OPEN_FINANCE_OK = {
     "customer_id": "CLI-001",
@@ -29,9 +31,19 @@ OPEN_DATA_OK = {
 }
 
 
+def autenticacion_proveedor() -> AutenticacionProveedor:
+    return AutenticacionProveedor(
+        llave_privada=PRIVATE_KEY_PATH.read_text(),
+        emisor="solventa",
+        audiencia="proveedor-prueba",
+    )
+
+
 def cliente(manejador) -> httpx.AsyncClient:
     return crear_cliente(
-        "https://proveedor.example", "token-de-prueba", transporte=httpx.MockTransport(manejador)
+        "https://proveedor.example",
+        autenticacion=autenticacion_proveedor(),
+        transporte=httpx.MockTransport(manejador),
     )
 
 
@@ -87,7 +99,7 @@ def test_cada_solicitud_va_autenticada_y_a_la_ruta_del_cliente():
 
     consultar(AdaptadorOpenFinance(cliente(manejador)))
 
-    assert vistas[0].headers["Authorization"] == "Bearer token-de-prueba"
+    assert vistas[0].headers["Authorization"].startswith("Bearer ")
     assert vistas[0].url.scheme == "https"
     assert vistas[0].url.path == "/v1/customers/CLI-001"
 
@@ -146,16 +158,26 @@ def test_respuesta_que_no_es_json_es_fuente_no_disponible():
 
 def test_no_se_permite_http_sin_cifrar():
     with pytest.raises(ConfiguracionInsegura, match="https"):
-        crear_cliente("http://proveedor.example", "token")
+        crear_cliente(
+            "http://proveedor.example",
+            autenticacion=autenticacion_proveedor(),
+        )
 
 
 def test_http_solo_con_permiso_explicito_para_desarrollo():
-    assert crear_cliente("http://localhost:9000", "token", permitir_http=True) is not None
+    assert (
+        crear_cliente(
+            "http://localhost:9000",
+            autenticacion=autenticacion_proveedor(),
+            permitir_http=True,
+        )
+        is not None
+    )
 
 
-def test_no_se_permite_una_integracion_sin_token():
-    with pytest.raises(ConfiguracionInsegura, match="token"):
-        crear_cliente("https://proveedor.example", "")
+def test_no_se_permite_una_integracion_sin_autenticacion_firmada():
+    with pytest.raises(ConfiguracionInsegura, match="autenticación firmada"):
+        crear_cliente("https://proveedor.example")
 
 
 def test_los_simuladores_son_estables_por_cliente_y_distintos_entre_clientes():
@@ -175,9 +197,10 @@ def test_sin_url_configurada_se_usan_los_simuladores():
 def test_con_url_configurada_se_usan_los_adaptadores_http():
     entorno = {
         "OPEN_FINANCE_URL": "https://of.example",
-        "OPEN_FINANCE_TOKEN": "t1",
+        "OPEN_FINANCE_AUDIENCE": "open-finance",
         "OPEN_DATA_URL": "https://od.example",
-        "OPEN_DATA_TOKEN": "t2",
+        "OPEN_DATA_AUDIENCE": "open-data",
+        "FUENTES_JWT_PRIVATE_KEY_PATH": str(PRIVATE_KEY_PATH),
     }
 
     fuentes = crear_fuentes(entorno, tiempo_limite=0.25)
@@ -185,6 +208,6 @@ def test_con_url_configurada_se_usan_los_adaptadores_http():
     assert [type(f) for f in fuentes] == [AdaptadorOpenFinance, AdaptadorOpenData]
 
 
-def test_url_configurada_sin_token_no_arranca():
+def test_url_configurada_sin_autenticacion_firmada_no_arranca():
     with pytest.raises(ConfiguracionInsegura):
         crear_fuentes({"OPEN_FINANCE_URL": "https://of.example"}, tiempo_limite=0.25)
