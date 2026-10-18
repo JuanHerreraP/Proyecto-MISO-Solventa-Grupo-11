@@ -56,7 +56,7 @@ Los pesos y umbrales son valores iniciales definidos por el equipo de desarrollo
 
 ## Seguridad y acceso
 
-Se valida JWT Bearer y el rol vigente del usuario. `CLIENTE` solo puede consultar su propia oferta, usando su `id` de `/api/v1/auth/me` como `cliente_id`. Ver [control de acceso y auditoría](control-acceso-auditoria.md).
+Se valida JWT Bearer y el rol vigente del usuario. `CLIENTE` solo puede consultar su propia oferta, usando su `id` de `/api/v1/auth/me` como `cliente_id`. Ver [control de acceso y auditoría](identidad-autenticacion.md#matriz-de-permisos).
 
 ## Pendientes conocidos
 

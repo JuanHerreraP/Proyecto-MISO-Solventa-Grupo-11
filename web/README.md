@@ -58,7 +58,7 @@ El login web recibe `email` y `password`. La respuesta contiene `access_token`,
 Los endpoints nativos `/api/v1/auth/login`, `/refresh` y `/logout` mantienen el
 contrato para Android, pero no son los que utiliza este cliente web.
 
-Los contratos completos están en [sesiones web](../docs/sesiones-web.md),
+Los contratos completos están en [sesiones web](../docs/identidad-autenticacion.md#sesión-web-y-seguridad),
 [identidad](../docs/identidad-autenticacion.md) y
 [socios de distribución](../docs/socios-distribucion.md).
 
@@ -130,7 +130,7 @@ de orígenes en `WEB_ALLOWED_ORIGINS`; no se admiten comodines. El valor predete
 de `WEB_COOKIE_SAMESITE` es `lax`. Configurar `VITE_API_URL` antes de compilar.
 No colocar secretos en variables `VITE_*`, que forman parte del cliente distribuido.
 
-Ver [configuración de cookies y CORS](../docs/sesiones-web.md#configuración) y
+Ver [configuración de cookies y CORS](../docs/identidad-autenticacion.md#cookies-y-cors-web) y
 [backend/.env.example](../backend/.env.example). El backend no carga `.env`
 automáticamente; las variables deben pasarse al proceso.
 
@@ -187,7 +187,7 @@ atributos de cookies, CORS, CSRF, permisos y persistencia de auditoría.
 ## Documentación relacionada
 
 - [Índice técnico](../docs/README.md).
-- [Administración de usuarios y roles](../docs/administracion-usuarios.md).
-- [Control de acceso y auditoría](../docs/control-acceso-auditoria.md).
-- [Sesión web](../docs/sesiones-web.md).
+- [Administración de usuarios y roles](../docs/identidad-autenticacion.md#administración-de-usuarios-ec08).
+- [Control de acceso y auditoría](../docs/identidad-autenticacion.md#matriz-de-permisos).
+- [Sesión web](../docs/identidad-autenticacion.md#sesión-web-y-seguridad).
 - [Cliente Android e ingreso biométrico](../docs/inicio-sesion-biometrico.md).
