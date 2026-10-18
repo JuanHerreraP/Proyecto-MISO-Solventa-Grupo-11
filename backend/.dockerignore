@@ -1,6 +1,12 @@
 .venv
 __pycache__
+**/__pycache__
+.env*
+keys
+*.db
 tests
 .pytest_cache
 .ruff_cache
+htmlcov
+.coverage
 coverage.xml

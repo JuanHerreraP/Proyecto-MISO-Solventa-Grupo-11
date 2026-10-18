@@ -20,6 +20,15 @@ La documentación de arquitectura y las entregas semanales están en la [wiki](h
 
 El flujo de ramas, la convención de commits y el versionamiento están en [CONTRIBUTING.md](CONTRIBUTING.md). Nadie hace push directo a `main`.
 
+## Despliegue del MVP en AWS
+
+La guía de [ECS Fargate y Aurora PostgreSQL (RDS)](infra/aws/README.md) incluye
+Docker/ECR para la API, web en S3, API Gateway, infraestructura CloudFormation
+y configuración de la URL HTTPS para web y Android. La
+[revisión de coherencia](infra/aws/coherencia-arquitectura.md) compara el MVP con la wiki.
+El despliegue usa CloudFront para obtener
+una dirección HTTPS sin dominio propio; ver alcance y límites en la guía.
+
 ## Backend en local
 
 ```bash
