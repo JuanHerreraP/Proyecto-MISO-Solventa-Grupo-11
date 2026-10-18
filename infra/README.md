@@ -1,10 +1,10 @@
 # MVP en AWS: ECS Fargate + RDS
 
 El despliegue requerido está en [aws/README.md](aws/README.md). Incluye imágenes
-Docker para la API, ECR, ECS Fargate privado, Aurora PostgreSQL, API Gateway,
-Secrets Manager, CloudWatch, ALB interno y web estática en S3 + CloudFront.
-La [revisión de coherencia con la wiki](aws/coherencia-arquitectura.md) detalla
-qué está cubierto y qué queda pendiente del diseño objetivo.
+Docker para la API, ECR, ECS Fargate privado, RDS PostgreSQL (`db.t3.micro`),
+API Gateway, Secrets Manager, CloudWatch, ALB interno y web estática en S3 +
+CloudFront. Para replicarlo paso a paso, seguir la receta en
+[aws/DESPLIEGUE.md](aws/DESPLIEGUE.md).
 
 Los módulos de identidad, socios, enriquecimiento y perfilamiento viven hoy en
 una sola API. Los tres proveedores KYC son simuladores separados. Open Finance

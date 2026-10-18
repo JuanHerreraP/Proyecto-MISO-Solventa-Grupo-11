@@ -6,6 +6,7 @@ RUN pip install --no-cache-dir -r requirements.txt && useradd --uid 10001 --crea
 COPY app ./app
 COPY mocks ./mocks
 COPY entrypoint.py .
+COPY crear_admin.py .
 USER solventa
 EXPOSE 8000
 CMD ["python", "entrypoint.py"]

@@ -1,6 +1,6 @@
 {
   "AWSTemplateFormatVersion": "2010-09-09",
-  "Description": "Solventa Sprint 1: S3/CloudFront, HTTP API, private ALB/ECS, Aurora PostgreSQL in two AZs",
+  "Description": "Solventa Sprint 1: S3/CloudFront, HTTP API, private ALB/ECS, RDS PostgreSQL (db.t3.micro) in two AZs",
   "Parameters": {
     "BackendImage": {
       "Type": "String",
@@ -10,9 +10,9 @@
       "Type": "String",
       "Description": "Secrets Manager JSON with private_key and public_key PEM"
     },
-    "AuroraEngineVersion": {
+    "PostgresEngineVersion": {
       "Type": "String",
-      "Description": "Aurora PostgreSQL version supporting Serverless v2 in selected region; verify with describe-orderable-db-instance-options"
+      "Description": "RDS PostgreSQL engine version (e.g. 16.x); verify with describe-orderable-db-instance-options for db.t3.micro"
     },
     "ApiRateLimit": {
       "Type": "Number",
@@ -247,16 +247,17 @@
       }
     },
     "Database": {
-      "Type": "AWS::RDS::DBCluster",
-      "DeletionPolicy": "Snapshot",
-      "UpdateReplacePolicy": "Snapshot",
+      "Type": "AWS::RDS::DBInstance",
+      "DeletionPolicy": "Delete",
+      "UpdateReplacePolicy": "Delete",
       "Properties": {
-        "Engine": "aurora-postgresql",
+        "Engine": "postgres",
         "EngineVersion": {
-          "Ref": "AuroraEngineVersion"
+          "Ref": "PostgresEngineVersion"
         },
-        "EngineMode": "provisioned",
-        "DatabaseName": "solventa",
+        "DBInstanceClass": "db.t3.micro",
+        "AllocatedStorage": "20",
+        "DBName": "solventa",
         "MasterUsername": "solventa",
         "MasterUserPassword": {
           "Fn::Sub": "{{resolve:secretsmanager:${DbSecret}:SecretString:password}}"
@@ -264,18 +265,16 @@
         "DBSubnetGroupName": {
           "Ref": "DbSubnets"
         },
-        "VpcSecurityGroupIds": [
+        "VPCSecurityGroups": [
           {
             "Ref": "DbSg"
           }
         ],
         "StorageEncrypted": true,
         "BackupRetentionPeriod": 1,
-        "DeletionProtection": false,
-        "ServerlessV2ScalingConfiguration": {
-          "MinCapacity": 0.5,
-          "MaxCapacity": 2
-        }
+        "MultiAZ": false,
+        "PubliclyAccessible": false,
+        "DeletionProtection": false
       }
     },
     "Logs": {
@@ -1002,8 +1001,7 @@
       },
       "DependsOn": [
         "Listener",
-        "DbWriter",
-        "DbReader",
+        "Database",
         "AppDefaultRoute0",
         "AppDefaultRoute1",
         "AppSubnetRoute0",
@@ -1155,46 +1153,6 @@
           "Ref": "Vpc"
         },
         "GroupDescription": "API Gateway VPC link ENIs"
-      }
-    },
-    "DbWriter": {
-      "Type": "AWS::RDS::DBInstance",
-      "Properties": {
-        "Engine": "aurora-postgresql",
-        "DBInstanceClass": "db.serverless",
-        "DBClusterIdentifier": {
-          "Ref": "Database"
-        },
-        "AvailabilityZone": {
-          "Fn::Select": [
-            0,
-            {
-              "Fn::GetAZs": ""
-            }
-          ]
-        },
-        "PubliclyAccessible": false,
-        "PromotionTier": 0
-      }
-    },
-    "DbReader": {
-      "Type": "AWS::RDS::DBInstance",
-      "Properties": {
-        "Engine": "aurora-postgresql",
-        "DBInstanceClass": "db.serverless",
-        "DBClusterIdentifier": {
-          "Ref": "Database"
-        },
-        "AvailabilityZone": {
-          "Fn::Select": [
-            1,
-            {
-              "Fn::GetAZs": ""
-            }
-          ]
-        },
-        "PubliclyAccessible": false,
-        "PromotionTier": 1
       }
     },
     "HttpApi": {
