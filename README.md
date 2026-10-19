@@ -11,7 +11,7 @@ Integrantes: Ana María Solano, Harold Virgüez, Juan Esteban Herrera, Fernando 
 | `backend/` | Servicios de dominio y adaptadores | Python 3.12, FastAPI, Pytest |
 | `web/` | Portal web | React, TypeScript, Vite, Vitest |
 | `android/` | App móvil nativa | Kotlin, Jetpack Compose, JUnit |
-| `infra/` | Infraestructura y despliegue en AWS | ECS Fargate, Aurora PostgreSQL, ElastiCache Redis, SNS/SQS |
+| `infra/` | Infraestructura y despliegue en AWS | ECS Fargate, RDS PostgreSQL, API Gateway, S3/CloudFront |
 | `docs/` | Documentación técnica que acompaña el código | Markdown |
 
 La documentación de arquitectura y las entregas semanales están en la [wiki](https://github.com/JuanHerreraP/Proyecto-MISO-Solventa-Grupo-11/wiki). El backlog está en [Jira (BPM)](https://proyecto-miso-grupo-11.atlassian.net/jira/software/projects/BPM/boards/3/backlog).
@@ -19,6 +19,13 @@ La documentación de arquitectura y las entregas semanales están en la [wiki](h
 ## Cómo trabajar
 
 El flujo de ramas, la convención de commits y el versionamiento están en [CONTRIBUTING.md](CONTRIBUTING.md). Nadie hace push directo a `main`.
+
+## Despliegue del MVP en AWS
+
+La guía de [ECS Fargate y RDS PostgreSQL](infra/aws/README.md) incluye
+Docker/ECR para la API, web en S3, API Gateway, infraestructura CloudFormation
+y configuración de la URL HTTPS para web y Android.
+El despliegue usa CloudFront para obtener una dirección HTTPS sin dominio propio; ver alcance y límites en la guía.
 
 ## Backend en local
 

@@ -1,9 +1,14 @@
 """Configuración de base de datos."""
 
+import logging
 import os
+import time
 
 from sqlalchemy import create_engine, inspect, text
+from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
+
+logger = logging.getLogger(__name__)
 
 DATABASE_URL = os.getenv("DATABASE_URL") or "sqlite:///./solventa.db"
 
@@ -26,6 +31,34 @@ SessionLocal = sessionmaker(
     autoflush=False,
     autocommit=False,
 )
+
+
+def esperar_base_disponible(intentos: int = 30, espera_segundos: float = 2.0) -> None:
+    """Espera a que la base acepte conexiones antes de preparar el esquema.
+
+    En RDS la instancia puede tardar en aceptar conexiones cuando la tarea ECS
+    arranca. Reintentar evita que el contenedor muera y dispare el circuit
+    breaker del servicio. Para SQLite el primer intento siempre tiene éxito.
+    """
+    for intento in range(1, intentos + 1):
+        try:
+            with engine.connect() as conexion:
+                conexion.execute(text("SELECT 1"))
+            if intento > 1:
+                logger.info("Conexión a la base establecida tras %s intentos", intento)
+            return
+        except OperationalError as error:
+            if intento == intentos:
+                logger.error("No se pudo conectar a la base tras %s intentos", intentos)
+                raise
+            logger.warning(
+                "Base no disponible (intento %s/%s): %s. Reintentando en %ss",
+                intento,
+                intentos,
+                error.__class__.__name__,
+                espera_segundos,
+            )
+            time.sleep(espera_segundos)
 
 
 def preparar_esquema_registro() -> None:

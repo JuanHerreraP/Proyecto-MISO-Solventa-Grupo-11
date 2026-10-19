@@ -12,6 +12,19 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  infraestructura:
+    name: Infraestructura (CloudFormation)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Instalar validador
+        run: pip install cfn-lint==1.57.2
+      - name: Validar plantillas AWS
+        run: cfn-lint --template infra/aws/stack.json infra/aws/ecr.json --regions us-east-1
+
   detectar:
     name: Detectar proyectos
     runs-on: ubuntu-latest

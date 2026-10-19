@@ -24,12 +24,18 @@ from app.identidad import (
     modelos_db,  # noqa: F401
 )
 from app.identidad.web import opciones_cookie, origenes_web
-from app.infraestructura.database import Base, engine, preparar_esquema_registro
+from app.infraestructura.database import (
+    Base,
+    engine,
+    esperar_base_disponible,
+    preparar_esquema_registro,
+)
 from app.socios import modelos_db as modelos_db_socios  # noqa: F401
 
 
 def crear_app() -> FastAPI:
     opciones_cookie()
+    esperar_base_disponible()
     Base.metadata.create_all(bind=engine)
     preparar_esquema_registro()
 

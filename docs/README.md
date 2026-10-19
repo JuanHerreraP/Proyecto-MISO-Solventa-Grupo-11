@@ -10,10 +10,7 @@ se mantienen en la [wiki del proyecto](https://github.com/JuanHerreraP/Proyecto-
 
 | Documento | Contenido |
 | --- | --- |
-| [Registro y autenticación](identidad-autenticacion.md) | HU19: onboarding, KYC desacoplado, credenciales y JWT RS256 |
-| [Administración de usuarios](administracion-usuarios.md) | Alta y listado por el manager; asignación de roles |
-| [Sesión web](sesiones-web.md) | Cookies protegidas, CSRF, CORS, restauración, renovación e inactividad |
-| [Control de acceso y auditoría](control-acceso-auditoria.md) | Matriz de permisos, pertenencia de recursos, rutas web y eventos |
+| [Identidad, autenticación, sesiones y control de acceso](identidad-autenticacion.md) | HU19, EC08 y EC06: registro, KYC, JWT, sesión nativa y web, administración de usuarios, permisos y auditoría |
 | [Inicio de sesión biométrico](inicio-sesion-biometrico.md) | HU02: biometría Android, Keystore, refresh y fallback |
 
 ## Perfilamiento e integraciones
