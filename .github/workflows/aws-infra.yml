@@ -1,0 +1,282 @@
+name: AWS Infra
+
+# Aprovisiona o elimina el MVP de Solventa en AWS
+#   provisionar: ECR + imagen API + secreto JWT + stack solventa-mvp + web + verificación
+#   eliminar:    stack solventa-mvp + bucket web + repositorio ECR + secreto JWT
+#
+# Secrets requeridos del repositorio:
+#   AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY  (y opcional AWS_SESSION_TOKEN)
+# Opcional (solo si se quiere crear el primer admin): ADMIN_PASSWORD
+
+on:
+  # En push siempre se provisiona (sin admin); los inputs solo existen en dispatch.
+  push:
+    branches: [feat/cloud-deployment]
+    paths:
+      - .github/workflows/aws-infra.yml
+      - infra/aws/**
+  workflow_dispatch:
+    inputs:
+      accion:
+        description: "Acción a ejecutar"
+        type: choice
+        required: true
+        default: provisionar
+        options:
+          - provisionar
+          - eliminar
+      postgres_engine_version:
+        description: "Versión de PostgreSQL (solo provisionar)"
+        type: string
+        default: "16.9"
+      crear_admin:
+        description: "Crear usuario administrador (solo provisionar; requiere secret ADMIN_PASSWORD)"
+        type: boolean
+        default: false
+      admin_email:
+        description: "Correo del administrador"
+        type: string
+        default: manager@solventa.local
+      admin_rol:
+        description: "Rol del administrador"
+        type: choice
+        default: SERVICIO_INTERNO
+        options:
+          - SERVICIO_INTERNO
+          - INGENIERO_INTEGRACIONES
+
+concurrency:
+  group: aws-infra
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  AWS_REGION: us-east-1
+  AWS_DEFAULT_REGION: us-east-1
+  STACK: solventa-mvp
+  ECR_STACK: solventa-ecr
+  JWT_SECRET_NAME: solventa-mvp-jwt
+
+jobs:
+  provisionar:
+    name: Provisionar infraestructura
+    if: ${{ github.event_name == 'push' || inputs.accion == 'provisionar' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Verificar credenciales
+        run: aws sts get-caller-identity
+
+      # Paso 1
+      - name: Crear repositorio ECR
+        run: |
+          aws cloudformation deploy --stack-name "$ECR_STACK" \
+            --template-file infra/aws/ecr.json --no-fail-on-empty-changeset
+          BACKEND_REPO=$(aws cloudformation describe-stacks --stack-name "$ECR_STACK" \
+            --query "Stacks[0].Outputs[?OutputKey=='BackendUri'].OutputValue" --output text)
+          echo "BACKEND_REPO=$BACKEND_REPO" >> "$GITHUB_ENV"
+          echo "REGISTRY=${BACKEND_REPO%%/*}" >> "$GITHUB_ENV"
+
+      - name: Construir y subir la imagen de la API
+        run: |
+          aws ecr get-login-password | docker login --username AWS --password-stdin "$REGISTRY"
+          IMAGE_TAG="$(git rev-parse --short HEAD)-$(date -u +%Y%m%d%H%M%S)"
+          docker build -t "$BACKEND_REPO:$IMAGE_TAG" backend
+          docker push "$BACKEND_REPO:$IMAGE_TAG"
+          echo "IMAGE_TAG=$IMAGE_TAG" >> "$GITHUB_ENV"
+
+      # Paso 2
+      - name: Crear (o reutilizar) el secreto con las llaves JWT
+        run: |
+          if JWT_SECRET_ARN=$(aws secretsmanager describe-secret --secret-id "$JWT_SECRET_NAME" \
+              --query ARN --output text 2>/dev/null); then
+            echo "El secreto $JWT_SECRET_NAME ya existe; se reutiliza."
+          else
+            mkdir -p infra/secrets
+            chmod 700 infra/secrets
+            openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 \
+              -out infra/secrets/private_key.pem
+            openssl pkey -in infra/secrets/private_key.pem -pubout \
+              -out infra/secrets/public_key.pem
+            chmod 600 infra/secrets/*.pem
+            python3 - <<'PY'
+          import json
+          from pathlib import Path
+          p = Path('infra/secrets')
+          (p / 'jwt.json').write_text(json.dumps({
+              'private_key': (p / 'private_key.pem').read_text(),
+              'public_key': (p / 'public_key.pem').read_text(),
+          }))
+          (p / 'jwt.json').chmod(0o600)
+          PY
+            JWT_SECRET_ARN=$(aws secretsmanager create-secret --name "$JWT_SECRET_NAME" \
+              --secret-string file://infra/secrets/jwt.json --query ARN --output text)
+            rm -rf infra/secrets
+          fi
+          echo "JWT_SECRET_ARN=$JWT_SECRET_ARN" >> "$GITHUB_ENV"
+
+      # Paso 3
+      - name: Generar parámetros de CloudFormation
+        env:
+          POSTGRES_ENGINE_VERSION: ${{ inputs.postgres_engine_version || '16.9' }}
+        run: |
+          aws rds describe-orderable-db-instance-options --engine postgres \
+            --db-instance-class db.t3.micro \
+            --query 'OrderableDBInstanceOptions[].EngineVersion' --output text
+          mkdir -p infra/secrets
+          python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          values = {
+              'BackendImage': os.environ['BACKEND_REPO'] + ':' + os.environ['IMAGE_TAG'],
+              'JwtSecretArn': os.environ['JWT_SECRET_ARN'],
+              'PostgresEngineVersion': os.environ['POSTGRES_ENGINE_VERSION'],
+          }
+          p = Path('infra/secrets/parameters.json')
+          p.write_text(json.dumps([{'ParameterKey': k, 'ParameterValue': v} for k, v in values.items()]))
+          p.chmod(0o600)
+          PY
+
+      - name: Limpiar stack en ROLLBACK_COMPLETE (si existe)
+        run: |
+          STATUS=$(aws cloudformation describe-stacks --stack-name "$STACK" \
+            --query "Stacks[0].StackStatus" --output text 2>/dev/null || echo NONE)
+          echo "Estado actual: $STATUS"
+          if [ "$STATUS" = "ROLLBACK_COMPLETE" ]; then
+            aws cloudformation delete-stack --stack-name "$STACK"
+            aws cloudformation wait stack-delete-complete --stack-name "$STACK"
+          fi
+
+      - name: Validar y desplegar el stack
+        run: |
+          aws cloudformation validate-template --template-body "file://infra/aws/stack.json" >/dev/null
+          aws cloudformation deploy --stack-name "$STACK" \
+            --template-file infra/aws/stack.json \
+            --parameter-overrides file://infra/secrets/parameters.json \
+            --capabilities CAPABILITY_IAM --no-fail-on-empty-changeset
+          aws cloudformation describe-stacks --stack-name "$STACK" \
+            --query "Stacks[0].Outputs" --output table
+
+      - name: Mostrar logs si el despliegue falló
+        if: failure()
+        run: |
+          for g in $(aws logs describe-log-groups \
+              --query "logGroups[?contains(logGroupName,'solventa')].logGroupName" --output text); do
+            echo "=== $g ==="
+            aws logs tail "$g" --since 30m --format short || true
+          done
+
+      # Paso 4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - name: Compilar y publicar la web
+        run: |
+          WEB_BUCKET=$(aws cloudformation describe-stacks --stack-name "$STACK" \
+            --query "Stacks[0].Outputs[?OutputKey=='WebBucket'].OutputValue" --output text)
+          (cd web && npm ci && VITE_API_URL="" npm run build)
+          aws s3 sync web/dist/ "s3://$WEB_BUCKET/" --cache-control no-cache
+
+      # Paso 5
+      - name: Verificar
+        run: |
+          MVP_URL=$(aws cloudformation describe-stacks --stack-name "$STACK" \
+            --query "Stacks[0].Outputs[?OutputKey=='Url'].OutputValue" --output text)
+          echo "MVP_URL=$MVP_URL"
+          curl --fail --retry 10 --retry-delay 15 --retry-all-errors "$MVP_URL/salud"
+          curl --fail "$MVP_URL/openapi.json" -o /dev/null -w "%{http_code}\n"
+          echo "### URL del MVP: $MVP_URL" >> "$GITHUB_STEP_SUMMARY"
+
+      # Paso 6
+      - name: Crear el primer usuario administrador
+        if: ${{ inputs.crear_admin }}
+        env:
+          ADMIN_EMAIL: ${{ inputs.admin_email }}
+          ADMIN_ROL: ${{ inputs.admin_rol }}
+          ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
+        run: |
+          if [ -z "$ADMIN_PASSWORD" ]; then
+            echo "Falta el secret ADMIN_PASSWORD"; exit 1
+          fi
+          chmod +x infra/aws/crear-admin-ecs.sh
+          ./infra/aws/crear-admin-ecs.sh
+
+      - name: Limpiar archivos sensibles
+        if: always()
+        run: rm -rf infra/secrets
+
+  eliminar:
+    name: Eliminar infraestructura
+    if: ${{ inputs.accion == 'eliminar' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Verificar credenciales
+        run: aws sts get-caller-identity
+
+      # Los recursos con política Retain se descubren antes de borrar el stack.
+      - name: Descubrir recursos retenidos
+        run: |
+          WEB_BUCKET=$(aws cloudformation describe-stacks --stack-name "$STACK" \
+            --query "Stacks[0].Outputs[?OutputKey=='WebBucket'].OutputValue" --output text 2>/dev/null || true)
+          [ "$WEB_BUCKET" = "None" ] && WEB_BUCKET=""
+          echo "WEB_BUCKET=$WEB_BUCKET" >> "$GITHUB_ENV"
+          BACKEND_REPO=$(aws cloudformation describe-stacks --stack-name "$ECR_STACK" \
+            --query "Stacks[0].Outputs[?OutputKey=='BackendUri'].OutputValue" --output text 2>/dev/null || true)
+          [ "$BACKEND_REPO" = "None" ] && BACKEND_REPO=""
+          echo "ECR_REPO_NAME=${BACKEND_REPO#*/}" >> "$GITHUB_ENV"
+
+      - name: Eliminar stack solventa-mvp
+        run: |
+          aws cloudformation delete-stack --stack-name "$STACK"
+          aws cloudformation wait stack-delete-complete --stack-name "$STACK"
+
+      - name: Vaciar y eliminar el bucket web (versionado)
+        run: |
+          if [ -z "$WEB_BUCKET" ] || ! aws s3api head-bucket --bucket "$WEB_BUCKET" 2>/dev/null; then
+            echo "Sin bucket web que eliminar."; exit 0
+          fi
+          while true; do
+            OBJS=$(aws s3api list-object-versions --bucket "$WEB_BUCKET" --max-items 1000 \
+              --query '{Objects: [].{Key: Key, VersionId: VersionId}}' --output json 2>/dev/null \
+              | jq -c 'select(.Objects != null) | {Objects: [.Objects[] | select(.Key != null)], Quiet: true}')
+            if [ -z "$OBJS" ] || [ "$(echo "$OBJS" | jq '.Objects | length')" = "0" ]; then break; fi
+            aws s3api delete-objects --bucket "$WEB_BUCKET" --delete "$OBJS" >/dev/null
+          done
+          aws s3api delete-bucket --bucket "$WEB_BUCKET"
+
+      - name: Eliminar repositorio ECR
+        run: |
+          aws cloudformation delete-stack --stack-name "$ECR_STACK"
+          aws cloudformation wait stack-delete-complete --stack-name "$ECR_STACK"
+          if [ -n "$ECR_REPO_NAME" ]; then
+            aws ecr delete-repository --repository-name "$ECR_REPO_NAME" --force 2>/dev/null \
+              || echo "Repositorio ECR ya eliminado."
+          fi
+
+      - name: Eliminar secreto JWT
+        run: |
+          aws secretsmanager delete-secret --secret-id "$JWT_SECRET_NAME" \
+            --force-delete-without-recovery 2>/dev/null \
+            || echo "Secreto JWT ya eliminado."
