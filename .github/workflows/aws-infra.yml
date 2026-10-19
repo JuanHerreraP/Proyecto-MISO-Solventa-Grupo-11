@@ -9,7 +9,7 @@ name: AWS Infra
 # Opcional (solo si se quiere crear el primer admin): ADMIN_PASSWORD
 
 on:
-  # En push siempre se ELIMINA todo (job eliminar); los inputs solo existen en dispatch.
+  # En push siempre se PROVISIONA (sin admin); los inputs solo existen en dispatch.
   # Para que el push vuelva a provisionar, intercambiar los `if` de ambos jobs.
   push:
     branches: [feat/cloud-deployment]
@@ -63,7 +63,7 @@ env:
 jobs:
   provisionar:
     name: Provisionar infraestructura
-    if: ${{ inputs.accion == 'provisionar' }}
+    if: ${{ github.event_name == 'push' || inputs.accion == 'provisionar' }}
     runs-on: ubuntu-latest
     timeout-minutes: 90
     steps:
@@ -222,7 +222,7 @@ jobs:
 
   eliminar:
     name: Eliminar infraestructura
-    if: ${{ github.event_name == 'push' || inputs.accion == 'eliminar' }}
+    if: ${{ inputs.accion == 'eliminar' }}
     runs-on: ubuntu-latest
     timeout-minutes: 90
     steps:
