@@ -10,6 +10,7 @@ import com.example.solventa.biometric.FalloBiometrico
  * - Ingreso biométrico: la huella abre la bóveda, el refresh token se cambia por uno nuevo
  *   (rotación en el backend) y el nuevo se vuelve a guardar.
  * - Si la biometría falla, se bloquea o cambia, se ofrece el ingreso con credenciales.
+ * - Al cerrar sesión con la huella activada, la bóveda se conserva para volver a entrar con ella.
  */
 class AuthCoordinator(
     private val gateway: AuthGateway,
@@ -268,11 +269,23 @@ class AuthCoordinator(
         }
     }
 
-    /** Revoca la sesión en el backend y borra todo rastro local, incluida la bóveda. */
+    /**
+     * Cierra la sesión.
+     *
+     * - Con la huella activada: solo se descarta la sesión en memoria. La bóveda y el
+     *   refresh token guardado se conservan (no se revoca en el backend) para que el
+     *   usuario pueda volver a entrar solo con su huella, sin escribir sus credenciales.
+     * - Sin la huella activada: se revoca la sesión en el backend como siempre.
+     */
     suspend fun cerrarSesion() {
         val refresh = tokens?.refreshToken
         tokens = null
-        boveda.borrar()
+
+        if (boveda.tieneSesionGuardada()) {
+            estado = EstadoAuth(biometriaActivada = true, mensaje = MensajesAuth.SESION_CERRADA)
+            return
+        }
+
         estado = EstadoAuth(cargando = true)
         if (refresh != null) gateway.cerrarSesion(refresh)
         estado = EstadoAuth(biometriaActivada = false, mensaje = MensajesAuth.SESION_CERRADA)
