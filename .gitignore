@@ -20,3 +20,4 @@ local.properties
 
 infra/secrets/
 infra/backups/
+backend/solventa.db
