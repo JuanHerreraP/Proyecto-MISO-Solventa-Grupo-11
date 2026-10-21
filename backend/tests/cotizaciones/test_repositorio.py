@@ -1,6 +1,7 @@
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 
+import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
@@ -16,6 +17,10 @@ def crear_cotizacion(
     cotizacion_id: str = "COT-001",
     cliente_id: str = "CLI-001",
     creada_en: datetime | None = None,
+    *,
+    asesor_id: str | None = None,
+    socio_id: str | None = None,
+    tenant_id: str | None = None,
 ) -> Cotizacion:
     fecha = creada_en or datetime(2027, 1, 10, tzinfo=UTC)
     return Cotizacion(
@@ -36,6 +41,9 @@ def crear_cotizacion(
             "suma_asegurada": Decimal("100000000.00"),
         },
         perfil_riesgo_id="PERFIL-001",
+        asesor_id=asesor_id,
+        socio_id=socio_id,
+        tenant_id=tenant_id,
         creada_en=fecha,
         vigente_hasta=fecha + timedelta(days=7),
     )
@@ -84,6 +92,31 @@ def test_postgres_persiste_y_reconstruye_la_cotizacion_completa() -> None:
     assert consultada == original
     assert consultada.prima_total == Decimal("504000.00")
     assert consultada.creada_en.tzinfo is not None
+
+
+@pytest.mark.parametrize(
+    "contexto",
+    [
+        {"asesor_id": "ASESOR-001"},
+        {"socio_id": "SOCIO-001", "tenant_id": "TENANT-001"},
+    ],
+)
+def test_postgres_conserva_el_contexto_de_autorizacion(
+    contexto: dict[str, str],
+) -> None:
+    engine = create_engine("sqlite+pysqlite:///:memory:")
+    CotizacionDB.__table__.create(engine)
+    original = crear_cotizacion(**contexto)
+
+    with Session(engine) as db:
+        repositorio = RepositorioCotizacionesPostgres(db)
+        repositorio.guardar(original)
+        consultada = repositorio.obtener(original.cotizacion_id)
+
+    assert consultada is not None
+    assert consultada.asesor_id == contexto.get("asesor_id")
+    assert consultada.socio_id == contexto.get("socio_id")
+    assert consultada.tenant_id == contexto.get("tenant_id")
 
 
 def test_postgres_lista_por_cliente_de_mas_reciente_a_mas_antigua() -> None:

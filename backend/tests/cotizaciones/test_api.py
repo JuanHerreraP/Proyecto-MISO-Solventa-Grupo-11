@@ -9,15 +9,37 @@ from app.api.cotizaciones import (
     actor_actual,
     obtener_servicio,
 )
+from app.api.socios import obtener_servicio as obtener_servicio_socios
 from app.cotizaciones.repositorio import RepositorioCotizacionesEnMemoria
 from app.cotizaciones.servicio import ServicioCotizaciones
-from app.cotizaciones.servicio_personalizacion import ServicioPersonalizacionCotizacion
+from app.cotizaciones.servicio_personalizacion import (
+    RiesgoNoAsegurableError,
+    ServicioPersonalizacionCotizacion,
+)
 from app.identidad.modelos import Rol
 from app.main import app
 from app.perfilamiento.enriquecimiento.memoria import RepositorioConsentimientosEnMemoria
 from app.perfilamiento.repositorio import RepositorioPerfilesEnMemoria
+from app.socios.dominio.catalogo import CodigoEndpoint
 
 RUTA = "/api/v1/cotizaciones"
+
+
+class ServicioSociosPermitido:
+    def autorizar_consumo(
+        self,
+        socio_id: str,
+        tenant_id: str,
+        endpoint: CodigoEndpoint,
+    ) -> None:
+        assert socio_id == "SOCIO-001"
+        assert tenant_id == "TENANT-001"
+        assert endpoint is CodigoEndpoint.COTIZACIONES_CREAR
+
+
+class ServicioCotizacionesNoAsegurable:
+    def cotizar(self, **_: object) -> None:
+        raise RiesgoNoAsegurableError("PERFIL-RECHAZADO")
 
 
 @pytest.fixture
@@ -125,6 +147,44 @@ def test_asesor_consulta_solo_los_procesos_que_asistio(cliente) -> None:
 
     assert cliente.get(f"{RUTA}/COT-001").status_code == 403
     assert cliente.get(RUTA, params={"cliente_id": "CLI-001"}).json() == []
+
+
+def test_socio_autorizado_crea_cotizacion_con_su_contexto(cliente) -> None:
+    app.dependency_overrides[actor_actual] = lambda: ActorCotizacion(
+        tipo=TipoActorCotizacion.SOCIO,
+        actor_id="solv_socio_001",
+        socio_id="SOCIO-001",
+        tenant_id="TENANT-001",
+        scopes={CodigoEndpoint.COTIZACIONES_CREAR},
+    )
+    app.dependency_overrides[obtener_servicio_socios] = lambda: ServicioSociosPermitido()
+
+    respuesta = cliente.post(RUTA, json=solicitud_valida())
+
+    assert respuesta.status_code == 201
+    assert respuesta.json()["socio_id"] == "SOCIO-001"
+    assert respuesta.json()["tenant_id"] == "TENANT-001"
+
+
+def test_socio_sin_scope_de_cotizacion_es_rechazado(cliente) -> None:
+    app.dependency_overrides[actor_actual] = lambda: ActorCotizacion(
+        tipo=TipoActorCotizacion.SOCIO,
+        actor_id="solv_socio_001",
+        socio_id="SOCIO-001",
+        tenant_id="TENANT-001",
+    )
+    app.dependency_overrides[obtener_servicio_socios] = lambda: ServicioSociosPermitido()
+
+    assert cliente.post(RUTA, json=solicitud_valida()).status_code == 403
+
+
+def test_perfil_rechazado_retorna_conflicto(cliente) -> None:
+    app.dependency_overrides[obtener_servicio] = lambda: ServicioCotizacionesNoAsegurable()
+
+    respuesta = cliente.post(RUTA, json=solicitud_valida())
+
+    assert respuesta.status_code == 409
+    assert respuesta.json()["detail"]["codigo"] == "RIESGO_NO_ASEGURABLE"
 
 
 def test_solicitud_sin_autenticacion_se_rechaza(cliente) -> None:
