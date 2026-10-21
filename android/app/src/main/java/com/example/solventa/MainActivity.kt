@@ -19,13 +19,16 @@ import com.example.solventa.biometric.AutenticadorBiometrico
 import com.example.solventa.biometric.DisponibilidadBiometrica
 import com.example.solventa.data.remote.ApiClient
 import com.example.solventa.data.remote.RemoteAuthGateway
+import com.example.solventa.data.remote.RemoteCotizacionesGateway
 import com.example.solventa.data.remote.RemotePolizasGateway
 import com.example.solventa.data.session.KeystoreBovedaSesion
 import com.example.solventa.domain.auth.AuthCoordinator
 import com.example.solventa.domain.auth.Reloj
+import com.example.solventa.domain.cotizaciones.CotizacionesCoordinator
 import com.example.solventa.domain.polizas.BilleteraCoordinator
 import com.example.solventa.ui.auth.AuthViewModel
 import com.example.solventa.ui.billetera.BilleteraViewModel
+import com.example.solventa.ui.cotizaciones.CotizacionesViewModel
 import com.example.solventa.ui.navigation.NavGraph
 import com.example.solventa.ui.theme.SolventaTheme
 
@@ -57,6 +60,15 @@ class MainActivity : FragmentActivity() {
         }
     }
 
+    private val cotizaciones: CotizacionesViewModel by viewModels {
+        CotizacionesViewModel.Fabrica {
+            CotizacionesCoordinator(
+                gateway = RemoteCotizacionesGateway(ApiClient.crearCotizacionesApi()),
+                sesion = viewModel.sesion
+            )
+        }
+    }
+
     private val solicitarRedLocal =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { }
 
@@ -73,7 +85,8 @@ class MainActivity : FragmentActivity() {
                         viewModel = viewModel,
                         autenticador = autenticador,
                         modifier = Modifier.padding(innerPadding),
-                        billetera = billetera
+                        billetera = billetera,
+                        cotizaciones = cotizaciones
                     )
                 }
             }

@@ -22,12 +22,13 @@ import com.example.solventa.biometric.FalloBiometrico
 import com.example.solventa.biometric.mensaje
 import com.example.solventa.domain.auth.MensajesAuth
 import com.example.solventa.domain.cotizaciones.CatalogoCotizaciones
+import com.example.solventa.domain.cotizaciones.EstadoCotizaciones
 import com.example.solventa.domain.cotizaciones.RamoCotizacion
-import com.example.solventa.ui.cotizaciones.CotizacionDemostracion
 import com.example.solventa.ui.auth.AuthViewModel
 import com.example.solventa.ui.billetera.BilleteraViewModel
 import com.example.solventa.ui.billetera.compartirTexto
 import com.example.solventa.ui.billetera.textoParaCompartir
+import com.example.solventa.ui.cotizaciones.CotizacionesViewModel
 import com.example.solventa.ui.screens.BiometricalLoginScreen
 import com.example.solventa.ui.screens.CertificateScreen
 import com.example.solventa.ui.screens.CredentialsLoginScreen
@@ -47,16 +48,21 @@ fun NavGraph(
     modifier: Modifier = Modifier,
     navController: NavHostController = rememberNavController(),
     startDestination: String = ScreenRoute.Welcome.route,
-    billetera: BilleteraViewModel? = null
+    billetera: BilleteraViewModel? = null,
+    cotizaciones: CotizacionesViewModel? = null
 ) {
     val estado by viewModel.estado.collectAsState()
+    val estadoCotizaciones = cotizaciones?.estado?.collectAsState()?.value ?: EstadoCotizaciones()
     val autenticado = estado.sesion != null
 
     // Guardia de navegación: con sesión se va al inicio; sin sesión nadie se queda en una
     // pantalla privada (inicio, billetera o certificado) y se descarta lo que se cargó.
     LaunchedEffect(autenticado) {
         val actual = navController.currentDestination?.route
-        if (!autenticado) billetera?.limpiar()
+        if (!autenticado) {
+            billetera?.limpiar()
+            cotizaciones?.limpiar()
+        }
         if (autenticado && actual !in ScreenRoute.privadas) {
             navController.navigate(ScreenRoute.Home.route) {
                 popUpTo(navController.graph.id) { inclusive = true }
@@ -257,17 +263,26 @@ fun NavGraph(
         ) { entrada ->
             val ramo = entrada.arguments?.getString(ScreenRoute.QuoteForm.ARGUMENTO)
                 ?.let(RamoCotizacion::desdeCodigoApi)
-            if (estado.sesion == null || ramo == null) {
+            val sesion = estado.sesion
+            if (sesion == null || ramo == null) {
                 Box(modifier = Modifier.fillMaxSize())
             } else {
-                QuoteFormScreen(
-                    definicion = CatalogoCotizaciones.definicion(ramo),
-                    onVolver = { navController.popBackStack() },
-                    onCalcular = {
+                LaunchedEffect(estadoCotizaciones.resultado?.cotizacionId) {
+                    val resultado = estadoCotizaciones.resultado
+                    if (resultado?.ramo == ramo) {
                         navController.navigate(ScreenRoute.QuoteResult.ruta(ramo)) {
                             launchSingleTop = true
                         }
+                    }
+                }
+                QuoteFormScreen(
+                    definicion = CatalogoCotizaciones.definicion(ramo),
+                    onVolver = { navController.popBackStack() },
+                    onCalcular = { valores ->
+                        cotizaciones?.cotizar(sesion.perfil.id, ramo, valores)
                     },
+                    cargando = estadoCotizaciones.cargando,
+                    errorRemoto = estadoCotizaciones.error,
                     onInicio = { navController.popBackStack(ScreenRoute.Home.route, false) },
                     onVerBilletera = billetera?.let {
                         { navController.navigate(ScreenRoute.Wallet.route) { launchSingleTop = true } }
@@ -284,19 +299,27 @@ fun NavGraph(
         ) { entrada ->
             val ramo = entrada.arguments?.getString(ScreenRoute.QuoteResult.ARGUMENTO)
                 ?.let(RamoCotizacion::desdeCodigoApi)
-            if (estado.sesion == null || ramo == null) {
+            val resultado = estadoCotizaciones.resultado?.takeIf { it.ramo == ramo }
+            if (estado.sesion == null || ramo == null || resultado == null) {
                 Box(modifier = Modifier.fillMaxSize())
             } else {
                 QuoteResultScreen(
-                    cotizacion = CotizacionDemostracion.para(ramo),
-                    onVolver = { navController.popBackStack() },
+                    cotizacion = resultado,
+                    onVolver = {
+                        cotizaciones?.limpiar()
+                        navController.popBackStack()
+                    },
                     onAceptar = {
                         // La aceptación y compra pertenecen al flujo posterior a HU03.
                     },
                     onCrearOtra = {
+                        cotizaciones?.limpiar()
                         navController.popBackStack(ScreenRoute.NewQuote.route, inclusive = false)
                     },
-                    onInicio = { navController.popBackStack(ScreenRoute.Home.route, false) },
+                    onInicio = {
+                        cotizaciones?.limpiar()
+                        navController.popBackStack(ScreenRoute.Home.route, false)
+                    },
                     onVerBilletera = billetera?.let {
                         { navController.navigate(ScreenRoute.Wallet.route) { launchSingleTop = true } }
                     }

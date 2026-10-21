@@ -18,6 +18,10 @@ object ApiClient {
     fun crearPolizasApi(urlBase: String = BuildConfig.API_BASE_URL): PolizasApi =
         retrofit(urlBase).create(PolizasApi::class.java)
 
+    /** Cotización de seguros para los canales autenticados (HU03). */
+    fun crearCotizacionesApi(urlBase: String = BuildConfig.API_BASE_URL): CotizacionesApi =
+        retrofit(urlBase).create(CotizacionesApi::class.java)
+
     private val cliente: OkHttpClient by lazy {
         OkHttpClient.Builder()
             .connectTimeout(10, TimeUnit.SECONDS)

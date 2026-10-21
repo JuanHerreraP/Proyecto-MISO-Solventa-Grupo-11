@@ -74,7 +74,9 @@ fun QuoteFormScreen(
     onCalcular: (Map<String, String>) -> Unit,
     modifier: Modifier = Modifier,
     onInicio: () -> Unit = {},
-    onVerBilletera: (() -> Unit)? = null
+    onVerBilletera: (() -> Unit)? = null,
+    cargando: Boolean = false,
+    errorRemoto: String? = null
 ) {
     var valores by rememberSaveable(definicion.ramo) {
         mutableStateOf(emptyMap<String, String>())
@@ -154,8 +156,17 @@ fun QuoteFormScreen(
                     icon = rememberVectorPainter(Icons.Outlined.Shield)
                 )
 
+                if (errorRemoto != null) {
+                    Text(
+                        text = errorRemoto,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
+
                 SolventaPrimaryButton(
                     text = "Calcular cotización",
+                    isLoading = cargando,
                     onClick = {
                         val incompleto = camposVisibles.any {
                             campoRequerido(it, valores) && valores[it.codigo].isNullOrBlank()
