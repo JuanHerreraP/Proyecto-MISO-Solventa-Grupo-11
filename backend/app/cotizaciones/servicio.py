@@ -42,6 +42,9 @@ class ServicioCotizaciones:
         cliente_id: str,
         ramo: RamoSeguro,
         datos_riesgo: dict[str, object],
+        asesor_id: str | None = None,
+        socio_id: str | None = None,
+        tenant_id: str | None = None,
     ) -> Cotizacion:
         tarifa_base = calcular_prima_y_cobertura(ramo, datos_riesgo)
         precio = self._personalizador.personalizar(cliente_id, tarifa_base)
@@ -56,6 +59,9 @@ class ServicioCotizaciones:
             prima_total=precio.prima_total,
             cobertura_principal=precio.cobertura_principal,
             perfil_riesgo_id=precio.perfil_riesgo_id,
+            asesor_id=asesor_id,
+            socio_id=socio_id,
+            tenant_id=tenant_id,
             creada_en=fecha,
             vigente_hasta=fecha + VIGENCIA_COTIZACION,
         )

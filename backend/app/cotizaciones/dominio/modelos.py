@@ -56,11 +56,17 @@ class Cotizacion(BaseModel):
     moneda: str = Field(default="COP", min_length=3, max_length=3, pattern=r"^[A-Z]{3}$")
     cobertura_principal: CoberturaPrincipal | None = None
     perfil_riesgo_id: str | None = Field(default=None, min_length=1, max_length=50)
+    asesor_id: str | None = Field(default=None, min_length=1, max_length=50)
+    socio_id: str | None = Field(default=None, min_length=1, max_length=50)
+    tenant_id: str | None = Field(default=None, min_length=1, max_length=50)
     creada_en: AwareDatetime
     vigente_hasta: AwareDatetime | None = None
 
     @model_validator(mode="after")
     def validar_resultado_y_vigencia(self) -> "Cotizacion":
+        if (self.socio_id is None) != (self.tenant_id is None):
+            raise ValueError("El socio y el tenant deben registrarse juntos.")
+
         if self.vigente_hasta is not None and self.vigente_hasta <= self.creada_en:
             raise ValueError("La vigencia debe terminar después de la creación.")
 

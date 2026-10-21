@@ -104,6 +104,9 @@ class RepositorioCotizacionesPostgres:
                 "moneda": persistida.moneda,
                 "cobertura_principal": persistida.cobertura_principal,
                 "perfil_riesgo_id": persistida.perfil_riesgo_id,
+                "asesor_id": persistida.asesor_id,
+                "socio_id": persistida.socio_id,
+                "tenant_id": persistida.tenant_id,
                 "creada_en": _con_zona_horaria(persistida.creada_en),
                 "vigente_hasta": _con_zona_horaria(persistida.vigente_hasta),
             }

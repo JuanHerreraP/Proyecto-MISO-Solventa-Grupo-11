@@ -27,6 +27,9 @@ class CotizacionDB(Base):
         nullable=True,
     )
     perfil_riesgo_id: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    asesor_id: Mapped[str | None] = mapped_column(String(50), nullable=True, index=True)
+    socio_id: Mapped[str | None] = mapped_column(String(50), nullable=True, index=True)
+    tenant_id: Mapped[str | None] = mapped_column(String(50), nullable=True, index=True)
     creada_en: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     vigente_hasta: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True),
