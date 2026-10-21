@@ -21,6 +21,8 @@ import com.example.solventa.biometric.DisponibilidadBiometrica
 import com.example.solventa.biometric.FalloBiometrico
 import com.example.solventa.biometric.mensaje
 import com.example.solventa.domain.auth.MensajesAuth
+import com.example.solventa.domain.cotizaciones.CatalogoCotizaciones
+import com.example.solventa.domain.cotizaciones.RamoCotizacion
 import com.example.solventa.ui.auth.AuthViewModel
 import com.example.solventa.ui.billetera.BilleteraViewModel
 import com.example.solventa.ui.billetera.compartirTexto
@@ -30,6 +32,7 @@ import com.example.solventa.ui.screens.CertificateScreen
 import com.example.solventa.ui.screens.CredentialsLoginScreen
 import com.example.solventa.ui.screens.HomeScreen
 import com.example.solventa.ui.screens.NewQuoteScreen
+import com.example.solventa.ui.screens.QuoteFormScreen
 import com.example.solventa.ui.screens.RegisterScreen
 import com.example.solventa.ui.screens.WalletScreen
 import com.example.solventa.ui.screens.WelcomeScreen
@@ -231,8 +234,35 @@ fun NavGraph(
             } else {
                 NewQuoteScreen(
                     onVolver = { navController.popBackStack() },
-                    onSeleccionarRamo = {
-                        // El formulario correspondiente se conecta en el siguiente paso.
+                    onSeleccionarRamo = { ramo ->
+                        navController.navigate(ScreenRoute.QuoteForm.ruta(ramo)) {
+                            launchSingleTop = true
+                        }
+                    },
+                    onInicio = { navController.popBackStack(ScreenRoute.Home.route, false) },
+                    onVerBilletera = billetera?.let {
+                        { navController.navigate(ScreenRoute.Wallet.route) { launchSingleTop = true } }
+                    }
+                )
+            }
+        }
+
+        composable(
+            route = ScreenRoute.QuoteForm.route,
+            arguments = listOf(
+                navArgument(ScreenRoute.QuoteForm.ARGUMENTO) { type = NavType.StringType }
+            )
+        ) { entrada ->
+            val ramo = entrada.arguments?.getString(ScreenRoute.QuoteForm.ARGUMENTO)
+                ?.let(RamoCotizacion::desdeCodigoApi)
+            if (estado.sesion == null || ramo == null) {
+                Box(modifier = Modifier.fillMaxSize())
+            } else {
+                QuoteFormScreen(
+                    definicion = CatalogoCotizaciones.definicion(ramo),
+                    onVolver = { navController.popBackStack() },
+                    onCalcular = {
+                        // El cálculo remoto y el resultado se conectan en los pasos 4 y 5.
                     },
                     onInicio = { navController.popBackStack(ScreenRoute.Home.route, false) },
                     onVerBilletera = billetera?.let {
