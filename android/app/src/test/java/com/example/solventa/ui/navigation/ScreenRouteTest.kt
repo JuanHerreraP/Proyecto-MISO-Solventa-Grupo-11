@@ -38,9 +38,14 @@ class ScreenRouteTest {
     }
 
     @Test
-    fun lasRutasPrivadasSonInicioBilleteraYCertificado() {
+    fun lasRutasPrivadasIncluyenCotizacionBilleteraYCertificado() {
         assertEquals(
-            setOf("home_screen", "wallet_screen", "certificate_screen/{polizaId}"),
+            setOf(
+                "home_screen",
+                "new_quote_screen",
+                "wallet_screen",
+                "certificate_screen/{polizaId}"
+            ),
             ScreenRoute.privadas
         )
     }

@@ -29,6 +29,7 @@ import com.example.solventa.ui.screens.BiometricalLoginScreen
 import com.example.solventa.ui.screens.CertificateScreen
 import com.example.solventa.ui.screens.CredentialsLoginScreen
 import com.example.solventa.ui.screens.HomeScreen
+import com.example.solventa.ui.screens.NewQuoteScreen
 import com.example.solventa.ui.screens.RegisterScreen
 import com.example.solventa.ui.screens.WalletScreen
 import com.example.solventa.ui.screens.WelcomeScreen
@@ -175,6 +176,9 @@ fun NavGraph(
                 // Sin sesión no se compone nada con datos; la guardia redirige al ingreso.
                 Box(modifier = Modifier.fillMaxSize())
             } else {
+                val estadoBilletera = billetera?.estado?.collectAsState()?.value
+                LaunchedEffect(billetera) { billetera?.cargar() }
+
                 // Expiración: al vencer el access token se cierra la sesión en memoria.
                 LaunchedEffect(sesion.expiraEnMs) {
                     delay((sesion.expiraEnMs - System.currentTimeMillis()).coerceAtLeast(0))
@@ -210,10 +214,22 @@ fun NavGraph(
                     onSolicitarActivacion = viewModel::solicitarActivacion,
                     onDescartarActivacion = { viewModel.descartarActivacion() },
                     onCerrarSesion = viewModel::cerrarSesion,
+                    onCotizarSeguro = {
+                        navController.navigate(ScreenRoute.NewQuote.route) { launchSingleTop = true }
+                    },
                     onVerBilletera = billetera?.let {
                         { navController.navigate(ScreenRoute.Wallet.route) { launchSingleTop = true } }
-                    }
+                    },
+                    cantidadPolizasActivas = estadoBilletera?.billetera?.totalVigentes
                 )
+            }
+        }
+
+        composable(route = ScreenRoute.NewQuote.route) {
+            if (estado.sesion == null) {
+                Box(modifier = Modifier.fillMaxSize())
+            } else {
+                NewQuoteScreen(onVolver = { navController.popBackStack() })
             }
         }
 
