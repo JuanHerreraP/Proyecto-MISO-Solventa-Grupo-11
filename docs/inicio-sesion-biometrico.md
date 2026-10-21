@@ -9,7 +9,7 @@ El cliente entra a la app Android con la huella o el rostro configurados en su d
 1. **Primer ingreso con credenciales.** La app llama a `POST /api/v1/auth/login` y recibe un access token (30 minutos) y un refresh token (7 días). Luego pide el perfil con `GET /api/v1/auth/me`.
 2. **Activación de la huella.** Si el dispositivo tiene biometría fuerte, la app ofrece activarla. Tras validar la huella, cifra el refresh token con una llave del Android Keystore y lo guarda cifrado.
 3. **Ingresos siguientes.** El usuario valida su huella; la llave se abre durante 30 segundos. La app descifra el refresh token, llama a `POST /api/v1/auth/refresh`, recibe un par nuevo y vuelve a guardar el refresh nuevo cifrado.
-4. **Cierre de sesión.** La app llama a `POST /api/v1/auth/logout`, que revoca el refresh token, y borra la sesión del teléfono.
+4. **Cierre de sesión.** Si la huella está activada, la app solo descarta la sesión en memoria y conserva el refresh token cifrado, para volver a entrar únicamente con la huella. Si la huella no está activada, la app llama a `POST /api/v1/auth/logout`, que revoca el refresh token. Ingresar con correo y contraseña reemplaza cualquier sesión guardada.
 
 ## Endpoints nuevos del backend
 

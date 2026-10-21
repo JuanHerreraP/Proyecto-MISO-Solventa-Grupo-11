@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
+    jacoco
 }
 
 android {
@@ -26,6 +27,11 @@ android {
     }
 
     buildTypes {
+        debug {
+            // Reporte de coverage de las pruebas unitarias:
+            // ./gradlew createDebugUnitTestCoverageReport
+            enableUnitTestCoverage = true
+        }
         release {
             optimization {
                 enable = true
@@ -40,6 +46,22 @@ android {
     buildFeatures {
         compose = true
         buildConfig = true
+    }
+    testOptions {
+        unitTests {
+            // Robolectric necesita los recursos para renderizar las pantallas Compose.
+            isIncludeAndroidResources = true
+            isReturnDefaultValues = true
+        }
+    }
+}
+
+// Las pantallas se prueban con Robolectric, que carga las clases con su propio classloader.
+// Sin esto JaCoCo las ignora y aparecen con 0 % de coverage.
+tasks.withType<Test>().configureEach {
+    extensions.configure<JacocoTaskExtension> {
+        isIncludeNoLocationClasses = true
+        excludes = listOf("jdk.internal.*")
     }
 }
 
@@ -65,6 +87,11 @@ dependencies {
     implementation(libs.retrofit.converter.gson)
     implementation(libs.okhttp)
     testImplementation(libs.junit)
+    testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.okhttp.mockwebserver)
+    testImplementation(libs.robolectric)
+    testImplementation(platform(libs.androidx.compose.bom))
+    testImplementation(libs.androidx.compose.ui.test.junit4)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     androidTestImplementation(libs.androidx.espresso.core)

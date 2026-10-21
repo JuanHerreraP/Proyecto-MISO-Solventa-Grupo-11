@@ -457,15 +457,42 @@ class AuthCoordinatorTest {
     }
 
     @Test
-    fun cerrarSesionRevocaEnElBackendYBorraLaBoveda() {
+    fun cerrarSesionConHuellaActivadaConservaLaBovedaYNoRevoca() {
         val boveda = BovedaFalsa(guardado = "refresh-1")
         val auth = coordinador(boveda)
         ejecutar { auth.ingresarConBiometria() }
 
         ejecutar { auth.cerrarSesion() }
 
-        assertEquals(listOf("refresh-2"), gateway.cerrados)
-        assertNull(boveda.guardado)
+        assertTrue(gateway.cerrados.isEmpty())
+        assertEquals("refresh-2", boveda.guardado)
+        assertNull(auth.estado.sesion)
+        assertTrue(auth.estado.biometriaActivada)
+        assertEquals(MensajesAuth.SESION_CERRADA, auth.estado.mensaje)
+    }
+
+    @Test
+    fun trasCerrarSesionSePuedeVolverAEntrarConLaHuella() {
+        val boveda = BovedaFalsa(guardado = "refresh-1")
+        val auth = coordinador(boveda)
+        ejecutar { auth.ingresarConBiometria() }
+        ejecutar { auth.cerrarSesion() }
+
+        assertTrue(auth.solicitarIngresoBiometrico())
+        ejecutar { auth.ingresarConBiometria() }
+
+        assertEquals(PERFIL_ANA, auth.estado.sesion?.perfil)
+    }
+
+    @Test
+    fun cerrarSesionSinHuellaRevocaEnElBackend() {
+        val boveda = BovedaFalsa()
+        val auth = coordinador(boveda)
+        ejecutar { auth.ingresarConCredenciales("ana@gmail.com", "x") }
+
+        ejecutar { auth.cerrarSesion() }
+
+        assertEquals(1, gateway.cerrados.size)
         assertNull(auth.estado.sesion)
         assertFalse(auth.estado.biometriaActivada)
         assertEquals(MensajesAuth.SESION_CERRADA, auth.estado.mensaje)
