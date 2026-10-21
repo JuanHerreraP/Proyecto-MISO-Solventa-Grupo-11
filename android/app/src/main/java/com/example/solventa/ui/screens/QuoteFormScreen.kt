@@ -1,6 +1,8 @@
 package com.example.solventa.ui.screens
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -17,7 +19,10 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.outlined.KeyboardArrowDown
+import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material.icons.outlined.Shield
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
@@ -30,6 +35,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -55,6 +61,10 @@ import com.example.solventa.ui.components.SolventaPrimaryButton
 import com.example.solventa.ui.components.SolventaTextField
 import com.example.solventa.ui.theme.Navegacion
 import com.example.solventa.ui.theme.SolventaTheme
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+import java.util.TimeZone
 
 /** Formulario único que renderiza los campos correspondientes al ramo seleccionado. */
 @Composable
@@ -169,6 +179,7 @@ private fun CampoDinamico(
     when (campo.tipo) {
         TipoCampoCotizacion.OPCION -> CampoOpcion(campo, valor, error, onValueChange)
         TipoCampoCotizacion.BOOLEANO -> CampoBooleano(campo, valor, error, onValueChange)
+        TipoCampoCotizacion.FECHA -> CampoFecha(campo, valor, error, onValueChange)
         else -> SolventaTextField(
             value = valor,
             onValueChange = onValueChange,
@@ -177,6 +188,75 @@ private fun CampoDinamico(
             keyboardOptions = KeyboardOptions(keyboardType = tecladoCampo(campo.tipo)),
             error = error
         )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun CampoFecha(
+    campo: CampoCotizacion,
+    valor: String,
+    error: String?,
+    onValueChange: (String) -> Unit
+) {
+    var mostrarCalendario by remember { mutableStateOf(false) }
+    val estadoCalendario = androidx.compose.material3.rememberDatePickerState(
+        initialSelectedDateMillis = valor.aMilisegundosUtc()
+    )
+
+    Box(modifier = Modifier.fillMaxWidth()) {
+        SolventaTextField(
+            value = valor,
+            onValueChange = {},
+            label = etiquetaCampo(campo),
+            placeholder = "AAAA-MM-DD",
+            readOnly = true,
+            trailingIcon = {
+                Icon(
+                    imageVector = Icons.Outlined.CalendarMonth,
+                    contentDescription = "Abrir calendario"
+                )
+            },
+            error = error
+        )
+        Box(
+            modifier = Modifier
+                .matchParentSize()
+                .testTag("campo_${campo.codigo}")
+                .clickable { mostrarCalendario = true }
+        )
+    }
+
+    if (mostrarCalendario) {
+        DatePickerDialog(
+            onDismissRequest = { mostrarCalendario = false },
+            confirmButton = {
+                TextButton(
+                    enabled = estadoCalendario.selectedDateMillis != null,
+                    onClick = {
+                        estadoCalendario.selectedDateMillis?.let { onValueChange(it.aFechaApi()) }
+                        mostrarCalendario = false
+                    }
+                ) {
+                    Text("Aceptar")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { mostrarCalendario = false }) {
+                    Text("Cancelar")
+                }
+            }
+        ) {
+            DatePicker(
+                state = estadoCalendario,
+                title = {
+                    Text(
+                        text = "Selecciona una fecha",
+                        modifier = Modifier.padding(start = 24.dp, top = 16.dp)
+                    )
+                }
+            )
+        }
     }
 }
 
@@ -327,6 +407,17 @@ private fun etiquetaOpcion(opcion: String): String = opcion
     .lowercase()
     .replace('_', ' ')
     .replaceFirstChar { it.titlecase() }
+
+private fun String.aMilisegundosUtc(): Long? = takeIf(String::isNotBlank)?.let { fecha ->
+    formatoFechaApi().runCatching { parse(fecha)?.time }.getOrNull()
+}
+
+private fun Long.aFechaApi(): String = formatoFechaApi().format(Date(this))
+
+private fun formatoFechaApi() = SimpleDateFormat("yyyy-MM-dd", Locale.ROOT).apply {
+    isLenient = false
+    timeZone = TimeZone.getTimeZone("UTC")
+}
 
 private fun tituloRamo(ramo: RamoCotizacion): String = when (ramo) {
     RamoCotizacion.VIAJE -> "Seguro de viaje"

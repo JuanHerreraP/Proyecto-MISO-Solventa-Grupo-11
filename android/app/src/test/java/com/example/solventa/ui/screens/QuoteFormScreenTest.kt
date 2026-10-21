@@ -80,4 +80,14 @@ class QuoteFormScreenTest {
         compose.onNodeWithText("NÚMERO DE VUELO").assertIsDisplayed()
         compose.onNodeWithText("UBICACIÓN").assertDoesNotExist()
     }
+
+    @Test
+    fun campoFechaAbreElCalendarioEnLugarDelTeclado() {
+        mostrar(RamoCotizacion.VIAJE)
+
+        compose.onNodeWithTag("campo_fecha_inicio").performScrollTo().performClick()
+
+        compose.onNodeWithText("Selecciona una fecha").assertIsDisplayed()
+        compose.onNodeWithText("Cancelar").assertIsDisplayed()
+    }
 }

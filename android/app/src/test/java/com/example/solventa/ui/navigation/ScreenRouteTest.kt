@@ -15,6 +15,7 @@ class ScreenRouteTest {
             ScreenRoute.Home.route,
             ScreenRoute.NewQuote.route,
             ScreenRoute.QuoteForm.route,
+            ScreenRoute.QuoteResult.route,
             ScreenRoute.Wallet.route,
             ScreenRoute.Certificate.route
         )
@@ -28,6 +29,7 @@ class ScreenRouteTest {
                 "home_screen",
                 "new_quote_screen",
                 "quote_form/{ramo}",
+                "quote_result/{ramo}",
                 "wallet_screen",
                 "certificate_screen/{polizaId}"
             ),
@@ -51,12 +53,21 @@ class ScreenRouteTest {
     }
 
     @Test
+    fun laRutaDelResultadoIncluyeElCodigoDelRamo() {
+        assertEquals(
+            "quote_result/VIDA",
+            ScreenRoute.QuoteResult.ruta(RamoCotizacion.VIDA)
+        )
+    }
+
+    @Test
     fun lasRutasPrivadasIncluyenCotizacionBilleteraYCertificado() {
         assertEquals(
             setOf(
                 "home_screen",
                 "new_quote_screen",
                 "quote_form/{ramo}",
+                "quote_result/{ramo}",
                 "wallet_screen",
                 "certificate_screen/{polizaId}"
             ),
