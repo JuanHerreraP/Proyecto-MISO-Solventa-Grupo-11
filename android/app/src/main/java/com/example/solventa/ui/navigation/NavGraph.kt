@@ -3,25 +3,34 @@ package com.example.solventa.ui.navigation
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.example.solventa.biometric.AutenticadorBiometrico
 import com.example.solventa.biometric.DisponibilidadBiometrica
 import com.example.solventa.biometric.FalloBiometrico
 import com.example.solventa.biometric.mensaje
 import com.example.solventa.domain.auth.MensajesAuth
 import com.example.solventa.ui.auth.AuthViewModel
+import com.example.solventa.ui.billetera.BilleteraViewModel
+import com.example.solventa.ui.billetera.compartirTexto
+import com.example.solventa.ui.billetera.textoParaCompartir
 import com.example.solventa.ui.screens.BiometricalLoginScreen
+import com.example.solventa.ui.screens.CertificateScreen
 import com.example.solventa.ui.screens.CredentialsLoginScreen
 import com.example.solventa.ui.screens.HomeScreen
 import com.example.solventa.ui.screens.RegisterScreen
+import com.example.solventa.ui.screens.WalletScreen
 import com.example.solventa.ui.screens.WelcomeScreen
 import kotlinx.coroutines.delay
 
@@ -31,20 +40,23 @@ fun NavGraph(
     autenticador: AutenticadorBiometrico,
     modifier: Modifier = Modifier,
     navController: NavHostController = rememberNavController(),
-    startDestination: String = ScreenRoute.Welcome.route
+    startDestination: String = ScreenRoute.Welcome.route,
+    billetera: BilleteraViewModel? = null
 ) {
     val estado by viewModel.estado.collectAsState()
     val autenticado = estado.sesion != null
 
-    // Guardia de navegación: con sesión se va al inicio; sin sesión nadie se queda en el inicio.
+    // Guardia de navegación: con sesión se va al inicio; sin sesión nadie se queda en una
+    // pantalla privada (inicio, billetera o certificado) y se descarta lo que se cargó.
     LaunchedEffect(autenticado) {
         val actual = navController.currentDestination?.route
-        if (autenticado && actual != ScreenRoute.Home.route) {
+        if (!autenticado) billetera?.limpiar()
+        if (autenticado && actual !in ScreenRoute.privadas) {
             navController.navigate(ScreenRoute.Home.route) {
                 popUpTo(navController.graph.id) { inclusive = true }
                 launchSingleTop = true
             }
-        } else if (!autenticado && actual == ScreenRoute.Home.route) {
+        } else if (!autenticado && actual in ScreenRoute.privadas) {
             navController.navigate(ScreenRoute.BiometricalLogin.route) {
                 popUpTo(navController.graph.id) { inclusive = true }
                 launchSingleTop = true
@@ -197,8 +209,71 @@ fun NavGraph(
                     },
                     onSolicitarActivacion = viewModel::solicitarActivacion,
                     onDescartarActivacion = { viewModel.descartarActivacion() },
-                    onCerrarSesion = viewModel::cerrarSesion
+                    onCerrarSesion = viewModel::cerrarSesion,
+                    onVerBilletera = billetera?.let {
+                        { navController.navigate(ScreenRoute.Wallet.route) { launchSingleTop = true } }
+                    }
                 )
+            }
+        }
+
+        if (billetera != null) {
+            composable(route = ScreenRoute.Wallet.route) {
+                val estadoBilletera by billetera.estado.collectAsState()
+                if (estado.sesion == null) {
+                    Box(modifier = Modifier.fillMaxSize())
+                } else {
+                    // Se vuelve a pedir cada vez que se entra: el backend es la fuente de verdad.
+                    LaunchedEffect(Unit) { billetera.cargar() }
+                    WalletScreen(
+                        billetera = estadoBilletera.billetera,
+                        cargando = estadoBilletera.cargando,
+                        error = estadoBilletera.error,
+                        onVerPoliza = { polizaId ->
+                            navController.navigate(ScreenRoute.Certificate.ruta(polizaId))
+                        },
+                        onReintentar = billetera::cargar,
+                        onVolver = { navController.popBackStack() }
+                    )
+                }
+            }
+
+            composable(
+                route = ScreenRoute.Certificate.route,
+                arguments = listOf(
+                    navArgument(ScreenRoute.Certificate.ARGUMENTO) { type = NavType.StringType }
+                )
+            ) { entrada ->
+                val polizaId = entrada.arguments?.getString(ScreenRoute.Certificate.ARGUMENTO).orEmpty()
+                val estadoBilletera by billetera.estado.collectAsState()
+                val contexto = LocalContext.current
+
+                if (estado.sesion == null) {
+                    Box(modifier = Modifier.fillMaxSize())
+                } else {
+                    LaunchedEffect(polizaId) { billetera.verCertificado(polizaId) }
+                    DisposableEffect(polizaId) { onDispose { billetera.cerrarCertificado() } }
+
+                    LaunchedEffect(estadoBilletera.enlaceParaCompartir) {
+                        val enlace = estadoBilletera.enlaceParaCompartir ?: return@LaunchedEffect
+                        billetera.enlaceCompartido()
+                        contexto.compartirTexto(
+                            textoParaCompartir(estadoBilletera.certificado?.numeroPoliza, enlace)
+                        )
+                    }
+
+                    val certificado = estadoBilletera.certificado?.takeIf { it.polizaId == polizaId }
+                    CertificateScreen(
+                        certificado = certificado,
+                        cargando = estadoBilletera.cargandoCertificado,
+                        error = estadoBilletera.errorCertificado,
+                        compartiendo = estadoBilletera.compartiendo,
+                        mensaje = estadoBilletera.mensaje,
+                        onCompartir = { billetera.compartir(polizaId) },
+                        onReintentar = { billetera.verCertificado(polizaId) },
+                        onVolver = { navController.popBackStack() }
+                    )
+                }
             }
         }
     }

@@ -47,7 +47,8 @@ fun HomeScreen(
     onSolicitarActivacion: () -> Unit,
     onDescartarActivacion: () -> Unit,
     onCerrarSesion: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onVerBilletera: (() -> Unit)? = null
 ) {
     if (ofrecerActivarBiometria) {
         AlertDialog(
@@ -123,11 +124,20 @@ fun HomeScreen(
                     }
                 }
 
-                Text(
-                    text = "Tus pólizas aparecerán aquí cuando las adquieras.",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
-                )
+                if (onVerBilletera != null) {
+                    Text(
+                        text = "Consulta tus pólizas y sus certificados en tu billetera.",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
+                    )
+                    SolventaPrimaryButton(text = "Ver mi billetera", onClick = onVerBilletera)
+                } else {
+                    Text(
+                        text = "Tus pólizas aparecerán aquí cuando las adquieras.",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
+                    )
+                }
 
                 if (mensaje != null) {
                     SolventaNoticePill(text = mensaje, icon = painterResource(id = R.drawable.ic_main_page))

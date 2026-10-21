@@ -7,6 +7,7 @@ import com.example.solventa.biometric.FalloBiometrico
 import com.example.solventa.domain.auth.AuthCoordinator
 import com.example.solventa.domain.auth.DatosRegistro
 import com.example.solventa.domain.auth.EstadoAuth
+import com.example.solventa.domain.polizas.SesionAutenticada
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -16,6 +17,9 @@ class AuthViewModel(private val coordinador: AuthCoordinator) : ViewModel() {
 
     private val _estado = MutableStateFlow(coordinador.estado)
     val estado: StateFlow<EstadoAuth> = _estado.asStateFlow()
+
+    /** Para que otros módulos (la billetera) usen la sesión sin ver los tokens desde la UI. */
+    val sesion: SesionAutenticada get() = coordinador
 
     init {
         coordinador.observador = { _estado.value = it }
