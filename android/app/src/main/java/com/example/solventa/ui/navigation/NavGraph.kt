@@ -229,7 +229,16 @@ fun NavGraph(
             if (estado.sesion == null) {
                 Box(modifier = Modifier.fillMaxSize())
             } else {
-                NewQuoteScreen(onVolver = { navController.popBackStack() })
+                NewQuoteScreen(
+                    onVolver = { navController.popBackStack() },
+                    onSeleccionarRamo = {
+                        // El formulario correspondiente se conecta en el siguiente paso.
+                    },
+                    onInicio = { navController.popBackStack(ScreenRoute.Home.route, false) },
+                    onVerBilletera = billetera?.let {
+                        { navController.navigate(ScreenRoute.Wallet.route) { launchSingleTop = true } }
+                    }
+                )
             }
         }
 

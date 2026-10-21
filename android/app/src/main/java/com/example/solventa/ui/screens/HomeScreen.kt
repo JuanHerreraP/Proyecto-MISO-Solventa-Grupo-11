@@ -19,21 +19,14 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.automirrored.outlined.Logout
-import androidx.compose.material.icons.outlined.Description
-import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.LocationOn
 import androidx.compose.material.icons.outlined.NotificationsNone
-import androidx.compose.material.icons.outlined.PersonOutline
-import androidx.compose.material.icons.outlined.Policy
 import androidx.compose.material.icons.outlined.Shield
 import androidx.compose.material.icons.outlined.WarningAmber
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -50,6 +43,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.solventa.domain.auth.Perfil
 import com.example.solventa.ui.components.SolventaNoticePill
+import com.example.solventa.ui.components.SolventaBottomNavigation
 import com.example.solventa.ui.theme.Avance
 import com.example.solventa.ui.theme.Navegacion
 import com.example.solventa.ui.theme.Noche
@@ -93,7 +87,7 @@ fun HomeScreen(
         modifier = modifier.fillMaxSize(),
         containerColor = MaterialTheme.colorScheme.surface,
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
-        bottomBar = { NavegacionInferior(onVerBilletera = onVerBilletera) }
+        bottomBar = { SolventaBottomNavigation(onPolizas = onVerBilletera) }
     ) { paddingValues ->
         Column(
             modifier = Modifier
@@ -333,51 +327,6 @@ private fun AccionInicio(
                 color = MaterialTheme.colorScheme.onSurface
             )
         }
-    }
-}
-
-@Composable
-private fun NavegacionInferior(onVerBilletera: (() -> Unit)?) {
-    val colores = NavigationBarItemDefaults.colors(
-        selectedIconColor = Navegacion,
-        selectedTextColor = Navegacion,
-        indicatorColor = Navegacion.copy(alpha = 0.12f),
-        unselectedIconColor = Noche.copy(alpha = 0.65f),
-        unselectedTextColor = Noche.copy(alpha = 0.65f),
-        disabledIconColor = Noche.copy(alpha = 0.35f),
-        disabledTextColor = Noche.copy(alpha = 0.35f)
-    )
-
-    NavigationBar(containerColor = MaterialTheme.colorScheme.surface) {
-        NavigationBarItem(
-            selected = true,
-            onClick = {},
-            icon = { Icon(Icons.Outlined.Home, contentDescription = null) },
-            label = { Text("Inicio") },
-            colors = colores
-        )
-        NavigationBarItem(
-            selected = false,
-            onClick = { onVerBilletera?.invoke() },
-            enabled = onVerBilletera != null,
-            icon = { Icon(Icons.Outlined.Policy, contentDescription = null) },
-            label = { Text("Pólizas") },
-            colors = colores
-        )
-        NavigationBarItem(
-            selected = false,
-            onClick = {},
-            icon = { Icon(Icons.Outlined.Description, contentDescription = null) },
-            label = { Text("Siniestros") },
-            colors = colores
-        )
-        NavigationBarItem(
-            selected = false,
-            onClick = {},
-            icon = { Icon(Icons.Outlined.PersonOutline, contentDescription = null) },
-            label = { Text("Perfil") },
-            colors = colores
-        )
     }
 }
 
