@@ -11,6 +11,7 @@ from app.api import (
     autenticacion,
     autorizacion_socios,
     billetera,
+    cotizaciones,
     credenciales_socios,
     enriquecimiento,
     identidad,
@@ -99,6 +100,7 @@ def crear_app() -> FastAPI:
         return respuesta
 
     app.include_router(salud.router)
+    app.include_router(cotizaciones.router)
     app.include_router(perfilamiento.router)
     app.include_router(enriquecimiento.router)
     app.include_router(socios.router)

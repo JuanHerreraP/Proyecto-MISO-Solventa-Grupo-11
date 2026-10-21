@@ -31,8 +31,13 @@ lector_oferta_actual = requiere_roles(
 
 
 @lru_cache
+def obtener_repositorio() -> RepositorioPerfilesEnMemoria:
+    return RepositorioPerfilesEnMemoria()
+
+
+@lru_cache
 def obtener_servicio() -> ServicioPerfilamiento:
-    return ServicioPerfilamiento(RepositorioPerfilesEnMemoria())
+    return ServicioPerfilamiento(obtener_repositorio())
 
 
 @router.post(
