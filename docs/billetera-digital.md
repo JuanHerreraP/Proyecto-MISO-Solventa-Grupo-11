@@ -65,5 +65,8 @@ Cuando HU12 emita pólizas, debe guardarlas con `RepositorioPolizasPostgres.guar
 
 ## Pruebas
 
+Evidencias de la prueba manual en el emulador: [evidencias/hu07](evidencias/hu07/README.md).
+
+
 - Backend: `pytest tests/billetera` (dominio, repositorio, servicio y API, con cobertura del 98 al 100 % del módulo).
 - Android: `./gradlew testDebugUnitTest` incluye `BilleteraCoordinatorTest`, `RemotePolizasGatewayTest`, `FormatosTest`, `CodigoQrTest`, las pruebas de las pantallas y `NavGraphBilleteraTest`, que recorre inicio → billetera → certificado → compartir.

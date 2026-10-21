@@ -34,6 +34,7 @@ se mantienen en la [wiki del proyecto](https://github.com/JuanHerreraP/Proyecto-
 - [Backend y proveedores KYC locales](../README.md#backend-en-local).
 - [Infraestructura](../infra/README.md).
 - [Evidencias de HU02](evidencias/hu02/README.md).
+- [Evidencias de HU07](evidencias/hu07/README.md).
 
 Los contratos ejecutables de la API están disponibles en `/docs` y `/openapi.json`
 al iniciar el backend; las rutas de este directorio describen su uso y contexto.
