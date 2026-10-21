@@ -21,6 +21,12 @@ se mantienen en la [wiki del proyecto](https://github.com/JuanHerreraP/Proyecto-
 | [Perfil de riesgo y pricing](perfil-de-riesgo.md) | HU11: puntaje, dictamen, extraprima y reglas |
 | [Socios de distribución](socios-distribucion.md) | HU24: alta, tenant lógico, credenciales, OAuth y scopes |
 
+## Pólizas
+
+| Documento | Contenido |
+| --- | --- |
+| [Billetera digital de pólizas](billetera-digital.md) | HU07: billetera, estados, certificado con QR y enlace temporal para compartir |
+
 ## Clientes, ejecución y evidencias
 
 - [Cliente web](../web/README.md): pantallas, ejecución, configuración y pruebas.

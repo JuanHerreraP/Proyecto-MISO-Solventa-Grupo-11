@@ -131,6 +131,7 @@ verificación de identidad real.
 - [Enriquecimiento del perfil con Open Finance y Open Data (HU10)](docs/enriquecimiento.md)
 - [Perfil de riesgo individualizado y pricing (HU11)](docs/perfil-de-riesgo.md)
 - [Inicio de sesión biométrico (HU02)](docs/inicio-sesion-biometrico.md)
+- [Billetera digital de pólizas (HU07)](docs/billetera-digital.md)
 
 ## Integración continua
 
