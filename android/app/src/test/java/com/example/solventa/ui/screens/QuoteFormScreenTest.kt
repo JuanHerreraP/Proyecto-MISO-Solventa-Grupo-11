@@ -24,13 +24,19 @@ class QuoteFormScreenTest {
 
     private val calculados = mutableListOf<Map<String, String>>()
 
-    private fun mostrar(ramo: RamoCotizacion) {
+    private fun mostrar(
+        ramo: RamoCotizacion,
+        cargando: Boolean = false,
+        errorRemoto: String? = null
+    ) {
         compose.setContent {
             SolventaTheme {
                 QuoteFormScreen(
                     definicion = CatalogoCotizaciones.definicion(ramo),
                     onVolver = {},
-                    onCalcular = { calculados += it }
+                    onCalcular = { calculados += it },
+                    cargando = cargando,
+                    errorRemoto = errorRemoto
                 )
             }
         }
@@ -89,5 +95,21 @@ class QuoteFormScreenTest {
 
         compose.onNodeWithText("Selecciona una fecha").assertIsDisplayed()
         compose.onNodeWithText("Cancelar").assertIsDisplayed()
+    }
+
+    @Test
+    fun muestraElErrorDevueltoAlCalcular() {
+        mostrar(RamoCotizacion.VIAJE, errorRemoto = "No pudimos calcular la cotización.")
+
+        compose.onNodeWithText("No pudimos calcular la cotización.")
+            .performScrollTo()
+            .assertIsDisplayed()
+    }
+
+    @Test
+    fun mientrasCalculaOcultaElTextoDelBoton() {
+        mostrar(RamoCotizacion.VIAJE, cargando = true)
+
+        compose.onNodeWithText("Calcular cotización").assertDoesNotExist()
     }
 }

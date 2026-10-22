@@ -83,6 +83,18 @@ class CotizacionesCoordinatorTest {
         assertFalse(coordinador.estado.cargandoListado)
         assertNull(coordinador.estado.errorListado)
     }
+
+    @Test
+    fun conservaElListadoYExponeErrorSiFallaLaActualizacion() = runBlocking {
+        coordinador.listar("CLI-1")
+        gateway.respuestaListado = ResultadoApi.SinConexion
+
+        coordinador.listar("CLI-1")
+
+        assertEquals(listOf(resultado()), coordinador.estado.listado)
+        assertEquals(MensajesCotizaciones.SIN_CONEXION, coordinador.estado.errorListado)
+        assertFalse(coordinador.estado.cargandoListado)
+    }
 }
 
 private class GatewayFalso : CotizacionesGateway {
