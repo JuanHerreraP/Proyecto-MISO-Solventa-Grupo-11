@@ -3,7 +3,10 @@
 import time
 
 from fastapi import FastAPI, Request
+from fastapi.encoders import jsonable_encoder
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from starlette.concurrency import run_in_threadpool
 
 from app import __version__
@@ -15,6 +18,7 @@ from app.api import (
     enriquecimiento,
     identidad,
     oauth_socios,
+    pagos,
     perfilamiento,
     salud,
     sesion_web,
@@ -31,6 +35,7 @@ from app.infraestructura.database import (
     esperar_base_disponible,
     preparar_esquema_registro,
 )
+from app.pagos import modelos_db as modelos_db_pagos  # noqa: F401
 from app.socios import modelos_db as modelos_db_socios  # noqa: F401
 
 
@@ -52,6 +57,17 @@ def crear_app() -> FastAPI:
         allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
         allow_headers=["Authorization", "Content-Type", "X-CSRF-Token", "X-Scope"],
     )
+
+    @app.exception_handler(RequestValidationError)
+    async def errores_de_validacion(request: Request, error: RequestValidationError):
+        detalle = jsonable_encoder(error.errors())
+        if request.url.path.startswith("/api/v1/pagos"):
+            # Los errores de FastAPI devuelven el valor recibido; en pagos podría ser un PAN.
+            detalle = [
+                {campo: valor for campo, valor in e.items() if campo not in {"input", "ctx"}}
+                for e in detalle
+            ]
+        return JSONResponse(status_code=422, content={"detail": detalle})
 
     @app.middleware("http")
     async def auditar_y_medir_latencia(request: Request, call_next):
@@ -94,6 +110,7 @@ def crear_app() -> FastAPI:
 
     app.include_router(salud.router)
     app.include_router(cotizaciones.router)
+    app.include_router(pagos.router)
     app.include_router(perfilamiento.router)
     app.include_router(enriquecimiento.router)
     app.include_router(socios.router)
