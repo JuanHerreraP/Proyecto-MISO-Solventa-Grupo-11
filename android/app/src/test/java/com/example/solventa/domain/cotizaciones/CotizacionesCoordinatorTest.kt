@@ -73,6 +73,16 @@ class CotizacionesCoordinatorTest {
 
         assertEquals(EstadoCotizaciones(), coordinador.estado)
     }
+
+    @Test
+    fun listaLasCotizacionesDelClienteAutenticado() = runBlocking {
+        coordinador.listar("CLI-1")
+
+        assertEquals("CLI-1", gateway.clienteListado)
+        assertEquals(listOf(resultado()), coordinador.estado.listado)
+        assertFalse(coordinador.estado.cargandoListado)
+        assertNull(coordinador.estado.errorListado)
+    }
 }
 
 private class GatewayFalso : CotizacionesGateway {
@@ -81,6 +91,18 @@ private class GatewayFalso : CotizacionesGateway {
     var clienteId: String? = null
     var datos: Map<String, Any> = emptyMap()
     var respuesta: ResultadoApi<ResultadoCotizacion> = ResultadoApi.Exito(resultado())
+    var clienteListado: String? = null
+    var respuestaListado: ResultadoApi<List<ResultadoCotizacion>> =
+        ResultadoApi.Exito(listOf(resultado()))
+
+    override suspend fun listar(
+        accessToken: String,
+        clienteId: String
+    ): ResultadoApi<List<ResultadoCotizacion>> {
+        token = accessToken
+        clienteListado = clienteId
+        return respuestaListado
+    }
 
     override suspend fun cotizar(
         accessToken: String,

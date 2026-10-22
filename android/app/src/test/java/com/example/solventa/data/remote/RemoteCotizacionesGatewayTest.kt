@@ -85,6 +85,25 @@ class RemoteCotizacionesGatewayTest {
         )
     }
 
+    @Test
+    fun listaLasCotizacionesDelClienteConSuToken() = runBlocking {
+        servidor.enqueue(
+            MockResponse()
+                .setResponseCode(200)
+                .setHeader("Content-Type", "application/json")
+                .setBody("[$COTIZACION_JSON]")
+        )
+
+        val respuesta = gateway.listar("access-1", "CLI-1")
+
+        val listado = (respuesta as ResultadoApi.Exito).valor
+        assertEquals(listOf("COT-1"), listado.map { it.cotizacionId })
+        val peticion = servidor.takeRequest()
+        assertEquals("GET", peticion.method)
+        assertEquals("/api/v1/cotizaciones?cliente_id=CLI-1", peticion.path)
+        assertEquals("Bearer access-1", peticion.getHeader("Authorization"))
+    }
+
     private companion object {
         val COTIZACION_JSON = """
             {

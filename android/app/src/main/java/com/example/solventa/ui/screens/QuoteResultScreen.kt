@@ -103,7 +103,11 @@ fun QuoteResultScreen(
                     )
                 }
 
-                SolventaPrimaryButton(text = "Aceptar y continuar", onClick = onAceptar)
+                SolventaPrimaryButton(
+                    text = "Aceptar y continuar",
+                    onClick = onAceptar,
+                    enabled = cotizacion.estado == "VIGENTE"
+                )
                 SolventaSecondaryButton(text = "Crear otra cotización", onClick = onCrearOtra)
             }
         }
@@ -163,7 +167,7 @@ private fun TarjetaPrima(cotizacion: ResultadoCotizacion) {
                 Spacer(modifier = Modifier.weight(1f))
                 Surface(color = Avance, shape = RoundedCornerShape(50)) {
                     Text(
-                        text = "VIGENTE 24 H",
+                        text = etiquetaEstado(cotizacion.estado),
                         style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
                         color = Noche,
                         modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp)
@@ -236,6 +240,11 @@ private fun tituloResultado(ramo: RamoCotizacion): String = when (ramo) {
     RamoCotizacion.DISPOSITIVOS -> "Protección para tu dispositivo"
     RamoCotizacion.VIDA -> "Protección para tu vida"
     RamoCotizacion.PARAMETRICO -> "Protección ante eventos"
+}
+
+private fun etiquetaEstado(estado: String): String = when (estado) {
+    "VIGENTE" -> "VIGENTE 24 H"
+    else -> estado.replace('_', ' ')
 }
 
 private fun formatearMoneda(valor: BigDecimal, moneda: String): String {

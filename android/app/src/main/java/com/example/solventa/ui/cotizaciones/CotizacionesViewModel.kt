@@ -23,6 +23,12 @@ class CotizacionesViewModel(private val coordinador: CotizacionesCoordinator) : 
         viewModelScope.launch { coordinador.cotizar(clienteId, ramo, valores) }
     }
 
+    fun listar(clienteId: String) {
+        viewModelScope.launch { coordinador.listar(clienteId) }
+    }
+
+    fun limpiarResultado() = coordinador.limpiarResultado()
+
     fun limpiar() = coordinador.limpiar()
 
     override fun onCleared() {

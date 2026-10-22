@@ -6,7 +6,10 @@ import com.example.solventa.domain.polizas.SesionAutenticada
 data class EstadoCotizaciones(
     val cargando: Boolean = false,
     val resultado: ResultadoCotizacion? = null,
-    val error: String? = null
+    val error: String? = null,
+    val cargandoListado: Boolean = false,
+    val listado: List<ResultadoCotizacion> = emptyList(),
+    val errorListado: String? = null
 )
 
 object MensajesCotizaciones {
@@ -18,6 +21,11 @@ object MensajesCotizaciones {
 }
 
 interface CotizacionesGateway {
+    suspend fun listar(
+        accessToken: String,
+        clienteId: String
+    ): ResultadoApi<List<ResultadoCotizacion>>
+
     suspend fun cotizar(
         accessToken: String,
         clienteId: String,
@@ -44,6 +52,34 @@ class CotizacionesCoordinator(
 
     private var generacion = 0
 
+    suspend fun listar(clienteId: String) {
+        if (estado.cargandoListado) return
+        val token = sesion.accessTokenVigente() ?: return rechazada()
+        estado = estado.copy(cargandoListado = true, errorListado = null)
+        val inicio = generacion
+        val respuesta = gateway.listar(token, clienteId)
+        if (inicio != generacion) return
+
+        estado = when (respuesta) {
+            is ResultadoApi.Exito -> estado.copy(
+                cargandoListado = false,
+                listado = respuesta.valor,
+                errorListado = null
+            )
+            is ResultadoApi.Fallo -> when (respuesta.http) {
+                401 -> return rechazada()
+                else -> estado.copy(
+                    cargandoListado = false,
+                    errorListado = MensajesCotizaciones.ERROR_GENERICO
+                )
+            }
+            ResultadoApi.SinConexion -> estado.copy(
+                cargandoListado = false,
+                errorListado = MensajesCotizaciones.SIN_CONEXION
+            )
+        }
+    }
+
     suspend fun cotizar(clienteId: String, ramo: RamoCotizacion, valores: Map<String, String>) {
         if (estado.cargando) return
         val token = sesion.accessTokenVigente() ?: return rechazada()
@@ -53,24 +89,44 @@ class CotizacionesCoordinator(
             return
         }
 
-        estado = EstadoCotizaciones(cargando = true)
+        estado = estado.copy(cargando = true, resultado = null, error = null)
         val inicio = generacion
         val respuesta = gateway.cotizar(token, clienteId, ramo, datos)
         if (inicio != generacion) return
 
         estado = when (respuesta) {
-            is ResultadoApi.Exito -> EstadoCotizaciones(resultado = respuesta.valor)
+            is ResultadoApi.Exito -> estado.copy(
+                cargando = false,
+                resultado = respuesta.valor,
+                error = null,
+                listado = listOf(respuesta.valor) +
+                    estado.listado.filterNot { it.cotizacionId == respuesta.valor.cotizacionId }
+            )
             is ResultadoApi.Fallo -> when (respuesta.http) {
                 401 -> return rechazada()
-                409 -> EstadoCotizaciones(
+                409 -> estado.copy(
+                    cargando = false,
                     error = respuesta.mensaje ?: MensajesCotizaciones.RIESGO_NO_ASEGURABLE
                 )
-                422 -> EstadoCotizaciones(
+                422 -> estado.copy(
+                    cargando = false,
                     error = respuesta.mensaje ?: MensajesCotizaciones.DATOS_INVALIDOS
                 )
-                else -> EstadoCotizaciones(error = MensajesCotizaciones.ERROR_GENERICO)
+                else -> estado.copy(
+                    cargando = false,
+                    error = MensajesCotizaciones.ERROR_GENERICO
+                )
             }
-            ResultadoApi.SinConexion -> EstadoCotizaciones(error = MensajesCotizaciones.SIN_CONEXION)
+            ResultadoApi.SinConexion -> estado.copy(
+                cargando = false,
+                error = MensajesCotizaciones.SIN_CONEXION
+            )
+        }
+    }
+
+    fun limpiarResultado() {
+        if (estado.resultado != null || estado.error != null || estado.cargando) {
+            estado = estado.copy(cargando = false, resultado = null, error = null)
         }
     }
 

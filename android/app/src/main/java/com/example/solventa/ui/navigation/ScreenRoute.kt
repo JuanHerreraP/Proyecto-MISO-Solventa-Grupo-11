@@ -19,6 +19,12 @@ sealed class ScreenRoute(val route: String) {
         const val ARGUMENTO = "ramo"
         fun ruta(ramo: RamoCotizacion) = "quote_result/${ramo.codigoApi}"
     }
+    object Quotes : ScreenRoute("quotes_screen")
+    object QuoteHistoryDetail : ScreenRoute("quote_history/{cotizacionId}") {
+        const val ARGUMENTO = "cotizacionId"
+        fun ruta(cotizacionId: String) =
+            "quote_history/${URLEncoder.encode(cotizacionId, "UTF-8")}"
+    }
     object Wallet : ScreenRoute("wallet_screen")
     object Certificate : ScreenRoute("certificate_screen/{polizaId}") {
         const val ARGUMENTO = "polizaId"
@@ -33,6 +39,8 @@ sealed class ScreenRoute(val route: String) {
                 NewQuote.route,
                 QuoteForm.route,
                 QuoteResult.route,
+                Quotes.route,
+                QuoteHistoryDetail.route,
                 Wallet.route,
                 Certificate.route
             )

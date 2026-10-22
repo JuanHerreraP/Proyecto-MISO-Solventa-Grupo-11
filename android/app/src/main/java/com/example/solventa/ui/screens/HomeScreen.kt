@@ -21,6 +21,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.automirrored.outlined.Logout
 import androidx.compose.material.icons.outlined.LocationOn
 import androidx.compose.material.icons.outlined.NotificationsNone
+import androidx.compose.material.icons.outlined.RequestQuote
 import androidx.compose.material.icons.outlined.Shield
 import androidx.compose.material.icons.outlined.WarningAmber
 import androidx.compose.material3.AlertDialog
@@ -65,6 +66,7 @@ fun HomeScreen(
     onCerrarSesion: () -> Unit,
     modifier: Modifier = Modifier,
     onVerBilletera: (() -> Unit)? = null,
+    onVerCotizaciones: (() -> Unit)? = null,
     onCotizarSeguro: () -> Unit = {},
     cantidadPolizasActivas: Int? = null
 ) {
@@ -136,8 +138,9 @@ fun HomeScreen(
                     modifier = Modifier.weight(1f)
                 )
                 AccionInicio(
-                    titulo = "Notificaciones",
-                    icono = Icons.Outlined.NotificationsNone,
+                    titulo = "Ver cotizaciones",
+                    icono = Icons.Outlined.RequestQuote,
+                    onClick = onVerCotizaciones,
                     modifier = Modifier.weight(1f)
                 )
             }
@@ -346,6 +349,7 @@ fun HomeScreenPreview() {
             onDescartarActivacion = {},
             onCerrarSesion = {},
             onVerBilletera = {},
+            onVerCotizaciones = {},
             onCotizarSeguro = {},
             cantidadPolizasActivas = 2
         )

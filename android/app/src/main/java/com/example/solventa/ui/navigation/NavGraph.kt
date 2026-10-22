@@ -36,6 +36,7 @@ import com.example.solventa.ui.screens.HomeScreen
 import com.example.solventa.ui.screens.NewQuoteScreen
 import com.example.solventa.ui.screens.QuoteFormScreen
 import com.example.solventa.ui.screens.QuoteResultScreen
+import com.example.solventa.ui.screens.QuotesScreen
 import com.example.solventa.ui.screens.RegisterScreen
 import com.example.solventa.ui.screens.WalletScreen
 import com.example.solventa.ui.screens.WelcomeScreen
@@ -228,6 +229,9 @@ fun NavGraph(
                     onCotizarSeguro = {
                         navController.navigate(ScreenRoute.NewQuote.route) { launchSingleTop = true }
                     },
+                    onVerCotizaciones = cotizaciones?.let {
+                        { navController.navigate(ScreenRoute.Quotes.route) { launchSingleTop = true } }
+                    },
                     onVerBilletera = billetera?.let {
                         { navController.navigate(ScreenRoute.Wallet.route) { launchSingleTop = true } }
                     },
@@ -306,24 +310,86 @@ fun NavGraph(
                 QuoteResultScreen(
                     cotizacion = resultado,
                     onVolver = {
-                        cotizaciones?.limpiar()
+                        cotizaciones?.limpiarResultado()
                         navController.popBackStack()
                     },
                     onAceptar = {
                         // La aceptación y compra pertenecen al flujo posterior a HU03.
                     },
                     onCrearOtra = {
-                        cotizaciones?.limpiar()
+                        cotizaciones?.limpiarResultado()
                         navController.popBackStack(ScreenRoute.NewQuote.route, inclusive = false)
                     },
                     onInicio = {
-                        cotizaciones?.limpiar()
+                        cotizaciones?.limpiarResultado()
                         navController.popBackStack(ScreenRoute.Home.route, false)
                     },
                     onVerBilletera = billetera?.let {
                         { navController.navigate(ScreenRoute.Wallet.route) { launchSingleTop = true } }
                     }
                 )
+            }
+        }
+
+        if (cotizaciones != null) {
+            composable(route = ScreenRoute.Quotes.route) {
+                val sesion = estado.sesion
+                if (sesion == null) {
+                    Box(modifier = Modifier.fillMaxSize())
+                } else {
+                    LaunchedEffect(sesion.perfil.id) { cotizaciones.listar(sesion.perfil.id) }
+                    QuotesScreen(
+                        cotizaciones = estadoCotizaciones.listado,
+                        cargando = estadoCotizaciones.cargandoListado,
+                        error = estadoCotizaciones.errorListado,
+                        onVerCotizacion = { cotizacionId ->
+                            navController.navigate(ScreenRoute.QuoteHistoryDetail.ruta(cotizacionId))
+                        },
+                        onReintentar = { cotizaciones.listar(sesion.perfil.id) },
+                        onVolver = { navController.popBackStack() }
+                    )
+                }
+            }
+
+            composable(
+                route = ScreenRoute.QuoteHistoryDetail.route,
+                arguments = listOf(
+                    navArgument(ScreenRoute.QuoteHistoryDetail.ARGUMENTO) {
+                        type = NavType.StringType
+                    }
+                )
+            ) { entrada ->
+                val cotizacionId = entrada.arguments
+                    ?.getString(ScreenRoute.QuoteHistoryDetail.ARGUMENTO)
+                val cotizacion = estadoCotizaciones.listado
+                    .firstOrNull { it.cotizacionId == cotizacionId }
+                if (estado.sesion == null || cotizacion == null) {
+                    Box(modifier = Modifier.fillMaxSize())
+                } else {
+                    QuoteResultScreen(
+                        cotizacion = cotizacion,
+                        onVolver = { navController.popBackStack() },
+                        onAceptar = {
+                            // La aceptación pertenece al siguiente paso del flujo de compra.
+                        },
+                        onCrearOtra = {
+                            cotizaciones.limpiarResultado()
+                            navController.navigate(ScreenRoute.NewQuote.route) {
+                                launchSingleTop = true
+                            }
+                        },
+                        onInicio = {
+                            navController.popBackStack(ScreenRoute.Home.route, false)
+                        },
+                        onVerBilletera = billetera?.let {
+                            {
+                                navController.navigate(ScreenRoute.Wallet.route) {
+                                    launchSingleTop = true
+                                }
+                            }
+                        }
+                    )
+                }
             }
         }
 

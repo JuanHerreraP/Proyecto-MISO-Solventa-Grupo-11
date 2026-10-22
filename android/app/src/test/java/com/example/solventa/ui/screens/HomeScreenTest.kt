@@ -43,6 +43,7 @@ class HomeScreenTest {
                     onDescartarActivacion = { eventos += "descartar" },
                     onCerrarSesion = { eventos += "cerrar" },
                     onVerBilletera = { eventos += "billetera" },
+                    onVerCotizaciones = { eventos += "cotizaciones" },
                     onCotizarSeguro = { eventos += "cotizar" },
                     cantidadPolizasActivas = cantidadPolizasActivas
                 )
@@ -122,5 +123,14 @@ class HomeScreenTest {
         compose.boton("Cotizar un nuevo seguro").performClick()
 
         assertEquals(listOf("billetera", "cotizar"), eventos)
+    }
+
+    @Test
+    fun permiteAbrirElHistorialDeCotizaciones() {
+        mostrar()
+
+        compose.boton("Ver cotizaciones").performScrollTo().performClick()
+
+        assertEquals(listOf("cotizaciones"), eventos)
     }
 }
