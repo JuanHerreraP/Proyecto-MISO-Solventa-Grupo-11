@@ -23,6 +23,7 @@ import androidx.compose.material.icons.outlined.LocationOn
 import androidx.compose.material.icons.outlined.NotificationsNone
 import androidx.compose.material.icons.outlined.RequestQuote
 import androidx.compose.material.icons.outlined.Shield
+import androidx.compose.material.icons.outlined.VerifiedUser
 import androidx.compose.material.icons.outlined.WarningAmber
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
@@ -120,27 +121,27 @@ fun HomeScreen(
 
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 AccionInicio(
-                    titulo = "Reportar siniestro",
-                    icono = Icons.Outlined.WarningAmber,
-                    modifier = Modifier.weight(1f)
-                )
-                AccionInicio(
-                    titulo = "Ver coberturas",
-                    icono = Icons.Outlined.Shield,
+                    titulo = "Ver pólizas",
+                    icono = Icons.Outlined.VerifiedUser,
                     onClick = onVerBilletera,
-                    modifier = Modifier.weight(1f)
-                )
-            }
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                AccionInicio(
-                    titulo = "Pedir asistencia",
-                    icono = Icons.Outlined.LocationOn,
                     modifier = Modifier.weight(1f)
                 )
                 AccionInicio(
                     titulo = "Ver cotizaciones",
                     icono = Icons.Outlined.RequestQuote,
                     onClick = onVerCotizaciones,
+                    modifier = Modifier.weight(1f)
+                )
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                AccionInicio(
+                    titulo = "Reportar siniestro",
+                    icono = Icons.Outlined.WarningAmber,
+                    modifier = Modifier.weight(1f)
+                )
+                AccionInicio(
+                    titulo = "Pedir asistencia",
+                    icono = Icons.Outlined.LocationOn,
                     modifier = Modifier.weight(1f)
                 )
             }
