@@ -13,6 +13,7 @@ from app import __version__
 from app.api import (
     autenticacion,
     autorizacion_socios,
+    billetera,
     cotizaciones,
     credenciales_socios,
     enriquecimiento,
@@ -36,6 +37,7 @@ from app.infraestructura.database import (
     preparar_esquema_registro,
 )
 from app.pagos import modelos_db as modelos_db_pagos  # noqa: F401
+from app.polizas import modelos_db as modelos_db_polizas  # noqa: F401
 from app.socios import modelos_db as modelos_db_socios  # noqa: F401
 
 
@@ -85,7 +87,12 @@ def crear_app() -> FastAPI:
             request.method in ("POST", "PUT", "PATCH", "DELETE")
             or request.url.path == "/api/v1/auth/users"
             or request.url.path.startswith(
-                ("/api/v1/perfiles-riesgo", "/api/v1/enriquecimientos", "/api/v1/socios")
+                (
+                    "/api/v1/perfiles-riesgo",
+                    "/api/v1/enriquecimientos",
+                    "/api/v1/socios",
+                    "/api/v1/billetera",
+                )
             )
         )
         if not getattr(request.state, "evento_auth_registrado", False) and (rechazo or sensible):
@@ -120,6 +127,8 @@ def crear_app() -> FastAPI:
     app.include_router(identidad.router)
     app.include_router(autenticacion.router)
     app.include_router(sesion_web.router)
+    app.include_router(billetera.router)
+    app.include_router(billetera.router_publico)
     return app
 
 

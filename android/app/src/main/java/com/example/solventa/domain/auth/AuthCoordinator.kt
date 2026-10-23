@@ -1,6 +1,7 @@
 package com.example.solventa.domain.auth
 
 import com.example.solventa.biometric.FalloBiometrico
+import com.example.solventa.domain.polizas.SesionAutenticada
 
 /**
  * Reglas de la HU02 (BPM-23), sin dependencias de Android para poder probarlas en la JVM.
@@ -11,13 +12,15 @@ import com.example.solventa.biometric.FalloBiometrico
  *   (rotación en el backend) y el nuevo se vuelve a guardar.
  * - Si la biometría falla, se bloquea o cambia, se ofrece el ingreso con credenciales.
  * - Al cerrar sesión con la huella activada, la bóveda se conserva para volver a entrar con ella.
+ * - Otros módulos (la billetera, HU07) piden el access token por [SesionAutenticada]; la UI
+ *   nunca lo recibe.
  */
 class AuthCoordinator(
     private val gateway: AuthGateway,
     private val boveda: BovedaSesion,
     private val reloj: Reloj,
     private val biometriaDisponible: () -> Boolean
-) {
+) : SesionAutenticada {
     var observador: ((EstadoAuth) -> Unit)? = null
         set(value) {
             field = value
@@ -254,6 +257,15 @@ class AuthCoordinator(
             ofrecerActivarBiometria = false,
             mensaje = MensajesAuth.SESION_EXPIRADA
         )
+    }
+
+    override fun accessTokenVigente(): String? {
+        val access = tokens?.accessToken ?: return null
+        return if (verificarExpiracion()) null else access
+    }
+
+    override fun sesionRechazada() {
+        if (tokens != null || estado.sesion != null) sesionExpirada()
     }
 
     /** Vuelve a pedir el perfil; si el backend rechaza el token, la sesión se da por expirada. */

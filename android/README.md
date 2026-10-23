@@ -52,6 +52,8 @@ La navegación utiliza **Jetpack Navigation Compose** mediante rutas selladas en
 | `credentials_login_screen` | `CredentialsLoginScreen` | Inicio de sesión tradicional con correo y contraseña |
 | `register_screen` | `RegisterScreen` | Registro de nuevos usuarios y captura de datos de identidad (BPM-22) |
 | `home_screen` | `HomeScreen` | Inicio del cliente; solo se muestra con sesión autenticada (BPM-23) |
+| `wallet_screen` | `WalletScreen` | Billetera de pólizas, vigentes e inactivas (BPM-31) |
+| `certificate_screen/{polizaId}` | `CertificateScreen` | Certificado con QR y opción de compartir (BPM-31) |
 
 ---
 
@@ -66,6 +68,17 @@ La navegación utiliza **Jetpack Navigation Compose** mediante rutas selladas en
 | `ui/auth` | `AuthViewModel`, que expone el estado a las pantallas. |
 
 La URL del backend sale de `BuildConfig.API_BASE_URL` (por defecto `http://10.0.2.2:8000/`). Detalle completo en [docs/inicio-sesion-biometrico.md](../docs/inicio-sesion-biometrico.md).
+
+## 👛 Billetera digital de pólizas (HU07, BPM-31)
+
+| Paquete | Contenido |
+|---|---|
+| `domain/polizas` | `BilleteraCoordinator`: carga de la billetera, certificado, enlace para compartir y limpieza al cerrar sesión. `Formatos`: fechas y dinero sin `java.time`. |
+| `data/remote` | Cliente Retrofit de `/api/v1/billetera` y su gateway. |
+| `ui/billetera` | `BilleteraViewModel` y el texto e intent para compartir. |
+| `ui/components/CodigoQr.kt` | QR dibujado en Compose con ZXing, sin red. |
+
+Para ver pólizas en la app, siembra datos de prueba con `backend/sembrar_polizas.py`. Detalle en [docs/billetera-digital.md](../docs/billetera-digital.md).
 
 ## 🪪 Registro desde Android (BPM-16)
 
