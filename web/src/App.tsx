@@ -12,6 +12,7 @@ import {
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import HomePage from "./pages/HomePage";
+import PagosPage from "./pages/PagosPage";
 import SocioRegistrationPage from "./pages/SocioRegistrationPage";
 
 function App() {
@@ -52,6 +53,11 @@ function App() {
       <Route
         path="/home"
         element={<RutaProtegida><HomePage /></RutaProtegida>}
+      />
+
+      <Route
+        path="/pagos"
+        element={<RutaProtegida><PagosPage /></RutaProtegida>}
       />
 
       <Route

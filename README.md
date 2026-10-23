@@ -132,6 +132,7 @@ verificación de identidad real.
 - [Perfil de riesgo individualizado y pricing (HU11)](docs/perfil-de-riesgo.md)
 - [Inicio de sesión biométrico (HU02)](docs/inicio-sesion-biometrico.md)
 - [Billetera digital de pólizas (HU07)](docs/billetera-digital.md)
+- [Recaudo inicial de la prima con pasarela de pagos (HU13)](docs/recaudo-pagos.md)
 
 ## Integración continua
 
