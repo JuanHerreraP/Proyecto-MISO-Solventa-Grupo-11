@@ -77,7 +77,8 @@ class NavGraphTest {
         compose.boton("Ingresar").performClick()
         // Entrar con credenciales reemplaza la sesión guardada anterior.
         ingresarConCredenciales()
-        compose.onNodeWithText("Ingreso con huella desactivado").assertIsDisplayed()
+        compose.onNodeWithText("Hola, Ana").assertIsDisplayed()
+        compose.onNodeWithText("Activar ingreso con huella").assertIsDisplayed()
     }
 
     @Test
