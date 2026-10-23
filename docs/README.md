@@ -27,6 +27,12 @@ se mantienen en la [wiki del proyecto](https://github.com/JuanHerreraP/Proyecto-
 | --- | --- |
 | [Billetera digital de pólizas](billetera-digital.md) | HU07: billetera, estados, certificado con QR y enlace temporal para compartir |
 
+## Pagos
+
+| Documento | Contenido |
+| --- | --- |
+| [Recaudo inicial de la prima](recaudo-pagos.md) | HU13: pago con tarjeta o PSE, idempotencia, webhook firmado de la pasarela y configuración |
+
 ## Clientes, ejecución y evidencias
 
 - [Cliente web](../web/README.md): pantallas, ejecución, configuración y pruebas.
