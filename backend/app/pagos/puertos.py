@@ -54,3 +54,6 @@ class RepositorioPagos(Protocol):
     def obtener_por_referencia(self, referencia_pasarela: str) -> Pago | None: ...
 
     def obtener_aprobado_de_cotizacion(self, cotizacion_id: str) -> Pago | None: ...
+
+    def listar_de_cliente(self, cliente_id: str) -> list[Pago]:
+        """Pagos del cliente, del más reciente al más antiguo."""

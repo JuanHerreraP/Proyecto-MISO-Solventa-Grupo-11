@@ -251,3 +251,25 @@ def test_consulta_de_pago_ajeno_da_404(entorno) -> None:
     cliente, _, _ = entorno
 
     assert cliente.get(f"{RUTA}/PAG-NADA").status_code == 404
+
+
+def test_lista_solo_los_pagos_del_cliente_del_mas_reciente_al_mas_antiguo(entorno) -> None:
+    cliente, cotizaciones, _ = entorno
+    cotizaciones.guardar(cotizacion(cot_id="COT-002"))
+    antiguo = pagar(cliente, cuerpo_tarjeta(token="tok_rechazado_1"), llave="llave-0001").json()
+    pagar(cliente, cuerpo_tarjeta(cot="COT-002"), llave="llave-0002")
+    repositorio = app.dependency_overrides[obtener_servicio]()._pagos
+    pago = repositorio.obtener(antiguo["pago_id"])
+    repositorio.guardar(pago.model_copy(update={"creado_en": AHORA - timedelta(days=30)}))
+
+    respuesta = cliente.get(RUTA)
+
+    assert respuesta.status_code == 200
+    pagos = respuesta.json()
+    assert [p["cotizacion_id"] for p in pagos] == ["COT-002", "COT-001"]
+    assert all("huella_solicitud" not in p for p in pagos)
+
+
+def test_lista_vacia_para_un_cliente_sin_pagos(entorno) -> None:
+    cliente, _, _ = entorno
+    assert cliente.get(RUTA).json() == []

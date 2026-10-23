@@ -41,6 +41,11 @@ class RepositorioPagosEnMemoria:
             lambda p: p.cotizacion_id == cotizacion_id and p.estado is EstadoPago.APROBADO
         )
 
+    def listar_de_cliente(self, cliente_id: str) -> list[Pago]:
+        propios = [p for p in self._por_id.values() if p.cliente_id == cliente_id]
+        propios.sort(key=lambda p: p.creado_en, reverse=True)
+        return [p.model_copy(deep=True) for p in propios]
+
     def _buscar(self, criterio: Callable[[Pago], bool]) -> Pago | None:
         for pago in self._por_id.values():
             if criterio(pago):
@@ -89,6 +94,12 @@ class RepositorioPagosPostgres:
             PagoDB.cotizacion_id == cotizacion_id, PagoDB.estado == EstadoPago.APROBADO.value
         )
         return self._a_dominio(self._db.scalars(sentencia).first())
+
+    def listar_de_cliente(self, cliente_id: str) -> list[Pago]:
+        sentencia = (
+            select(PagoDB).where(PagoDB.cliente_id == cliente_id).order_by(PagoDB.creado_en.desc())
+        )
+        return [self._a_dominio(fila) for fila in self._db.scalars(sentencia)]
 
     @staticmethod
     def _a_persistencia(pago: Pago) -> dict[str, object]:

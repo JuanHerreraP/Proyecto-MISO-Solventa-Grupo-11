@@ -10,7 +10,13 @@ import { fetchAutenticado } from "./session";
 const API_URL =
   import.meta.env.VITE_API_URL ?? "http://localhost:8000";
 
-export async function obtenerPerfil(): Promise<{ rol: string }> {
+export interface Perfil {
+  rol: string;
+  nombre?: string;
+  apellido?: string;
+}
+
+export async function obtenerPerfil(): Promise<Perfil> {
   const response = await fetchAutenticado(`${API_URL}/api/v1/auth/me`);
   if (!response.ok) {
     throw new Error(await obtenerMensajeError(response));

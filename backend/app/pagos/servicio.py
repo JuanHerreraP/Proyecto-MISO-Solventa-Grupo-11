@@ -137,6 +137,9 @@ class ServicioPagos:
             raise PagoNoEncontrado(pago_id)
         return pago
 
+    def listar(self, cliente_id: str) -> list[Pago]:
+        return self._pagos.listar_de_cliente(cliente_id)
+
     def confirmar(
         self,
         cuerpo: bytes,

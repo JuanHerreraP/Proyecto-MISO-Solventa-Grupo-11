@@ -120,6 +120,19 @@ def pagar(
 
 
 @router.get(
+    "",
+    response_model=list[Pago],
+    response_model_exclude={"__all__": {"huella_solicitud"}},
+    summary="Lista los pagos del cliente, del más reciente al más antiguo",
+)
+def listar_pagos(
+    cliente_id: str = Depends(cliente_pagador),
+    servicio: ServicioPagos = Depends(obtener_servicio),
+) -> list[Pago]:
+    return servicio.listar(cliente_id)
+
+
+@router.get(
     "/{pago_id}",
     response_model=Pago,
     response_model_exclude={"huella_solicitud"},
