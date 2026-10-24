@@ -511,3 +511,71 @@
   from { opacity: 0; transform: translateY(12px) scale(0.98); }
   to { opacity: 1; transform: translateY(0) scale(1); }
 }
+
+/* ---- Lista de cotizaciones con detalle desplegable ---- */
+
+.cotizaciones-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.cotizacion-item {
+  border: 1px solid var(--solventa-border);
+  border-radius: 12px;
+  background: var(--solventa-white);
+  overflow: hidden;
+}
+
+.cotizacion-cabecera {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px;
+  border: 0;
+  background: transparent;
+  color: var(--solventa-night);
+  text-align: left;
+  cursor: pointer;
+}
+
+.cotizacion-cabecera:hover { background: var(--solventa-background); }
+
+.cotizacion-cabecera-texto { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+.cotizacion-cabecera-texto strong { font-size: 15px; }
+.cotizacion-cabecera-texto small { color: var(--solventa-blue); font-weight: 700; font-size: 13px; }
+
+.cotizacion-estado {
+  background: #eef2f8;
+  color: var(--solventa-muted);
+}
+
+.cotizacion-chevron { color: var(--solventa-muted); }
+
+.cotizacion-detalle {
+  padding: 0 16px 18px;
+  border-top: 1px solid var(--solventa-border);
+}
+
+.cotizacion-subtitulo {
+  margin: 16px 0 8px;
+  font-size: 13px;
+  color: var(--solventa-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.cotizacion-datos { margin: 0 0 8px; }
+
+.cotizacion-datos > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--solventa-border);
+}
+
+.cotizacion-datos > div:last-child { border-bottom: 0; }
+.cotizacion-datos dt { color: var(--solventa-muted); font-size: 13px; }
+.cotizacion-datos dd { margin: 0; font-size: 14px; font-weight: 700; text-align: right; }

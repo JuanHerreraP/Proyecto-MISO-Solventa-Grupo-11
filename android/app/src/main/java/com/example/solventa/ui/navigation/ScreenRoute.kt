@@ -30,6 +30,14 @@ sealed class ScreenRoute(val route: String) {
         const val ARGUMENTO = "polizaId"
         fun ruta(polizaId: String) = "certificate_screen/${URLEncoder.encode(polizaId, "UTF-8")}"
     }
+    object Payment : ScreenRoute("payment_screen/{cotizacionId}") {
+        const val ARGUMENTO = "cotizacionId"
+        fun ruta(cotizacionId: String) =
+            "payment_screen/${URLEncoder.encode(cotizacionId, "UTF-8")}"
+    }
+    object PsePortal : ScreenRoute("pse_portal_screen")
+    object PaymentResult : ScreenRoute("payment_result_screen")
+    object Payments : ScreenRoute("payments_screen")
 
     companion object {
         /** Rutas que solo se pueden ver con una sesión activa. */
@@ -42,7 +50,11 @@ sealed class ScreenRoute(val route: String) {
                 Quotes.route,
                 QuoteHistoryDetail.route,
                 Wallet.route,
-                Certificate.route
+                Certificate.route,
+                Payment.route,
+                PsePortal.route,
+                PaymentResult.route,
+                Payments.route
             )
     }
 }

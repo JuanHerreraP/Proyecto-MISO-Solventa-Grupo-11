@@ -14,6 +14,7 @@ import RegisterPage from "./pages/RegisterPage";
 import HomePage from "./pages/HomePage";
 import PagosPage from "./pages/PagosPage";
 import CotizarPage from "./pages/CotizarPage";
+import CotizacionesPage from "./pages/CotizacionesPage";
 import SocioRegistrationPage from "./pages/SocioRegistrationPage";
 
 function App() {
@@ -64,6 +65,11 @@ function App() {
       <Route
         path="/cotizar"
         element={<RutaProtegida><CotizarPage /></RutaProtegida>}
+      />
+
+      <Route
+        path="/cotizaciones"
+        element={<RutaProtegida><CotizacionesPage /></RutaProtegida>}
       />
 
       <Route

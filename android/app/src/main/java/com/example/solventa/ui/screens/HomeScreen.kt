@@ -19,8 +19,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.automirrored.outlined.Logout
-import androidx.compose.material.icons.outlined.LocationOn
 import androidx.compose.material.icons.outlined.NotificationsNone
+import androidx.compose.material.icons.outlined.Payments
 import androidx.compose.material.icons.outlined.RequestQuote
 import androidx.compose.material.icons.outlined.Shield
 import androidx.compose.material.icons.outlined.VerifiedUser
@@ -68,6 +68,7 @@ fun HomeScreen(
     modifier: Modifier = Modifier,
     onVerBilletera: (() -> Unit)? = null,
     onVerCotizaciones: (() -> Unit)? = null,
+    onVerPagos: (() -> Unit)? = null,
     onCotizarSeguro: () -> Unit = {},
     cantidadPolizasActivas: Int? = null
 ) {
@@ -127,7 +128,7 @@ fun HomeScreen(
                     modifier = Modifier.weight(1f)
                 )
                 AccionInicio(
-                    titulo = "Ver cotizaciones",
+                    titulo = "Cotizaciones",
                     icono = Icons.Outlined.RequestQuote,
                     onClick = onVerCotizaciones,
                     modifier = Modifier.weight(1f)
@@ -140,8 +141,9 @@ fun HomeScreen(
                     modifier = Modifier.weight(1f)
                 )
                 AccionInicio(
-                    titulo = "Pedir asistencia",
-                    icono = Icons.Outlined.LocationOn,
+                    titulo = "Pagos",
+                    icono = Icons.Outlined.Payments,
+                    onClick = onVerPagos,
                     modifier = Modifier.weight(1f)
                 )
             }

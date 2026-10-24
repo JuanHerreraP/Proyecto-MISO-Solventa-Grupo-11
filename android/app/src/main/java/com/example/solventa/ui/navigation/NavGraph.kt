@@ -24,16 +24,22 @@ import com.example.solventa.domain.auth.MensajesAuth
 import com.example.solventa.domain.cotizaciones.CatalogoCotizaciones
 import com.example.solventa.domain.cotizaciones.EstadoCotizaciones
 import com.example.solventa.domain.cotizaciones.RamoCotizacion
+import com.example.solventa.domain.pagos.EstadoPagos
 import com.example.solventa.ui.auth.AuthViewModel
 import com.example.solventa.ui.billetera.BilleteraViewModel
 import com.example.solventa.ui.billetera.compartirTexto
 import com.example.solventa.ui.billetera.textoParaCompartir
 import com.example.solventa.ui.cotizaciones.CotizacionesViewModel
+import com.example.solventa.ui.pagos.PagosViewModel
 import com.example.solventa.ui.screens.BiometricalLoginScreen
 import com.example.solventa.ui.screens.CertificateScreen
 import com.example.solventa.ui.screens.CredentialsLoginScreen
 import com.example.solventa.ui.screens.HomeScreen
 import com.example.solventa.ui.screens.NewQuoteScreen
+import com.example.solventa.ui.screens.PaymentResultScreen
+import com.example.solventa.ui.screens.PaymentScreen
+import com.example.solventa.ui.screens.PaymentsScreen
+import com.example.solventa.ui.screens.PsePortalScreen
 import com.example.solventa.ui.screens.QuoteFormScreen
 import com.example.solventa.ui.screens.QuoteResultScreen
 import com.example.solventa.ui.screens.QuotesScreen
@@ -50,10 +56,12 @@ fun NavGraph(
     navController: NavHostController = rememberNavController(),
     startDestination: String = ScreenRoute.Welcome.route,
     billetera: BilleteraViewModel? = null,
-    cotizaciones: CotizacionesViewModel? = null
+    cotizaciones: CotizacionesViewModel? = null,
+    pagos: PagosViewModel? = null
 ) {
     val estado by viewModel.estado.collectAsState()
     val estadoCotizaciones = cotizaciones?.estado?.collectAsState()?.value ?: EstadoCotizaciones()
+    val estadoPagos = pagos?.estado?.collectAsState()?.value ?: EstadoPagos()
     val autenticado = estado.sesion != null
 
     // Guardia de navegación: con sesión se va al inicio; sin sesión nadie se queda en una
@@ -63,6 +71,7 @@ fun NavGraph(
         if (!autenticado) {
             billetera?.limpiar()
             cotizaciones?.limpiar()
+            pagos?.limpiar()
         }
         if (autenticado && actual !in ScreenRoute.privadas) {
             navController.navigate(ScreenRoute.Home.route) {
@@ -235,6 +244,9 @@ fun NavGraph(
                     onVerBilletera = billetera?.let {
                         { navController.navigate(ScreenRoute.Wallet.route) { launchSingleTop = true } }
                     },
+                    onVerPagos = pagos?.let {
+                        { navController.navigate(ScreenRoute.Payments.route) { launchSingleTop = true } }
+                    },
                     cantidadPolizasActivas = estadoBilletera?.billetera?.totalVigentes
                 )
             }
@@ -314,7 +326,12 @@ fun NavGraph(
                         navController.popBackStack()
                     },
                     onAceptar = {
-                        // La aceptación y compra pertenecen al flujo posterior a HU03.
+                        if (pagos != null) {
+                            pagos.limpiar()
+                            navController.navigate(ScreenRoute.Payment.ruta(resultado.cotizacionId)) {
+                                launchSingleTop = true
+                            }
+                        }
                     },
                     onCrearOtra = {
                         cotizaciones?.limpiarResultado()
@@ -346,7 +363,10 @@ fun NavGraph(
                             navController.navigate(ScreenRoute.QuoteHistoryDetail.ruta(cotizacionId))
                         },
                         onReintentar = { cotizaciones.listar(sesion.perfil.id) },
-                        onVolver = { navController.popBackStack() }
+                        onVolver = { navController.popBackStack() },
+                        onCrearCotizacion = {
+                            navController.navigate(ScreenRoute.NewQuote.route) { launchSingleTop = true }
+                        }
                     )
                 }
             }
@@ -387,7 +407,8 @@ fun NavGraph(
                                     launchSingleTop = true
                                 }
                             }
-                        }
+                        },
+                        modoDetalle = true
                     )
                 }
             }
@@ -452,5 +473,115 @@ fun NavGraph(
                 }
             }
         }
+
+        if (pagos != null) {
+            composable(
+                route = ScreenRoute.Payment.route,
+                arguments = listOf(
+                    navArgument(ScreenRoute.Payment.ARGUMENTO) { type = NavType.StringType }
+                )
+            ) { entrada ->
+                val cotizacionId = entrada.arguments?.getString(ScreenRoute.Payment.ARGUMENTO)
+                val resultado = estadoCotizaciones.resultado
+                    ?: estadoCotizaciones.listado.firstOrNull { it.cotizacionId == cotizacionId }
+                if (estado.sesion == null || cotizacionId == null || resultado == null) {
+                    Box(modifier = Modifier.fillMaxSize())
+                } else {
+                    // El pago lleva al portal PSE (pendiente con URL) o a la pantalla de resultado.
+                    LaunchedEffect(estadoPagos.pago?.pagoId) {
+                        val pago = estadoPagos.pago
+                        if (pago != null) {
+                            val destino = if (pago.urlRedireccion != null) {
+                                ScreenRoute.PsePortal.route
+                            } else {
+                                ScreenRoute.PaymentResult.route
+                            }
+                            navController.navigate(destino) { launchSingleTop = true }
+                        }
+                    }
+                    PaymentScreen(
+                        cotizacionId = cotizacionId,
+                        monto = resultado.primaTotal,
+                        moneda = resultado.moneda,
+                        procesando = estadoPagos.procesando,
+                        error = estadoPagos.error,
+                        onVolver = { navController.popBackStack() },
+                        onPagar = { solicitud -> pagos.pagar(solicitud) },
+                        onInicio = { navController.popBackStack(ScreenRoute.Home.route, false) },
+                        urlRetorno = URL_RETORNO_PSE
+                    )
+                }
+            }
+
+            composable(route = ScreenRoute.PaymentResult.route) {
+                val pago = estadoPagos.pago
+                if (estado.sesion == null || pago == null) {
+                    Box(modifier = Modifier.fillMaxSize())
+                } else {
+                    PaymentResultScreen(
+                        pago = pago,
+                        onReintentar = {
+                            pagos.prepararReintento()
+                            navController.popBackStack()
+                        },
+                        onCerrar = {
+                            pagos.limpiar()
+                            cotizaciones?.limpiarResultado()
+                            navController.popBackStack(ScreenRoute.Home.route, false)
+                        },
+                        onInicio = {
+                            pagos.limpiar()
+                            cotizaciones?.limpiarResultado()
+                            navController.popBackStack(ScreenRoute.Home.route, false)
+                        },
+                        onVerBilletera = billetera?.let {
+                            { navController.navigate(ScreenRoute.Wallet.route) { launchSingleTop = true } }
+                        }
+                    )
+                }
+            }
+
+            composable(route = ScreenRoute.PsePortal.route) {
+                val url = estadoPagos.pago?.urlRedireccion
+                if (estado.sesion == null || url == null) {
+                    Box(modifier = Modifier.fillMaxSize())
+                } else {
+                    PsePortalScreen(
+                        url = url,
+                        urlRetorno = URL_RETORNO_PSE,
+                        onRetorno = { pagoId ->
+                            pagos.consultar(pagoId)
+                            navController.navigate(ScreenRoute.PaymentResult.route) {
+                                popUpTo(ScreenRoute.PsePortal.route) { inclusive = true }
+                                launchSingleTop = true
+                            }
+                        },
+                        onVolver = { navController.popBackStack() }
+                    )
+                }
+            }
+
+            composable(route = ScreenRoute.Payments.route) {
+                if (estado.sesion == null) {
+                    Box(modifier = Modifier.fillMaxSize())
+                } else {
+                    LaunchedEffect(Unit) { pagos.listar() }
+                    PaymentsScreen(
+                        pagos = estadoPagos.listado,
+                        cargando = estadoPagos.cargandoListado,
+                        error = estadoPagos.errorListado,
+                        onReintentar = { pagos.listar() },
+                        onVolver = { navController.popBackStack() },
+                        onInicio = { navController.popBackStack(ScreenRoute.Home.route, false) },
+                        onVerBilletera = billetera?.let {
+                            { navController.navigate(ScreenRoute.Wallet.route) { launchSingleTop = true } }
+                        }
+                    )
+                }
+            }
+        }
     }
 }
+
+/** URL de retorno que el portal PSE usa para devolver al cliente a la app con ?pago=... */
+private const val URL_RETORNO_PSE = "https://solventa.app/pse-retorno"

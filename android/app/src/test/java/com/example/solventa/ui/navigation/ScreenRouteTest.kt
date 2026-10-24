@@ -80,7 +80,11 @@ class ScreenRouteTest {
                 "quotes_screen",
                 "quote_history/{cotizacionId}",
                 "wallet_screen",
-                "certificate_screen/{polizaId}"
+                "certificate_screen/{polizaId}",
+                "payment_screen/{cotizacionId}",
+                "pse_portal_screen",
+                "payment_result_screen",
+                "payments_screen"
             ),
             ScreenRoute.privadas
         )

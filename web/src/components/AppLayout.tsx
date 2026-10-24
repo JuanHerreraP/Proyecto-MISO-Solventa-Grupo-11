@@ -7,14 +7,18 @@ import "../styles/home.css";
 
 const MENU = [
   { icono: "home", texto: "Inicio", ruta: "/home" },
-  { icono: "request_quote", texto: "Cotizar", ruta: "/cotizar" },
-  { icono: "description", texto: "Mis pólizas", ruta: null },
+  { icono: "description", texto: "Cotizaciones", ruta: "/cotizaciones" },
+  { icono: "shield", texto: "Mis pólizas", ruta: null },
   { icono: "error", texto: "Siniestros", ruta: null },
   { icono: "payments", texto: "Pagos", ruta: "/pagos" },
   { icono: "person", texto: "Perfil", ruta: null },
 ] as const;
 
-type Props = { activo: "Inicio" | "Pagos" | "Cotizar"; rol: string | null; children: ReactNode };
+type Props = {
+  activo: "Inicio" | "Pagos" | "Cotizar" | "Cotizaciones";
+  rol: string | null;
+  children: ReactNode;
+};
 
 /** Barra lateral y contenedor común de las pantallas del cliente. */
 export default function AppLayout({ activo, rol, children }: Props) {

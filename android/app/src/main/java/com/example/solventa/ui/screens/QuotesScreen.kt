@@ -52,11 +52,12 @@ fun QuotesScreen(
     onVerCotizacion: (String) -> Unit,
     onReintentar: () -> Unit,
     onVolver: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onCrearCotizacion: () -> Unit = {}
 ) {
     Surface(modifier = modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surface) {
         Column(modifier = Modifier.fillMaxSize()) {
-            Encabezado(titulo = "Mis cotizaciones", onVolver = onVolver)
+            Encabezado(titulo = "Cotizaciones", onVolver = onVolver)
             when {
                 cotizaciones.isEmpty() && cargando -> EstadoCentrado {
                     CircularProgressIndicator(
@@ -82,8 +83,10 @@ fun QuotesScreen(
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                     )
+                    Spacer(modifier = Modifier.size(20.dp))
+                    SolventaPrimaryButton(text = "Crear cotización", onClick = onCrearCotizacion)
                 }
-                else -> ListaCotizaciones(cotizaciones, error, onVerCotizacion)
+                else -> ListaCotizaciones(cotizaciones, error, onVerCotizacion, onCrearCotizacion)
             }
         }
     }
@@ -93,19 +96,22 @@ fun QuotesScreen(
 private fun ListaCotizaciones(
     cotizaciones: List<ResultadoCotizacion>,
     error: String?,
-    onVerCotizacion: (String) -> Unit
+    onVerCotizacion: (String) -> Unit,
+    onCrearCotizacion: () -> Unit
 ) {
     LazyColumn(
         contentPadding = PaddingValues(start = 24.dp, end = 24.dp, bottom = 32.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         item {
-            Text(
-                text = "Cotizaciones recientes",
-                style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                modifier = Modifier.padding(top = 12.dp)
-            )
+            Column(modifier = Modifier.padding(top = 12.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                SolventaPrimaryButton(text = "Crear cotización", onClick = onCrearCotizacion)
+                Text(
+                    text = "Cotizaciones recientes",
+                    style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                )
+            }
         }
         if (error != null) {
             item { Text(error, style = MaterialTheme.typography.bodyMedium, color = Atencion) }

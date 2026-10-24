@@ -40,6 +40,15 @@ export async function crearCotizacion(
   return response.json();
 }
 
+/** Lista las cotizaciones de un cliente, de la más reciente a la más antigua. */
+export async function listarCotizaciones(clienteId: string): Promise<Cotizacion[]> {
+  const response = await fetchAutenticado(
+    `${API_URL}/api/v1/cotizaciones?cliente_id=${encodeURIComponent(clienteId)}`,
+  );
+  if (!response.ok) throw new Error("No fue posible consultar tus cotizaciones.");
+  return response.json();
+}
+
 /** Consulta una cotización por su identificador. */
 export async function obtenerCotizacion(cotizacionId: string): Promise<Cotizacion> {
   const response = await fetchAutenticado(
