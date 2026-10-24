@@ -5,9 +5,9 @@ import { obtenerPerfil, type Perfil } from "../services/auth.service";
 import { obtenerBilletera, type PolizaResumen } from "../services/billetera.service";
 
 const ACCIONES = [
-  { icono: "error", titulo: "Reportar un siniestro", detalle: "Con evidencia fotográfica" },
-  { icono: "schedule", titulo: "Consultar estado de siniestro", detalle: "Sigue tu reclamación" },
-  { icono: "request_quote", titulo: "Cotizar un nuevo seguro", detalle: "Hogar, vida o autos" },
+  { icono: "error", titulo: "Reportar un siniestro", detalle: "Con evidencia fotográfica", ruta: null },
+  { icono: "schedule", titulo: "Consultar estado de siniestro", detalle: "Sigue tu reclamación", ruta: null },
+  { icono: "request_quote", titulo: "Cotizar un nuevo seguro", detalle: "Viaje, vida, dispositivos y más", ruta: "/cotizar" },
 ] as const;
 
 function iniciales(perfil: Perfil | null): string {
@@ -105,8 +105,15 @@ export default function HomePage() {
           <section aria-labelledby="acciones">
             <h2 id="acciones" className="home-acciones-titulo">Acciones rápidas</h2>
             <div className="home-acciones">
-              {ACCIONES.map(({ icono, titulo, detalle }) => (
-                <button key={titulo} type="button" className="home-accion" disabled title="Próximamente">
+              {ACCIONES.map(({ icono, titulo, detalle, ruta }) => (
+                <button
+                  key={titulo}
+                  type="button"
+                  className="home-accion"
+                  disabled={ruta === null}
+                  title={ruta === null ? "Próximamente" : undefined}
+                  onClick={ruta ? () => navigate(ruta) : undefined}
+                >
                   <span className="home-accion-icono material-symbols-outlined" aria-hidden="true">{icono}</span>
                   <span>
                     <strong>{titulo}</strong>

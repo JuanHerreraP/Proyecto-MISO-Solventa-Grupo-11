@@ -206,7 +206,7 @@ def test_pse_devuelve_redireccion_y_la_confirmacion_aprueba(entorno) -> None:
 
     r = pagar(cliente, {"cotizacion_id": "COT-001", "metodo": "PSE", "codigo_banco": "1007"})
     assert r.json()["estado"] == "PENDIENTE"
-    assert r.json()["url_redireccion"].startswith("https://")
+    assert "/api/v1/pagos/pse-simulado/" in r.json()["url_redireccion"]
     assert cotizaciones.obtener("COT-001").estado is EstadoCotizacion.VIGENTE
 
     c = confirmar(cliente, r.json()["referencia_pasarela"], "APROBADO")

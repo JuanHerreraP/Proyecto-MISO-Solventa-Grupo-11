@@ -21,6 +21,7 @@ from app.api import (
     oauth_socios,
     pagos,
     perfilamiento,
+    pse_simulado,
     salud,
     sesion_web,
     socios,
@@ -57,7 +58,13 @@ def crear_app() -> FastAPI:
         allow_origins=origenes_web(),
         allow_credentials=True,
         allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-        allow_headers=["Authorization", "Content-Type", "X-CSRF-Token", "X-Scope"],
+        allow_headers=[
+            "Authorization",
+            "Content-Type",
+            "X-CSRF-Token",
+            "X-Scope",
+            "Idempotency-Key",
+        ],
     )
 
     @app.exception_handler(RequestValidationError)
@@ -118,6 +125,7 @@ def crear_app() -> FastAPI:
     app.include_router(salud.router)
     app.include_router(cotizaciones.router)
     app.include_router(pagos.router)
+    app.include_router(pse_simulado.router)
     app.include_router(perfilamiento.router)
     app.include_router(enriquecimiento.router)
     app.include_router(socios.router)

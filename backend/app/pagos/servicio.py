@@ -137,6 +137,13 @@ class ServicioPagos:
             raise PagoNoEncontrado(pago_id)
         return pago
 
+    def consultar_por_referencia(self, referencia_pasarela: str) -> Pago:
+        """Consulta usada por el portal PSE simulado; no expone datos a un cliente."""
+        pago = self._pagos.obtener_por_referencia(referencia_pasarela)
+        if pago is None:
+            raise PagoNoEncontrado(referencia_pasarela)
+        return pago
+
     def listar(self, cliente_id: str) -> list[Pago]:
         return self._pagos.listar_de_cliente(cliente_id)
 

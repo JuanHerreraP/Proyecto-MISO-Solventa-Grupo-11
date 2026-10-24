@@ -13,6 +13,7 @@ import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import HomePage from "./pages/HomePage";
 import PagosPage from "./pages/PagosPage";
+import CotizarPage from "./pages/CotizarPage";
 import SocioRegistrationPage from "./pages/SocioRegistrationPage";
 
 function App() {
@@ -58,6 +59,11 @@ function App() {
       <Route
         path="/pagos"
         element={<RutaProtegida><PagosPage /></RutaProtegida>}
+      />
+
+      <Route
+        path="/cotizar"
+        element={<RutaProtegida><CotizarPage /></RutaProtegida>}
       />
 
       <Route
