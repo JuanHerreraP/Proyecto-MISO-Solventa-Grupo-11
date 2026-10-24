@@ -27,12 +27,13 @@ se mantienen en la [wiki del proyecto](https://github.com/JuanHerreraP/Proyecto-
 | --- | --- |
 | [Billetera digital de pólizas](billetera-digital.md) | HU07: billetera, estados, certificado con QR y enlace temporal para compartir |
 
-## Pagos
+## Pagos y contratación
 
 | Documento | Contenido |
 | --- | --- |
 | [Recaudo inicial de la prima](recaudo-pagos.md) | HU13: pago con tarjeta o PSE, idempotencia, webhook firmado de la pasarela y configuración |
 | [Comprar un seguro desde la web](compra-web.md) | HU23: flujo web cotizar → aceptar → pagar, reutilizando HU03 y HU13 |
+| [Firma electrónica del contrato](firma-electronica.md) | HU14: contrato prellenado tras el pago, OTP por SMS o correo, huella del documento y metadatos de la firma |
 
 ## Siniestros
 
