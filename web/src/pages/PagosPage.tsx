@@ -62,7 +62,7 @@ export default function PagosPage() {
         {error && <p role="alert" className="home-aviso">{error}</p>}
         <table>
           <thead>
-            <tr><th>Fecha</th><th>Concepto</th><th>Método</th><th>Monto</th><th>Estado</th><th>Comprobante</th></tr>
+            <tr><th>Fecha</th><th>Concepto</th><th>Método</th><th>Monto</th><th>Estado</th><th>Contrato</th></tr>
           </thead>
           <tbody>
             {pagos?.length === 0 && (
@@ -75,7 +75,19 @@ export default function PagosPage() {
                 <td>{METODOS[pago.metodo]}</td>
                 <td>{formatearMonto(pago.monto, pago.moneda)}</td>
                 <td className={`pagos-estado pagos-estado-${pago.estado.toLowerCase()}`}>{ESTADOS[pago.estado]}</td>
-                <td className="home-card-vacio">—</td>
+                <td>
+                  {pago.estado === "APROBADO" ? (
+                    <button
+                      type="button"
+                      className="pagos-enlace"
+                      onClick={() => navigate(`/firma/${encodeURIComponent(pago.cotizacion_id)}`)}
+                    >
+                      Contrato
+                    </button>
+                  ) : (
+                    <span className="home-card-vacio">—</span>
+                  )}
+                </td>
               </tr>
             ))}
           </tbody>

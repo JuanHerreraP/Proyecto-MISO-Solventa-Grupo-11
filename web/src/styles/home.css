@@ -623,3 +623,14 @@
   color: var(--solventa-night);
   white-space: pre-wrap;
 }
+
+.pagos-enlace {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--solventa-blue);
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: underline;
+  cursor: pointer;
+}
