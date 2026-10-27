@@ -579,3 +579,47 @@
 .cotizacion-datos > div:last-child { border-bottom: 0; }
 .cotizacion-datos dt { color: var(--solventa-muted); font-size: 13px; }
 .cotizacion-datos dd { margin: 0; font-size: 14px; font-weight: 700; text-align: right; }
+
+/* ---- Registro de siniestro (HU20) ---- */
+
+.siniestro-polizas {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.siniestro-poliza-texto {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  text-align: left;
+}
+
+.siniestro-poliza-texto strong { font-size: 14px; }
+.siniestro-poliza-texto small { color: var(--solventa-muted); font-size: 12px; font-weight: 500; }
+
+.cotizar-campo textarea {
+  padding: 13px 16px;
+  border: 1px solid var(--solventa-border);
+  border-radius: 10px;
+  background: var(--solventa-white);
+  color: var(--solventa-night);
+  font-size: 15px;
+  font-family: inherit;
+  resize: vertical;
+}
+
+.cotizar-campo textarea:focus {
+  outline: 2px solid var(--solventa-blue);
+  outline-offset: 1px;
+  border-color: var(--solventa-blue);
+}
+
+.siniestro-descripcion {
+  margin: 0 0 12px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--solventa-night);
+  white-space: pre-wrap;
+}

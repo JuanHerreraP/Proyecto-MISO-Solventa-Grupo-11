@@ -7,15 +7,15 @@ import "../styles/home.css";
 
 const MENU = [
   { icono: "home", texto: "Inicio", ruta: "/home" },
-  { icono: "description", texto: "Cotizaciones", ruta: "/cotizaciones" },
-  { icono: "shield", texto: "Mis pólizas", ruta: null },
-  { icono: "error", texto: "Siniestros", ruta: null },
+  { icono: "description", texto: "Mis cotizaciones", ruta: "/cotizaciones" },
+  { icono: "shield", texto: "Mis pólizas", ruta: "/polizas" },
+  { icono: "error", texto: "Siniestros", ruta: "/siniestros" },
   { icono: "payments", texto: "Pagos", ruta: "/pagos" },
   { icono: "person", texto: "Perfil", ruta: null },
 ] as const;
 
 type Props = {
-  activo: "Inicio" | "Pagos" | "Cotizar" | "Cotizaciones";
+  activo: "Inicio" | "Pagos" | "Mis cotizaciones" | "Mis pólizas" | "Siniestros";
   rol: string | null;
   children: ReactNode;
 };

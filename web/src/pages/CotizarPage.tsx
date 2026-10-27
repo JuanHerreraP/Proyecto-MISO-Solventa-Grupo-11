@@ -286,7 +286,7 @@ export default function CotizarPage() {
   }
 
   return (
-    <AppLayout activo="Cotizar" rol={rol}>
+    <AppLayout activo="Mis cotizaciones" rol={rol}>
       <header className="home-header">
         <div>
           <h1>Cotizar un nuevo seguro</h1>

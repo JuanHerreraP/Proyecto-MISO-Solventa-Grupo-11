@@ -86,8 +86,9 @@ it("saluda al cliente por su nombre y muestra su póliza activa", async () => {
     total_vigentes: 1,
     total_inactivas: 0,
     polizas: [{
-      poliza_id: "p1", numero_poliza: "SOLV-VH-2026-004821", nombre_ramo: "Vida hipotecario",
-      estado: "VIGENTE", activa: true, fecha_fin: "2027-09-17", cobertura_principal: "Vida",
+      poliza_id: "p1", numero_poliza: "SOLV-VH-2026-004821", ramo: "VIDA",
+      nombre_ramo: "Vida hipotecario", estado: "VIGENTE", activa: true,
+      fecha_inicio: "2026-09-17", fecha_fin: "2027-09-17", cobertura_principal: "Vida",
     }],
   });
   inicio();
