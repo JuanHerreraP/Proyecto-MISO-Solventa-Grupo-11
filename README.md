@@ -125,6 +125,41 @@ endpoint de registro. En esta versión local, los proveedores KYC son mocks: no
 analizan la selfie ni ejecutan una prueba de vida. No usar este flujo como
 verificación de identidad real.
 
+## Telemetría externa en local
+
+Para la detección paramétrica de siniestros se incluye un **proveedor externo simulado de
+telemetría**. Representa fuentes externas (vuelos, clima): genera un evento y lo empuja hacia
+Solventa. Corre como una app FastAPI aparte.
+
+| Servicio                | Servicio               | Puerto |
+| ----------------------- | ---------------------- | ------ |
+| Proveedor de telemetría | `mocks.telemetry.main` | `8004` |
+
+Desde `backend/`, en una terminal aparte del backend:
+
+```bash
+source .venv/bin/activate
+uvicorn mocks.telemetry.main:app --reload --port 8004
+```
+
+El proveedor expone un endpoint de salud en `http://localhost:8004/health`.
+
+La URL de Solventa y la credencial de servicio no se escriben en el código; se leen de variables
+de entorno (solo desarrollo local):
+
+| Variable                     | Valor local por defecto                                         |
+| ---------------------------- | --------------------------------------------------------------- |
+| `SOLVENTA_TELEMETRY_URL`     | `http://localhost:8000/api/v1/integraciones/telemetria/eventos` |
+| `SOLVENTA_TELEMETRY_API_KEY` | `solventa-telemetry-dev`                                        |
+
+Ejemplo de disparo:
+
+```bash
+curl -X POST http://localhost:8004/simulate/flight-delay \
+  -H "Content-Type: application/json" \
+  -d '{"numero_vuelo":"AV123","retraso_minutos":215,"aeropuerto":"BOG","fecha_evento":"2026-10-26T20:00:00Z"}'
+```
+
 ## Funcionalidades
 
 - [Registro, onboarding seguro y autenticación basada en tokens (HU19)](docs/identidad-autenticacion.md)
@@ -133,6 +168,8 @@ verificación de identidad real.
 - [Inicio de sesión biométrico (HU02)](docs/inicio-sesion-biometrico.md)
 - [Billetera digital de pólizas (HU07)](docs/billetera-digital.md)
 - [Recaudo inicial de la prima con pasarela de pagos (HU13)](docs/recaudo-pagos.md)
+- [Comprar un seguro desde la web: cotizar, aceptar y pagar (HU23)](docs/compra-web.md)
+- [Siniestros: registro manual y detección paramétrica por telemetría (HU20)](docs/siniestros.md)
 
 ## Integración continua
 

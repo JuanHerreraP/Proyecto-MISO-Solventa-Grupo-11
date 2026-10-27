@@ -26,6 +26,10 @@ object ApiClient {
     fun crearPagosApi(urlBase: String = BuildConfig.API_BASE_URL): PagosApi =
         retrofit(urlBase).create(PagosApi::class.java)
 
+    /** Siniestros del cliente (HU20): manuales y automáticos de telemetría. */
+    fun crearSiniestrosApi(urlBase: String = BuildConfig.API_BASE_URL): SiniestrosApi =
+        retrofit(urlBase).create(SiniestrosApi::class.java)
+
     private val cliente: OkHttpClient by lazy {
         OkHttpClient.Builder()
             .connectTimeout(10, TimeUnit.SECONDS)

@@ -24,7 +24,9 @@ from app.api import (
     pse_simulado,
     salud,
     sesion_web,
+    siniestros,
     socios,
+    telemetria,
 )
 from app.identidad import (
     auditoria,
@@ -39,6 +41,7 @@ from app.infraestructura.database import (
 )
 from app.pagos import modelos_db as modelos_db_pagos  # noqa: F401
 from app.polizas import modelos_db as modelos_db_polizas  # noqa: F401
+from app.siniestros import modelos_db as modelos_db_siniestros  # noqa: F401
 from app.socios import modelos_db as modelos_db_socios  # noqa: F401
 
 
@@ -126,6 +129,8 @@ def crear_app() -> FastAPI:
     app.include_router(cotizaciones.router)
     app.include_router(pagos.router)
     app.include_router(pse_simulado.router)
+    app.include_router(siniestros.router)
+    app.include_router(telemetria.router)
     app.include_router(perfilamiento.router)
     app.include_router(enriquecimiento.router)
     app.include_router(socios.router)

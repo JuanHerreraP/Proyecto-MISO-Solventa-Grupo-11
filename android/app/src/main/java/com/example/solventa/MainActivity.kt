@@ -22,16 +22,19 @@ import com.example.solventa.data.remote.RemoteAuthGateway
 import com.example.solventa.data.remote.RemoteCotizacionesGateway
 import com.example.solventa.data.remote.RemotePagosGateway
 import com.example.solventa.data.remote.RemotePolizasGateway
+import com.example.solventa.data.remote.RemoteSiniestrosGateway
 import com.example.solventa.data.session.KeystoreBovedaSesion
 import com.example.solventa.domain.auth.AuthCoordinator
 import com.example.solventa.domain.auth.Reloj
 import com.example.solventa.domain.cotizaciones.CotizacionesCoordinator
 import com.example.solventa.domain.pagos.PagosCoordinator
 import com.example.solventa.domain.polizas.BilleteraCoordinator
+import com.example.solventa.domain.siniestros.SiniestrosCoordinator
 import com.example.solventa.ui.auth.AuthViewModel
 import com.example.solventa.ui.billetera.BilleteraViewModel
 import com.example.solventa.ui.cotizaciones.CotizacionesViewModel
 import com.example.solventa.ui.pagos.PagosViewModel
+import com.example.solventa.ui.siniestros.SiniestrosViewModel
 import com.example.solventa.ui.navigation.NavGraph
 import com.example.solventa.ui.theme.SolventaTheme
 
@@ -81,6 +84,15 @@ class MainActivity : FragmentActivity() {
         }
     }
 
+    private val siniestros: SiniestrosViewModel by viewModels {
+        SiniestrosViewModel.Fabrica {
+            SiniestrosCoordinator(
+                gateway = RemoteSiniestrosGateway(ApiClient.crearSiniestrosApi()),
+                sesion = viewModel.sesion
+            )
+        }
+    }
+
     private val solicitarRedLocal =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { }
 
@@ -99,7 +111,8 @@ class MainActivity : FragmentActivity() {
                         modifier = Modifier.padding(innerPadding),
                         billetera = billetera,
                         cotizaciones = cotizaciones,
-                        pagos = pagos
+                        pagos = pagos,
+                        siniestros = siniestros
                     )
                 }
             }

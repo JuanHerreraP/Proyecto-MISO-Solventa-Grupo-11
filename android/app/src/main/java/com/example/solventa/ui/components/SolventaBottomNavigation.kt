@@ -18,7 +18,8 @@ import com.example.solventa.ui.theme.Noche
 @Composable
 fun SolventaBottomNavigation(
     onInicio: () -> Unit = {},
-    onPolizas: (() -> Unit)? = null
+    onPolizas: (() -> Unit)? = null,
+    onSiniestros: (() -> Unit)? = null
 ) {
     val colores = NavigationBarItemDefaults.colors(
         selectedIconColor = Navegacion,
@@ -48,7 +49,8 @@ fun SolventaBottomNavigation(
         )
         NavigationBarItem(
             selected = false,
-            onClick = {},
+            onClick = { onSiniestros?.invoke() },
+            enabled = onSiniestros != null,
             icon = { Icon(Icons.Outlined.Description, contentDescription = null) },
             label = { Text("Siniestros") },
             colors = colores

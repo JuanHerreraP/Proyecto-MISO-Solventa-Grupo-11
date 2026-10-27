@@ -103,6 +103,34 @@ def test_certificado_con_qr(cliente, polizas):
     assert cuerpo["contenido_qr"] == "SOLVENTA|SOL-VI-000001|a1b2c3d4e5f60718"
     assert cuerpo["documento_titular"] == "CC ****5678"
     assert "1012345678" not in respuesta.text
+    # Sin descripción contratada, el campo viaja como null (no rompe la app).
+    assert cuerpo["descripcion_cobertura"] is None
+
+
+def test_certificado_expone_la_descripcion_parametrica(cliente, polizas):
+    from decimal import Decimal
+
+    from app.polizas.dominio.modelos import CoberturaPoliza, RamoPoliza
+
+    condicion = (
+        "tipo_evento=RETRASO_VUELO; numero_vuelo=AV123; ubicacion=BOG; "
+        "umbral_disparo=180; unidad=MINUTOS"
+    )
+    polizas.guardar(
+        poliza(
+            ramo=RamoPoliza.PARAMETRICO,
+            cobertura_principal=CoberturaPoliza(
+                codigo="RETRASO_DE_VUELO",
+                nombre="Retraso de vuelo",
+                suma_asegurada=Decimal("500000.00"),
+                descripcion=condicion,
+            ),
+        )
+    )
+
+    cuerpo = cliente.get(f"{RUTA}/POL-1/certificado", headers=CLIENTE).json()
+
+    assert cuerpo["descripcion_cobertura"] == condicion
 
 
 def test_compartir_y_abrir_el_enlace_sin_sesion(cliente, polizas):

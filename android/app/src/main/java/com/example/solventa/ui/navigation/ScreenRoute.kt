@@ -38,6 +38,8 @@ sealed class ScreenRoute(val route: String) {
     object PsePortal : ScreenRoute("pse_portal_screen")
     object PaymentResult : ScreenRoute("payment_result_screen")
     object Payments : ScreenRoute("payments_screen")
+    object Claims : ScreenRoute("claims_screen")
+    object ClaimForm : ScreenRoute("claim_form_screen")
 
     companion object {
         /** Rutas que solo se pueden ver con una sesión activa. */
@@ -54,7 +56,9 @@ sealed class ScreenRoute(val route: String) {
                 Payment.route,
                 PsePortal.route,
                 PaymentResult.route,
-                Payments.route
+                Payments.route,
+                Claims.route,
+                ClaimForm.route
             )
     }
 }

@@ -10,7 +10,7 @@ from typing import Protocol
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.polizas.dominio.modelos import EnlaceCertificado, Poliza
+from app.polizas.dominio.modelos import EnlaceCertificado, Poliza, RamoPoliza
 from app.polizas.modelos_db import EnlaceCertificadoDB, PolizaDB
 
 
@@ -22,6 +22,8 @@ class RepositorioPolizas(Protocol):
     def obtener_del_cliente(self, poliza_id: str, cliente_id: str) -> Poliza | None: ...
 
     def obtener(self, poliza_id: str) -> Poliza | None: ...
+
+    def listar_parametricas(self) -> list[Poliza]: ...
 
 
 class RepositorioEnlaces(Protocol):
@@ -53,6 +55,13 @@ class RepositorioPolizasEnMemoria:
     def obtener(self, poliza_id: str) -> Poliza | None:
         poliza = self._por_id.get(poliza_id)
         return poliza.model_copy(deep=True) if poliza is not None else None
+
+    def listar_parametricas(self) -> list[Poliza]:
+        return [
+            poliza.model_copy(deep=True)
+            for poliza in self._por_id.values()
+            if poliza.ramo is RamoPoliza.PARAMETRICO
+        ]
 
 
 class RepositorioEnlacesEnMemoria:
@@ -96,6 +105,10 @@ class RepositorioPolizasPostgres:
     def obtener(self, poliza_id: str) -> Poliza | None:
         registro = self._db.get(PolizaDB, poliza_id)
         return _poliza_a_dominio(registro) if registro is not None else None
+
+    def listar_parametricas(self) -> list[Poliza]:
+        sentencia = select(PolizaDB).where(PolizaDB.ramo == RamoPoliza.PARAMETRICO.value)
+        return [_poliza_a_dominio(registro) for registro in self._db.scalars(sentencia).all()]
 
 
 class RepositorioEnlacesPostgres:
