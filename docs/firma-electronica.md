@@ -91,6 +91,8 @@ Genera un valor con `python -c "import secrets; print(secrets.token_hex(32))"`.
 - Backend, desde `backend`: `pytest tests/firmas` (41 casos). Contrato prellenado y estable, sin pago aprobado, cliente ajeno, titular sin datos, envío por SMS y correo, espera y límite de reenvíos, código anterior invalidado, firma exitosa con metadatos, firma repetida, código incorrecto, vencido, sin emitir e intentos agotados, bloqueo, huella distinta, contrato alterado, pago revertido, proveedor caído al enviar y al sellar, roles, persistencia con SQLite y lectura del titular.
 - Web, desde `web`: `npm test` (`FirmaPage.test.tsx`, `firma.service.test.ts` y el acceso desde `PagosPage.test.tsx`).
 
+Evidencias de la prueba manual en el portal web: [evidencias/hu14](evidencias/hu14/README.md).
+
 ## Pendientes conocidos
 
 - El proveedor de firma es simulado; falta integrar el proveedor real (por ejemplo, una entidad de certificación) y su sello.
