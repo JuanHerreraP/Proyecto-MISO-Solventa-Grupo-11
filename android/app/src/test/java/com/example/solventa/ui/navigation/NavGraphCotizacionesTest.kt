@@ -63,9 +63,9 @@ class NavGraphCotizacionesTest {
         compose.boton("Ingresar").performClick()
         compose.waitForIdle()
 
-        compose.boton("Ver cotizaciones").performScrollTo().performClick()
+        compose.boton("Cotizaciones").performScrollTo().performClick()
         compose.waitForIdle()
-        compose.onNodeWithText("Mis cotizaciones").assertIsDisplayed()
+        compose.onNodeWithText("Cotizaciones").assertIsDisplayed()
         assertEquals(listOf("u-1"), gateway.clientesListados)
 
         compose.boton("Seguro de viaje").performClick()
@@ -74,7 +74,7 @@ class NavGraphCotizacionesTest {
 
         compose.onNodeWithContentDescription("Volver").performClick()
         compose.waitForIdle()
-        compose.onNodeWithText("Mis cotizaciones").assertIsDisplayed()
+        compose.onNodeWithText("Cotizaciones").assertIsDisplayed()
     }
 }
 

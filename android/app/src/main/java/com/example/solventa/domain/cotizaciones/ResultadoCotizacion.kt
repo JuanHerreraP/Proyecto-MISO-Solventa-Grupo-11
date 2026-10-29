@@ -11,7 +11,8 @@ data class ResultadoCotizacion(
     val moneda: String,
     val coberturaPrincipal: CoberturaCotizacion,
     val vigenteHasta: String,
-    val perfilRiesgoId: String? = null
+    val perfilRiesgoId: String? = null,
+    val datosRiesgo: Map<String, String> = emptyMap()
 )
 
 data class CoberturaCotizacion(

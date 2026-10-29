@@ -2,17 +2,23 @@ import { useState, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { cerrarSesion } from "../services/session";
 import { ROLES_ADMINISTRACION_SOCIOS } from "../types/permisos";
+import logoSolventa from "../assets/solventa-logo.png";
 import "../styles/home.css";
 
 const MENU = [
   { icono: "home", texto: "Inicio", ruta: "/home" },
-  { icono: "description", texto: "Mis pólizas", ruta: null },
+  { icono: "description", texto: "Cotizaciones", ruta: "/cotizaciones" },
+  { icono: "shield", texto: "Mis pólizas", ruta: null },
   { icono: "error", texto: "Siniestros", ruta: null },
   { icono: "payments", texto: "Pagos", ruta: "/pagos" },
   { icono: "person", texto: "Perfil", ruta: null },
 ] as const;
 
-type Props = { activo: "Inicio" | "Pagos"; rol: string | null; children: ReactNode };
+type Props = {
+  activo: "Inicio" | "Pagos" | "Cotizar" | "Cotizaciones";
+  rol: string | null;
+  children: ReactNode;
+};
 
 /** Barra lateral y contenedor común de las pantallas del cliente. */
 export default function AppLayout({ activo, rol, children }: Props) {
@@ -24,7 +30,7 @@ export default function AppLayout({ activo, rol, children }: Props) {
     <div className="home-layout">
       <aside className="home-sidebar">
         <div className="home-brand">
-          <span className="material-symbols-outlined" aria-hidden="true">shield</span>
+          <img src={logoSolventa} alt="" className="home-brand-logo" aria-hidden="true" />
           Solventa
         </div>
         <nav aria-label="Principal">

@@ -24,6 +24,13 @@
   font-weight: 700;
 }
 
+.home-brand-logo {
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  object-fit: contain;
+}
+
 .home-sidebar nav {
   display: flex;
   flex-direction: column;
@@ -157,6 +164,16 @@
 }
 
 .home-accion:disabled { opacity: 1; cursor: default; }
+.home-accion:not(:disabled) { cursor: pointer; transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s; }
+.home-accion:not(:disabled):hover {
+  border-color: var(--solventa-blue);
+  box-shadow: 0 6px 18px rgba(56, 103, 242, 0.12);
+  transform: translateY(-2px);
+}
+.home-accion:not(:disabled):focus-visible {
+  outline: 2px solid var(--solventa-blue);
+  outline-offset: 2px;
+}
 .home-accion strong { display: block; color: var(--solventa-blue); font-size: 13px; }
 .home-accion small { color: var(--solventa-muted); font-size: 11px; }
 
@@ -211,3 +228,354 @@
 .pagos-estado-aprobado { color: #1b8a4a; }
 .pagos-estado-pendiente { color: #b36b00; }
 .pagos-estado-rechazado { color: #c0392b; }
+
+/* ---- Cotizar un nuevo seguro (HU03 / HU23) ---- */
+
+.cotizar-grid-ramos {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 16px;
+}
+
+.cotizar-ramo-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 20px;
+  border: 1px solid var(--solventa-border);
+  border-radius: 12px;
+  background: var(--solventa-white);
+  color: var(--solventa-night);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
+}
+
+.cotizar-ramo-card:hover {
+  border-color: var(--solventa-blue);
+  box-shadow: 0 6px 18px rgba(56, 103, 242, 0.12);
+  transform: translateY(-2px);
+}
+
+.cotizar-ramo-card:focus-visible {
+  outline: 2px solid var(--solventa-blue);
+  outline-offset: 2px;
+}
+
+.cotizar-ramo-icono {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  background: #eaf0fe;
+  color: var(--solventa-blue);
+  font-size: 24px;
+}
+
+.cotizar-ramo-card strong { font-size: 15px; }
+.cotizar-ramo-card small { color: var(--solventa-muted); font-size: 12px; line-height: 1.4; }
+
+.cotizar-ramo-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
+  color: var(--solventa-blue);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.cotizar-ramo-cta .material-symbols-outlined { font-size: 16px; }
+
+.cotizar-form-panel { width: 100%; max-width: 820px; margin: 0 auto; padding: 28px 32px; }
+
+.cotizar-form-encabezado,
+.cotizar-resultado-encabezado {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.cotizar-form-encabezado strong,
+.cotizar-resultado-encabezado strong { display: block; font-size: 18px; }
+.cotizar-form-encabezado small,
+.cotizar-resultado-encabezado small { color: var(--solventa-muted); font-size: 13px; }
+
+.cotizar-resultado-encabezado > div { flex: 1; }
+
+.cotizar-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 22px 28px;
+}
+
+.cotizar-campo { display: flex; flex-direction: column; gap: 8px; }
+
+.cotizar-campo label { font-size: 14px; font-weight: 700; }
+.cotizar-opcional { color: var(--solventa-muted); font-weight: 500; }
+
+.cotizar-campo input,
+.cotizar-campo select {
+  padding: 13px 16px;
+  border: 1px solid var(--solventa-border);
+  border-radius: 10px;
+  background: var(--solventa-white);
+  color: var(--solventa-night);
+  font-size: 15px;
+}
+
+.cotizar-campo input:focus,
+.cotizar-campo select:focus {
+  outline: 2px solid var(--solventa-blue);
+  outline-offset: 1px;
+  border-color: var(--solventa-blue);
+}
+
+.cotizar-ayuda { color: var(--solventa-muted); font-size: 12px; }
+
+.cotizar-acciones {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.cotizar-boton-primario,
+.cotizar-boton-secundario {
+  padding: 13px 28px;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.cotizar-boton-primario {
+  border: 0;
+  background: var(--solventa-blue);
+  color: #fff;
+}
+
+.cotizar-boton-primario:disabled { opacity: 0.55; cursor: default; }
+.cotizar-boton-primario:not(:disabled):hover { background: #2a52c9; }
+
+.cotizar-boton-secundario {
+  border: 1px solid var(--solventa-border);
+  background: var(--solventa-white);
+  color: var(--solventa-night);
+}
+
+.cotizar-boton-secundario:hover { background: var(--solventa-background); }
+
+.cotizar-resultado { width: 100%; max-width: 560px; margin: 0 auto; }
+
+.cotizar-detalle {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 14px;
+  border-radius: 10px;
+  background: var(--solventa-background);
+  margin-bottom: 16px;
+}
+
+.cotizar-detalle span { color: var(--solventa-muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; }
+.cotizar-detalle strong { font-size: 14px; }
+.cotizar-detalle small { color: var(--solventa-muted); font-size: 12px; }
+
+.cotizar-resumen { margin: 0 0 18px; }
+
+.cotizar-resumen > div {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--solventa-border);
+}
+
+.cotizar-resumen dt { color: var(--solventa-muted); font-size: 13px; }
+.cotizar-resumen dd { margin: 0; font-size: 14px; font-weight: 700; }
+
+.cotizar-resumen-total { border-bottom: 0 !important; }
+.cotizar-resumen-total dt { color: var(--solventa-night); font-weight: 700; }
+.cotizar-resumen-total dd { font-family: var(--font-heading); font-size: 20px; color: var(--solventa-blue); }
+
+@media (max-width: 720px) {
+  .cotizar-form { grid-template-columns: 1fr; }
+}
+
+/* ---- Pago de la prima dentro de Cotizar (HU13 / HU23) ---- */
+
+.cotizar-campo-ancho { grid-column: 1 / -1; }
+
+.cotizar-metodos {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  border: 0;
+  margin: 0;
+  padding: 0;
+}
+
+.cotizar-metodo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1 1 220px;
+  padding: 14px 16px;
+  border: 1px solid var(--solventa-border);
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.cotizar-metodo .material-symbols-outlined { color: var(--solventa-blue); }
+.cotizar-metodo:hover { border-color: var(--solventa-blue); }
+
+.cotizar-metodo-activo {
+  border-color: var(--solventa-blue);
+  box-shadow: 0 0 0 1px var(--solventa-blue) inset;
+  background: #f4f7ff;
+}
+
+.cotizar-pago-aprobado { background: #e3f7ea; color: #1b8a4a; }
+.cotizar-pago-pendiente { background: #fff4e5; color: #b36b00; }
+.cotizar-pago-rechazado { background: #fdecea; color: #c0392b; }
+
+.cotizar-mensaje-ok,
+.cotizar-mensaje-pendiente,
+.cotizar-mensaje-error {
+  margin: 0 0 18px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.cotizar-mensaje-ok { color: #1b8a4a; }
+.cotizar-mensaje-pendiente { color: #b36b00; }
+.cotizar-mensaje-error { color: #c0392b; }
+
+/* ---- Modal de pago exitoso ---- */
+
+/* ---- Modal de pago exitoso ---- */
+
+.cotizar-modal-fondo {
+  position: fixed;
+  inset: 0;
+  background: rgba(16, 27, 50, 0.55);
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  z-index: 1000;
+  animation: cotizar-fundido 0.15s ease-out;
+}
+
+.cotizar-modal {
+  background: var(--solventa-white);
+  border-radius: 16px;
+  padding: 32px;
+  width: 100%;
+  max-width: 400px;
+  text-align: center;
+  box-shadow: 0 20px 50px rgba(16, 27, 50, 0.3);
+  animation: cotizar-aparecer 0.2s ease-out;
+}
+
+.cotizar-modal-icono {
+  font-size: 56px;
+  color: #1b8a4a;
+  margin-bottom: 8px;
+}
+
+.cotizar-modal h2 { margin: 0 0 8px; font-size: 22px; color: var(--solventa-night); }
+.cotizar-modal p { margin: 0 0 4px; color: var(--solventa-muted); font-size: 14px; }
+.cotizar-modal-ref { font-size: 12px; color: #8a93a6; word-break: break-all; margin-bottom: 20px !important; }
+
+.cotizar-modal-acciones {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+@keyframes cotizar-fundido {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes cotizar-aparecer {
+  from { opacity: 0; transform: translateY(12px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* ---- Lista de cotizaciones con detalle desplegable ---- */
+
+.cotizaciones-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.cotizacion-item {
+  border: 1px solid var(--solventa-border);
+  border-radius: 12px;
+  background: var(--solventa-white);
+  overflow: hidden;
+}
+
+.cotizacion-cabecera {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px;
+  border: 0;
+  background: transparent;
+  color: var(--solventa-night);
+  text-align: left;
+  cursor: pointer;
+}
+
+.cotizacion-cabecera:hover { background: var(--solventa-background); }
+
+.cotizacion-cabecera-texto { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+.cotizacion-cabecera-texto strong { font-size: 15px; }
+.cotizacion-cabecera-texto small { color: var(--solventa-blue); font-weight: 700; font-size: 13px; }
+
+.cotizacion-estado {
+  background: #eef2f8;
+  color: var(--solventa-muted);
+}
+
+.cotizacion-chevron { color: var(--solventa-muted); }
+
+.cotizacion-detalle {
+  padding: 0 16px 18px;
+  border-top: 1px solid var(--solventa-border);
+}
+
+.cotizacion-subtitulo {
+  margin: 16px 0 8px;
+  font-size: 13px;
+  color: var(--solventa-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.cotizacion-datos { margin: 0 0 8px; }
+
+.cotizacion-datos > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--solventa-border);
+}
+
+.cotizacion-datos > div:last-child { border-bottom: 0; }
+.cotizacion-datos dt { color: var(--solventa-muted); font-size: 13px; }
+.cotizacion-datos dd { margin: 0; font-size: 14px; font-weight: 700; text-align: right; }

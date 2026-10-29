@@ -30,6 +30,7 @@ import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.example.solventa.domain.cotizaciones.CatalogoCotizaciones
 import com.example.solventa.domain.cotizaciones.RamoCotizacion
 import com.example.solventa.domain.cotizaciones.ResultadoCotizacion
 import com.example.solventa.ui.components.SolventaBottomNavigation
@@ -54,7 +55,8 @@ fun QuoteResultScreen(
     onCrearOtra: () -> Unit,
     modifier: Modifier = Modifier,
     onInicio: () -> Unit = {},
-    onVerBilletera: (() -> Unit)? = null
+    onVerBilletera: (() -> Unit)? = null,
+    modoDetalle: Boolean = false
 ) {
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -93,6 +95,9 @@ fun QuoteResultScreen(
 
                 TarjetaPrima(cotizacion)
                 TarjetaCobertura(cotizacion)
+                if (cotizacion.datosRiesgo.keys.any { it != "valor_asegurado" }) {
+                    TarjetaDatosSolicitud(cotizacion)
+                }
 
                 if (cotizacion.perfilRiesgoId != null) {
                     SolventaNoticePill(
@@ -103,12 +108,16 @@ fun QuoteResultScreen(
                     )
                 }
 
-                SolventaPrimaryButton(
-                    text = "Aceptar y continuar",
-                    onClick = onAceptar,
-                    enabled = cotizacion.estado == "VIGENTE"
-                )
-                SolventaSecondaryButton(text = "Crear otra cotización", onClick = onCrearOtra)
+                if (modoDetalle) {
+                    SolventaPrimaryButton(text = "Cerrar", onClick = onVolver)
+                } else {
+                    SolventaPrimaryButton(
+                        text = "Aceptar y continuar",
+                        onClick = onAceptar,
+                        enabled = cotizacion.estado == "VIGENTE"
+                    )
+                    SolventaSecondaryButton(text = "Crear otra cotización", onClick = onCrearOtra)
+                }
             }
         }
     }
@@ -209,6 +218,52 @@ private fun TarjetaCobertura(cotizacion: ResultadoCotizacion) {
                 "Suma asegurada: ${formatearMoneda(cobertura.sumaAsegurada, cotizacion.moneda)}"
             )
             cobertura.descripcion?.takeIf(String::isNotBlank)?.let { DatoCobertura(it) }
+        }
+    }
+}
+
+@Composable
+private fun TarjetaDatosSolicitud(cotizacion: ResultadoCotizacion) {
+    val etiquetas = CatalogoCotizaciones.definicion(cotizacion.ramo)
+        .campos.associate { it.codigo to it.etiqueta }
+    // La suma/valor asegurado ya se muestra en la tarjeta de cobertura.
+    val datos = cotizacion.datosRiesgo.filterKeys { it != "valor_asegurado" }
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        color = MaterialTheme.colorScheme.surface,
+        shape = RoundedCornerShape(18.dp),
+        border = androidx.compose.foundation.BorderStroke(
+            1.dp,
+            MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f)
+        )
+    ) {
+        Column(
+            modifier = Modifier.padding(18.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Text(
+                text = "Datos de la solicitud",
+                style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            datos.forEach { (codigo, valor) ->
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Text(
+                        text = etiquetas[codigo] ?: codigo,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                        modifier = Modifier.weight(1f)
+                    )
+                    Text(
+                        text = valor,
+                        style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                }
+            }
         }
     }
 }

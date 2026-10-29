@@ -20,7 +20,8 @@ data class CotizacionDto(
     @SerializedName("moneda") val moneda: String?,
     @SerializedName("cobertura_principal") val coberturaPrincipal: CoberturaCotizacionDto?,
     @SerializedName("vigente_hasta") val vigenteHasta: String?,
-    @SerializedName("perfil_riesgo_id") val perfilRiesgoId: String?
+    @SerializedName("perfil_riesgo_id") val perfilRiesgoId: String?,
+    @SerializedName("datos_riesgo") val datosRiesgo: Map<String, Any?>? = null
 ) {
     fun aResultado(): ResultadoCotizacion? {
         val ramoDominio = ramo?.let(RamoCotizacion::desdeCodigoApi) ?: return null
@@ -33,9 +34,20 @@ data class CotizacionDto(
             moneda = moneda?.takeIf(String::isNotBlank) ?: return null,
             coberturaPrincipal = cobertura,
             vigenteHasta = vigenteHasta?.takeIf(String::isNotBlank) ?: return null,
-            perfilRiesgoId = perfilRiesgoId
+            perfilRiesgoId = perfilRiesgoId,
+            datosRiesgo = datosRiesgo
+                ?.mapNotNull { (clave, valor) -> valor?.let { clave to formatearValor(it) } }
+                ?.toMap()
+                ?: emptyMap()
         )
     }
+}
+
+/** Convierte un valor del JSON a texto legible (Gson entrega los números como Double). */
+private fun formatearValor(valor: Any): String = when (valor) {
+    is Boolean -> if (valor) "Sí" else "No"
+    is Double -> if (valor == valor.toLong().toDouble()) valor.toLong().toString() else valor.toString()
+    else -> valor.toString()
 }
 
 data class CoberturaCotizacionDto(

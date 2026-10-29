@@ -129,7 +129,7 @@ class HomeScreenTest {
     fun permiteAbrirElHistorialDeCotizaciones() {
         mostrar()
 
-        compose.boton("Ver cotizaciones").performScrollTo().performClick()
+        compose.boton("Cotizaciones").performScrollTo().performClick()
 
         assertEquals(listOf("cotizaciones"), eventos)
     }

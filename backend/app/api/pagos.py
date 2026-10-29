@@ -1,6 +1,7 @@
 """API del recaudo inicial de la prima (HU13)."""
 
 import json
+import os
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Request, Response, status
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
@@ -25,8 +26,11 @@ from app.pagos.servicio import (
 router = APIRouter(prefix="/api/v1/pagos", tags=["pagos"])
 
 
-def obtener_pasarela() -> PasarelaPagos:
-    return PasarelaSimulada()
+def obtener_pasarela(request: Request) -> PasarelaPagos:
+    # La URL del portal PSE sale del propio request (sirve para web en 8000 y Android en
+    # 10.0.2.2); SOLVENTA_URL_PUBLICA la sobreescribe cuando hay una URL pública fija.
+    url_base = os.getenv("SOLVENTA_URL_PUBLICA") or str(request.base_url)
+    return PasarelaSimulada(url_base=url_base)
 
 
 def obtener_servicio(

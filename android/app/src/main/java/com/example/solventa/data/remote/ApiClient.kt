@@ -22,6 +22,10 @@ object ApiClient {
     fun crearCotizacionesApi(urlBase: String = BuildConfig.API_BASE_URL): CotizacionesApi =
         retrofit(urlBase).create(CotizacionesApi::class.java)
 
+    /** Recaudo inicial de la prima (HU13). */
+    fun crearPagosApi(urlBase: String = BuildConfig.API_BASE_URL): PagosApi =
+        retrofit(urlBase).create(PagosApi::class.java)
+
     private val cliente: OkHttpClient by lazy {
         OkHttpClient.Builder()
             .connectTimeout(10, TimeUnit.SECONDS)
