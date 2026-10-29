@@ -40,6 +40,7 @@ data class Certificado(
     val fechaInicio: String,
     val fechaFin: String,
     val coberturaPrincipal: String,
+    val descripcionCobertura: String? = null,
     val sumaAsegurada: String,
     val moneda: String,
     val contenidoQr: String

@@ -69,6 +69,7 @@ fun HomeScreen(
     onVerBilletera: (() -> Unit)? = null,
     onVerCotizaciones: (() -> Unit)? = null,
     onVerPagos: (() -> Unit)? = null,
+    onVerSiniestros: (() -> Unit)? = null,
     onCotizarSeguro: () -> Unit = {},
     cantidadPolizasActivas: Int? = null
 ) {
@@ -91,7 +92,7 @@ fun HomeScreen(
         modifier = modifier.fillMaxSize(),
         containerColor = MaterialTheme.colorScheme.surface,
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
-        bottomBar = { SolventaBottomNavigation(onPolizas = onVerBilletera) }
+        bottomBar = { SolventaBottomNavigation(onPolizas = onVerBilletera, onSiniestros = onVerSiniestros) }
     ) { paddingValues ->
         Column(
             modifier = Modifier
@@ -136,8 +137,9 @@ fun HomeScreen(
             }
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 AccionInicio(
-                    titulo = "Reportar siniestro",
+                    titulo = "Mis siniestros",
                     icono = Icons.Outlined.WarningAmber,
+                    onClick = onVerSiniestros,
                     modifier = Modifier.weight(1f)
                 )
                 AccionInicio(

@@ -15,6 +15,9 @@ import HomePage from "./pages/HomePage";
 import PagosPage from "./pages/PagosPage";
 import CotizarPage from "./pages/CotizarPage";
 import CotizacionesPage from "./pages/CotizacionesPage";
+import PolizasPage from "./pages/PolizasPage";
+import ClaimRegistrationPage from "./pages/ClaimRegistrationPage";
+import SiniestrosPage from "./pages/SiniestrosPage";
 import SocioRegistrationPage from "./pages/SocioRegistrationPage";
 
 function App() {
@@ -70,6 +73,21 @@ function App() {
       <Route
         path="/cotizaciones"
         element={<RutaProtegida><CotizacionesPage /></RutaProtegida>}
+      />
+
+      <Route
+        path="/polizas"
+        element={<RutaProtegida><PolizasPage /></RutaProtegida>}
+      />
+
+      <Route
+        path="/siniestros"
+        element={<RutaProtegida><SiniestrosPage /></RutaProtegida>}
+      />
+
+      <Route
+        path="/siniestros/nuevo"
+        element={<RutaProtegida><ClaimRegistrationPage /></RutaProtegida>}
       />
 
       <Route

@@ -94,10 +94,10 @@ export default function CotizacionesPage() {
   }
 
   return (
-    <AppLayout activo="Cotizaciones" rol={rol}>
+    <AppLayout activo="Mis cotizaciones" rol={rol}>
       <header className="home-header">
         <div>
-          <h1>Cotizaciones</h1>
+          <h1>Mis cotizaciones</h1>
           <p>Consulta tus cotizaciones y el detalle de cada una.</p>
         </div>
         <button

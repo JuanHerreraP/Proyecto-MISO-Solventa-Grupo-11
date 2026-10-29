@@ -5,7 +5,7 @@ import { obtenerPerfil, type Perfil } from "../services/auth.service";
 import { obtenerBilletera, type PolizaResumen } from "../services/billetera.service";
 
 const ACCIONES = [
-  { icono: "error", titulo: "Reportar un siniestro", detalle: "Con evidencia fotográfica", ruta: null },
+  { icono: "error", titulo: "Reportar un siniestro", detalle: "Registra lo ocurrido", ruta: "/siniestros/nuevo" },
   { icono: "schedule", titulo: "Consultar estado de siniestro", detalle: "Sigue tu reclamación", ruta: null },
   { icono: "request_quote", titulo: "Cotizar un nuevo seguro", detalle: "Viaje, vida, dispositivos y más", ruta: "/cotizar" },
 ] as const;

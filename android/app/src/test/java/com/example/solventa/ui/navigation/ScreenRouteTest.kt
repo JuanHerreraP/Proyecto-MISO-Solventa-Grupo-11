@@ -84,7 +84,9 @@ class ScreenRouteTest {
                 "payment_screen/{cotizacionId}",
                 "pse_portal_screen",
                 "payment_result_screen",
-                "payments_screen"
+                "payments_screen",
+                "claims_screen",
+                "claim_form_screen"
             ),
             ScreenRoute.privadas
         )

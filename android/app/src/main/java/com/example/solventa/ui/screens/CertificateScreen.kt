@@ -26,6 +26,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.solventa.R
 import com.example.solventa.domain.polizas.Certificado
+import com.example.solventa.domain.polizas.CondicionParametrica
 import com.example.solventa.domain.polizas.EstadoPoliza
 import com.example.solventa.domain.polizas.Formatos
 import com.example.solventa.ui.components.SolventaCodigoQr
@@ -148,6 +149,34 @@ private fun Contenido(
                 Dato("Vigencia", Formatos.vigencia(certificado.fechaInicio, certificado.fechaFin))
                 Dato("Cobertura principal", certificado.coberturaPrincipal)
                 Dato("Suma asegurada", Formatos.dinero(certificado.sumaAsegurada, certificado.moneda))
+            }
+        }
+
+        val condicion = CondicionParametrica.campos(certificado.descripcionCobertura)
+        if (condicion.isNotEmpty()) {
+            Surface(
+                shape = RoundedCornerShape(16.dp),
+                color = Navegacion.copy(alpha = 0.06f),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Text(
+                        text = "Condición paramétrica",
+                        style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
+                        color = Navegacion
+                    )
+                    condicion.forEach { campo ->
+                        val valor = if (campo.esMoneda) {
+                            Formatos.dinero(campo.valor, certificado.moneda)
+                        } else {
+                            campo.valor
+                        }
+                        Dato(campo.etiqueta, valor)
+                    }
+                }
             }
         }
 

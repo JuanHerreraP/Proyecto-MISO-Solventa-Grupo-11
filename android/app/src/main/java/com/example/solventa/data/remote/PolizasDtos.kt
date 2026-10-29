@@ -64,6 +64,7 @@ data class CertificadoDto(
     @SerializedName("fecha_inicio") val fechaInicio: String?,
     @SerializedName("fecha_fin") val fechaFin: String?,
     @SerializedName("cobertura_principal") val coberturaPrincipal: String?,
+    @SerializedName("descripcion_cobertura") val descripcionCobertura: String?,
     @SerializedName("suma_asegurada") val sumaAsegurada: String?,
     @SerializedName("moneda") val moneda: String?,
     @SerializedName("contenido_qr") val contenidoQr: String?
@@ -81,6 +82,7 @@ data class CertificadoDto(
             fechaInicio = fechaInicio ?: return null,
             fechaFin = fechaFin ?: return null,
             coberturaPrincipal = coberturaPrincipal.orEmpty(),
+            descripcionCobertura = descripcionCobertura,
             sumaAsegurada = sumaAsegurada.orEmpty(),
             moneda = moneda ?: "COP",
             contenidoQr = contenidoQr ?: return null

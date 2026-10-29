@@ -54,6 +54,8 @@ La navegación utiliza **Jetpack Navigation Compose** mediante rutas selladas en
 | `home_screen` | `HomeScreen` | Inicio del cliente; solo se muestra con sesión autenticada (BPM-23) |
 | `wallet_screen` | `WalletScreen` | Billetera de pólizas, vigentes e inactivas (BPM-31) |
 | `certificate_screen/{polizaId}` | `CertificateScreen` | Certificado con QR y opción de compartir (BPM-31) |
+| `claims_screen` | `ClaimsScreen` | Lista de siniestros del cliente: manuales y automáticos de telemetría (HU20) |
+| `claim_form_screen` | `ClaimFormScreen` | Formulario de registro manual de un siniestro (HU20) |
 
 ---
 
@@ -79,6 +81,34 @@ La URL del backend sale de `BuildConfig.API_BASE_URL` (por defecto `http://10.0.
 | `ui/components/CodigoQr.kt` | QR dibujado en Compose con ZXing, sin red. |
 
 Para ver pólizas en la app, siembra datos de prueba con `backend/sembrar_polizas.py`. Detalle en [docs/billetera-digital.md](../docs/billetera-digital.md).
+
+## ⚠️ Siniestros del cliente (HU20)
+
+Pantalla de solo lectura que lista los siniestros del cliente autenticado, del más reciente al
+más antiguo. Incluye los **automáticos** creados por la telemetría externa (retraso de vuelo,
+clima) y los manuales. El backend filtra por la identidad del token: la app nunca envía un
+identificador de cliente.
+
+Desde la lista, con **«Reportar siniestro»** se abre un formulario (`ClaimFormScreen`) que
+registra un siniestro manual vía `POST /api/v1/siniestros`: se elige una de las pólizas vigentes
+de la billetera (o se ingresa el número), la fecha/hora del evento, el lugar, la descripción y la
+estimación del daño. La validación local es ayuda temprana; el backend valida de forma
+autoritativa la vigencia y la titularidad y responde 403/404/409/422 con un código que se traduce
+a un mensaje claro. Al registrar bien, la app recarga la lista y vuelve a ella.
+
+| Paquete | Contenido |
+|---|---|
+| `domain/siniestros` | `SiniestrosCoordinator`: carga de la lista, **registro manual** (`registrar`) con mapeo de errores y recarga, y limpieza al cerrar sesión. `Modelos`: `Siniestro`, `Siniestros`, `SolicitudSiniestro`, `OrigenSiniestro`, `EstadoSiniestro` y el puerto `SiniestrosGateway`. Sin dependencias de Android. |
+| `data/remote` | Cliente Retrofit de `GET`/`POST /api/v1/siniestros` (`SiniestrosApi`) y su gateway (`RemoteSiniestrosGateway`). |
+| `ui/validation` | `SiniestroFormValidation`: reglas del formulario (lugar, descripción ≥10, estimación decimal, fecha no futura, hora HH:MM). |
+| `ui/siniestros` | `SiniestrosViewModel`. |
+| `ui/screens/ClaimsScreen.kt` | Lista con estados de carga, error y vacío; etiquetas de origen (Automático/Manual) y estado; acción para reportar. |
+| `ui/screens/ClaimFormScreen.kt` | Formulario de registro manual. |
+
+Se entra desde el inicio con la acción **«Mis siniestros»**. Para la demo, siembra la póliza
+paramétrica con `backend/sembrar_polizas.py` y dispara un evento con el proveedor de telemetría
+(`uvicorn mocks.telemetry.main:app --port 8004`); el siniestro automático aparecerá en esta
+pantalla. Reutiliza la `SesionAutenticada` del módulo de autenticación, igual que la billetera.
 
 ## 🪪 Registro desde Android (BPM-16)
 

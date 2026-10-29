@@ -87,6 +87,20 @@ def preparar_esquema_registro() -> None:
         if indice.name == "uq_usuarios_tipo_documento_numero_documento":
             indice.create(bind=engine, checkfirst=True)
 
+    if inspector.has_table("siniestros"):
+        columnas_sin = {c["name"] for c in inspector.get_columns("siniestros")}
+        if "evento_id" not in columnas_sin:
+            # Columna aditiva para la idempotencia de eventos de telemetría (HU20).
+            with engine.begin() as conexion:
+                conexion.execute(text("ALTER TABLE siniestros ADD COLUMN evento_id VARCHAR(120)"))
+        indices_sin = {i["name"] for i in inspector.get_indexes("siniestros")}
+        if "uq_siniestros_evento" not in indices_sin:
+            from app.siniestros.modelos_db import SiniestroDB
+
+            for indice in SiniestroDB.__table__.indexes:
+                if indice.name == "uq_siniestros_evento":
+                    indice.create(bind=engine, checkfirst=True)
+
 
 def get_db():
     db = SessionLocal()

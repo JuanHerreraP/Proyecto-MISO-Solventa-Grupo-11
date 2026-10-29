@@ -25,14 +25,18 @@ import com.example.solventa.domain.cotizaciones.CatalogoCotizaciones
 import com.example.solventa.domain.cotizaciones.EstadoCotizaciones
 import com.example.solventa.domain.cotizaciones.RamoCotizacion
 import com.example.solventa.domain.pagos.EstadoPagos
+import com.example.solventa.domain.siniestros.SolicitudSiniestro
 import com.example.solventa.ui.auth.AuthViewModel
 import com.example.solventa.ui.billetera.BilleteraViewModel
 import com.example.solventa.ui.billetera.compartirTexto
 import com.example.solventa.ui.billetera.textoParaCompartir
 import com.example.solventa.ui.cotizaciones.CotizacionesViewModel
 import com.example.solventa.ui.pagos.PagosViewModel
+import com.example.solventa.ui.siniestros.SiniestrosViewModel
 import com.example.solventa.ui.screens.BiometricalLoginScreen
 import com.example.solventa.ui.screens.CertificateScreen
+import com.example.solventa.ui.screens.ClaimFormScreen
+import com.example.solventa.ui.screens.ClaimsScreen
 import com.example.solventa.ui.screens.CredentialsLoginScreen
 import com.example.solventa.ui.screens.HomeScreen
 import com.example.solventa.ui.screens.NewQuoteScreen
@@ -57,7 +61,8 @@ fun NavGraph(
     startDestination: String = ScreenRoute.Welcome.route,
     billetera: BilleteraViewModel? = null,
     cotizaciones: CotizacionesViewModel? = null,
-    pagos: PagosViewModel? = null
+    pagos: PagosViewModel? = null,
+    siniestros: SiniestrosViewModel? = null
 ) {
     val estado by viewModel.estado.collectAsState()
     val estadoCotizaciones = cotizaciones?.estado?.collectAsState()?.value ?: EstadoCotizaciones()
@@ -72,6 +77,7 @@ fun NavGraph(
             billetera?.limpiar()
             cotizaciones?.limpiar()
             pagos?.limpiar()
+            siniestros?.limpiar()
         }
         if (autenticado && actual !in ScreenRoute.privadas) {
             navController.navigate(ScreenRoute.Home.route) {
@@ -246,6 +252,9 @@ fun NavGraph(
                     },
                     onVerPagos = pagos?.let {
                         { navController.navigate(ScreenRoute.Payments.route) { launchSingleTop = true } }
+                    },
+                    onVerSiniestros = siniestros?.let {
+                        { navController.navigate(ScreenRoute.Claims.route) { launchSingleTop = true } }
                     },
                     cantidadPolizasActivas = estadoBilletera?.billetera?.totalVigentes
                 )
@@ -575,6 +584,75 @@ fun NavGraph(
                         onInicio = { navController.popBackStack(ScreenRoute.Home.route, false) },
                         onVerBilletera = billetera?.let {
                             { navController.navigate(ScreenRoute.Wallet.route) { launchSingleTop = true } }
+                        }
+                    )
+                }
+            }
+        }
+
+        if (siniestros != null) {
+            composable(route = ScreenRoute.Claims.route) {
+                val estadoSiniestros by siniestros.estado.collectAsState()
+                if (estado.sesion == null) {
+                    Box(modifier = Modifier.fillMaxSize())
+                } else {
+                    // Se vuelve a pedir cada vez que se entra: el backend es la fuente de verdad.
+                    LaunchedEffect(Unit) { siniestros.cargar() }
+                    ClaimsScreen(
+                        siniestros = estadoSiniestros.siniestros,
+                        cargando = estadoSiniestros.cargando,
+                        error = estadoSiniestros.error,
+                        onReintentar = { siniestros.cargar() },
+                        onVolver = { navController.popBackStack() },
+                        onReportar = {
+                            navController.navigate(ScreenRoute.ClaimForm.route) { launchSingleTop = true }
+                        }
+                    )
+                }
+            }
+
+            composable(route = ScreenRoute.ClaimForm.route) {
+                val estadoSiniestros by siniestros.estado.collectAsState()
+                if (estado.sesion == null) {
+                    Box(modifier = Modifier.fillMaxSize())
+                } else {
+                    // Las pólizas elegibles son las vigentes de la billetera; si no hay, texto libre.
+                    val estadoBilletera = billetera?.estado?.collectAsState()?.value
+                    LaunchedEffect(billetera) { billetera?.cargar() }
+                    val elegibles = estadoBilletera?.billetera?.vigentes.orEmpty().map { poliza ->
+                        com.example.solventa.ui.screens.PolizaElegible(
+                            polizaId = poliza.polizaId,
+                            etiqueta = "${poliza.nombreRamo} · ${poliza.numeroPoliza}"
+                        )
+                    }
+
+                    // Al registrar bien, se vuelve a la lista (que ya se recargó en el coordinador).
+                    LaunchedEffect(estadoSiniestros.registroExitoso) {
+                        if (estadoSiniestros.registroExitoso) {
+                            siniestros.consumirRegistroExitoso()
+                            navController.popBackStack(ScreenRoute.Claims.route, inclusive = false)
+                        }
+                    }
+
+                    ClaimFormScreen(
+                        polizas = elegibles,
+                        registrando = estadoSiniestros.registrando,
+                        error = estadoSiniestros.errorFormulario,
+                        onRegistrar = { polizaId, fecha, hora, lugar, descripcion, estimacion ->
+                            siniestros.registrar(
+                                SolicitudSiniestro(
+                                    polizaId = polizaId,
+                                    fechaEvento = fecha,
+                                    horaEvento = if (hora.length == 5) "$hora:00" else hora,
+                                    lugar = lugar,
+                                    descripcion = descripcion,
+                                    estimacionDanos = estimacion
+                                )
+                            )
+                        },
+                        onVolver = {
+                            siniestros.consumirErrorFormulario()
+                            navController.popBackStack()
                         }
                     )
                 }

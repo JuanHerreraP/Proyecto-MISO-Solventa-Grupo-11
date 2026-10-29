@@ -1,8 +1,9 @@
 """Siembra pólizas de demostración en la billetera de un cliente (HU07 / BPM-31).
 
 Mientras no exista la emisión automática (HU12), la billetera no tiene de dónde sacar
-pólizas. Este script le crea a un cliente ya registrado cuatro pólizas que cubren los
-casos de la historia: dos vigentes, una vencida y una cancelada.
+pólizas. Este script le crea a un cliente ya registrado cinco pólizas que cubren los
+casos de la historia: dos vigentes, una vencida, una cancelada y una paramétrica vigente
+de retraso de vuelo (AV123 / BOG, umbral 180 minutos) para la demo de telemetría (HU20).
 
 Es idempotente: si se vuelve a ejecutar, actualiza las mismas pólizas en vez de duplicarlas.
 Solo para desarrollo y pruebas; no debe ejecutarse contra producción.
@@ -36,7 +37,17 @@ def _polizas_demo(usuario, hoy: date):
     titular = f"{usuario.nombre} {usuario.apellido}"
     emitida = datetime.now(UTC)
 
-    def crear(n, ramo, inicio, fin, prima, cobertura, suma, estado=EstadoRegistroPoliza.VIGENTE):
+    def crear(
+        n,
+        ramo,
+        inicio,
+        fin,
+        prima,
+        cobertura,
+        suma,
+        estado=EstadoRegistroPoliza.VIGENTE,
+        descripcion_cobertura=None,
+    ):
         return Poliza(
             poliza_id=f"DEMO-{sufijo}-{n}",
             numero_poliza=f"SOL-{prefijos[ramo]}-{sufijo}-{n}",
@@ -53,6 +64,7 @@ def _polizas_demo(usuario, hoy: date):
                 codigo=cobertura.upper().replace(" ", "_")[:50],
                 nombre=cobertura,
                 suma_asegurada=Decimal(suma),
+                descripcion=descripcion_cobertura,
             ),
             codigo_verificacion=secrets.token_hex(8),
             emitida_en=emitida,
@@ -93,9 +105,60 @@ def _polizas_demo(usuario, hoy: date):
             hoy - timedelta(days=20),
             hoy + timedelta(days=10),
             "45000.00",
+            "Evento climático",
+            "500000.00",
+            estado=EstadoRegistroPoliza.VIGENTE,
+            # Condición paramétrica legible por Solventa al cruzar los eventos de telemetría
+            # (HU20): mismos códigos que el catálogo de cotización. El vuelo y la ubicación
+            # coinciden con el proveedor simulado (AV123 / BOG) y el umbral es 180 minutos.
+            descripcion_cobertura=(
+                "tipo_evento=EVENTO_CLIMATICO; numero_vuelo=AV321; ubicacion=BOG; "
+                "umbral_disparo=180; unidad=MINUTOS"
+            ),
+        ),
+        crear(
+            "05",
+            RamoPoliza.VIAJE,
+            hoy - timedelta(days=90),
+            hoy + timedelta(days=90),
+            "90000.00",
+            "Asistencia médica en viaje",
+            "40000000.00",
+            estado=EstadoRegistroPoliza.CANCELADA,
+        ),
+        crear(
+            "06",
+            RamoPoliza.PARAMETRICO,
+            hoy - timedelta(days=20),
+            hoy + timedelta(days=10),
+            "45000.00",
             "Retraso de vuelo",
             "500000.00",
-            estado=EstadoRegistroPoliza.CANCELADA,
+            estado=EstadoRegistroPoliza.VIGENTE,
+            # Condición paramétrica legible por Solventa al cruzar los eventos de telemetría
+            # (HU20): mismos códigos que el catálogo de cotización. El vuelo y la ubicación
+            # coinciden con el proveedor simulado (AV123 / BOG) y el umbral es 180 minutos.
+            descripcion_cobertura=(
+                "tipo_evento=RETRASO_VUELO; numero_vuelo=PV456; ubicacion=BOG; "
+                "umbral_disparo=180; unidad=MINUTOS"
+            ),
+        ),
+        crear(
+            "07",
+            RamoPoliza.PARAMETRICO,
+            hoy - timedelta(days=20),
+            hoy + timedelta(days=10),
+            "45000.00",
+            "Evento climático",
+            "500000.00",
+            estado=EstadoRegistroPoliza.VIGENTE,
+            # Condición paramétrica legible por Solventa al cruzar los eventos de telemetría
+            # (HU20): mismos códigos que el catálogo de cotización. El vuelo y la ubicación
+            # coinciden con el proveedor simulado (AV123 / BOG) y el umbral es 180 minutos.
+            descripcion_cobertura=(
+                "tipo_evento=EVENTO_CLIMATICO; numero_vuelo=zV321; ubicacion=BOG; "
+                "umbral_disparo=180; unidad=MINUTOS"
+            ),
         ),
     ]
 
