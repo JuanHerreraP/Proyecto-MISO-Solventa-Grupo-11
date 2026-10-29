@@ -11,7 +11,7 @@ Los dos últimos criterios de la historia en Jira (aprobación de siniestros por
 ## Flujo
 
 1. Desde **Pagos**, en un pago aprobado, el cliente abre **Contrato** (`/firma/{cotizacion_id}`).
-2. `GET /api/v1/firmas/{cotizacion_id}` arma el contrato la primera vez: titular, cobertura, datos del riesgo, prima pagada, referencia del pago y cláusulas del ramo. Lo guarda tal cual y fija su huella. Las consultas siguientes devuelven el mismo documento aunque cambien los datos del cliente.
+2. `GET /api/v1/firmas/{cotizacion_id}` arma el contrato la primera vez: titular, cobertura, datos del riesgo, prima pagada, referencia del pago y cláusulas del ramo. El nombre del ramo es el mismo del catálogo de cotización (por ejemplo, "Microseguro de vida"). Si la cotización de vida trae `valor_credito`, el contrato es de vida hipotecario y agrega la cláusula de la entidad financiera como beneficiaria. Lo guarda tal cual y fija su huella. Las consultas siguientes devuelven el mismo documento aunque cambien los datos del cliente.
 3. El cliente marca la autorización, elige SMS o correo y pide el código (`POST .../otp`).
 4. El cliente escribe el código. El portal envía el código y la huella del contrato que revisó (`POST .../firma`).
 5. El servicio verifica que la huella coincida, que el contrato guardado no haya sido alterado, que el pago siga aprobado y que el código sea válido. Luego pide el sello al proveedor y guarda la firma.

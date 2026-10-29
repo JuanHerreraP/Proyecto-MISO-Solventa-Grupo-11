@@ -11,16 +11,10 @@ from decimal import Decimal
 
 from pydantic import AwareDatetime, BaseModel, ConfigDict, EmailStr, Field
 
+from app.cotizaciones.dominio.catalogo import consultar_ramo
 from app.cotizaciones.dominio.modelos import RamoSeguro
 
-VERSION_PLANTILLA = "2026.10"
-
-NOMBRES_RAMO: dict[RamoSeguro, str] = {
-    RamoSeguro.VIAJE: "Seguro de viaje",
-    RamoSeguro.PROTECCION_DISPOSITIVOS: "Protección de dispositivos",
-    RamoSeguro.VIDA: "Seguro de vida hipotecario",
-    RamoSeguro.PARAMETRICO: "Seguro paramétrico",
-}
+VERSION_PLANTILLA = "2026.10.2"
 
 _CLAUSULAS_GENERALES = (
     "El tomador declara que la información suministrada es veraz y completa; la inexactitud "
@@ -33,14 +27,26 @@ _CLAUSULAS_GENERALES = (
     "(Ley 527 de 1999 y Decreto 2364 de 2012).",
 )
 
+# Vida hipotecario: la cotización trae el crédito que respalda el seguro (banco aliado, EC02).
+NOMBRE_VIDA_HIPOTECARIO = "Seguro de vida hipotecario"
+CAMPO_CREDITO_HIPOTECARIO = "valor_credito"
+
+_CLAUSULAS_VIDA = (
+    "El beneficio se paga a los beneficiarios designados por el asegurado o, en su defecto, "
+    "a sus herederos legales.",
+    "Se excluye el suicidio ocurrido durante el primer año de vigencia.",
+)
+
+_CLAUSULAS_VIDA_HIPOTECARIO = (
+    "El beneficiario a título oneroso es la entidad financiera que otorgó el crédito "
+    "hipotecario, hasta por el saldo insoluto de la deuda a la fecha del siniestro.",
+    "El remanente de la suma asegurada, si lo hay, se paga a los beneficiarios designados "
+    "por el asegurado o, en su defecto, a sus herederos legales.",
+    "Se excluye el suicidio ocurrido durante el primer año de vigencia.",
+)
+
 CLAUSULAS_POR_RAMO: dict[RamoSeguro, tuple[str, ...]] = {
-    RamoSeguro.VIDA: (
-        "El beneficiario a título oneroso es la entidad financiera que otorgó el crédito "
-        "hipotecario, hasta por el saldo insoluto de la deuda a la fecha del siniestro.",
-        "El remanente de la suma asegurada, si lo hay, se paga a los beneficiarios designados "
-        "por el asegurado o, en su defecto, a sus herederos legales.",
-        "Se excluye el suicidio ocurrido durante el primer año de vigencia.",
-    ),
+    RamoSeguro.VIDA: _CLAUSULAS_VIDA,
     RamoSeguro.VIAJE: (
         "La cobertura opera únicamente durante las fechas del viaje declaradas al cotizar.",
     ),
@@ -106,5 +112,20 @@ class ContratoSeguro(BaseModel):
         return hashlib.sha256(self.contenido_canonico()).hexdigest()
 
 
-def clausulas_de(ramo: RamoSeguro) -> tuple[str, ...]:
-    return CLAUSULAS_POR_RAMO.get(ramo, ()) + _CLAUSULAS_GENERALES
+def es_vida_hipotecario(ramo: RamoSeguro, datos_riesgo: dict[str, object]) -> bool:
+    return ramo is RamoSeguro.VIDA and CAMPO_CREDITO_HIPOTECARIO in datos_riesgo
+
+
+def nombre_ramo_de(ramo: RamoSeguro, datos_riesgo: dict[str, object]) -> str:
+    """El mismo nombre que el cliente vio al cotizar (catálogo de HU03)."""
+    if es_vida_hipotecario(ramo, datos_riesgo):
+        return NOMBRE_VIDA_HIPOTECARIO
+    return consultar_ramo(ramo).nombre
+
+
+def clausulas_de(ramo: RamoSeguro, datos_riesgo: dict[str, object]) -> tuple[str, ...]:
+    if es_vida_hipotecario(ramo, datos_riesgo):
+        particulares = _CLAUSULAS_VIDA_HIPOTECARIO
+    else:
+        particulares = CLAUSULAS_POR_RAMO.get(ramo, ())
+    return particulares + _CLAUSULAS_GENERALES

@@ -1,5 +1,6 @@
 import pytest
 
+from app.cotizaciones.dominio.modelos import RamoSeguro
 from app.firmas.modelos import CanalOtp, EstadoFirma
 from app.firmas.puertos import ProveedorFirmaNoDisponible
 from app.firmas.servicio import (
@@ -11,7 +12,7 @@ from app.firmas.servicio import (
     ReenvioNoPermitido,
 )
 from app.pagos.modelos import EstadoPago
-from tests.firmas.fabrica import AHORA, CLIENTE, COTIZACION, crear_entorno, pago
+from tests.firmas.fabrica import AHORA, CLIENTE, COTIZACION, cotizacion, crear_entorno, pago
 
 
 @pytest.fixture
@@ -49,6 +50,31 @@ def test_presenta_el_contrato_prellenado_tras_el_pago_aprobado(e):
     assert any("hipotecario" in clausula for clausula in contrato.clausulas)
     assert proceso.huella_documento == contrato.huella()
     assert len(proceso.huella_documento) == 64
+
+
+def test_microseguro_de_vida_usa_el_nombre_del_catalogo_y_sin_clausula_del_banco(e):
+    e.cotizaciones.guardar(
+        cotizacion().model_copy(
+            update={"datos_riesgo": {"fecha_nacimiento": "1990-05-14", "meses_cobertura": 12}}
+        )
+    )
+
+    contrato = e.servicio.presentar(CLIENTE, COTIZACION).contrato
+
+    assert contrato.nombre_ramo == "Microseguro de vida"
+    assert not any("entidad financiera" in clausula for clausula in contrato.clausulas)
+    assert any("beneficiarios designados" in clausula for clausula in contrato.clausulas)
+
+
+def test_otros_ramos_usan_el_nombre_del_catalogo(e):
+    e.cotizaciones.guardar(
+        cotizacion().model_copy(update={"ramo": RamoSeguro.VIAJE, "datos_riesgo": {}})
+    )
+
+    contrato = e.servicio.presentar(CLIENTE, COTIZACION).contrato
+
+    assert contrato.nombre_ramo == "Seguro de viaje"
+    assert any("fechas del viaje" in clausula for clausula in contrato.clausulas)
 
 
 def test_presentar_dos_veces_devuelve_el_mismo_documento(e):

@@ -64,6 +64,8 @@
   gap: 24px;
 }
 
+.firma-contenido-error { grid-template-columns: minmax(0, 520px); }
+
 .firma-principal { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
 
 .firma-encabezado h1 { margin: 0; font-family: var(--font-heading); font-size: 24px; }

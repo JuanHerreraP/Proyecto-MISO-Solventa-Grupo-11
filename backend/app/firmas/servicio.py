@@ -17,11 +17,11 @@ from datetime import UTC, datetime
 
 from app.cotizaciones.repositorio import RepositorioCotizaciones
 from app.firmas.contrato import (
-    NOMBRES_RAMO,
     VERSION_PLANTILLA,
     CoberturaContrato,
     ContratoSeguro,
     clausulas_de,
+    nombre_ramo_de,
 )
 from app.firmas.modelos import (
     MAX_ENVIOS,
@@ -153,7 +153,7 @@ class ServicioFirmas:
             version_plantilla=VERSION_PLANTILLA,
             cotizacion_id=cotizacion.cotizacion_id,
             ramo=cotizacion.ramo,
-            nombre_ramo=NOMBRES_RAMO[cotizacion.ramo],
+            nombre_ramo=nombre_ramo_de(cotizacion.ramo, cotizacion.datos_riesgo),
             titular=titular,
             cobertura_principal=CoberturaContrato(
                 codigo=cobertura.codigo,
@@ -168,7 +168,7 @@ class ServicioFirmas:
             pago_id=pago.pago_id,
             referencia_pago=pago.referencia_pasarela,
             fecha_pago=pago.actualizado_en,
-            clausulas=clausulas_de(cotizacion.ramo),
+            clausulas=clausulas_de(cotizacion.ramo, cotizacion.datos_riesgo),
         )
         ahora = self._reloj()
         proceso = ProcesoFirma(

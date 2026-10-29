@@ -165,11 +165,19 @@ export default function FirmaPage() {
     return (
       <div className="firma-pagina">
         <Pasos />
-        <main className="firma-contenido">
-          <p role="alert" className="firma-alerta">{errorCarga}</p>
-          <button type="button" className="firma-boton-secundario" onClick={() => navigate("/pagos")}>
-            Volver a pagos
-          </button>
+        <main className="firma-contenido firma-contenido-error">
+          <div className="firma-principal">
+            <header className="firma-encabezado">
+              <h1>No podemos mostrar el contrato</h1>
+            </header>
+            <p role="alert" className="firma-alerta">{errorCarga}</p>
+            <nav className="firma-acciones">
+              <button type="button" className="firma-volver" onClick={() => navigate("/pagos")}>
+                <span className="material-symbols-outlined" aria-hidden="true">arrow_back</span>
+                Volver a pagos
+              </button>
+            </nav>
+          </div>
         </main>
       </div>
     );
