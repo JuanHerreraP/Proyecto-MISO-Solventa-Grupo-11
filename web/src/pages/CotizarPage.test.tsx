@@ -107,6 +107,7 @@ function montar(ruta = "/cotizar") {
       <Routes>
         <Route path="/cotizar" element={<CotizarPage />} />
         <Route path="/home" element={<h1>Inicio</h1>} />
+        <Route path="/firma/:cotizacionId" element={<h1>Firma del contrato</h1>} />
         <Route path="/login" element={<h1>Inicia sesión</h1>} />
       </Routes>
     </MemoryRouter>,
@@ -151,6 +152,8 @@ it("paga con tarjeta aprobada y muestra la confirmación", async () => {
   await userEvent.click(screen.getByRole("button", { name: "Pagar prima" }));
 
   expect(await screen.findByText("Pago aprobado")).toBeInTheDocument();
+  await userEvent.click(screen.getByRole("button", { name: "Firmar contrato" }));
+  expect(await screen.findByRole("heading", { name: "Firma del contrato" })).toBeInTheDocument();
 });
 
 it("muestra el rechazo y permite reintentar volviendo a pagar la prima", async () => {

@@ -12,7 +12,7 @@ La pantalla `CotizarPage` avanza por pasos: `ramo → formulario → resultado �
 2. **Formulario:** se piden los campos de riesgo del ramo (catálogo de HU03) y se envía `POST /api/v1/cotizaciones`.
 3. **Resultado:** se muestra la prima y el detalle; el cliente **acepta** o cancela.
 4. **Pago:** al aceptar se genera una `Idempotency-Key` y se paga con tarjeta o PSE (`POST /api/v1/pagos`, HU13).
-5. **Confirmación:** aprobado, rechazado (con opción de reintentar) o pendiente (PSE, por webhook).
+5. **Confirmación:** aprobado (lleva a la [firma del contrato](firma-electronica.md), HU14), rechazado (con opción de reintentar) o pendiente (PSE, por webhook).
 
 ## Servicios que consume
 
