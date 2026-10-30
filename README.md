@@ -170,6 +170,7 @@ curl -X POST http://localhost:8004/simulate/flight-delay \
 - [Recaudo inicial de la prima con pasarela de pagos (HU13)](docs/recaudo-pagos.md)
 - [Comprar un seguro desde la web: cotizar, aceptar y pagar (HU23)](docs/compra-web.md)
 - [Siniestros: registro manual y detección paramétrica por telemetría (HU20)](docs/siniestros.md)
+- [Firma electrónica del contrato (HU14)](docs/firma-electronica.md)
 
 ## Integración continua
 

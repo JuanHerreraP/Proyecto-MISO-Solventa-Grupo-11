@@ -1,5 +1,5 @@
 import RutaProtegida from "./components/auth/RutaProtegida";
-import { ROLES_ADMINISTRACION_SOCIOS } from "./types/permisos";
+import { ROLES_ADMINISTRACION_SOCIOS, ROLES_CLIENTE } from "./types/permisos";
 import { useEffect, useState } from "react";
 import { iniciarControlSesion, restaurarSesion } from "./services/session";
 import {
@@ -18,6 +18,7 @@ import CotizacionesPage from "./pages/CotizacionesPage";
 import PolizasPage from "./pages/PolizasPage";
 import ClaimRegistrationPage from "./pages/ClaimRegistrationPage";
 import SiniestrosPage from "./pages/SiniestrosPage";
+import FirmaPage from "./pages/FirmaPage";
 import SocioRegistrationPage from "./pages/SocioRegistrationPage";
 
 function App() {
@@ -88,6 +89,11 @@ function App() {
       <Route
         path="/siniestros/nuevo"
         element={<RutaProtegida><ClaimRegistrationPage /></RutaProtegida>}
+      />
+
+      <Route
+        path="/firma/:cotizacionId"
+        element={<RutaProtegida roles={ROLES_CLIENTE}><FirmaPage /></RutaProtegida>}
       />
 
       <Route

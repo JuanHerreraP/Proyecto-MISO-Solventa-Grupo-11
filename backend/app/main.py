@@ -17,6 +17,7 @@ from app.api import (
     cotizaciones,
     credenciales_socios,
     enriquecimiento,
+    firmas,
     identidad,
     oauth_socios,
     pagos,
@@ -28,6 +29,7 @@ from app.api import (
     socios,
     telemetria,
 )
+from app.firmas import modelos_db as modelos_db_firmas  # noqa: F401
 from app.identidad import (
     auditoria,
     modelos_db,  # noqa: F401
@@ -73,8 +75,8 @@ def crear_app() -> FastAPI:
     @app.exception_handler(RequestValidationError)
     async def errores_de_validacion(request: Request, error: RequestValidationError):
         detalle = jsonable_encoder(error.errors())
-        if request.url.path.startswith("/api/v1/pagos"):
-            # Los errores de FastAPI devuelven el valor recibido; en pagos podría ser un PAN.
+        if request.url.path.startswith(("/api/v1/pagos", "/api/v1/firmas")):
+            # Los errores de FastAPI devuelven el valor recibido: un PAN o un código OTP.
             detalle = [
                 {campo: valor for campo, valor in e.items() if campo not in {"input", "ctx"}}
                 for e in detalle
@@ -102,6 +104,7 @@ def crear_app() -> FastAPI:
                     "/api/v1/enriquecimientos",
                     "/api/v1/socios",
                     "/api/v1/billetera",
+                    "/api/v1/firmas",
                 )
             )
         )
@@ -131,6 +134,7 @@ def crear_app() -> FastAPI:
     app.include_router(pse_simulado.router)
     app.include_router(siniestros.router)
     app.include_router(telemetria.router)
+    app.include_router(firmas.router)
     app.include_router(perfilamiento.router)
     app.include_router(enriquecimiento.router)
     app.include_router(socios.router)

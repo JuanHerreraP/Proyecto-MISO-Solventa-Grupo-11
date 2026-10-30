@@ -621,7 +621,7 @@ export default function CotizarPage() {
           {pago.estado === "APROBADO" && (
             <p className="cotizar-mensaje-ok">
               Tu pago de {formatearMonto(pago.monto, pago.moneda)} fue aprobado. En un único flujo de
-              compra, el siguiente paso es la firma del contrato y la emisión de tu póliza.
+              compra, el siguiente paso es firmar el contrato para emitir tu póliza.
             </p>
           )}
           {pago.estado === "PENDIENTE" && (
@@ -658,6 +658,23 @@ export default function CotizarPage() {
                   disabled={!cotizacion}
                 >
                   Reintentar pago
+                </button>
+              </>
+            ) : pago.estado === "APROBADO" ? (
+              <>
+                <button
+                  type="button"
+                  className="cotizar-boton-secundario"
+                  onClick={() => navigate("/home")}
+                >
+                  Firmar después
+                </button>
+                <button
+                  type="button"
+                  className="cotizar-boton-primario"
+                  onClick={() => navigate(`/firma/${encodeURIComponent(pago.cotizacion_id)}`)}
+                >
+                  Firmar contrato
                 </button>
               </>
             ) : (

@@ -1,1 +1,2 @@
 export const ROLES_ADMINISTRACION_SOCIOS = ["INGENIERO_INTEGRACIONES", "SERVICIO_INTERNO"] as const;
+export const ROLES_CLIENTE = ["CLIENTE"] as const;
