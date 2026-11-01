@@ -44,3 +44,21 @@ class EnlaceCertificadoDB(Base):
     cliente_id: Mapped[str] = mapped_column(String(50), nullable=False)
     creado_en: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     expira_en: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+
+class DocumentoPolizaDB(Base):
+    """PDF emitido de una póliza: dónde está guardado y su huella SHA-256 (HU12)."""
+
+    __tablename__ = "documentos_poliza"
+
+    poliza_id: Mapped[str] = mapped_column(
+        String(50), ForeignKey("polizas.poliza_id", ondelete="CASCADE"), primary_key=True
+    )
+    clave_almacenamiento: Mapped[str] = mapped_column(String(200), nullable=False)
+    huella_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    tamano_bytes: Mapped[int] = mapped_column(nullable=False)
+    creado_en: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    bienvenida_enviada_en: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    notificada_en: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)

@@ -2,6 +2,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app.api.cotizaciones import ActorCotizacion, TipoActorCotizacion, actor_actual
+from app.api.emision import obtener_despachador
 from app.api.firmas import obtener_servicio
 from app.identidad.modelos import Rol
 from app.main import app
@@ -18,6 +19,7 @@ def actor(rol=Rol.CLIENTE, actor_id="CLI-001"):
 def entorno():
     e = crear_entorno()
     app.dependency_overrides[obtener_servicio] = lambda: e.servicio
+    app.dependency_overrides[obtener_despachador] = lambda: lambda poliza_id: None
     app.dependency_overrides[actor_actual] = actor()
     yield TestClient(app), e
     app.dependency_overrides.clear()

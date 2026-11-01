@@ -188,6 +188,10 @@
 .firma-exito strong { display: block; font-size: 13px; }
 .firma-exito small { color: var(--solventa-muted); }
 
+.firma-poliza { flex-wrap: wrap; }
+.firma-poliza > div { flex: 1 1 220px; }
+.firma-poliza button { margin-left: auto; }
+
 .firma-acciones { display: flex; }
 .firma-volver {
   display: inline-flex;

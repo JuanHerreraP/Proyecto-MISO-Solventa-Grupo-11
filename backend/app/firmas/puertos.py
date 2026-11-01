@@ -49,6 +49,14 @@ class ProveedorFirmaElectronica(Protocol):
         ...
 
 
+class EmisorPoliza(Protocol):
+    """Quien emite la póliza (HU12) una vez el contrato queda firmado."""
+
+    def emitir(self, cotizacion_id: str) -> object: ...
+
+    def poliza_emitida(self, cotizacion_id: str) -> str | None: ...
+
+
 class RepositorioFirmas(Protocol):
     def crear(self, proceso: ProcesoFirma) -> bool:
         """Inserta el proceso; devuelve False si la cotización ya tiene uno."""

@@ -8,10 +8,12 @@ import {
   type CanalOtp,
   type ProcesoFirma,
 } from "../services/firma.service";
+import { descargarDocumentoPoliza } from "../services/poliza-documento.service";
 import "../styles/firma.css";
 
 const PASOS = ["Consentimiento", "Perfil de riesgo", "Cotización", "Pago y firma", "Póliza emitida"];
-const PASO_ACTUAL = 3;
+const PASO_PAGO_Y_FIRMA = 3;
+const PASO_POLIZA_EMITIDA = 4;
 
 function moneda(valor: string, codigo: string): string {
   return Number(valor).toLocaleString("es-CO", {
@@ -42,7 +44,7 @@ function segundosHasta(iso: string | null, ahora: number): number {
   return Math.max(0, Math.ceil((new Date(iso).getTime() - ahora) / 1000));
 }
 
-function Pasos() {
+function Pasos({ actual }: { actual: number }) {
   return (
     <header className="firma-barra">
       <div className="firma-marca">
@@ -53,10 +55,10 @@ function Pasos() {
       {PASOS.map((paso, indice) => (
         <li
           key={paso}
-          className={indice < PASO_ACTUAL ? "hecho" : indice === PASO_ACTUAL ? "actual" : ""}
-          aria-current={indice === PASO_ACTUAL ? "step" : undefined}
+          className={indice < actual ? "hecho" : indice === actual ? "actual" : ""}
+          aria-current={indice === actual ? "step" : undefined}
         >
-          <span className="firma-paso-numero">{indice < PASO_ACTUAL ? "✓" : indice + 1}</span>
+          <span className="firma-paso-numero">{indice < actual ? "✓" : indice + 1}</span>
           {paso}
         </li>
       ))}
@@ -144,6 +146,8 @@ export default function FirmaPage() {
   const [codigo, setCodigo] = useState("");
   const [enviando, setEnviando] = useState(false);
   const [ahora, setAhora] = useState(() => Date.now());
+  const [descargando, setDescargando] = useState(false);
+  const [errorDescarga, setErrorDescarga] = useState("");
 
   useEffect(() => {
     let activo = true;
@@ -164,7 +168,7 @@ export default function FirmaPage() {
   if (errorCarga) {
     return (
       <div className="firma-pagina">
-        <Pasos />
+        <Pasos actual={PASO_PAGO_Y_FIRMA} />
         <main className="firma-contenido firma-contenido-error">
           <div className="firma-principal">
             <header className="firma-encabezado">
@@ -204,6 +208,29 @@ export default function FirmaPage() {
     }
   }
 
+  async function descargarPoliza() {
+    if (!proceso?.poliza_id) return;
+    setErrorDescarga("");
+    setDescargando(true);
+    try {
+      await descargarDocumentoPoliza(proceso.poliza_id);
+    } catch (fallo) {
+      setErrorDescarga((fallo as Error).message);
+    } finally {
+      setDescargando(false);
+    }
+  }
+
+  // Si la emisión quedó pendiente, consultar el contrato la completa en el servidor.
+  async function actualizarPoliza() {
+    setErrorDescarga("");
+    try {
+      setProceso(await obtenerContrato(cotizacionId));
+    } catch (fallo) {
+      setErrorDescarga((fallo as Error).message);
+    }
+  }
+
   async function firmar(evento: FormEvent) {
     evento.preventDefault();
     setAviso("");
@@ -231,14 +258,16 @@ export default function FirmaPage() {
 
   return (
     <div className="firma-pagina">
-      <Pasos />
+      <Pasos actual={proceso.poliza_id ? PASO_POLIZA_EMITIDA : PASO_PAGO_Y_FIRMA} />
       <main className="firma-contenido">
         <div className="firma-principal">
           <header className="firma-encabezado">
             <h1>{proceso.estado === "FIRMADA" ? "Contrato firmado" : "Firma tu contrato"}</h1>
             <p>
               {proceso.estado === "FIRMADA"
-                ? "Tu firma quedó registrada. La póliza se emitirá con este contrato."
+                ? proceso.poliza_id
+                  ? "Tu firma quedó registrada y tu póliza ya fue emitida."
+                  : "Tu firma quedó registrada. Estamos emitiendo tu póliza."
                 : "Revisa las condiciones de tu seguro y fírmalas con el código que te enviamos."}
             </p>
           </header>
@@ -260,6 +289,42 @@ export default function FirmaPage() {
               </div>
             </section>
           )}
+
+          {proceso.estado === "FIRMADA" && proceso.poliza_id && (
+            <section className="firma-tarjeta firma-exito firma-poliza" aria-label="Póliza emitida">
+              <span className="material-symbols-outlined" aria-hidden="true">task_alt</span>
+              <div>
+                <strong>¡Tu póliza fue emitida!</strong>
+                <small>
+                  Te enviaremos un correo a {proceso.contrato.titular.email} con el documento adjunto.
+                </small>
+              </div>
+              <button
+                type="button"
+                className="firma-boton-primario"
+                onClick={() => void descargarPoliza()}
+                disabled={descargando}
+              >
+                {descargando ? "Descargando…" : "Descargar póliza (PDF)"}
+                <span className="material-symbols-outlined" aria-hidden="true">download</span>
+              </button>
+            </section>
+          )}
+
+          {proceso.estado === "FIRMADA" && !proceso.poliza_id && (
+            <section className="firma-tarjeta firma-poliza" aria-label="Póliza en preparación">
+              <span className="material-symbols-outlined firma-icono" aria-hidden="true">hourglass_top</span>
+              <div>
+                <strong>Estamos preparando tu póliza</strong>
+                <small>Puede tardar unos segundos.</small>
+              </div>
+              <button type="button" className="firma-boton-secundario" onClick={() => void actualizarPoliza()}>
+                Actualizar
+              </button>
+            </section>
+          )}
+
+          {errorDescarga && <p role="alert" className="firma-alerta">{errorDescarga}</p>}
 
           {proceso.estado === "BLOQUEADA" && (
             <p role="alert" className="firma-alerta">
