@@ -11,7 +11,7 @@ from app.cotizaciones.repositorio import RepositorioCotizacionesPostgres
 from app.firmas.repositorio import RepositorioFirmasPostgres
 from app.identidad.modelos import Rol
 from app.infraestructura.database import SessionLocal, get_db
-from app.polizas.almacenamiento import AlmacenDocumentos, AlmacenEnDisco, AlmacenNoDisponible
+from app.polizas.almacenamiento import AlmacenDocumentos, AlmacenNoDisponible, crear_almacen
 from app.polizas.comunicaciones import ComunicacionesSimuladas
 from app.polizas.emision import (
     AccesoDenegado,
@@ -28,7 +28,7 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/v1/polizas", tags=["polizas"])
 
-_almacen = AlmacenEnDisco()
+_almacen = crear_almacen()
 _comunicaciones = ComunicacionesSimuladas()
 
 
