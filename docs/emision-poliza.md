@@ -58,6 +58,17 @@ Respuestas: 404 si la póliza no existe o es de otro cliente; 403 si el asesor n
 
 Las credenciales y la región salen de la cadena estándar de AWS (en ECS, el rol de la tarea).
 
+## Infraestructura en AWS
+
+`infra/aws/stack.json` define lo necesario:
+
+- **`PolizasBucket`:** bucket privado (sin acceso público), cifrado `AES256`, versionado, y con una política que rechaza el tráfico sin TLS. Tiene política `Retain`: sobrevive al borrado del stack para no perder documentos de clientes por accidente.
+- **Permisos del rol de la tarea:** `s3:GetObject` y `s3:PutObject` sobre los objetos, y `s3:ListBucket` sobre el bucket. `ListBucket` es imprescindible: sin él, S3 responde `AccessDenied` (no "no existe") al pedir un PDF que aún no se subió, y la aplicación lo tomaría por un fallo de S3 y nunca escribiría en el bucket.
+- **Variables del contenedor:** `POLIZAS_S3_BUCKET` y `AWS_DEFAULT_REGION`.
+- **Salida del stack:** `PolizasBucket`.
+
+El workflow `AWS Infra` (acción `provisionar`) lo crea con el stack; la acción `eliminar` descubre el bucket antes de borrar el stack, y después lo vacía (todas las versiones) y lo elimina.
+
 ## Pruebas
 
 - `backend/tests/emision/`: emisión, idempotencia, PDF, descarga por cliente y asesor, integridad, correo y notificación asíncronos, repositorios de base de datos y almacenamiento (S3 simulado, respaldo en disco y un cliente `boto3` real contra un endpoint que no responde).
@@ -65,7 +76,7 @@ Las credenciales y la región salen de la cadena estándar de AWS (en ECS, el ro
 
 ## Pendiente
 
-- **Antes de desplegar en AWS:** crear el bucket de documentos en el stack de infraestructura, darle al rol de la tarea ECS `s3:GetObject` y `s3:PutObject` sobre él, y definir `POLIZAS_S3_BUCKET`. Sin eso la aplicación seguirá guardando en el disco del contenedor, que no es persistente. El adaptador de S3 ya está escrito y probado, pero no contra un S3 real.
+- **Probar contra un S3 real.** El stack `infra/aws/stack.json` ya crea el bucket de documentos (`PolizasBucket`), le da al rol de la tarea ECS `s3:GetObject`, `s3:PutObject` y `s3:ListBucket`, y define `POLIZAS_S3_BUCKET`. El adaptador de S3 está probado con un S3 simulado y contra un endpoint caído, pero aún no contra un bucket real desplegado.
 - Adaptador de SES (o SMTP) para el correo.
 - El envío en segundo plano usa las tareas de FastAPI. Un fallo deja el envío pendiente, pero nada lo reintenta solo: una cola con reintentos (SQS, como en la arquitectura) es el siguiente paso.
 - Vista de pólizas del asesor en el portal. El endpoint ya permite su descarga.

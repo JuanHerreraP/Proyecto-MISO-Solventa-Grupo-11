@@ -2,20 +2,15 @@ name: AWS Infra
 
 # Aprovisiona o elimina el MVP de Solventa en AWS
 #   provisionar: ECR + imagen API + secreto JWT + stack solventa-mvp + web + verificación
-#   eliminar:    stack solventa-mvp + bucket web + repositorio ECR + secreto JWT
+#   eliminar:    stack solventa-mvp + bucket web + bucket de PDF de pólizas + repositorio ECR
+#                + secreto JWT
 #
 # Secrets requeridos del repositorio:
 #   AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY  (y opcional AWS_SESSION_TOKEN)
 # Opcional (solo si se quiere crear el primer admin): ADMIN_PASSWORD
 
 on:
-  # En push siempre se PROVISIONA (sin admin); los inputs solo existen en dispatch.
-  # Para que el push vuelva a provisionar, intercambiar los `if` de ambos jobs.
-  push:
-    branches: [feat/cloud-deployment]
-    paths:
-      - .github/workflows/aws-infra.yml
-      - infra/aws/**
+  # Solo manual (Actions > AWS Infra > Run workflow): se elige la acción y sus parámetros.
   workflow_dispatch:
     inputs:
       accion:
@@ -63,7 +58,7 @@ env:
 jobs:
   provisionar:
     name: Provisionar infraestructura
-    if: ${{ github.event_name == 'push' || inputs.accion == 'provisionar' }}
+    if: ${{ inputs.accion == 'provisionar' }}
     runs-on: ubuntu-latest
     timeout-minutes: 90
     steps:
@@ -243,6 +238,9 @@ jobs:
             --query "Stacks[0].Outputs[?OutputKey=='WebBucket'].OutputValue" --output text 2>/dev/null || true)
           [ "$WEB_BUCKET" = "None" ] && WEB_BUCKET=""
           echo "WEB_BUCKET=$WEB_BUCKET" >> "$GITHUB_ENV"
+          POLIZAS_BUCKET=$(aws cloudformation describe-stacks --stack-name "$STACK"             --query "Stacks[0].Outputs[?OutputKey=='PolizasBucket'].OutputValue" --output text 2>/dev/null || true)
+          [ "$POLIZAS_BUCKET" = "None" ] && POLIZAS_BUCKET=""
+          echo "POLIZAS_BUCKET=$POLIZAS_BUCKET" >> "$GITHUB_ENV"
           BACKEND_REPO=$(aws cloudformation describe-stacks --stack-name "$ECR_STACK" \
             --query "Stacks[0].Outputs[?OutputKey=='BackendUri'].OutputValue" --output text 2>/dev/null || true)
           [ "$BACKEND_REPO" = "None" ] && BACKEND_REPO=""
@@ -253,19 +251,25 @@ jobs:
           aws cloudformation delete-stack --stack-name "$STACK"
           aws cloudformation wait stack-delete-complete --stack-name "$STACK"
 
-      - name: Vaciar y eliminar el bucket web (versionado)
+      # Ambos buckets son versionados y de política Retain: hay que borrar todas las
+      # versiones y los marcadores de eliminación antes de poder eliminar el bucket.
+      - name: Vaciar y eliminar los buckets retenidos (web y PDF de pólizas)
         run: |
-          if [ -z "$WEB_BUCKET" ] || ! aws s3api head-bucket --bucket "$WEB_BUCKET" 2>/dev/null; then
-            echo "Sin bucket web que eliminar."; exit 0
-          fi
-          while true; do
-            OBJS=$(aws s3api list-object-versions --bucket "$WEB_BUCKET" --max-items 1000 \
-              --query '{Objects: [].{Key: Key, VersionId: VersionId}}' --output json 2>/dev/null \
-              | jq -c 'select(.Objects != null) | {Objects: [.Objects[] | select(.Key != null)], Quiet: true}')
-            if [ -z "$OBJS" ] || [ "$(echo "$OBJS" | jq '.Objects | length')" = "0" ]; then break; fi
-            aws s3api delete-objects --bucket "$WEB_BUCKET" --delete "$OBJS" >/dev/null
-          done
-          aws s3api delete-bucket --bucket "$WEB_BUCKET"
+          vaciar_y_eliminar() {
+            BUCKET="$1"
+            if [ -z "$BUCKET" ] || ! aws s3api head-bucket --bucket "$BUCKET" 2>/dev/null; then
+              echo "Sin bucket que eliminar ($2)."; return 0
+            fi
+            while true; do
+              OBJS=$(aws s3api list-object-versions --bucket "$BUCKET" --max-items 1000                 --query '{Objects: [].{Key: Key, VersionId: VersionId}}' --output json 2>/dev/null                 | jq -c 'select(.Objects != null) | {Objects: [.Objects[] | select(.Key != null)], Quiet: true}')
+              if [ -z "$OBJS" ] || [ "$(echo "$OBJS" | jq '.Objects | length')" = "0" ]; then break; fi
+              aws s3api delete-objects --bucket "$BUCKET" --delete "$OBJS" >/dev/null
+            done
+            aws s3api delete-bucket --bucket "$BUCKET"
+            echo "Bucket $2 eliminado: $BUCKET"
+          }
+          vaciar_y_eliminar "$WEB_BUCKET" "web"
+          vaciar_y_eliminar "$POLIZAS_BUCKET" "de PDF de pólizas"
 
       - name: Eliminar repositorio ECR
         run: |
