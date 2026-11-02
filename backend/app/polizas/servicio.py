@@ -75,9 +75,7 @@ class ServicioBilletera:
             a_poliza_en_billetera(p, hoy) for p in self._polizas.listar_por_cliente(cliente_id)
         ]
         # Ordenadas por fecha de emisión, la más reciente arriba (desempata el número).
-        ordenadas = sorted(
-            vistas, key=lambda v: (v.emitida_en, v.numero_poliza), reverse=True
-        )
+        ordenadas = sorted(vistas, key=lambda v: (v.emitida_en, v.numero_poliza), reverse=True)
         return Billetera(
             polizas=ordenadas,
             total_vigentes=sum(1 for v in vistas if v.activa),
