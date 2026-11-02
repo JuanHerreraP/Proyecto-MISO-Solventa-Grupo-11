@@ -121,7 +121,7 @@ aws cloudformation deploy --stack-name solventa-mvp \
   --parameter-overrides file://infra/secrets/parameters.json \
   --capabilities CAPABILITY_IAM
 
-# 3.5 Ver las salidas (URL pública, bucket web, cluster, etc.).
+# 3.5 Ver las salidas (URL pública, bucket web, bucket de PDF de pólizas, cluster, etc.).
 aws cloudformation describe-stacks --stack-name solventa-mvp \
   --query "Stacks[0].Outputs" --output table
 ```
@@ -213,5 +213,11 @@ aws cloudformation wait stack-delete-complete --stack-name solventa-mvp
 ```
 
 > Eliminar `solventa-mvp` borra la base y los NAT Gateway. **Se conservan** (por
-> política de retención) el bucket web versionado, el repositorio ECR y el
-> secreto JWT; retirarlos aparte si ya no se necesitan.
+> política de retención) el bucket web versionado, el bucket versionado de los
+> PDF de pólizas (`PolizasBucket`), el repositorio ECR y el secreto JWT; retirarlos
+> aparte si ya no se necesitan. El workflow **AWS Infra** con la acción `eliminar`
+> ya vacía (todas las versiones) y borra ambos buckets, el ECR y el secreto.
+>
+> **Los PDF de pólizas son documentos de clientes:** por eso su bucket sobrevive a un
+> `delete-stack` manual. Si se borra solo el stack, el bucket queda huérfano con los
+> documentos, y un despliegue nuevo crea otro bucket vacío.
