@@ -20,7 +20,8 @@ data class PolizaEnBilleteraDto(
     @SerializedName("activa") val activa: Boolean?,
     @SerializedName("fecha_inicio") val fechaInicio: String?,
     @SerializedName("fecha_fin") val fechaFin: String?,
-    @SerializedName("cobertura_principal") val coberturaPrincipal: String?
+    @SerializedName("cobertura_principal") val coberturaPrincipal: String?,
+    @SerializedName("emitida_en") val emitidaEn: String?
 ) {
     fun aPoliza(): PolizaResumen? {
         val estadoPoliza = estado.aEstado() ?: return null
@@ -33,7 +34,8 @@ data class PolizaEnBilleteraDto(
             activa = activa ?: (estadoPoliza == EstadoPoliza.VIGENTE),
             fechaInicio = fechaInicio ?: return null,
             fechaFin = fechaFin ?: return null,
-            coberturaPrincipal = coberturaPrincipal.orEmpty()
+            coberturaPrincipal = coberturaPrincipal.orEmpty(),
+            emitidaEn = emitidaEn.orEmpty()
         )
     }
 }

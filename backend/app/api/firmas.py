@@ -1,11 +1,13 @@
 """API de la firma electrónica del contrato de seguro (HU14 / BPM-60)."""
 
+from collections.abc import Callable
 from datetime import datetime
 
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request, status
 from pydantic import AwareDatetime, BaseModel, ConfigDict, Field
 from sqlalchemy.orm import Session
 
+from app.api.emision import construir_emision, obtener_despachador
 from app.api.pagos import cliente_pagador
 from app.cotizaciones.repositorio import RepositorioCotizacionesPostgres
 from app.firmas.contrato import ContratoSeguro
@@ -44,6 +46,7 @@ def obtener_servicio(
         pagos=RepositorioPagosPostgres(db),
         titulares=RepositorioTitularesPostgres(db),
         proveedor=proveedor,
+        emisor=construir_emision(db),
     )
 
 
@@ -65,9 +68,10 @@ class RespuestaFirma(BaseModel):
     firmado_en: AwareDatetime | None
     ip_firmante: str | None
     referencia_proveedor: str | None
+    poliza_id: str | None = None
 
     @classmethod
-    def de(cls, proceso: ProcesoFirma) -> "RespuestaFirma":
+    def de(cls, proceso: ProcesoFirma, poliza_id: str | None = None) -> "RespuestaFirma":
         return cls(
             firma_id=proceso.firma_id,
             cotizacion_id=proceso.cotizacion_id,
@@ -84,6 +88,7 @@ class RespuestaFirma(BaseModel):
             firmado_en=proceso.firmado_en,
             ip_firmante=proceso.ip_firmante,
             referencia_proveedor=proceso.referencia_proveedor,
+            poliza_id=poliza_id,
         )
 
 
@@ -143,6 +148,15 @@ def _no_disponible(error: FirmaNoDisponible) -> HTTPException:
     return _error(codigo_http, error.codigo, mensaje)
 
 
+def _respuesta(servicio: ServicioFirmas, proceso: ProcesoFirma) -> RespuestaFirma:
+    poliza_id = (
+        servicio.poliza_emitida(proceso.cotizacion_id)
+        if proceso.estado is EstadoFirma.FIRMADA
+        else None
+    )
+    return RespuestaFirma.de(proceso, poliza_id)
+
+
 _BLOQUEADA = (
     status.HTTP_423_LOCKED,
     "FIRMA_BLOQUEADA",
@@ -171,7 +185,7 @@ def presentar_contrato(
     servicio: ServicioFirmas = Depends(obtener_servicio),
 ) -> RespuestaFirma:
     try:
-        return RespuestaFirma.de(servicio.presentar(cliente_id, cotizacion_id))
+        return _respuesta(servicio, servicio.presentar(cliente_id, cotizacion_id))
     except FirmaNoDisponible as error:
         raise _no_disponible(error) from None
 
@@ -192,7 +206,8 @@ def solicitar_otp(
     servicio: ServicioFirmas = Depends(obtener_servicio),
 ) -> RespuestaFirma:
     try:
-        return RespuestaFirma.de(servicio.solicitar_otp(cliente_id, cotizacion_id, solicitud.canal))
+        proceso = servicio.solicitar_otp(cliente_id, cotizacion_id, solicitud.canal)
+        return _respuesta(servicio, proceso)
     except FirmaNoDisponible as error:
         raise _no_disponible(error) from None
     except ReenvioNoPermitido as error:
@@ -218,15 +233,18 @@ def solicitar_otp(
         "El cliente envía el código y la huella del contrato que revisó. Si la huella no es "
         "la del contrato guardado, la firma se rechaza. Quedan registrados la fecha, la IP, "
         "el firmante, la huella y el sello del proveedor. Repetir la firma de un contrato ya "
-        "firmado devuelve la firma existente."
+        "firmado devuelve la firma existente. Al completarse la firma se emite la póliza y "
+        "su PDF; `poliza_id` identifica el documento descargable."
     ),
 )
 def firmar_contrato(
     cotizacion_id: str,
     solicitud: SolicitudFirma,
     request: Request,
+    tareas: BackgroundTasks,
     cliente_id: str = Depends(cliente_pagador),
     servicio: ServicioFirmas = Depends(obtener_servicio),
+    despachar: Callable[[str], None] = Depends(obtener_despachador),
 ) -> RespuestaFirma:
     try:
         proceso = servicio.firmar(
@@ -260,4 +278,8 @@ def firmar_contrato(
         raise _error(*_BLOQUEADA) from None
     except ProveedorFirmaNoDisponible:
         raise _error(*_PROVEEDOR_CAIDO) from None
-    return RespuestaFirma.de(proceso)
+    respuesta = _respuesta(servicio, proceso)
+    if respuesta.poliza_id is not None:
+        # Correo de bienvenida y confirmación: después de responder, sin demorar al cliente.
+        tareas.add_task(despachar, respuesta.poliza_id)
+    return respuesta

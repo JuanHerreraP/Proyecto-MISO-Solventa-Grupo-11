@@ -43,6 +43,8 @@ export interface ProcesoFirma {
   firmado_en: string | null;
   ip_firmante: string | null;
   referencia_proveedor: string | null;
+  /** Identificador de la póliza emitida al completarse la firma; null mientras se prepara. */
+  poliza_id: string | null;
 }
 
 /** Error de negocio del backend, con el código para decidir qué mostrar. */

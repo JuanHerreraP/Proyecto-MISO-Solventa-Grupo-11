@@ -9,7 +9,12 @@ import {
   solicitarCodigo,
   type ProcesoFirma,
 } from "../services/firma.service";
+import { descargarDocumentoPoliza } from "../services/poliza-documento.service";
 import FirmaPage from "./FirmaPage";
+
+vi.mock("../services/poliza-documento.service", () => ({
+  descargarDocumentoPoliza: vi.fn(),
+}));
 
 vi.mock("../services/firma.service", async (original) => ({
   ...(await original<typeof import("../services/firma.service")>()),
@@ -57,6 +62,7 @@ function proceso(cambios: Partial<ProcesoFirma> = {}): ProcesoFirma {
     firmado_en: null,
     ip_firmante: null,
     referencia_proveedor: null,
+    poliza_id: null,
     ...cambios,
   };
 }
@@ -72,6 +78,8 @@ function pantalla() {
   render(<MemoryRouter initialEntries={["/firma/COT-001"]}><Routes>
     <Route path="/firma/:cotizacionId" element={<FirmaPage />} />
     <Route path="/pagos" element={<h1>Pagos</h1>} />
+    <Route path="/polizas" element={<h1>Mis pólizas</h1>} />
+    <Route path="/cotizaciones" element={<h1>Mis cotizaciones</h1>} />
   </Routes></MemoryRouter>);
 }
 
@@ -177,6 +185,83 @@ it("explica por qué no hay contrato si el pago no está aprobado", async () => 
   pantalla();
 
   expect(await screen.findByRole("alert")).toHaveTextContent("pago de la prima quede aprobado");
-  await userEvent.click(screen.getByRole("button", { name: "Volver a pagos" }));
-  expect(await screen.findByRole("heading", { name: "Pagos" })).toBeInTheDocument();
+});
+
+it("ya no muestra el botón de retroceso ni la barra de pasos", async () => {
+  vi.mocked(obtenerContrato).mockResolvedValue(proceso());
+  pantalla();
+
+  await screen.findByRole("heading", { name: "Firma tu contrato" });
+  expect(screen.queryByRole("button", { name: "Atrás" })).not.toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "Volver a pagos" })).not.toBeInTheDocument();
+  expect(screen.queryByRole("list", { name: "Progreso de la compra" })).not.toBeInTheDocument();
+});
+
+const firmada = (cambios: Partial<ProcesoFirma> = {}) => proceso({
+  estado: "FIRMADA", firmado_en: "2027-01-01T15:02:00Z", referencia_proveedor: "SIM-abc", ...cambios,
+});
+
+it("al firmar muestra el éxito de la emisión y ofrece la descarga inmediata", async () => {
+  vi.mocked(obtenerContrato).mockResolvedValue(conCodigo());
+  vi.mocked(firmarContrato).mockResolvedValue(firmada({ poliza_id: "POL-001" }));
+  vi.mocked(descargarDocumentoPoliza).mockResolvedValue();
+  pantalla();
+
+  await userEvent.type(await screen.findByLabelText("Código de verificación"), "123456");
+  await userEvent.click(screen.getByRole("button", { name: /Firmar contrato/ }));
+
+  expect(await screen.findByText("¡Tu póliza fue emitida!")).toBeInTheDocument();
+  expect(screen.getByText(/correo a laura@example.com con el documento adjunto/)).toBeInTheDocument();
+  await userEvent.click(screen.getByRole("button", { name: /Descargar póliza \(PDF\)/ }));
+  expect(descargarDocumentoPoliza).toHaveBeenCalledWith("POL-001");
+});
+
+it("al finalizar lleva a la lista de mis pólizas donde aparece la póliza emitida", async () => {
+  vi.mocked(obtenerContrato).mockResolvedValue(firmada({ poliza_id: "POL-001" }));
+  pantalla();
+
+  const finalizar = await screen.findByRole("button", { name: /Finalizar e ir a mis pólizas/ });
+  await userEvent.click(finalizar);
+
+  expect(await screen.findByRole("heading", { name: "Mis pólizas" })).toBeInTheDocument();
+});
+
+it("informa si la descarga falla y permite reintentar", async () => {
+  vi.mocked(obtenerContrato).mockResolvedValue(firmada({ poliza_id: "POL-001" }));
+  vi.mocked(descargarDocumentoPoliza)
+    .mockRejectedValueOnce(new Error("El documento de la póliza aún no está disponible."))
+    .mockResolvedValueOnce();
+  pantalla();
+
+  const descargar = await screen.findByRole("button", { name: /Descargar póliza/ });
+  await userEvent.click(descargar);
+  expect(await screen.findByRole("alert")).toHaveTextContent("aún no está disponible");
+
+  await userEvent.click(screen.getByRole("button", { name: /Descargar póliza/ }));
+  expect(descargarDocumentoPoliza).toHaveBeenCalledTimes(2);
+  expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+});
+
+it("si la póliza aún se está preparando, permite actualizar hasta que esté lista", async () => {
+  vi.mocked(obtenerContrato)
+    .mockResolvedValueOnce(firmada())
+    .mockResolvedValueOnce(firmada({ poliza_id: "POL-001" }));
+  pantalla();
+
+  expect(await screen.findByText("Estamos preparando tu póliza")).toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: /Descargar póliza/ })).not.toBeInTheDocument();
+
+  await userEvent.click(screen.getByRole("button", { name: "Actualizar" }));
+
+  expect(await screen.findByText("¡Tu póliza fue emitida!")).toBeInTheDocument();
+  expect(obtenerContrato).toHaveBeenCalledTimes(2);
+});
+
+it("no ofrece la descarga mientras el contrato está pendiente de firma", async () => {
+  vi.mocked(obtenerContrato).mockResolvedValue(proceso());
+  pantalla();
+
+  await screen.findByRole("heading", { name: "Firma tu contrato" });
+  expect(screen.queryByText("¡Tu póliza fue emitida!")).not.toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: /Descargar póliza/ })).not.toBeInTheDocument();
 });

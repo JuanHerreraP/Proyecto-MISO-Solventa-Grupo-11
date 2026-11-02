@@ -15,7 +15,9 @@ data class PolizaResumen(
     val activa: Boolean,
     val fechaInicio: String,
     val fechaFin: String,
-    val coberturaPrincipal: String
+    val coberturaPrincipal: String,
+    /** Fecha de emisión en ISO 8601. El backend ya devuelve la lista con la más reciente arriba. */
+    val emitidaEn: String
 )
 
 data class Billetera(

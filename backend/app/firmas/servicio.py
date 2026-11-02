@@ -33,6 +33,7 @@ from app.firmas.modelos import (
     enmascarar,
 )
 from app.firmas.puertos import (
+    EmisorPoliza,
     ProveedorFirmaElectronica,
     RepositorioFirmas,
     RepositorioTitulares,
@@ -114,6 +115,7 @@ class ServicioFirmas:
         reloj: Callable[[], datetime] = lambda: datetime.now(UTC),
         generar_id: Callable[[], str] = lambda: f"FIR-{uuid.uuid4()}",
         generar_codigo: Callable[[], str] = generar_codigo_otp,
+        emisor: EmisorPoliza | None = None,
     ):
         self._firmas = firmas
         self._cotizaciones = cotizaciones
@@ -124,6 +126,7 @@ class ServicioFirmas:
         self._reloj = reloj
         self._generar_id = generar_id
         self._generar_codigo = generar_codigo
+        self._emisor = emisor
 
     # --- Presentación del contrato -------------------------------------------------
 
@@ -134,6 +137,11 @@ class ServicioFirmas:
         if existente is not None:
             if existente.cliente_id != cliente_id:
                 raise FirmaNoDisponible("COTIZACION_NO_ENCONTRADA")
+            if (
+                existente.estado is EstadoFirma.FIRMADA
+                and self.poliza_emitida(cotizacion_id) is None
+            ):
+                self._emitir(cotizacion_id)
             return existente
 
         cotizacion = self._cotizaciones.obtener(cotizacion_id)
@@ -251,7 +259,9 @@ class ServicioFirmas:
         if not hmac.compare_digest(proceso.huella_documento, huella_aceptada):
             raise DocumentoAlterado()
         if proceso.estado is EstadoFirma.FIRMADA:
-            # Reintento tras una respuesta perdida: la firma ya existe.
+            # Reintento tras una respuesta perdida: la firma ya existe. Si la emisión falló la
+            # vez anterior, este reintento la completa (es idempotente).
+            self._emitir(cotizacion_id)
             return proceso
         self._exigir_pendiente(proceso)
         if not proceso.documento_integro():
@@ -296,9 +306,24 @@ class ServicioFirmas:
         )
         self._firmas.guardar(firmado)
         logger.info("Contrato %s firmado por %s", proceso.firma_id, cliente_id)
+        self._emitir(cotizacion_id)
         return firmado
 
+    def poliza_emitida(self, cotizacion_id: str) -> str | None:
+        """Identificador de la póliza emitida a partir de esta firma, si ya existe."""
+        return self._emisor.poliza_emitida(cotizacion_id) if self._emisor else None
+
     # --- Auxiliares -----------------------------------------------------------------
+
+    def _emitir(self, cotizacion_id: str) -> None:
+        """Gatilla la emisión técnica. Un fallo no deshace la firma: queda registrado y se
+        reintenta cuando el cliente repita la firma o consulte el contrato."""
+        if self._emisor is None:
+            return
+        try:
+            self._emisor.emitir(cotizacion_id)
+        except Exception:
+            logger.exception("No se pudo emitir la póliza de la cotización %s", cotizacion_id)
 
     def _registrar_fallo(self, proceso: ProcesoFirma, ahora: datetime) -> None:
         intentos = proceso.intentos_fallidos + 1

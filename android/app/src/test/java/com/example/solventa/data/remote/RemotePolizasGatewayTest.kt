@@ -47,11 +47,13 @@ class RemotePolizasGatewayTest {
           {"poliza_id":"POL-1","numero_poliza":"SOL-VJ-0001","ramo":"VIAJE",
            "nombre_ramo":"Seguro de viaje","estado":"VIGENTE","activa":true,
            "fecha_inicio":"2026-10-01","fecha_fin":"2026-12-31",
-           "cobertura_principal":"Asistencia médica en viaje"},
+           "cobertura_principal":"Asistencia médica en viaje",
+           "emitida_en":"2026-10-05T12:00:00Z"},
           {"poliza_id":"POL-2","numero_poliza":"SOL-VD-0002","ramo":"VIDA",
            "nombre_ramo":"Seguro de vida","estado":"VENCIDA","activa":false,
            "fecha_inicio":"2025-01-01","fecha_fin":"2025-12-31",
-           "cobertura_principal":"Muerte por cualquier causa"}
+           "cobertura_principal":"Muerte por cualquier causa",
+           "emitida_en":"2025-01-01T10:00:00Z"}
         ],"total_vigentes":1,"total_inactivas":1}
     """.trimIndent()
 
@@ -64,6 +66,7 @@ class RemotePolizasGatewayTest {
         val billetera = (resultado as ResultadoApi.Exito).valor
         assertEquals(listOf("POL-1", "POL-2"), billetera.polizas.map { it.polizaId })
         assertEquals(EstadoPoliza.VENCIDA, billetera.polizas[1].estado)
+        assertEquals("2026-10-05T12:00:00Z", billetera.polizas[0].emitidaEn)
         assertEquals(1, billetera.totalVigentes)
         assertEquals(1, billetera.totalInactivas)
 

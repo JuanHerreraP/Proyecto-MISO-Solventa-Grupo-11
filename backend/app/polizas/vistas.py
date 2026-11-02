@@ -18,6 +18,7 @@ class PolizaEnBilletera(BaseModel):
     fecha_inicio: date
     fecha_fin: date
     cobertura_principal: str
+    emitida_en: datetime
 
 
 class Billetera(BaseModel):
@@ -80,6 +81,7 @@ def a_poliza_en_billetera(poliza: Poliza, hoy: date) -> PolizaEnBilletera:
         fecha_inicio=poliza.fecha_inicio,
         fecha_fin=poliza.fecha_fin,
         cobertura_principal=poliza.cobertura_principal.nombre,
+        emitida_en=poliza.emitida_en,
     )
 
 
