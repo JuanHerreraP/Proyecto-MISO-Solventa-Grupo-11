@@ -74,19 +74,14 @@ class ServicioBilletera:
         vistas = [
             a_poliza_en_billetera(p, hoy) for p in self._polizas.listar_por_cliente(cliente_id)
         ]
-        # Vigentes primero (las que vencen antes arriba); luego inactivas, la más reciente arriba.
-        vigentes = sorted(
-            (v for v in vistas if v.activa), key=lambda v: (v.fecha_fin, v.numero_poliza)
-        )
-        inactivas = sorted(
-            (v for v in vistas if not v.activa),
-            key=lambda v: (v.fecha_fin, v.numero_poliza),
-            reverse=True,
+        # Ordenadas por fecha de emisión, la más reciente arriba (desempata el número).
+        ordenadas = sorted(
+            vistas, key=lambda v: (v.emitida_en, v.numero_poliza), reverse=True
         )
         return Billetera(
-            polizas=[*vigentes, *inactivas],
-            total_vigentes=len(vigentes),
-            total_inactivas=len(inactivas),
+            polizas=ordenadas,
+            total_vigentes=sum(1 for v in vistas if v.activa),
+            total_inactivas=sum(1 for v in vistas if not v.activa),
         )
 
     def certificado(self, cliente_id: str, poliza_id: str) -> CertificadoPoliza:

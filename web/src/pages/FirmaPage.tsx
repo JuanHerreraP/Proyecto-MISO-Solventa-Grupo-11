@@ -1,5 +1,7 @@
 import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import AppLayout from "../components/AppLayout";
+import { obtenerPerfil } from "../services/auth.service";
 import {
   ErrorFirma,
   firmarContrato,
@@ -10,10 +12,6 @@ import {
 } from "../services/firma.service";
 import { descargarDocumentoPoliza } from "../services/poliza-documento.service";
 import "../styles/firma.css";
-
-const PASOS = ["Consentimiento", "Perfil de riesgo", "Cotización", "Pago y firma", "Póliza emitida"];
-const PASO_PAGO_Y_FIRMA = 3;
-const PASO_POLIZA_EMITIDA = 4;
 
 function moneda(valor: string, codigo: string): string {
   return Number(valor).toLocaleString("es-CO", {
@@ -42,29 +40,6 @@ function valorRiesgo(valor: unknown): string {
 function segundosHasta(iso: string | null, ahora: number): number {
   if (!iso) return 0;
   return Math.max(0, Math.ceil((new Date(iso).getTime() - ahora) / 1000));
-}
-
-function Pasos({ actual }: { actual: number }) {
-  return (
-    <header className="firma-barra">
-      <div className="firma-marca">
-        <span className="material-symbols-outlined" aria-hidden="true">shield</span>
-        Solventa
-      </div>
-      <ol className="firma-pasos" aria-label="Progreso de la compra">
-      {PASOS.map((paso, indice) => (
-        <li
-          key={paso}
-          className={indice < actual ? "hecho" : indice === actual ? "actual" : ""}
-          aria-current={indice === actual ? "step" : undefined}
-        >
-          <span className="firma-paso-numero">{indice < actual ? "✓" : indice + 1}</span>
-          {paso}
-        </li>
-      ))}
-      </ol>
-    </header>
-  );
 }
 
 function Fila({ t, children }: { t: string; children: ReactNode }) {
@@ -148,9 +123,14 @@ export default function FirmaPage() {
   const [ahora, setAhora] = useState(() => Date.now());
   const [descargando, setDescargando] = useState(false);
   const [errorDescarga, setErrorDescarga] = useState("");
+  const [rol, setRol] = useState<string | null>(null);
 
   useEffect(() => {
     let activo = true;
+    obtenerPerfil().then(
+      (perfil) => { if (activo) setRol(perfil.rol); },
+      () => undefined,
+    );
     obtenerContrato(cotizacionId).then(
       (datos) => { if (activo) setProceso(datos); },
       (fallo: Error) => { if (activo) setErrorCarga(fallo.message); },
@@ -167,26 +147,26 @@ export default function FirmaPage() {
 
   if (errorCarga) {
     return (
-      <div className="firma-pagina">
-        <Pasos actual={PASO_PAGO_Y_FIRMA} />
-        <main className="firma-contenido firma-contenido-error">
-          <div className="firma-principal">
-            <header className="firma-encabezado">
-              <h1>No podemos mostrar el contrato</h1>
-            </header>
-            <p role="alert" className="firma-alerta">{errorCarga}</p>
-            <nav className="firma-acciones">
-              <button type="button" className="firma-volver" onClick={() => navigate("/pagos")}>
-                <span className="material-symbols-outlined" aria-hidden="true">arrow_back</span>
-                Volver a pagos
-              </button>
-            </nav>
+      <AppLayout activo="Pagos" rol={rol}>
+        <header className="home-header firma-cabecera">
+          <div>
+            <h1>No podemos mostrar el contrato</h1>
+            <p>Revisa el estado del pago antes de firmar.</p>
           </div>
-        </main>
-      </div>
+        </header>
+        <section className="home-panel firma-panel">
+          <p role="alert" className="firma-alerta">{errorCarga}</p>
+        </section>
+      </AppLayout>
     );
   }
-  if (!proceso) return <p role="status">Cargando contrato…</p>;
+  if (!proceso) {
+    return (
+      <AppLayout activo="Pagos" rol={rol}>
+        <p role="status" className="home-card-vacio">Cargando contrato…</p>
+      </AppLayout>
+    );
+  }
 
   const codigoEnviado = proceso.otp_destino !== null && proceso.intentos_restantes > 0;
 
@@ -257,20 +237,21 @@ export default function FirmaPage() {
   }
 
   return (
-    <div className="firma-pagina">
-      <Pasos actual={proceso.poliza_id ? PASO_POLIZA_EMITIDA : PASO_PAGO_Y_FIRMA} />
-      <main className="firma-contenido">
+    <AppLayout activo="Pagos" rol={rol}>
+      <header className="home-header firma-cabecera">
+        <div>
+          <h1>{proceso.estado === "FIRMADA" ? "Contrato firmado" : "Firma tu contrato"}</h1>
+          <p>
+            {proceso.estado === "FIRMADA"
+              ? proceso.poliza_id
+                ? "Tu firma quedó registrada y tu póliza ya fue emitida."
+                : "Tu firma quedó registrada. Estamos emitiendo tu póliza."
+              : "Revisa las condiciones de tu seguro y fírmalas con el código que te enviamos."}
+          </p>
+        </div>
+      </header>
+      <div className="firma-contenido">
         <div className="firma-principal">
-          <header className="firma-encabezado">
-            <h1>{proceso.estado === "FIRMADA" ? "Contrato firmado" : "Firma tu contrato"}</h1>
-            <p>
-              {proceso.estado === "FIRMADA"
-                ? proceso.poliza_id
-                  ? "Tu firma quedó registrada y tu póliza ya fue emitida."
-                  : "Tu firma quedó registrada. Estamos emitiendo tu póliza."
-                : "Revisa las condiciones de tu seguro y fírmalas con el código que te enviamos."}
-            </p>
-          </header>
 
           {!proceso.documento_integro && (
             <p role="alert" className="firma-alerta">
@@ -299,15 +280,25 @@ export default function FirmaPage() {
                   Te enviaremos un correo a {proceso.contrato.titular.email} con el documento adjunto.
                 </small>
               </div>
-              <button
-                type="button"
-                className="firma-boton-primario"
-                onClick={() => void descargarPoliza()}
-                disabled={descargando}
-              >
-                {descargando ? "Descargando…" : "Descargar póliza (PDF)"}
-                <span className="material-symbols-outlined" aria-hidden="true">download</span>
-              </button>
+              <div className="firma-poliza-acciones">
+                <button
+                  type="button"
+                  className="firma-boton-secundario"
+                  onClick={() => void descargarPoliza()}
+                  disabled={descargando}
+                >
+                  {descargando ? "Descargando…" : "Descargar póliza (PDF)"}
+                  <span className="material-symbols-outlined" aria-hidden="true">download</span>
+                </button>
+                <button
+                  type="button"
+                  className="firma-boton-primario"
+                  onClick={() => navigate("/polizas")}
+                >
+                  Finalizar e ir a mis pólizas
+                  <span className="material-symbols-outlined" aria-hidden="true">arrow_forward</span>
+                </button>
+              </div>
             </section>
           )}
 
@@ -398,15 +389,9 @@ export default function FirmaPage() {
             </section>
           )}
 
-          <nav className="firma-acciones">
-            <button type="button" className="firma-volver" onClick={() => navigate("/pagos")}>
-              <span className="material-symbols-outlined" aria-hidden="true">arrow_back</span>
-              Volver a pagos
-            </button>
-          </nav>
         </div>
         <Resumen proceso={proceso} />
-      </main>
-    </div>
+      </div>
+    </AppLayout>
   );
 }

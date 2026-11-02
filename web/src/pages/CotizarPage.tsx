@@ -661,22 +661,13 @@ export default function CotizarPage() {
                 </button>
               </>
             ) : pago.estado === "APROBADO" ? (
-              <>
-                <button
-                  type="button"
-                  className="cotizar-boton-secundario"
-                  onClick={() => navigate("/home")}
-                >
-                  Firmar después
-                </button>
-                <button
-                  type="button"
-                  className="cotizar-boton-primario"
-                  onClick={() => navigate(`/firma/${encodeURIComponent(pago.cotizacion_id)}`)}
-                >
-                  Firmar contrato
-                </button>
-              </>
+              <button
+                type="button"
+                className="cotizar-boton-primario"
+                onClick={() => navigate(`/firma/${encodeURIComponent(pago.cotizacion_id)}`)}
+              >
+                Firmar contrato
+              </button>
             ) : (
               <button
                 type="button"

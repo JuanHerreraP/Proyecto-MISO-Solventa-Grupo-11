@@ -32,7 +32,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.solventa.domain.polizas.Billetera
@@ -101,7 +100,7 @@ fun WalletScreen(
 @Composable
 private fun ListaPolizas(billetera: Billetera, error: String?, onVerPoliza: (String) -> Unit) {
     LazyColumn(
-        contentPadding = PaddingValues(start = 24.dp, end = 24.dp, bottom = 32.dp),
+        contentPadding = PaddingValues(start = 24.dp, end = 24.dp, top = 8.dp, bottom = 32.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         if (error != null) {
@@ -113,29 +112,11 @@ private fun ListaPolizas(billetera: Billetera, error: String?, onVerPoliza: (Str
                 )
             }
         }
-        if (billetera.vigentes.isNotEmpty()) {
-            item { TituloSeccion("Vigentes (${billetera.vigentes.size})") }
-            items(billetera.vigentes, key = { it.polizaId }) { poliza ->
-                TarjetaPoliza(poliza = poliza, onClick = { onVerPoliza(poliza.polizaId) })
-            }
-        }
-        if (billetera.inactivas.isNotEmpty()) {
-            item { TituloSeccion("Inactivas (${billetera.inactivas.size})") }
-            items(billetera.inactivas, key = { it.polizaId }) { poliza ->
-                TarjetaPoliza(poliza = poliza, onClick = { onVerPoliza(poliza.polizaId) })
-            }
+        // El backend devuelve las pólizas por fecha de emisión, la más reciente arriba.
+        items(billetera.polizas, key = { it.polizaId }) { poliza ->
+            TarjetaPoliza(poliza = poliza, onClick = { onVerPoliza(poliza.polizaId) })
         }
     }
-}
-
-@Composable
-private fun TituloSeccion(texto: String) {
-    Text(
-        text = texto,
-        style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
-        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-        modifier = Modifier.padding(top = 12.dp)
-    )
 }
 
 @Composable
@@ -246,11 +227,11 @@ fun WalletScreenPreview() {
     val polizas = listOf(
         PolizaResumen(
             "1", "SOL-VJ-0001", "VIAJE", "Seguro de viaje", EstadoPoliza.VIGENTE, true,
-            "2026-10-01", "2026-12-31", "Asistencia médica en viaje"
+            "2026-10-01", "2026-12-31", "Asistencia médica en viaje", "2026-09-30T14:00:00Z"
         ),
         PolizaResumen(
             "2", "SOL-VD-0002", "VIDA", "Seguro de vida", EstadoPoliza.VENCIDA, false,
-            "2025-01-01", "2025-12-31", "Muerte por cualquier causa"
+            "2025-01-01", "2025-12-31", "Muerte por cualquier causa", "2025-01-01T10:00:00Z"
         )
     )
     SolventaTheme {

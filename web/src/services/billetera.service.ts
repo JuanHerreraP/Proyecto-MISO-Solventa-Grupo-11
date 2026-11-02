@@ -12,6 +12,7 @@ export interface PolizaResumen {
   fecha_inicio: string;
   fecha_fin: string;
   cobertura_principal: string;
+  emitida_en: string;
 }
 
 export interface Billetera {

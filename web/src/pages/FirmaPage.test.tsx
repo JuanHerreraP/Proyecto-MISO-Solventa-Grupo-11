@@ -78,6 +78,8 @@ function pantalla() {
   render(<MemoryRouter initialEntries={["/firma/COT-001"]}><Routes>
     <Route path="/firma/:cotizacionId" element={<FirmaPage />} />
     <Route path="/pagos" element={<h1>Pagos</h1>} />
+    <Route path="/polizas" element={<h1>Mis pólizas</h1>} />
+    <Route path="/cotizaciones" element={<h1>Mis cotizaciones</h1>} />
   </Routes></MemoryRouter>);
 }
 
@@ -183,8 +185,16 @@ it("explica por qué no hay contrato si el pago no está aprobado", async () => 
   pantalla();
 
   expect(await screen.findByRole("alert")).toHaveTextContent("pago de la prima quede aprobado");
-  await userEvent.click(screen.getByRole("button", { name: "Volver a pagos" }));
-  expect(await screen.findByRole("heading", { name: "Pagos" })).toBeInTheDocument();
+});
+
+it("ya no muestra el botón de retroceso ni la barra de pasos", async () => {
+  vi.mocked(obtenerContrato).mockResolvedValue(proceso());
+  pantalla();
+
+  await screen.findByRole("heading", { name: "Firma tu contrato" });
+  expect(screen.queryByRole("button", { name: "Atrás" })).not.toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "Volver a pagos" })).not.toBeInTheDocument();
+  expect(screen.queryByRole("list", { name: "Progreso de la compra" })).not.toBeInTheDocument();
 });
 
 const firmada = (cambios: Partial<ProcesoFirma> = {}) => proceso({
@@ -204,6 +214,16 @@ it("al firmar muestra el éxito de la emisión y ofrece la descarga inmediata", 
   expect(screen.getByText(/correo a laura@example.com con el documento adjunto/)).toBeInTheDocument();
   await userEvent.click(screen.getByRole("button", { name: /Descargar póliza \(PDF\)/ }));
   expect(descargarDocumentoPoliza).toHaveBeenCalledWith("POL-001");
+});
+
+it("al finalizar lleva a la lista de mis pólizas donde aparece la póliza emitida", async () => {
+  vi.mocked(obtenerContrato).mockResolvedValue(firmada({ poliza_id: "POL-001" }));
+  pantalla();
+
+  const finalizar = await screen.findByRole("button", { name: /Finalizar e ir a mis pólizas/ });
+  await userEvent.click(finalizar);
+
+  expect(await screen.findByRole("heading", { name: "Mis pólizas" })).toBeInTheDocument();
 });
 
 it("informa si la descarga falla y permite reintentar", async () => {

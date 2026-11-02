@@ -42,7 +42,6 @@ class WalletScreenTest {
     fun muestraNumeroRamoEstadoYVigenciaDeCadaPoliza() {
         mostrar(billeteraDe(resumen()))
 
-        compose.onNodeWithText("Vigentes (1)").assertIsDisplayed()
         compose.onNodeWithText("Seguro de viaje").assertIsDisplayed()
         compose.onNodeWithText("Póliza SOL-VJ-0001").assertIsDisplayed()
         compose.onNodeWithText("Vigente").assertIsDisplayed()
@@ -50,7 +49,7 @@ class WalletScreenTest {
     }
 
     @Test
-    fun separaLasInactivasYDiceSuEstado() {
+    fun muestraVigentesEInactivasEnUnaSolaLista() {
         mostrar(
             billeteraDe(
                 resumen(id = "A", numero = "SOL-1"),
@@ -59,8 +58,7 @@ class WalletScreenTest {
             )
         )
 
-        compose.onNodeWithText("Vigentes (1)").assertIsDisplayed()
-        compose.onNodeWithText("Inactivas (2)").assertIsDisplayed()
+        // Ya no hay secciones "Vigentes"/"Inactivas": es una sola lista por fecha de emisión.
         compose.onNodeWithText("Vencida").assertIsDisplayed()
         compose.onNodeWithText("Cancelada").assertIsDisplayed()
     }

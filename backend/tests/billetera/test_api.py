@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import UTC, datetime, timedelta
 
 import pytest
 from fastapi.testclient import TestClient
@@ -52,24 +52,26 @@ def test_billetera_vacia(cliente):
 
 
 def test_el_cliente_ve_sus_polizas_con_vigentes_e_inactivas(cliente, polizas):
-    polizas.guardar(poliza())
+    polizas.guardar(poliza(emitida_en=datetime(2026, 9, 1, 10, 0, tzinfo=UTC)))
     polizas.guardar(
         poliza(
             poliza_id="POL-2",
             numero_poliza="SOL-VI-000002",
             estado=EstadoRegistroPoliza.CANCELADA,
+            emitida_en=datetime(2026, 10, 5, 10, 0, tzinfo=UTC),
         )
     )
 
     cuerpo = cliente.get(RUTA, headers=CLIENTE).json()
 
+    # Ordenadas por fecha de emisión, la más reciente arriba.
     assert [(p["numero_poliza"], p["estado"], p["activa"]) for p in cuerpo["polizas"]] == [
-        ("SOL-VI-000001", "VIGENTE", True),
         ("SOL-VI-000002", "CANCELADA", False),
+        ("SOL-VI-000001", "VIGENTE", True),
     ]
-    assert cuerpo["polizas"][0]["fecha_inicio"] == "2026-10-01"
-    assert cuerpo["polizas"][0]["fecha_fin"] == "2026-12-31"
-    assert cuerpo["polizas"][0]["nombre_ramo"] == "Seguro de viaje"
+    assert cuerpo["polizas"][1]["fecha_inicio"] == "2026-10-01"
+    assert cuerpo["polizas"][1]["fecha_fin"] == "2026-12-31"
+    assert cuerpo["polizas"][1]["nombre_ramo"] == "Seguro de viaje"
 
 
 def test_el_cliente_no_ve_polizas_de_otro_titular(cliente, polizas):

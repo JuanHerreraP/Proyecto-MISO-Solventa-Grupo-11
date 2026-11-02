@@ -6,7 +6,8 @@ fun resumen(
     id: String = "POL-1",
     numero: String = "SOL-VJ-0001",
     estado: EstadoPoliza = EstadoPoliza.VIGENTE,
-    nombreRamo: String = "Seguro de viaje"
+    nombreRamo: String = "Seguro de viaje",
+    emitidaEn: String = "2026-09-30T14:00:00Z"
 ) = PolizaResumen(
     polizaId = id,
     numeroPoliza = numero,
@@ -16,7 +17,8 @@ fun resumen(
     activa = estado == EstadoPoliza.VIGENTE,
     fechaInicio = "2026-10-01",
     fechaFin = "2026-12-31",
-    coberturaPrincipal = "Asistencia médica en viaje"
+    coberturaPrincipal = "Asistencia médica en viaje",
+    emitidaEn = emitidaEn
 )
 
 fun billeteraDe(vararg polizas: PolizaResumen) = Billetera(

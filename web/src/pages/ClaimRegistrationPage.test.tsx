@@ -17,11 +17,13 @@ const VIGENTE: PolizaResumen = {
   poliza_id: "POL-1", numero_poliza: "SOL-VJ-0001", ramo: "VIAJE",
   nombre_ramo: "Seguro de viaje", estado: "VIGENTE", activa: true,
   fecha_inicio: "2026-10-01", fecha_fin: "2026-11-30", cobertura_principal: "Asistencia",
+  emitida_en: "2026-10-01T12:00:00Z",
 };
 const INACTIVA: PolizaResumen = {
   poliza_id: "POL-2", numero_poliza: "SOL-VD-0002", ramo: "VIDA",
   nombre_ramo: "Seguro de vida", estado: "VENCIDA", activa: false,
   fecha_inicio: "2024-01-01", fecha_fin: "2024-12-31", cobertura_principal: "Vida",
+  emitida_en: "2024-01-01T12:00:00Z",
 };
 
 const SINIESTRO: Siniestro = {
