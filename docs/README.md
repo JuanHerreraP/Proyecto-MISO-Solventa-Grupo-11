@@ -26,6 +26,7 @@ se mantienen en la [wiki del proyecto](https://github.com/JuanHerreraP/Proyecto-
 | Documento | Contenido |
 | --- | --- |
 | [Billetera digital de pólizas](billetera-digital.md) | HU07: billetera, estados, certificado con QR y enlace temporal para compartir |
+| [Modificación de coberturas y endosos](endosos.md) | HU16: beneficiarios, coberturas opcionales, ajuste pro-rata, PDF del endoso y trazabilidad |
 
 ## Pagos y contratación
 

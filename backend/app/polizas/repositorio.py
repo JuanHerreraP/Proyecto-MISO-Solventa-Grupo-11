@@ -81,7 +81,7 @@ class RepositorioPolizasPostgres:
         self._db = db
 
     def guardar(self, poliza: Poliza) -> None:
-        datos = _poliza_a_persistencia(poliza)
+        datos = poliza_a_persistencia(poliza)
         persistida = self._db.get(PolizaDB, poliza.poliza_id)
         if persistida is None:
             self._db.add(PolizaDB(**datos))
@@ -127,17 +127,19 @@ class RepositorioEnlacesPostgres:
             huella_token=registro.huella_token,
             poliza_id=registro.poliza_id,
             cliente_id=registro.cliente_id,
-            creado_en=_con_zona_horaria(registro.creado_en),
-            expira_en=_con_zona_horaria(registro.expira_en),
+            creado_en=con_zona_horaria(registro.creado_en),
+            expira_en=con_zona_horaria(registro.expira_en),
         )
 
 
-def _poliza_a_persistencia(poliza: Poliza) -> dict[str, object]:
+def poliza_a_persistencia(poliza: Poliza) -> dict[str, object]:
     datos = poliza.model_dump()
     datos.update(
         ramo=poliza.ramo.value,
         estado=poliza.estado.value,
         cobertura_principal=poliza.cobertura_principal.model_dump(mode="json"),
+        coberturas_opcionales=[c.model_dump(mode="json") for c in poliza.coberturas_opcionales],
+        beneficiarios=[b.model_dump(mode="json") for b in poliza.beneficiarios],
     )
     return datos
 
@@ -159,14 +161,16 @@ def _poliza_a_dominio(registro: PolizaDB) -> Poliza:
             "prima_total": registro.prima_total,
             "moneda": registro.moneda,
             "cobertura_principal": registro.cobertura_principal,
+            "coberturas_opcionales": registro.coberturas_opcionales or [],
+            "beneficiarios": registro.beneficiarios or [],
             "codigo_verificacion": registro.codigo_verificacion,
-            "emitida_en": _con_zona_horaria(registro.emitida_en),
-            "cancelada_en": _con_zona_horaria(registro.cancelada_en),
+            "emitida_en": con_zona_horaria(registro.emitida_en),
+            "cancelada_en": con_zona_horaria(registro.cancelada_en),
         }
     )
 
 
-def _con_zona_horaria(fecha: datetime | None) -> datetime | None:
+def con_zona_horaria(fecha: datetime | None) -> datetime | None:
     """SQLite devuelve las fechas sin zona horaria; se guardan siempre en UTC."""
     if fecha is not None and fecha.tzinfo is None:
         return fecha.replace(tzinfo=UTC)

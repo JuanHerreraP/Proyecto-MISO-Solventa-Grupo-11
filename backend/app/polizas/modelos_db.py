@@ -1,9 +1,19 @@
-"""Modelos persistentes de pólizas y enlaces temporales de certificado (HU07 / BPM-31)."""
+"""Modelos persistentes de pólizas, certificados, documentos y endosos (HU07, HU12, HU16)."""
 
 from datetime import date, datetime
 from decimal import Decimal
 
-from sqlalchemy import JSON, Date, DateTime, ForeignKey, Index, Numeric, String
+from sqlalchemy import (
+    JSON,
+    Date,
+    DateTime,
+    ForeignKey,
+    Index,
+    Integer,
+    Numeric,
+    String,
+    UniqueConstraint,
+)
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.infraestructura.database import Base
@@ -27,6 +37,11 @@ class PolizaDB(Base):
     prima_total: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False)
     moneda: Mapped[str] = mapped_column(String(3), nullable=False)
     cobertura_principal: Mapped[dict[str, object]] = mapped_column(JSON, nullable=False)
+    # Columnas aditivas de HU16: las pólizas emitidas antes del cambio quedan en NULL.
+    coberturas_opcionales: Mapped[list[dict[str, object]] | None] = mapped_column(
+        JSON, nullable=True
+    )
+    beneficiarios: Mapped[list[dict[str, object]] | None] = mapped_column(JSON, nullable=True)
     codigo_verificacion: Mapped[str] = mapped_column(String(64), nullable=False)
     emitida_en: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     cancelada_en: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
@@ -62,3 +77,44 @@ class DocumentoPolizaDB(Base):
         DateTime(timezone=True), nullable=True
     )
     notificada_en: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+
+class EndosoDB(Base):
+    """Endoso de una póliza: qué cambió, quién lo pidió, el ajuste de prima y su PDF (HU16).
+
+    Un endoso no se modifica ni se borra. El número es consecutivo por póliza y la restricción
+    única evita que dos confirmaciones simultáneas generen el mismo endoso.
+    """
+
+    __tablename__ = "endosos"
+    __table_args__ = (
+        UniqueConstraint("poliza_id", "numero_endoso", name="uq_endosos_poliza_numero"),
+        UniqueConstraint("poliza_id", "clave_idempotencia", name="uq_endosos_poliza_clave"),
+    )
+
+    endoso_id: Mapped[str] = mapped_column(String(60), primary_key=True)
+    poliza_id: Mapped[str] = mapped_column(
+        String(50), ForeignKey("polizas.poliza_id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    numero_endoso: Mapped[int] = mapped_column(Integer, nullable=False)
+    tipo: Mapped[str] = mapped_column(String(40), nullable=False)
+    solicitado_por: Mapped[str] = mapped_column(String(50), nullable=False)
+    rol_solicitante: Mapped[str] = mapped_column(String(40), nullable=False)
+    clave_idempotencia: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    huella_solicitud: Mapped[str] = mapped_column(String(64), nullable=False)
+    ip_solicitante: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    user_agent: Mapped[str | None] = mapped_column(String(300), nullable=True)
+    fecha_efecto: Mapped[date] = mapped_column(Date, nullable=False)
+    dias_vigencia: Mapped[int] = mapped_column(Integer, nullable=False)
+    dias_restantes: Mapped[int] = mapped_column(Integer, nullable=False)
+    prima_anterior: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False)
+    ajuste_prima: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False)
+    prima_nueva: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False)
+    moneda: Mapped[str] = mapped_column(String(3), nullable=False)
+    cambios: Mapped[list[dict[str, object]]] = mapped_column(JSON, nullable=False)
+    coberturas_opcionales: Mapped[list[dict[str, object]]] = mapped_column(JSON, nullable=False)
+    beneficiarios: Mapped[list[dict[str, object]]] = mapped_column(JSON, nullable=False)
+    clave_documento: Mapped[str] = mapped_column(String(200), nullable=False)
+    huella_documento: Mapped[str] = mapped_column(String(64), nullable=False)
+    tamano_documento: Mapped[int] = mapped_column(Integer, nullable=False)
+    creado_en: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)

@@ -171,6 +171,7 @@ curl -X POST http://localhost:8004/simulate/flight-delay \
 - [Comprar un seguro desde la web: cotizar, aceptar y pagar (HU23)](docs/compra-web.md)
 - [Siniestros: registro manual y detección paramétrica por telemetría (HU20)](docs/siniestros.md)
 - [Firma electrónica del contrato (HU14)](docs/firma-electronica.md)
+- [Modificación de coberturas, beneficiarios y endosos (HU16)](docs/endosos.md)
 
 ## Integración continua
 
