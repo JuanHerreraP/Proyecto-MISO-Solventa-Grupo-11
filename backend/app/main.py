@@ -17,6 +17,7 @@ from app.api import (
     cotizaciones,
     credenciales_socios,
     emision,
+    endosos,
     enriquecimiento,
     firmas,
     identidad,
@@ -140,6 +141,7 @@ def crear_app() -> FastAPI:
     app.include_router(telemetria.router)
     app.include_router(firmas.router)
     app.include_router(emision.router)
+    app.include_router(endosos.router)
     app.include_router(perfilamiento.router)
     app.include_router(enriquecimiento.router)
     app.include_router(socios.router)

@@ -132,3 +132,34 @@ it("informa el error si no puede consultar", async () => {
     "No fue posible consultar tus pólizas.",
   );
 });
+
+it("lleva a modificar coberturas desde una póliza vigente", async () => {
+  vi.mocked(obtenerBilletera).mockResolvedValue({
+    polizas: [POLIZA], total_vigentes: 1, total_inactivas: 0,
+  });
+  vi.mocked(obtenerCertificado).mockResolvedValue(CERTIFICADO);
+  render(
+    <MemoryRouter initialEntries={["/polizas"]}>
+      <Routes>
+        <Route path="/polizas" element={<PolizasPage />} />
+        <Route path="/polizas/:polizaId/modificar" element={<h1>Modificar póliza</h1>} />
+      </Routes>
+    </MemoryRouter>,
+  );
+
+  await userEvent.click(await screen.findByRole("button", { name: /Seguro de viaje/ }));
+  await userEvent.click(screen.getByRole("button", { name: "Modificar coberturas y beneficiarios" }));
+
+  expect(await screen.findByRole("heading", { name: "Modificar póliza" })).toBeInTheDocument();
+});
+
+it("no ofrece modificar una póliza inactiva", async () => {
+  vi.mocked(obtenerBilletera).mockResolvedValue({
+    polizas: [{ ...POLIZA, estado: "VENCIDA", activa: false }], total_vigentes: 0, total_inactivas: 1,
+  });
+  montar();
+
+  await userEvent.click(await screen.findByRole("button", { name: /Seguro de viaje/ }));
+
+  expect(screen.queryByRole("button", { name: "Modificar coberturas y beneficiarios" })).not.toBeInTheDocument();
+});

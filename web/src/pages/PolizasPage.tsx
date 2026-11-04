@@ -192,6 +192,15 @@ export default function PolizasPage() {
                   </dl>
 
                   <div className="poliza-acciones">
+                    {poliza.activa && (
+                      <button
+                        type="button"
+                        className="cotizar-boton-secundario"
+                        onClick={() => navigate(`/polizas/${encodeURIComponent(poliza.poliza_id)}/modificar`)}
+                      >
+                        Modificar coberturas y beneficiarios
+                      </button>
+                    )}
                     <button
                       type="button"
                       className="cotizar-boton-primario"

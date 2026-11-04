@@ -74,6 +74,7 @@ def preparar_esquema_registro() -> None:
                 conexion.execute(
                     text("UPDATE sesiones_refresh SET ultima_actividad = fecha_emision")
                 )
+    _agregar_columnas_endosos(inspector)
     if not inspector.has_table("usuarios"):
         return
 
@@ -100,6 +101,17 @@ def preparar_esquema_registro() -> None:
             for indice in SiniestroDB.__table__.indexes:
                 if indice.name == "uq_siniestros_evento":
                     indice.create(bind=engine, checkfirst=True)
+
+
+def _agregar_columnas_endosos(inspector) -> None:
+    """Coberturas opcionales y beneficiarios de la póliza (HU16): columnas aditivas y nulas."""
+    if not inspector.has_table("polizas"):
+        return
+    columnas = {c["name"] for c in inspector.get_columns("polizas")}
+    for columna in ("coberturas_opcionales", "beneficiarios"):
+        if columna not in columnas:
+            with engine.begin() as conexion:
+                conexion.execute(text(f"ALTER TABLE polizas ADD COLUMN {columna} JSON"))
 
 
 def get_db():
