@@ -1,9 +1,9 @@
 """Siembra pólizas de demostración en la billetera de un cliente (HU07 / BPM-31).
 
 Mientras no exista la emisión automática (HU12), la billetera no tiene de dónde sacar
-pólizas. Este script le crea a un cliente ya registrado cinco pólizas que cubren los
-casos de la historia: dos vigentes, una vencida, una cancelada y una paramétrica vigente
-de retraso de vuelo (AV123 / BOG, umbral 180 minutos) para la demo de telemetría (HU20).
+pólizas. Este script le crea a un cliente ya registrado pólizas que cubren los casos de la
+historia: vigentes, una vencida, una cancelada, paramétricas vigentes para la demo de
+telemetría (HU20) y una de vida vigente para probar beneficiarios y endosos (HU16).
 
 Es idempotente: si se vuelve a ejecutar, actualiza las mismas pólizas en vez de duplicarlas.
 Solo para desarrollo y pruebas; no debe ejecutarse contra producción.
@@ -159,6 +159,15 @@ def _polizas_demo(usuario, hoy: date):
                 "tipo_evento=EVENTO_CLIMATICO; numero_vuelo=zV321; ubicacion=BOG; "
                 "umbral_disparo=180; unidad=MINUTOS"
             ),
+        ),
+        crear(
+            "08",
+            RamoPoliza.VIDA,
+            hoy - timedelta(days=120),
+            hoy + timedelta(days=245),
+            "150000.00",
+            "Cobertura por fallecimiento",
+            "100000000.00",
         ),
     ]
 
