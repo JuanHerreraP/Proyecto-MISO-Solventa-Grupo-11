@@ -181,13 +181,22 @@ def main() -> int:
     from sqlalchemy import select
 
     from app.identidad.modelos_db import UsuarioDB
-    from app.infraestructura.database import Base, SessionLocal, engine, esperar_base_disponible
+    from app.infraestructura.database import (
+        Base,
+        SessionLocal,
+        engine,
+        esperar_base_disponible,
+        preparar_esquema_registro,
+    )
     from app.polizas import modelos_db  # noqa: F401
     from app.polizas.dominio.modelos import hoy_en_colombia
     from app.polizas.repositorio import RepositorioPolizasPostgres
 
     esperar_base_disponible()
     Base.metadata.create_all(bind=engine)
+    # Las columnas aditivas (por ejemplo, las de HU16 en pólizas) no las crea create_all:
+    # sin esto, sembrar en una base anterior falla si el backend aún no ha arrancado.
+    preparar_esquema_registro()
 
     db = SessionLocal()
     try:
