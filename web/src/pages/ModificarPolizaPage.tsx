@@ -49,6 +49,21 @@ function formatearFecha(iso: string): string {
   });
 }
 
+/** Lo que escribe el usuario ("50.000.000") queda en dígitos: la suma se edita en pesos enteros. */
+function soloDigitos(escrito: string): string {
+  return escrito.replace(/\D/g, "").replace(/^0+(?=\d)/, "");
+}
+
+/** Un monto de la API ("50000000.00") en dígitos, sin los centavos. */
+function digitosDeMonto(monto: string): string {
+  return soloDigitos(monto.split(".")[0]);
+}
+
+/** "50000000" -> "50.000.000", para leer la suma sin contar ceros. */
+function conSeparadorDeMiles(digitos: string): string {
+  return digitos ? Number(digitos).toLocaleString("es-CO", { maximumFractionDigits: 0 }) : "";
+}
+
 function sinDecimalesInnecesarios(valor: string): string {
   return String(Number(valor));
 }
@@ -102,7 +117,7 @@ export default function ModificarPolizaPage() {
                 disponible.codigo,
                 {
                   incluida: Boolean(actual),
-                  suma: sinDecimalesInnecesarios(actual?.suma_asegurada ?? disponible.suma_minima),
+                  suma: actual ? digitosDeMonto(actual.suma_asegurada) : "",
                 },
               ];
             }),
@@ -209,6 +224,9 @@ export default function ModificarPolizaPage() {
   const rol = perfil?.rol ?? null;
   const bloqueada = !opciones?.modificable || procesando !== null;
   const porcentajesValidos = beneficiarios.length === 0 || totalPorcentaje === 100;
+  const sumasCompletas = (opciones?.coberturas_disponibles ?? []).every(
+    (d) => !coberturas[d.codigo]?.incluida || coberturas[d.codigo].suma !== "",
+  );
 
   return (
     <AppLayout activo="Mis pólizas" rol={rol}>
@@ -285,14 +303,13 @@ export default function ModificarPolizaPage() {
                         <input
                           id={idSuma}
                           aria-label={`Suma asegurada de ${disponible.nombre}`}
-                          type="number"
+                          type="text"
                           inputMode="numeric"
-                          min={Number(disponible.suma_minima)}
-                          max={Number(disponible.suma_maxima)}
-                          step={1000}
-                          value={estado.suma}
+                          autoComplete="off"
+                          placeholder={estado.incluida ? "Escribe la suma" : "No incluida"}
+                          value={estado.incluida ? conSeparadorDeMiles(estado.suma) : ""}
                           disabled={bloqueada || !estado.incluida}
-                          onChange={(e) => cambiarCobertura(disponible.codigo, { suma: e.target.value })}
+                          onChange={(e) => cambiarCobertura(disponible.codigo, { suma: soloDigitos(e.target.value) })}
                         />
                         <span className="cotizar-ayuda">
                           Entre {formatearMonto(disponible.suma_minima, opciones.moneda)} y{" "}
@@ -373,7 +390,7 @@ export default function ModificarPolizaPage() {
               <button
                 type="button"
                 className="cotizar-boton-primario"
-                disabled={bloqueada || !porcentajesValidos}
+                disabled={bloqueada || !porcentajesValidos || !sumasCompletas}
                 onClick={() => void calcular()}
               >
                 {procesando === "simulando" ? "Calculando…" : "Calcular ajuste de prima"}

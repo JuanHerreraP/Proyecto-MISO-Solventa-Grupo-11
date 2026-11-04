@@ -108,8 +108,45 @@ it("muestra las coberturas opcionales y la cobertura principal de la póliza", a
   expect(screen.getByText("Incapacidad total y permanente")).toBeInTheDocument();
   expect(screen.getByText("Cobertura por fallecimiento")).toBeInTheDocument();
   expect(obtenerOpciones).toHaveBeenCalledWith("POL-1");
-  // La suma solo se edita al incluir la cobertura.
-  expect(screen.getByLabelText("Suma asegurada de Auxilio funerario")).toBeDisabled();
+  // Una cobertura no incluida no muestra suma: no debe parecer contratada.
+  const suma = screen.getByLabelText("Suma asegurada de Auxilio funerario");
+  expect(suma).toBeDisabled();
+  expect(suma).toHaveValue("");
+  expect(suma).toHaveAttribute("placeholder", "No incluida");
+});
+
+it("muestra la suma con separador de miles y exige escribirla al incluir la cobertura", async () => {
+  const usuario = userEvent.setup();
+  montar();
+
+  await usuario.click(await screen.findByRole("checkbox", { name: /Auxilio funerario/ }));
+  const suma = screen.getByLabelText("Suma asegurada de Auxilio funerario");
+  expect(suma).toBeEnabled();
+  expect(suma).toHaveValue("");
+  expect(screen.getByRole("button", { name: "Calcular ajuste de prima" })).toBeDisabled();
+
+  await usuario.type(suma, "5000000");
+
+  expect(suma).toHaveValue("5.000.000");
+  expect(screen.getByRole("button", { name: "Calcular ajuste de prima" })).toBeEnabled();
+});
+
+it("precarga con separador de miles la suma de una cobertura ya contratada", async () => {
+  vi.mocked(obtenerOpciones).mockResolvedValue({
+    ...OPCIONES,
+    coberturas_opcionales: [
+      {
+        codigo: "INCAPACIDAD_TOTAL_PERMANENTE", nombre: "Incapacidad total y permanente",
+        suma_asegurada: "50000000.00", descripcion: null,
+      },
+    ],
+  });
+  montar();
+
+  expect(await screen.findByLabelText("Suma asegurada de Incapacidad total y permanente")).toHaveValue(
+    "50.000.000",
+  );
+  expect(screen.getByRole("checkbox", { name: /Incapacidad total/ })).toBeChecked();
 });
 
 it("calcula el ajuste, pide aceptación y emite el endoso", async () => {
@@ -152,10 +189,11 @@ it("editar después de calcular obliga a recalcular", async () => {
   montar();
 
   await usuario.click(await screen.findByRole("checkbox", { name: /Auxilio funerario/ }));
+  await usuario.type(screen.getByLabelText("Suma asegurada de Auxilio funerario"), "5000000");
   await usuario.click(screen.getByRole("button", { name: "Calcular ajuste de prima" }));
   expect(await screen.findByText("Revisa los cambios")).toBeInTheDocument();
 
-  await usuario.click(screen.getByRole("checkbox", { name: /Incapacidad total/ }));
+  await usuario.type(screen.getByLabelText("Suma asegurada de Auxilio funerario"), "0");
 
   expect(screen.queryByText("Revisa los cambios")).not.toBeInTheDocument();
   expect(screen.getByRole("button", { name: "Calcular ajuste de prima" })).toBeEnabled();
