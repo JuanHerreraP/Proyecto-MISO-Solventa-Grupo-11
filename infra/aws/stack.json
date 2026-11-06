@@ -10,6 +10,15 @@
       "Type": "String",
       "Description": "Secrets Manager JSON with private_key and public_key PEM"
     },
+    "AppSecretsArn": {
+      "Type": "String",
+      "Description": "Secrets Manager JSON with the application secrets (key pagos_webhook_secret)"
+    },
+    "PublicUrl": {
+      "Type": "String",
+      "Default": "",
+      "Description": "Public base URL of the app (e.g. https://app.example.com). Empty means the CloudFront domain of this stack."
+    },
     "PostgresEngineVersion": {
       "Type": "String",
       "Description": "RDS PostgreSQL engine version (e.g. 16.x); verify with describe-orderable-db-instance-options for db.t3.micro"
@@ -23,6 +32,20 @@
       "Type": "Number",
       "Default": 200,
       "MinValue": 1
+    }
+  },
+  "Conditions": {
+    "HasPublicUrl": {
+      "Fn::Not": [
+        {
+          "Fn::Equals": [
+            {
+              "Ref": "PublicUrl"
+            },
+            ""
+          ]
+        }
+      ]
     }
   },
   "Resources": {
@@ -319,6 +342,9 @@
                   "Resource": [
                     {
                       "Ref": "JwtSecretArn"
+                    },
+                    {
+                      "Ref": "AppSecretsArn"
                     },
                     {
                       "Ref": "DbSecret"
@@ -892,6 +918,20 @@
                 }
               },
               {
+                "Name": "SOLVENTA_URL_PUBLICA",
+                "Value": {
+                  "Fn::If": [
+                    "HasPublicUrl",
+                    {
+                      "Ref": "PublicUrl"
+                    },
+                    {
+                      "Fn::Sub": "https://${Distribution.DomainName}"
+                    }
+                  ]
+                }
+              },
+              {
                 "Name": "WEB_COOKIE_SECURE",
                 "Value": "true"
               },
@@ -941,6 +981,12 @@
                 "Name": "JWT_PUBLIC_KEY_PEM",
                 "ValueFrom": {
                   "Fn::Sub": "${JwtSecretArn}:public_key::"
+                }
+              },
+              {
+                "Name": "PAGOS_WEBHOOK_SECRET",
+                "ValueFrom": {
+                  "Fn::Sub": "${AppSecretsArn}:pagos_webhook_secret::"
                 }
               }
             ],
