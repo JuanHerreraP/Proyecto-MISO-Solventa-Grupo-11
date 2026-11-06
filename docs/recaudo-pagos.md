@@ -65,6 +65,16 @@ La pasarela incluida es **simulada** (`app/pagos/pasarela_simulada.py`). El rest
 
 Genera un valor con `python -c "import secrets; print(secrets.token_hex(32))"`. Debe ser el mismo en Solventa y en la pasarela, y distinto entre desarrollo y producción.
 
+### En AWS
+
+En el despliegue el valor sale de un **secret de GitHub** llamado `PAGOS_WEBHOOK_SECRET` (*Settings → Secrets and variables → Actions*). El contenedor de la API no puede leer GitHub, así que el workflow **AWS Infra** lo copia a un secreto de Secrets Manager (`solventa-mvp-app`, clave `pagos_webhook_secret`) y el stack lo inyecta en el contenedor como la variable de entorno `PAGOS_WEBHOOK_SECRET`.
+
+- Debe tener al menos 32 caracteres. Si el secret de GitHub falta o es más corto, el workflow falla antes de desplegar nada.
+- Para rotarlo basta con cambiar el secret de GitHub y volver a ejecutar el workflow: detecta que el valor cambió, actualiza Secrets Manager y reinicia el servicio (ECS lee los secretos solo al iniciar cada tarea).
+- Con la pasarela real, usa como valor el secreto que entregue el proveedor para firmar sus notificaciones.
+- La acción `eliminar` del workflow también borra el secreto de Secrets Manager. El secret de GitHub no se toca.
+- `SOLVENTA_URL_PUBLICA`, la dirección a la que PSE devuelve al cliente, toma por defecto el dominio de CloudFront del stack. Para fijarla (por ejemplo, con un dominio propio) define la **variable** del repositorio `SOLVENTA_URL_PUBLICA` (pestaña *Variables*, no *Secrets*) con una URL `https://` sin ruta.
+
 ## Cómo probar en local
 
 La pasarela simulada decide el resultado según el token:

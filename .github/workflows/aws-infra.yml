@@ -1,13 +1,21 @@
 name: AWS Infra
 
 # Aprovisiona o elimina el MVP de Solventa en AWS
-#   provisionar: ECR + imagen API + secreto JWT + stack solventa-mvp + web + verificación
+#   provisionar: ECR + imagen API + secreto JWT + secretos de la aplicación + stack
+#                solventa-mvp + web + verificación
 #   eliminar:    stack solventa-mvp + bucket web + bucket de PDF de pólizas + repositorio ECR
-#                + secreto JWT
+#                + secreto JWT + secretos de la aplicación
 #
-# Secrets requeridos del repositorio:
+# Secrets requeridos del repositorio (Settings > Secrets and variables > Actions):
 #   AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY  (y opcional AWS_SESSION_TOKEN)
+#   PAGOS_WEBHOOK_SECRET  secreto compartido con la pasarela de pagos (mínimo 32 caracteres);
+#                         el workflow lo copia a Secrets Manager y el stack lo inyecta en el
+#                         contenedor de la API como variable de entorno PAGOS_WEBHOOK_SECRET
 # Opcional (solo si se quiere crear el primer admin): ADMIN_PASSWORD
+#
+# Variable opcional del repositorio (pestaña Variables, no Secrets):
+#   SOLVENTA_URL_PUBLICA  URL https pública de la app, sin ruta (p. ej. un dominio propio).
+#                         Si no existe, el stack usa el dominio de CloudFront que crea él mismo.
 
 on:
   # Solo manual (Actions > AWS Infra > Run workflow): se elige la acción y sus parámetros.
@@ -54,6 +62,7 @@ env:
   STACK: solventa-mvp
   ECR_STACK: solventa-ecr
   JWT_SECRET_NAME: solventa-mvp-jwt
+  APP_SECRETS_NAME: solventa-mvp-app
 
 jobs:
   provisionar:
@@ -122,11 +131,62 @@ jobs:
           fi
           echo "JWT_SECRET_ARN=$JWT_SECRET_ARN" >> "$GITHUB_ENV"
 
+      # Paso 2b: los secretos de la aplicación salen de secrets de GitHub. El contenedor no
+      # puede leer GitHub, así que se copian a Secrets Manager y el stack los inyecta.
+      - name: Guardar los secretos de la aplicación en Secrets Manager
+        env:
+          PAGOS_WEBHOOK_SECRET: ${{ secrets.PAGOS_WEBHOOK_SECRET }}
+        run: |
+          if [ -z "$PAGOS_WEBHOOK_SECRET" ]; then
+            echo "::error::Falta el secret de GitHub PAGOS_WEBHOOK_SECRET (Settings > Secrets and variables > Actions)."
+            exit 1
+          fi
+          if [ "${#PAGOS_WEBHOOK_SECRET}" -lt 32 ]; then
+            echo "::error::PAGOS_WEBHOOK_SECRET debe tener al menos 32 caracteres."
+            exit 1
+          fi
+          mkdir -p infra/secrets
+          chmod 700 infra/secrets
+          python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          p = Path('infra/secrets/app.json')
+          p.write_text(json.dumps({'pagos_webhook_secret': os.environ['PAGOS_WEBHOOK_SECRET']}))
+          p.chmod(0o600)
+          PY
+          SECRETO_CAMBIO=false
+          if APP_SECRETS_ARN=$(aws secretsmanager describe-secret --secret-id "$APP_SECRETS_NAME" \
+              --query ARN --output text 2>/dev/null); then
+            ACTUAL=$(aws secretsmanager get-secret-value --secret-id "$APP_SECRETS_NAME" \
+              --query SecretString --output text 2>/dev/null || echo "")
+            if [ "$ACTUAL" = "$(cat infra/secrets/app.json)" ]; then
+              echo "El secreto $APP_SECRETS_NAME ya está al día."
+            else
+              aws secretsmanager put-secret-value --secret-id "$APP_SECRETS_NAME" \
+                --secret-string file://infra/secrets/app.json >/dev/null
+              SECRETO_CAMBIO=true
+              echo "El secreto $APP_SECRETS_NAME cambió; se reiniciará el servicio."
+            fi
+          else
+            APP_SECRETS_ARN=$(aws secretsmanager create-secret --name "$APP_SECRETS_NAME" \
+              --secret-string file://infra/secrets/app.json --query ARN --output text)
+            echo "Secreto $APP_SECRETS_NAME creado."
+          fi
+          echo "APP_SECRETS_ARN=$APP_SECRETS_ARN" >> "$GITHUB_ENV"
+          echo "SECRETO_CAMBIO=$SECRETO_CAMBIO" >> "$GITHUB_ENV"
+
       # Paso 3
       - name: Generar parámetros de CloudFormation
         env:
           POSTGRES_ENGINE_VERSION: ${{ inputs.postgres_engine_version || '16.9' }}
+          PUBLIC_URL: ${{ vars.SOLVENTA_URL_PUBLICA }}
         run: |
+          PUBLIC_URL="$(printf '%s' "$PUBLIC_URL" | tr -d '[:space:]')"
+          export PUBLIC_URL
+          if [ -n "$PUBLIC_URL" ] && ! printf '%s' "$PUBLIC_URL" | grep -Eq '^https://[^/]+/?$'; then
+            echo "::error::La variable SOLVENTA_URL_PUBLICA debe ser una URL https sin ruta (por ejemplo https://app.ejemplo.com)."
+            exit 1
+          fi
           aws rds describe-orderable-db-instance-options --engine postgres \
             --db-instance-class db.t3.micro \
             --query 'OrderableDBInstanceOptions[].EngineVersion' --output text
@@ -137,8 +197,12 @@ jobs:
           values = {
               'BackendImage': os.environ['BACKEND_REPO'] + ':' + os.environ['IMAGE_TAG'],
               'JwtSecretArn': os.environ['JWT_SECRET_ARN'],
+              'AppSecretsArn': os.environ['APP_SECRETS_ARN'],
               'PostgresEngineVersion': os.environ['POSTGRES_ENGINE_VERSION'],
           }
+          # Opcional: sin variable, el stack usa el dominio de CloudFront.
+          if os.environ.get('PUBLIC_URL'):
+              values['PublicUrl'] = os.environ['PUBLIC_URL'].rstrip('/')
           p = Path('infra/secrets/parameters.json')
           p.write_text(json.dumps([{'ParameterKey': k, 'ParameterValue': v} for k, v in values.items()]))
           p.chmod(0o600)
@@ -163,6 +227,19 @@ jobs:
             --capabilities CAPABILITY_IAM --no-fail-on-empty-changeset
           aws cloudformation describe-stacks --stack-name "$STACK" \
             --query "Stacks[0].Outputs" --output table
+
+      # ECS lee los secretos solo al iniciar cada tarea: si el valor cambió y el stack no, las
+      # tareas en ejecución seguirían con el valor anterior hasta reiniciarse.
+      - name: Reiniciar el servicio para tomar el secreto nuevo
+        if: ${{ env.SECRETO_CAMBIO == 'true' }}
+        run: |
+          CLUSTER=$(aws cloudformation describe-stacks --stack-name "$STACK" \
+            --query "Stacks[0].Outputs[?OutputKey=='Cluster'].OutputValue" --output text)
+          SERVICE=$(aws cloudformation describe-stacks --stack-name "$STACK" \
+            --query "Stacks[0].Outputs[?OutputKey=='Service'].OutputValue" --output text)
+          aws ecs update-service --cluster "$CLUSTER" --service "$SERVICE" \
+            --force-new-deployment >/dev/null
+          aws ecs wait services-stable --cluster "$CLUSTER" --services "$SERVICE"
 
       - name: Mostrar logs si el despliegue falló
         if: failure()
@@ -285,3 +362,9 @@ jobs:
           aws secretsmanager delete-secret --secret-id "$JWT_SECRET_NAME" \
             --force-delete-without-recovery 2>/dev/null \
             || echo "Secreto JWT ya eliminado."
+
+      - name: Eliminar secretos de la aplicación
+        run: |
+          aws secretsmanager delete-secret --secret-id "$APP_SECRETS_NAME" \
+            --force-delete-without-recovery 2>/dev/null \
+            || echo "Secretos de la aplicación ya eliminados."
