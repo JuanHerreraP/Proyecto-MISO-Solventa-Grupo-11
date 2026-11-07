@@ -53,6 +53,7 @@ class CoberturaPoliza(BaseModel):
     nombre: str = Field(min_length=2, max_length=120)
     suma_asegurada: Decimal = Field(gt=0, max_digits=18, decimal_places=2)
     descripcion: str | None = Field(default=None, max_length=500)
+    exclusiones_principales: tuple[str, ...] = ()
 
 
 class Poliza(BaseModel):

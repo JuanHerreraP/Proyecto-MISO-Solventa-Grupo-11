@@ -14,7 +14,7 @@ from pydantic import AwareDatetime, BaseModel, ConfigDict, EmailStr, Field
 from app.cotizaciones.dominio.catalogo import consultar_ramo
 from app.cotizaciones.dominio.modelos import RamoSeguro
 
-VERSION_PLANTILLA = "2026.10.2"
+VERSION_PLANTILLA = "2026.11.1"
 
 _CLAUSULAS_GENERALES = (
     "El tomador declara que la información suministrada es veraz y completa; la inexactitud "
@@ -34,7 +34,6 @@ CAMPO_CREDITO_HIPOTECARIO = "valor_credito"
 _CLAUSULAS_VIDA = (
     "El beneficio se paga a los beneficiarios designados por el asegurado o, en su defecto, "
     "a sus herederos legales.",
-    "Se excluye el suicidio ocurrido durante el primer año de vigencia.",
 )
 
 _CLAUSULAS_VIDA_HIPOTECARIO = (
@@ -42,21 +41,41 @@ _CLAUSULAS_VIDA_HIPOTECARIO = (
     "hipotecario, hasta por el saldo insoluto de la deuda a la fecha del siniestro.",
     "El remanente de la suma asegurada, si lo hay, se paga a los beneficiarios designados "
     "por el asegurado o, en su defecto, a sus herederos legales.",
-    "Se excluye el suicidio ocurrido durante el primer año de vigencia.",
 )
 
 CLAUSULAS_POR_RAMO: dict[RamoSeguro, tuple[str, ...]] = {
     RamoSeguro.VIDA: _CLAUSULAS_VIDA,
-    RamoSeguro.VIAJE: (
-        "La cobertura opera únicamente durante las fechas del viaje declaradas al cotizar.",
-    ),
     RamoSeguro.PROTECCION_DISPOSITIVOS: (
-        "La cobertura aplica al dispositivo identificado al cotizar; el deducible se descuenta "
-        "de cada indemnización.",
+        "El deducible pactado se descuenta de cada indemnización.",
     ),
     RamoSeguro.PARAMETRICO: (
         "La indemnización se activa al cumplirse el índice paramétrico pactado, sin necesidad "
         "de demostrar la pérdida.",
+    ),
+}
+
+# Reglas ya presentes en el producto, separadas de las condiciones generales para que el
+# cliente pueda identificarlas claramente en el detalle y en el documento contractual.
+EXCLUSIONES_PRINCIPALES_POR_RAMO: dict[RamoSeguro, tuple[str, ...]] = {
+    RamoSeguro.VIAJE: (
+        "No se cubren eventos ocurridos fuera de las fechas del viaje declaradas al cotizar.",
+        "No se cubren hechos intencionales del asegurado ni actividades ilícitas.",
+        "No se cubren condiciones médicas preexistentes que no hayan sido declaradas.",
+    ),
+    RamoSeguro.PROTECCION_DISPOSITIVOS: (
+        "No se cubren daños sobre un dispositivo distinto al identificado al cotizar.",
+        "No se cubren el desgaste normal ni los daños meramente estéticos.",
+        "No se cubren daños intencionales causados por el asegurado.",
+    ),
+    RamoSeguro.VIDA: (
+        "No se cubre el suicidio ocurrido durante el primer año de vigencia.",
+        "No se cubre el fallecimiento derivado de la participación en actividades ilícitas.",
+        "No se cubren hechos asociados a información material omitida deliberadamente.",
+    ),
+    RamoSeguro.PARAMETRICO: (
+        "No hay indemnización cuando el índice paramétrico pactado no alcanza el umbral.",
+        "No se cubren eventos ocurridos fuera de la zona geográfica declarada.",
+        "No se cubren eventos ocurridos fuera del periodo de vigencia contratado.",
     ),
 }
 
@@ -98,11 +117,17 @@ class ContratoSeguro(BaseModel):
     referencia_pago: str | None
     fecha_pago: AwareDatetime
     clausulas: tuple[str, ...]
+    exclusiones_principales: tuple[str, ...] = ()
 
     def contenido_canonico(self) -> bytes:
         """Serialización estable: mismas condiciones, mismos bytes, misma huella."""
+        contenido = self.model_dump(mode="json")
+        # Los contratos emitidos antes de incorporar exclusiones no contenían esta clave.
+        # Omitirla cuando está vacía conserva exactamente su huella y su validez.
+        if not self.exclusiones_principales:
+            contenido.pop("exclusiones_principales", None)
         return json.dumps(
-            self.model_dump(mode="json"),
+            contenido,
             sort_keys=True,
             separators=(",", ":"),
             ensure_ascii=False,
@@ -129,3 +154,7 @@ def clausulas_de(ramo: RamoSeguro, datos_riesgo: dict[str, object]) -> tuple[str
     else:
         particulares = CLAUSULAS_POR_RAMO.get(ramo, ())
     return particulares + _CLAUSULAS_GENERALES
+
+
+def exclusiones_de(ramo: RamoSeguro) -> tuple[str, ...]:
+    return EXCLUSIONES_PRINCIPALES_POR_RAMO.get(ramo, ())

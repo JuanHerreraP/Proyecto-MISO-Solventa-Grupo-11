@@ -182,6 +182,7 @@ class ServicioEmision:
                 nombre=cobertura.nombre,
                 suma_asegurada=cobertura.suma_asegurada,
                 descripcion=cobertura.descripcion,
+                exclusiones_principales=contrato.exclusiones_principales,
             ),
             codigo_verificacion=self._generar_codigo(),
             emitida_en=ahora,

@@ -35,6 +35,10 @@ def test_la_firma_emite_la_poliza_con_lo_contratado_y_lo_cobrado() -> None:
     assert poliza.titular_nombre == "Laura Gómez"
     assert str(poliza.prima_total) == "94500.00"
     assert poliza.cobertura_principal.codigo == "VIDA_DEUDORES"
+    assert any(
+        "suicidio" in exclusion
+        for exclusion in poliza.cobertura_principal.exclusiones_principales
+    )
     assert poliza.numero_poliza.startswith("SOL-2027-")
     assert poliza.codigo_verificacion == "abcdef0123456789"
     # plazo_meses=240 contados desde la firma (1 de enero de 2027, hora de Colombia)
@@ -66,6 +70,8 @@ def test_el_pdf_compila_asegurado_cobertura_tarifa_y_sellos() -> None:
         "Vida deudores hipotecario",
         "COP 94.500,00",
         "COP 250.000.000,00",
+        "EXCLUSIONES PRINCIPALES",
+        "suicidio ocurrido durante el primer a",
         proceso.referencia_proveedor,
         proceso.sello_proveedor,
         proceso.huella_documento,

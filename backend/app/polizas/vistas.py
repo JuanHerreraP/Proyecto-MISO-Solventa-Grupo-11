@@ -40,6 +40,7 @@ class CertificadoPoliza(BaseModel):
     fecha_fin: date
     cobertura_principal: str
     descripcion_cobertura: str | None = None
+    exclusiones_principales: tuple[str, ...] = ()
     suma_asegurada: Decimal
     prima_total: Decimal
     moneda: str
@@ -100,6 +101,7 @@ def a_certificado(poliza: Poliza, hoy: date) -> CertificadoPoliza:
         fecha_fin=poliza.fecha_fin,
         cobertura_principal=poliza.cobertura_principal.nombre,
         descripcion_cobertura=poliza.cobertura_principal.descripcion,
+        exclusiones_principales=poliza.cobertura_principal.exclusiones_principales,
         suma_asegurada=poliza.cobertura_principal.suma_asegurada,
         prima_total=poliza.prima_total,
         moneda=poliza.moneda,
