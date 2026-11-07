@@ -1,6 +1,8 @@
 package com.example.solventa.domain.polizas
 
 import java.util.TimeZone
+import java.text.SimpleDateFormat
+import java.util.Locale
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -34,6 +36,14 @@ class FormatosTest {
     @Test
     fun fechaHoraInvalidaSeDevuelveIgual() {
         assertEquals("pronto", Formatos.fechaHora("pronto", bogota))
+    }
+
+    @Test
+    fun fechaHoraDesdeMilisegundosUsaLaZonaDelDispositivo() {
+        val instante = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssX", Locale.US)
+            .parse("2026-10-22T15:00:00Z")
+
+        assertEquals("22 oct 2026, 10:00", Formatos.fechaHora(checkNotNull(instante).time, bogota))
     }
 
     @Test

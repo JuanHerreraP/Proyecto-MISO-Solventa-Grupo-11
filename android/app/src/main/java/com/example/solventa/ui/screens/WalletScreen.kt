@@ -42,6 +42,7 @@ import com.example.solventa.ui.components.SolventaPrimaryButton
 import com.example.solventa.ui.theme.Atencion
 import com.example.solventa.ui.theme.Avance
 import com.example.solventa.ui.theme.Navegacion
+import com.example.solventa.ui.theme.Offline
 import com.example.solventa.ui.theme.SolventaTheme
 
 /** Billetera digital de pólizas (HU07 / BPM-31). Solo se compone con una sesión activa. */
@@ -50,6 +51,10 @@ fun WalletScreen(
     billetera: Billetera?,
     cargando: Boolean,
     error: String?,
+    sinConexion: Boolean = false,
+    ultimaSincronizacionMs: Long? = null,
+    datosAntiguos: Boolean = false,
+    falloSincronizacionPersistente: Boolean = false,
     onVerPoliza: (String) -> Unit,
     onReintentar: () -> Unit,
     onVolver: () -> Unit,
@@ -58,6 +63,12 @@ fun WalletScreen(
     Surface(modifier = modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surface) {
         Column(modifier = Modifier.fillMaxSize()) {
             Encabezado(titulo = "Mi billetera", onVolver = onVolver)
+            EstadoSincronizacion(
+                sinConexion = sinConexion,
+                ultimaSincronizacionMs = ultimaSincronizacionMs,
+                datosAntiguos = datosAntiguos,
+                falloPersistente = falloSincronizacionPersistente
+            )
 
             when {
                 billetera == null && cargando -> Centrado {
@@ -92,6 +103,47 @@ fun WalletScreen(
                 }
 
                 else -> ListaPolizas(billetera = billetera, error = error, onVerPoliza = onVerPoliza)
+            }
+        }
+    }
+}
+
+@Composable
+private fun EstadoSincronizacion(
+    sinConexion: Boolean,
+    ultimaSincronizacionMs: Long?,
+    datosAntiguos: Boolean,
+    falloPersistente: Boolean
+) {
+    val mensajes = buildList {
+        if (sinConexion && ultimaSincronizacionMs != null) {
+            add(
+                "Sin conexión · datos del ${Formatos.fechaHora(ultimaSincronizacionMs)}" to Offline
+            )
+        }
+        if (datosAntiguos) {
+            add("Estos datos tienen más de 30 días y podrían no estar actualizados." to Atencion)
+        }
+        if (falloPersistente) {
+            add("No pudimos actualizar tus pólizas. Volveremos a intentarlo." to Atencion)
+        }
+    }
+    if (mensajes.isEmpty()) return
+
+    Column(
+        modifier = Modifier.padding(horizontal = 24.dp, vertical = 4.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        mensajes.forEach { (texto, color) ->
+            Surface(shape = RoundedCornerShape(12.dp), color = color.copy(alpha = 0.14f)) {
+                Text(
+                    text = texto,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = color,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 12.dp, vertical = 10.dp)
+                )
             }
         }
     }

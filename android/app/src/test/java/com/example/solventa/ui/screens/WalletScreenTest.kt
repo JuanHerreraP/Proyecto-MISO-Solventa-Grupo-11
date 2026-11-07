@@ -23,13 +23,25 @@ class WalletScreenTest {
 
     private val eventos = mutableListOf<String>()
 
-    private fun mostrar(billetera: Billetera?, cargando: Boolean = false, error: String? = null) {
+    private fun mostrar(
+        billetera: Billetera?,
+        cargando: Boolean = false,
+        error: String? = null,
+        sinConexion: Boolean = false,
+        ultimaSincronizacionMs: Long? = null,
+        datosAntiguos: Boolean = false,
+        falloPersistente: Boolean = false
+    ) {
         compose.setContent {
             SolventaTheme {
                 WalletScreen(
                     billetera = billetera,
                     cargando = cargando,
                     error = error,
+                    sinConexion = sinConexion,
+                    ultimaSincronizacionMs = ultimaSincronizacionMs,
+                    datosAntiguos = datosAntiguos,
+                    falloSincronizacionPersistente = falloPersistente,
                     onVerPoliza = { eventos += "ver:$it" },
                     onReintentar = { eventos += "reintentar" },
                     onVolver = { eventos += "volver" }
@@ -103,5 +115,40 @@ class WalletScreenTest {
 
         compose.onNodeWithText("Sin conexión").assertIsDisplayed()
         compose.onNodeWithText("Seguro de viaje").assertIsDisplayed()
+    }
+
+    @Test
+    fun sinConexionMuestraLaFechaDeLosDatosLocales() {
+        mostrar(
+            billeteraDe(resumen()),
+            sinConexion = true,
+            ultimaSincronizacionMs = 1_798_000_000_000L
+        )
+
+        compose.onNodeWithText("Sin conexión · datos del", substring = true).assertIsDisplayed()
+    }
+
+    @Test
+    fun datosAntiguosMuestranUnaAdvertenciaClara() {
+        mostrar(billeteraDe(resumen()), datosAntiguos = true)
+
+        compose.onNodeWithText("Estos datos tienen más de 30 días", substring = true)
+            .assertIsDisplayed()
+    }
+
+    @Test
+    fun enLineaNoMuestraUnaFallaDeSincronizacion() {
+        mostrar(billeteraDe(resumen()))
+
+        compose.onNodeWithText("No pudimos actualizar tus pólizas", substring = true)
+            .assertDoesNotExist()
+    }
+
+    @Test
+    fun fallaPersistenteMuestraUnaAdvertencia() {
+        mostrar(billeteraDe(resumen()), falloPersistente = true)
+
+        compose.onNodeWithText("No pudimos actualizar tus pólizas", substring = true)
+            .assertIsDisplayed()
     }
 }

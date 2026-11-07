@@ -39,16 +39,21 @@ object Formatos {
                 isLenient = false
             }
             val instante = lector.parse(normalizado) ?: return iso
-            val calendario = java.util.Calendar.getInstance(zona).apply { time = instante }
-            val dia = calendario.get(java.util.Calendar.DAY_OF_MONTH)
-            val mes = MESES[calendario.get(java.util.Calendar.MONTH)]
-            val anio = calendario.get(java.util.Calendar.YEAR)
-            val hora = calendario.get(java.util.Calendar.HOUR_OF_DAY).toString().padStart(2, '0')
-            val minuto = calendario.get(java.util.Calendar.MINUTE).toString().padStart(2, '0')
-            "$dia $mes $anio, $hora:$minuto"
+            fechaHora(instante.time, zona)
         } catch (error: java.text.ParseException) {
             iso
         }
+    }
+
+    /** Epoch milliseconds → "22 oct 2026, 10:00" en la zona del dispositivo. */
+    fun fechaHora(instanteMs: Long, zona: TimeZone = TimeZone.getDefault()): String {
+        val calendario = java.util.Calendar.getInstance(zona).apply { timeInMillis = instanteMs }
+        val dia = calendario.get(java.util.Calendar.DAY_OF_MONTH)
+        val mes = MESES[calendario.get(java.util.Calendar.MONTH)]
+        val anio = calendario.get(java.util.Calendar.YEAR)
+        val hora = calendario.get(java.util.Calendar.HOUR_OF_DAY).toString().padStart(2, '0')
+        val minuto = calendario.get(java.util.Calendar.MINUTE).toString().padStart(2, '0')
+        return "$dia $mes $anio, $hora:$minuto"
     }
 
     /** "40000000.00" con COP → "$40.000.000"; con centavos, "$1.234,50". */

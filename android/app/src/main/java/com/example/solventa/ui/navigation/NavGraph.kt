@@ -451,6 +451,11 @@ fun NavGraph(
                         billetera = estadoBilletera.billetera,
                         cargando = estadoBilletera.cargando,
                         error = estadoBilletera.error,
+                        sinConexion = estadoBilletera.sinConexion,
+                        ultimaSincronizacionMs = estadoBilletera.ultimaSincronizacionMs,
+                        datosAntiguos = estadoBilletera.datosAntiguos,
+                        falloSincronizacionPersistente =
+                            estadoBilletera.falloSincronizacionPersistente,
                         onVerPoliza = { polizaId ->
                             navController.navigate(ScreenRoute.Certificate.ruta(polizaId))
                         },
