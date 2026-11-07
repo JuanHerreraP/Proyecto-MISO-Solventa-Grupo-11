@@ -13,6 +13,7 @@ class AuthCoordinatorSesionTest {
     @Test
     fun sinSesionNoHayToken() {
         assertNull(auth.accessTokenVigente())
+        assertNull(auth.usuarioId())
     }
 
     @Test
@@ -20,6 +21,7 @@ class AuthCoordinatorSesionTest {
         ejecutar { auth.ingresarConCredenciales("ana@gmail.com", "clave") }
 
         assertEquals("access-1", auth.accessTokenVigente())
+        assertEquals(PERFIL_ANA.id, auth.usuarioId())
     }
 
     @Test
@@ -40,6 +42,7 @@ class AuthCoordinatorSesionTest {
 
         assertNull(auth.estado.sesion)
         assertNull(auth.accessTokenVigente())
+        assertNull(auth.usuarioId())
         assertEquals(MensajesAuth.SESION_EXPIRADA, auth.estado.mensaje)
     }
 

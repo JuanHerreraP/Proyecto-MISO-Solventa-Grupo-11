@@ -75,8 +75,13 @@ class PolizasGatewayFalso : PolizasGateway {
     }
 }
 
-class SesionFalsa(var token: String? = "access-1") : SesionAutenticada {
+class SesionFalsa(
+    var token: String? = "access-1",
+    var idUsuario: String? = "u-1"
+) : SesionPolizasOffline {
     var rechazos = 0
+
+    override fun usuarioId(): String? = idUsuario
 
     override fun accessTokenVigente(): String? = token
 
