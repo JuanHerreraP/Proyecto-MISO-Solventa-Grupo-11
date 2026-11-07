@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.solventa.domain.polizas.BilleteraCoordinator
 import com.example.solventa.domain.polizas.EstadoBilletera
+import com.example.solventa.domain.polizas.ResultadoSincronizacion
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -22,6 +23,12 @@ class BilleteraViewModel(private val coordinador: BilleteraCoordinator) : ViewMo
     fun cargar() {
         viewModelScope.launch { coordinador.cargar() }
     }
+
+    suspend fun sincronizarEnSegundoPlano(): ResultadoSincronizacion =
+        coordinador.sincronizarEnSegundoPlano()
+
+    fun marcarFalloSincronizacionPersistente() =
+        coordinador.marcarFalloSincronizacionPersistente()
 
     fun verCertificado(polizaId: String) {
         viewModelScope.launch { coordinador.verCertificado(polizaId) }

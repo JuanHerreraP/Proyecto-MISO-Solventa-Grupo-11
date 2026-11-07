@@ -13,6 +13,7 @@ data class EstadoBilletera(
     val sinConexion: Boolean = false,
     val ultimaSincronizacionMs: Long? = null,
     val datosAntiguos: Boolean = false,
+    val falloSincronizacionPersistente: Boolean = false,
     val cargandoCertificado: Boolean = false,
     val certificado: Certificado? = null,
     val errorCertificado: String? = null,
@@ -31,6 +32,13 @@ object MensajesBilletera {
     const val CERTIFICADO_NO_DISPONIBLE = "No pudimos cargar el certificado. Inténtalo de nuevo."
     const val COMPARTIR_FALLIDO = "No pudimos generar el enlace para compartir. Inténtalo de nuevo."
     const val SESION_VENCIDA = "Tu sesión expiró. Vuelve a ingresar."
+}
+
+enum class ResultadoSincronizacion {
+    EXITO,
+    REINTENTAR,
+    SIN_SESION,
+    EN_CURSO
 }
 
 /**
@@ -64,9 +72,28 @@ class BilleteraCoordinator(
     private var generacion = 0
 
     suspend fun cargar() {
-        if (estado.cargando) return
-        val usuario = usuarioOFinalizar() ?: return
-        val token = tokenOFinalizar() ?: return
+        actualizar(informarFallo = true)
+    }
+
+    /** Actualiza sin bloquear la UI ni mostrar errores durante los reintentos automáticos. */
+    suspend fun sincronizarEnSegundoPlano(): ResultadoSincronizacion =
+        actualizar(informarFallo = false)
+
+    fun marcarFalloSincronizacionPersistente() {
+        if (sesion.usuarioId() != null) {
+            estado = estado.copy(falloSincronizacionPersistente = true)
+        }
+    }
+
+    private suspend fun actualizar(informarFallo: Boolean): ResultadoSincronizacion {
+        if (estado.cargando) return ResultadoSincronizacion.EN_CURSO
+        val usuarioId = sesion.usuarioId()
+        val token = sesion.accessTokenVigente()
+        if (usuarioId == null || token == null) {
+            if (informarFallo) rechazada()
+            return ResultadoSincronizacion.SIN_SESION
+        }
+        val usuario = ClaveUsuarioCache(usuarioId)
         val cacheada = leerBilletera(usuario)
         estado = estado.copy(
             cargando = true,
@@ -75,36 +102,50 @@ class BilleteraCoordinator(
             usandoDatosLocales = cacheada != null,
             sinConexion = false,
             ultimaSincronizacionMs = cacheada?.metadatos?.sincronizadaEnMs,
-            datosAntiguos = cacheada?.metadatos?.superaAntiguedadMaxima(reloj.ahoraMs()) == true
+            datosAntiguos = cacheada?.metadatos?.superaAntiguedadMaxima(reloj.ahoraMs()) == true,
+            falloSincronizacionPersistente = false
         )
         val inicio = generacion
         val resultado = gateway.billetera(token)
-        if (inicio != generacion) return
+        if (inicio != generacion) return ResultadoSincronizacion.SIN_SESION
 
-        estado = when (resultado) {
+        when (resultado) {
             is ResultadoApi.Exito -> {
                 val sincronizadaEnMs = reloj.ahoraMs()
                 guardarBilletera(usuario, resultado.valor, sincronizadaEnMs)
-                estado.copy(
+                estado = estado.copy(
                     cargando = false,
                     billetera = resultado.valor,
                     error = null,
                     usandoDatosLocales = false,
                     sinConexion = false,
                     ultimaSincronizacionMs = sincronizadaEnMs,
-                    datosAntiguos = false
+                    datosAntiguos = false,
+                    falloSincronizacionPersistente = false
                 )
+                return ResultadoSincronizacion.EXITO
             }
             is ResultadoApi.Fallo -> {
-                if (resultado.http == 401) return rechazada()
-                estado.copy(cargando = false, error = MensajesBilletera.ERROR_GENERICO)
+                if (resultado.http == 401) {
+                    rechazada()
+                    return ResultadoSincronizacion.SIN_SESION
+                }
+                estado = estado.copy(
+                    cargando = false,
+                    error = if (informarFallo) MensajesBilletera.ERROR_GENERICO else estado.error
+                )
             }
-            ResultadoApi.SinConexion -> if (cacheada != null) {
+            ResultadoApi.SinConexion -> estado = if (cacheada != null) {
                 estado.copy(cargando = false, error = null, sinConexion = true)
             } else {
-                estado.copy(cargando = false, error = MensajesBilletera.SIN_CONEXION, sinConexion = true)
+                estado.copy(
+                    cargando = false,
+                    error = if (informarFallo) MensajesBilletera.SIN_CONEXION else null,
+                    sinConexion = true
+                )
             }
         }
+        return ResultadoSincronizacion.REINTENTAR
     }
 
     suspend fun verCertificado(polizaId: String) {

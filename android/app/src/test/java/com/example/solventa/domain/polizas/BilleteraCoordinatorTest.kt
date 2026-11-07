@@ -159,6 +159,43 @@ class BilleteraCoordinatorTest {
     }
 
     @Test
+    fun sincronizacionAutomaticaNoInformaAntesDeAgotarLosReintentos() {
+        ejecutar { billetera.cargar() }
+        gateway.respuestaBilletera = ResultadoApi.Fallo(500, null, null)
+        var resultado: ResultadoSincronizacion? = null
+
+        ejecutar { resultado = billetera.sincronizarEnSegundoPlano() }
+
+        assertEquals(ResultadoSincronizacion.REINTENTAR, resultado)
+        assertNull(billetera.estado.error)
+        assertFalse(billetera.estado.falloSincronizacionPersistente)
+    }
+
+    @Test
+    fun marcaLaFallaPersistenteYSiguienteExitoLaLimpia() {
+        billetera.marcarFalloSincronizacionPersistente()
+        assertTrue(billetera.estado.falloSincronizacionPersistente)
+
+        ejecutar { billetera.sincronizarEnSegundoPlano() }
+
+        assertFalse(billetera.estado.falloSincronizacionPersistente)
+        assertEquals(reloj.ahora, billetera.estado.ultimaSincronizacionMs)
+    }
+
+    @Test
+    fun sincronizacionAutomaticaSinSesionNoMuestraSesionVencida() {
+        sesion.token = null
+        sesion.idUsuario = null
+        var resultado: ResultadoSincronizacion? = null
+
+        ejecutar { resultado = billetera.sincronizarEnSegundoPlano() }
+
+        assertEquals(ResultadoSincronizacion.SIN_SESION, resultado)
+        assertEquals(EstadoBilletera(), billetera.estado)
+        assertEquals(0, sesion.rechazos)
+    }
+
+    @Test
     fun siElBackendRechazaElTokenSeCierraLaSesionYSeBorraLoCargado() {
         ejecutar { billetera.cargar() }
         gateway.respuestaBilletera = ResultadoApi.Fallo(401, "TOKEN_EXPIRED", null)

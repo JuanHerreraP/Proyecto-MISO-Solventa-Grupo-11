@@ -15,6 +15,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.ui.Modifier
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
+import androidx.lifecycle.lifecycleScope
 import com.example.solventa.biometric.AutenticadorBiometrico
 import com.example.solventa.biometric.DisponibilidadBiometrica
 import com.example.solventa.data.remote.ApiClient
@@ -23,6 +24,7 @@ import com.example.solventa.data.remote.RemoteCotizacionesGateway
 import com.example.solventa.data.remote.RemotePagosGateway
 import com.example.solventa.data.remote.RemotePolizasGateway
 import com.example.solventa.data.local.CachePolizasCifrada
+import com.example.solventa.data.connectivity.MonitorConexionPolizas
 import com.example.solventa.data.remote.RemoteSiniestrosGateway
 import com.example.solventa.data.session.KeystoreBovedaSesion
 import com.example.solventa.domain.auth.AuthCoordinator
@@ -30,6 +32,7 @@ import com.example.solventa.domain.auth.Reloj
 import com.example.solventa.domain.cotizaciones.CotizacionesCoordinator
 import com.example.solventa.domain.pagos.PagosCoordinator
 import com.example.solventa.domain.polizas.BilleteraCoordinator
+import com.example.solventa.domain.polizas.SincronizadorPolizas
 import com.example.solventa.domain.siniestros.SiniestrosCoordinator
 import com.example.solventa.ui.auth.AuthViewModel
 import com.example.solventa.ui.billetera.BilleteraViewModel
@@ -67,6 +70,17 @@ class MainActivity : FragmentActivity() {
                 reloj = Reloj { System.currentTimeMillis() }
             )
         }
+    }
+
+    private val monitorPolizas by lazy {
+        MonitorConexionPolizas(
+            context = applicationContext,
+            alcance = lifecycleScope,
+            sincronizador = SincronizadorPolizas(
+                sincronizar = { billetera.sincronizarEnSegundoPlano() },
+                alFalloPersistente = { billetera.marcarFalloSincronizacionPersistente() }
+            )
+        )
     }
 
     private val cotizaciones: CotizacionesViewModel by viewModels {
@@ -120,6 +134,12 @@ class MainActivity : FragmentActivity() {
                 }
             }
         }
+        monitorPolizas.iniciar()
+    }
+
+    override fun onDestroy() {
+        monitorPolizas.detener()
+        super.onDestroy()
     }
 
     override fun onResume() {
