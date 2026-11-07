@@ -148,6 +148,56 @@ class BilleteraCoordinatorTest {
     }
 
     @Test
+    fun alRecrearElCoordinadorSinConexionRecuperaLaUltimaSincronizacion() {
+        val guardada = billeteraDe(resumen(id = "POL-ANTES-DEL-REINICIO"))
+        gateway.respuestaBilletera = ResultadoApi.Exito(guardada)
+        ejecutar { billetera.cargar() }
+        val gatewayTrasReinicio = PolizasGatewayFalso().apply {
+            respuestaBilletera = ResultadoApi.SinConexion
+        }
+        val recreada = BilleteraCoordinator(gatewayTrasReinicio, sesion, cache, reloj)
+
+        ejecutar { recreada.cargar() }
+
+        assertEquals(guardada, recreada.estado.billetera)
+        assertTrue(recreada.estado.usandoDatosLocales)
+        assertTrue(recreada.estado.sinConexion)
+        assertNull(recreada.estado.error)
+    }
+
+    @Test
+    fun alRecuperarConexionReintentaYReemplazaLosDatosLocales() {
+        val local = billeteraDe(resumen(id = "POL-LOCAL"))
+        ejecutar {
+            cache.reemplazar(ClaveUsuarioCache("u-1"), local, emptyList(), 1L)
+        }
+        gateway.respuestaBilletera = ResultadoApi.SinConexion
+        ejecutar { billetera.cargar() }
+        val remota = billeteraDe(resumen(id = "POL-REMOTA"))
+        var intentos = 0
+        val sincronizador = SincronizadorPolizas(
+            sincronizar = {
+                intentos++
+                if (intentos == 2) gateway.respuestaBilletera = ResultadoApi.Exito(remota)
+                billetera.sincronizarEnSegundoPlano()
+            },
+            alFalloPersistente = billetera::marcarFalloSincronizacionPersistente,
+            esperar = {}
+        )
+
+        ejecutar { sincronizador.ejecutar() }
+
+        assertEquals(2, intentos)
+        assertEquals(remota, billetera.estado.billetera)
+        assertFalse(billetera.estado.sinConexion)
+        assertFalse(billetera.estado.usandoDatosLocales)
+        assertFalse(billetera.estado.falloSincronizacionPersistente)
+        var persistida: BilleteraCacheada? = null
+        ejecutar { persistida = cache.billetera(ClaveUsuarioCache("u-1")) }
+        assertEquals(remota, persistida?.billetera)
+    }
+
+    @Test
     fun unErrorDelServidorConservaLoQueYaSeHabiaCargado() {
         ejecutar { billetera.cargar() }
         gateway.respuestaBilletera = ResultadoApi.Fallo(500, null, null)
@@ -368,6 +418,40 @@ class BilleteraCoordinatorTest {
         assertNull(anterior)
         assertEquals("POL-U2", nueva?.billetera?.polizas?.single()?.polizaId)
         assertEquals("POL-U2", billetera.estado.billetera?.polizas?.single()?.polizaId)
+    }
+
+    @Test
+    fun respuestaTardiaDelUsuarioAnteriorNoSeMuestraNiSePersiste() {
+        ejecutar {
+            cache.reemplazar(
+                ClaveUsuarioCache("u-1"),
+                billeteraDe(resumen(id = "POL-U1-CACHE")),
+                emptyList(),
+                1L
+            )
+        }
+        lateinit var coordinador: BilleteraCoordinator
+        val gatewayConCambio = object : PolizasGateway by gateway {
+            override suspend fun billetera(accessToken: String): ResultadoApi<Billetera> {
+                sesion.idUsuario = "u-2"
+                sesion.token = "access-2"
+                coordinador.registrarUsuario("u-2")
+                return ResultadoApi.Exito(billeteraDe(resumen(id = "POL-U1-TARDIA")))
+            }
+        }
+        coordinador = BilleteraCoordinator(gatewayConCambio, sesion, cache, reloj)
+
+        ejecutar { coordinador.cargar() }
+
+        assertEquals(EstadoBilletera(), coordinador.estado)
+        var anterior: BilleteraCacheada? = null
+        var nueva: BilleteraCacheada? = null
+        ejecutar {
+            anterior = cache.billetera(ClaveUsuarioCache("u-1"))
+            nueva = cache.billetera(ClaveUsuarioCache("u-2"))
+        }
+        assertNull(anterior)
+        assertNull(nueva)
     }
 
     @Test

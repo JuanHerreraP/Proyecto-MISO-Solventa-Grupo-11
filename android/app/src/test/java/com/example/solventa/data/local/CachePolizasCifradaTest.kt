@@ -32,6 +32,25 @@ class CachePolizasCifradaTest {
     }
 
     @Test
+    fun unaNuevaInstanciaRecuperaLosDatosCifradosTrasReiniciarLaAplicacion() = runTest {
+        val billetera = billeteraDe(resumen(id = "POL-REINICIO"))
+        CachePolizasCifrada(almacen, llave).reemplazar(
+            ana,
+            billetera,
+            listOf(certificado(id = "POL-REINICIO")),
+            123_456L
+        )
+
+        val cacheTrasReinicio = CachePolizasCifrada(almacen, llave)
+
+        assertEquals(billetera, cacheTrasReinicio.billetera(ana)?.billetera)
+        assertEquals(
+            "POL-REINICIO",
+            cacheTrasReinicio.certificado(ana, "POL-REINICIO")?.certificado?.polizaId
+        )
+    }
+
+    @Test
     fun nuncaPersisteDatosSensiblesEnTextoClaro() = runTest {
         cache.reemplazar(ana, billeteraDe(resumen()), listOf(certificado()), 123_456L)
 
