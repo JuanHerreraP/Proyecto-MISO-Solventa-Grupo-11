@@ -15,6 +15,7 @@ import com.example.solventa.domain.auth.GatewayFalso
 import com.example.solventa.domain.auth.RelojFalso
 import com.example.solventa.domain.auth.ResultadoApi
 import com.example.solventa.domain.polizas.BilleteraCoordinator
+import com.example.solventa.domain.polizas.CachePolizasFalsa
 import com.example.solventa.domain.polizas.PolizasGatewayFalso
 import com.example.solventa.ui.auth.AuthViewModel
 import com.example.solventa.ui.billetera.BilleteraViewModel
@@ -44,7 +45,14 @@ class NavGraphBilleteraTest {
     private fun mostrar() {
         val coordinador = AuthCoordinator(gatewayAuth, BovedaFalsa(), RelojFalso()) { false }
         val viewModel = AuthViewModel(coordinador)
-        billetera = BilleteraViewModel(BilleteraCoordinator(gatewayPolizas, viewModel.sesion))
+        billetera = BilleteraViewModel(
+            BilleteraCoordinator(
+                gatewayPolizas,
+                viewModel.sesion,
+                CachePolizasFalsa(),
+                RelojFalso()
+            )
+        )
         actividad = Robolectric.buildActivity(FragmentActivity::class.java).setup().get()
         compose.setContent {
             SolventaTheme {

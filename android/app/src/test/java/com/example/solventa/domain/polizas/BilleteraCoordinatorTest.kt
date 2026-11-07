@@ -1,6 +1,7 @@
 package com.example.solventa.domain.polizas
 
 import com.example.solventa.domain.auth.ResultadoApi
+import com.example.solventa.domain.auth.RelojFalso
 import com.example.solventa.domain.auth.ejecutar
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -12,7 +13,9 @@ import org.junit.Test
 class BilleteraCoordinatorTest {
     private val gateway = PolizasGatewayFalso()
     private val sesion = SesionFalsa()
-    private val billetera = BilleteraCoordinator(gateway, sesion)
+    private val cache = CachePolizasFalsa()
+    private val reloj = RelojFalso()
+    private val billetera = BilleteraCoordinator(gateway, sesion, cache, reloj)
 
     @Test
     fun cargaLaBilleteraConElTokenDeLaSesion() {
@@ -55,6 +58,96 @@ class BilleteraCoordinatorTest {
     }
 
     @Test
+    fun sinConexionMuestraLaUltimaBilleteraCacheadaSinErrorBloqueante() {
+        val guardada = billeteraDe(resumen(id = "POL-CACHE"))
+        ejecutar {
+            cache.reemplazar(ClaveUsuarioCache("u-1"), guardada, emptyList(), 900_000L)
+        }
+        gateway.respuestaBilletera = ResultadoApi.SinConexion
+
+        ejecutar { billetera.cargar() }
+
+        assertEquals(guardada, billetera.estado.billetera)
+        assertTrue(billetera.estado.usandoDatosLocales)
+        assertTrue(billetera.estado.sinConexion)
+        assertEquals(900_000L, billetera.estado.ultimaSincronizacionMs)
+        assertFalse(billetera.estado.datosAntiguos)
+        assertNull(billetera.estado.error)
+    }
+
+    @Test
+    fun marcaComoAntiguosLosDatosCacheadosDeMasDeTreintaDias() {
+        val diaMs = 24L * 60L * 60L * 1_000L
+        reloj.ahora = 31L * diaMs
+        ejecutar {
+            cache.reemplazar(
+                ClaveUsuarioCache("u-1"),
+                billeteraDe(resumen()),
+                emptyList(),
+                0L
+            )
+        }
+        gateway.respuestaBilletera = ResultadoApi.SinConexion
+
+        ejecutar { billetera.cargar() }
+
+        assertTrue(billetera.estado.datosAntiguos)
+    }
+
+    @Test
+    fun nuncaMuestraLaCacheDeOtroUsuario() {
+        ejecutar {
+            cache.reemplazar(
+                ClaveUsuarioCache("otro-usuario"),
+                billeteraDe(resumen(id = "POL-AJENA")),
+                emptyList(),
+                1L
+            )
+        }
+        gateway.respuestaBilletera = ResultadoApi.SinConexion
+
+        ejecutar { billetera.cargar() }
+
+        assertNull(billetera.estado.billetera)
+        assertFalse(billetera.estado.usandoDatosLocales)
+        assertEquals(MensajesBilletera.SIN_CONEXION, billetera.estado.error)
+    }
+
+    @Test
+    fun muestraLaCacheAntesDeReemplazarlaConLaRespuestaRemota() {
+        ejecutar {
+            cache.reemplazar(
+                ClaveUsuarioCache("u-1"),
+                billeteraDe(resumen(id = "POL-CACHE")),
+                emptyList(),
+                1L
+            )
+        }
+        gateway.respuestaBilletera = ResultadoApi.Exito(billeteraDe(resumen(id = "POL-REMOTA")))
+        val estados = mutableListOf<EstadoBilletera>()
+        billetera.observador = { estados += it }
+
+        ejecutar { billetera.cargar() }
+
+        assertTrue(estados.any { it.usandoDatosLocales && it.billetera?.polizas?.single()?.polizaId == "POL-CACHE" })
+        assertEquals("POL-REMOTA", billetera.estado.billetera?.polizas?.single()?.polizaId)
+        assertFalse(billetera.estado.usandoDatosLocales)
+    }
+
+    @Test
+    fun unaRespuestaRemotaActualizaLaCacheDelUsuario() {
+        val remota = billeteraDe(resumen(id = "POL-REMOTA"))
+        gateway.respuestaBilletera = ResultadoApi.Exito(remota)
+
+        ejecutar { billetera.cargar() }
+
+        var guardada: BilleteraCacheada? = null
+        ejecutar { guardada = cache.billetera(ClaveUsuarioCache("u-1")) }
+        assertEquals(remota, guardada?.billetera)
+        assertEquals(reloj.ahora, guardada?.metadatos?.sincronizadaEnMs)
+    }
+
+    @Test
     fun unErrorDelServidorConservaLoQueYaSeHabiaCargado() {
         ejecutar { billetera.cargar() }
         gateway.respuestaBilletera = ResultadoApi.Fallo(500, null, null)
@@ -94,6 +187,37 @@ class BilleteraCoordinatorTest {
         assertEquals(listOf("POL-1"), gateway.certificadosPedidos)
         assertEquals(certificado(), billetera.estado.certificado)
         assertFalse(billetera.estado.cargandoCertificado)
+    }
+
+    @Test
+    fun sinConexionMuestraElCertificadoCacheado() {
+        ejecutar {
+            cache.reemplazar(
+                ClaveUsuarioCache("u-1"),
+                billeteraDe(resumen()),
+                listOf(certificado()),
+                1L
+            )
+        }
+        gateway.respuestaCertificado = ResultadoApi.SinConexion
+
+        ejecutar { billetera.verCertificado("POL-1") }
+
+        assertEquals(certificado(), billetera.estado.certificado)
+        assertNull(billetera.estado.errorCertificado)
+    }
+
+    @Test
+    fun unCertificadoRemotoQuedaDisponibleParaLaSiguienteConsultaOffline() {
+        ejecutar { billetera.cargar() }
+        ejecutar { billetera.verCertificado("POL-1") }
+        billetera.cerrarCertificado()
+        gateway.respuestaCertificado = ResultadoApi.SinConexion
+
+        ejecutar { billetera.verCertificado("POL-1") }
+
+        assertEquals(certificado(), billetera.estado.certificado)
+        assertNull(billetera.estado.errorCertificado)
     }
 
     @Test
@@ -182,7 +306,7 @@ class BilleteraCoordinatorTest {
                 return ResultadoApi.Exito(billeteraDe(resumen()))
             }
         }
-        coordinadorLento = BilleteraCoordinator(lento, sesion)
+        coordinadorLento = BilleteraCoordinator(lento, sesion, cache, reloj)
 
         ejecutar { coordinadorLento.cargar() }
 

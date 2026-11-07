@@ -22,6 +22,7 @@ import com.example.solventa.data.remote.RemoteAuthGateway
 import com.example.solventa.data.remote.RemoteCotizacionesGateway
 import com.example.solventa.data.remote.RemotePagosGateway
 import com.example.solventa.data.remote.RemotePolizasGateway
+import com.example.solventa.data.local.CachePolizasCifrada
 import com.example.solventa.data.remote.RemoteSiniestrosGateway
 import com.example.solventa.data.session.KeystoreBovedaSesion
 import com.example.solventa.domain.auth.AuthCoordinator
@@ -61,7 +62,9 @@ class MainActivity : FragmentActivity() {
         BilleteraViewModel.Fabrica {
             BilleteraCoordinator(
                 gateway = RemotePolizasGateway(ApiClient.crearPolizasApi()),
-                sesion = viewModel.sesion
+                sesion = viewModel.sesion,
+                cache = CachePolizasCifrada(applicationContext),
+                reloj = Reloj { System.currentTimeMillis() }
             )
         }
     }
