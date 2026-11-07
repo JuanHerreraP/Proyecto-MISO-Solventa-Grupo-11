@@ -70,6 +70,7 @@ class BilleteraCoordinator(
 
     /** Cambia al limpiar; una respuesta de otra generación ya no se aplica. */
     private var generacion = 0
+    private var usuarioActivo: ClaveUsuarioCache? = null
 
     suspend fun cargar() {
         actualizar(informarFallo = true)
@@ -94,6 +95,7 @@ class BilleteraCoordinator(
             return ResultadoSincronizacion.SIN_SESION
         }
         val usuario = ClaveUsuarioCache(usuarioId)
+        activarUsuario(usuario)
         val cacheada = leerBilletera(usuario)
         estado = estado.copy(
             cargando = true,
@@ -151,6 +153,7 @@ class BilleteraCoordinator(
     suspend fun verCertificado(polizaId: String) {
         if (estado.cargandoCertificado) return
         val usuario = usuarioOFinalizar() ?: return
+        activarUsuario(usuario)
         val token = tokenOFinalizar() ?: return
         val cacheado = leerCertificado(usuario, polizaId)
         estado = estado.copy(
@@ -229,10 +232,26 @@ class BilleteraCoordinator(
         )
     }
 
-    /** Se llama al cerrar o perder la sesión. */
+    /** Limpia únicamente la memoria; no borra una caché útil al iniciar la app sin conexión. */
     fun limpiar() {
         generacion++
         if (estado != EstadoBilletera()) estado = EstadoBilletera()
+    }
+
+    /** Se llama después de una transición real de sesión autenticada a sesión cerrada. */
+    suspend fun eliminarDatosLocales() {
+        limpiar()
+        usuarioActivo = null
+        try {
+            cache.eliminarTodo()
+        } catch (error: Exception) {
+            // El estado en memoria ya quedó limpio; el almacenamiento reintentará al próximo acceso.
+        }
+    }
+
+    /** Registra la identidad actual y elimina cualquier dato perteneciente a otra sesión. */
+    suspend fun registrarUsuario(usuarioId: String) {
+        activarUsuario(ClaveUsuarioCache(usuarioId))
     }
 
     private fun tokenOFinalizar(): String? {
@@ -300,6 +319,23 @@ class BilleteraCoordinator(
         } catch (error: Exception) {
             // Mostrar el certificado remoto no depende de que el dispositivo pueda persistirlo.
         }
+    }
+
+    private suspend fun activarUsuario(usuario: ClaveUsuarioCache) {
+        val anterior = usuarioActivo
+        if (anterior != null && anterior != usuario) {
+            limpiar()
+            try {
+                cache.eliminar(anterior)
+            } catch (error: Exception) {
+                try {
+                    cache.eliminarTodo()
+                } catch (errorTotal: Exception) {
+                    // El aislamiento en memoria se mantiene aunque falle el almacenamiento.
+                }
+            }
+        }
+        usuarioActivo = usuario
     }
 
     private fun rechazada() {

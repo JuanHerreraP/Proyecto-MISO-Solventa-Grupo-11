@@ -46,6 +46,14 @@ class BilleteraViewModel(private val coordinador: BilleteraCoordinator) : ViewMo
 
     fun limpiar() = coordinador.limpiar()
 
+    fun eliminarDatosLocales() {
+        viewModelScope.launch { coordinador.eliminarDatosLocales() }
+    }
+
+    fun registrarUsuario(usuarioId: String) {
+        viewModelScope.launch { coordinador.registrarUsuario(usuarioId) }
+    }
+
     override fun onCleared() {
         coordinador.observador = null
     }

@@ -315,13 +315,59 @@ class BilleteraCoordinatorTest {
     }
 
     @Test
-    fun limpiarBorraTodoParaElSiguienteUsuario() {
+    fun limpiarBorraElEstadoEnMemoria() {
         ejecutar { billetera.cargar() }
         ejecutar { billetera.verCertificado("POL-1") }
 
         billetera.limpiar()
 
         assertEquals(EstadoBilletera(), billetera.estado)
+    }
+
+    @Test
+    fun cerrarSesionEliminaLaCacheCifrada() {
+        ejecutar { billetera.cargar() }
+
+        ejecutar { billetera.eliminarDatosLocales() }
+
+        var guardada: BilleteraCacheada? = null
+        ejecutar { guardada = cache.billetera(ClaveUsuarioCache("u-1")) }
+        assertNull(guardada)
+        assertEquals(EstadoBilletera(), billetera.estado)
+    }
+
+    @Test
+    fun iniciarSinSesionNoBorraUnaCacheQuePuedeDesbloquearseDespues() {
+        val guardada = billeteraDe(resumen(id = "POL-OFFLINE"))
+        ejecutar {
+            cache.reemplazar(ClaveUsuarioCache("u-1"), guardada, emptyList(), 1L)
+        }
+
+        billetera.limpiar()
+
+        var recuperada: BilleteraCacheada? = null
+        ejecutar { recuperada = cache.billetera(ClaveUsuarioCache("u-1")) }
+        assertEquals(guardada, recuperada?.billetera)
+    }
+
+    @Test
+    fun cambiarDeUsuarioEliminaLaCacheAnteriorAntesDeMostrarLaNueva() {
+        ejecutar { billetera.cargar() }
+        sesion.idUsuario = "u-2"
+        sesion.token = "access-2"
+        gateway.respuestaBilletera = ResultadoApi.Exito(billeteraDe(resumen(id = "POL-U2")))
+
+        ejecutar { billetera.cargar() }
+
+        var anterior: BilleteraCacheada? = null
+        var nueva: BilleteraCacheada? = null
+        ejecutar {
+            anterior = cache.billetera(ClaveUsuarioCache("u-1"))
+            nueva = cache.billetera(ClaveUsuarioCache("u-2"))
+        }
+        assertNull(anterior)
+        assertEquals("POL-U2", nueva?.billetera?.polizas?.single()?.polizaId)
+        assertEquals("POL-U2", billetera.estado.billetera?.polizas?.single()?.polizaId)
     }
 
     @Test
