@@ -77,7 +77,7 @@ class NavGraphBilleteraTest {
 
         compose.boton("Ver mi billetera").performClick()
         compose.waitForIdle()
-        compose.onNodeWithText("Mi billetera").assertIsDisplayed()
+        compose.onNodeWithText("Pólizas").assertIsDisplayed()
         // El inicio consulta el resumen y la billetera vuelve a cargar la fuente de verdad.
         assertEquals(listOf("access-1", "access-1"), gatewayPolizas.tokensUsados)
 
@@ -95,7 +95,7 @@ class NavGraphBilleteraTest {
 
         compose.onNodeWithContentDescription("Volver").performClick()
         compose.waitForIdle()
-        compose.onNodeWithText("Mi billetera").assertIsDisplayed()
+        compose.onNodeWithText("Pólizas").assertIsDisplayed()
         assertNull(billetera.estado.value.certificado)
     }
 
@@ -107,7 +107,7 @@ class NavGraphBilleteraTest {
         compose.boton("Ver mi billetera").performClick()
         compose.waitForIdle()
 
-        compose.onNodeWithText("Mi billetera").assertDoesNotExist()
+        compose.onNodeWithText("Pólizas").assertDoesNotExist()
         compose.onNodeWithText("Ver mi billetera").assertDoesNotExist()
         assertNull(billetera.estado.value.billetera)
     }

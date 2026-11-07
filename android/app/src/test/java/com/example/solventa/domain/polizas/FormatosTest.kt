@@ -47,6 +47,23 @@ class FormatosTest {
     }
 
     @Test
+    fun fechaHoraDeSincronizacionUsaDoceHoras() {
+        val manana = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssX", Locale.US)
+            .parse("2026-10-22T15:05:00Z")
+        val tarde = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssX", Locale.US)
+            .parse("2026-10-23T00:30:00Z")
+
+        assertEquals(
+            "22 oct 2026, 10:05 AM",
+            Formatos.fechaHoraDoceHoras(checkNotNull(manana).time, bogota)
+        )
+        assertEquals(
+            "22 oct 2026, 7:30 PM",
+            Formatos.fechaHoraDoceHoras(checkNotNull(tarde).time, bogota)
+        )
+    }
+
+    @Test
     fun dineroEnPesosSinCentavos() {
         assertEquals("$40.000.000", Formatos.dinero("40000000.00", "COP"))
         assertEquals("$500", Formatos.dinero("500", "COP"))

@@ -272,7 +272,9 @@ fun NavGraph(
                     onVerSiniestros = siniestros?.let {
                         { navController.navigate(ScreenRoute.Claims.route) { launchSingleTop = true } }
                     },
-                    cantidadPolizasActivas = estadoBilletera?.billetera?.totalVigentes
+                    cantidadPolizasActivas = estadoBilletera?.billetera?.totalVigentes,
+                    sinConexion = estadoBilletera?.sinConexion == true,
+                    ultimaSincronizacionMs = estadoBilletera?.ultimaSincronizacionMs
                 )
             }
         }

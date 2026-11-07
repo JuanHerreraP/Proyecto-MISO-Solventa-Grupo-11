@@ -125,7 +125,9 @@ class WalletScreenTest {
             ultimaSincronizacionMs = 1_798_000_000_000L
         )
 
-        compose.onNodeWithText("Sin conexión · datos del", substring = true).assertIsDisplayed()
+        compose.onNodeWithText("Sin conexión · Última actualización:", substring = true)
+            .assertIsDisplayed()
+        compose.onNodeWithContentDescription("Sin conexión").assertIsDisplayed()
     }
 
     @Test
@@ -138,10 +140,13 @@ class WalletScreenTest {
 
     @Test
     fun enLineaNoMuestraUnaFallaDeSincronizacion() {
-        mostrar(billeteraDe(resumen()))
+        mostrar(billeteraDe(resumen()), ultimaSincronizacionMs = 1_798_000_000_000L)
 
         compose.onNodeWithText("No pudimos actualizar tus pólizas", substring = true)
             .assertDoesNotExist()
+        compose.onNodeWithText("Actualizado", substring = true)
+            .assertIsDisplayed()
+        compose.onNodeWithContentDescription("Datos actualizados").assertIsDisplayed()
     }
 
     @Test

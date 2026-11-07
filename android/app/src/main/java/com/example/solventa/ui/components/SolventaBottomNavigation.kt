@@ -1,5 +1,6 @@
 package com.example.solventa.ui.components
 
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Description
 import androidx.compose.material.icons.outlined.Home
@@ -31,7 +32,10 @@ fun SolventaBottomNavigation(
         disabledTextColor = Noche.copy(alpha = 0.35f)
     )
 
-    NavigationBar(containerColor = MaterialTheme.colorScheme.surface) {
+    NavigationBar(
+        containerColor = MaterialTheme.colorScheme.surface,
+        windowInsets = WindowInsets(0, 0, 0, 0)
+    ) {
         NavigationBarItem(
             selected = true,
             onClick = onInicio,

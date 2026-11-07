@@ -56,6 +56,22 @@ object Formatos {
         return "$dia $mes $anio, $hora:$minuto"
     }
 
+    /** Epoch milliseconds → "22 oct 2026, 10:00 AM" en la zona del dispositivo. */
+    fun fechaHoraDoceHoras(instanteMs: Long, zona: TimeZone = TimeZone.getDefault()): String {
+        val calendario = java.util.Calendar.getInstance(zona).apply { timeInMillis = instanteMs }
+        val dia = calendario.get(java.util.Calendar.DAY_OF_MONTH)
+        val mes = MESES[calendario.get(java.util.Calendar.MONTH)]
+        val anio = calendario.get(java.util.Calendar.YEAR)
+        val hora24 = calendario.get(java.util.Calendar.HOUR_OF_DAY)
+        val hora12 = when (val hora = hora24 % 12) {
+            0 -> 12
+            else -> hora
+        }
+        val minuto = calendario.get(java.util.Calendar.MINUTE).toString().padStart(2, '0')
+        val periodo = if (hora24 < 12) "AM" else "PM"
+        return "$dia $mes $anio, $hora12:$minuto $periodo"
+    }
+
     /** "40000000.00" con COP → "$40.000.000"; con centavos, "$1.234,50". */
     fun dinero(valor: String, moneda: String): String {
         val numero = valor.toBigDecimalOrNull() ?: return "$moneda $valor"
