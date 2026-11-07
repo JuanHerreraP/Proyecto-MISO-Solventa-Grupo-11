@@ -36,8 +36,7 @@ def test_la_firma_emite_la_poliza_con_lo_contratado_y_lo_cobrado() -> None:
     assert str(poliza.prima_total) == "94500.00"
     assert poliza.cobertura_principal.codigo == "VIDA_DEUDORES"
     assert any(
-        "suicidio" in exclusion
-        for exclusion in poliza.cobertura_principal.exclusiones_principales
+        "suicidio" in exclusion for exclusion in poliza.cobertura_principal.exclusiones_principales
     )
     assert poliza.numero_poliza.startswith("SOL-2027-")
     assert poliza.codigo_verificacion == "abcdef0123456789"
