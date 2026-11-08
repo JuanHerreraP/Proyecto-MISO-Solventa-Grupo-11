@@ -1,6 +1,10 @@
+import hashlib
+import json
+
 import pytest
 
 from app.cotizaciones.dominio.modelos import RamoSeguro
+from app.firmas.contrato import exclusiones_de
 from app.firmas.modelos import CanalOtp, EstadoFirma
 from app.firmas.puertos import ProveedorFirmaNoDisponible
 from app.firmas.servicio import (
@@ -35,6 +39,11 @@ def firmar(e, codigo=None, huella=None, cliente=CLIENTE):
 # --- Contrato prellenado ---------------------------------------------------------------
 
 
+@pytest.mark.parametrize("ramo", list(RamoSeguro))
+def test_cada_ramo_define_tres_exclusiones_principales(ramo):
+    assert len(exclusiones_de(ramo)) == 3
+
+
 def test_presenta_el_contrato_prellenado_tras_el_pago_aprobado(e):
     proceso = e.servicio.presentar(CLIENTE, COTIZACION)
 
@@ -48,6 +57,7 @@ def test_presenta_el_contrato_prellenado_tras_el_pago_aprobado(e):
     assert contrato.referencia_pago == "PSP-COT-001"
     assert contrato.datos_riesgo["valor_credito"] == 250000000
     assert any("hipotecario" in clausula for clausula in contrato.clausulas)
+    assert any("suicidio" in exclusion for exclusion in contrato.exclusiones_principales)
     assert proceso.huella_documento == contrato.huella()
     assert len(proceso.huella_documento) == 64
 
@@ -74,7 +84,7 @@ def test_otros_ramos_usan_el_nombre_del_catalogo(e):
     contrato = e.servicio.presentar(CLIENTE, COTIZACION).contrato
 
     assert contrato.nombre_ramo == "Seguro de viaje"
-    assert any("fechas del viaje" in clausula for clausula in contrato.clausulas)
+    assert any("fechas del viaje" in exclusion for exclusion in contrato.exclusiones_principales)
 
 
 def test_presentar_dos_veces_devuelve_el_mismo_documento(e):
@@ -122,6 +132,24 @@ def test_la_huella_cambia_si_cambia_una_condicion(e):
     alterado = proceso.contrato.model_copy(update={"prima_total": proceso.contrato.prima_total + 1})
 
     assert alterado.huella() != proceso.huella_documento
+
+
+def test_contrato_anterior_sin_exclusiones_conserva_su_huella(e):
+    contrato = e.servicio.presentar(CLIENTE, COTIZACION).contrato.model_copy(
+        update={"version_plantilla": "2026.10.2", "exclusiones_principales": ()}
+    )
+    contenido_anterior = contrato.model_dump(mode="json")
+    contenido_anterior.pop("exclusiones_principales")
+    esperado = hashlib.sha256(
+        json.dumps(
+            contenido_anterior,
+            sort_keys=True,
+            separators=(",", ":"),
+            ensure_ascii=False,
+        ).encode("utf-8")
+    ).hexdigest()
+
+    assert contrato.huella() == esperado
 
 
 # --- OTP -------------------------------------------------------------------------------

@@ -124,6 +124,11 @@ def generar_pdf_poliza(poliza: Poliza, proceso: ProcesoFirma) -> bytes:
     if cobertura.descripcion:
         pag.parrafo(cobertura.descripcion)
 
+    if contrato.exclusiones_principales:
+        pag.titulo("Exclusiones principales")
+        for numero, exclusion in enumerate(contrato.exclusiones_principales, start=1):
+            pag.parrafo(f"{numero}. {exclusion}")
+
     pag.titulo("Tarifa cobrada")
     pag.par("Prima total", _moneda(poliza.prima_total, poliza.moneda))
     pag.par("Pago", contrato.pago_id)

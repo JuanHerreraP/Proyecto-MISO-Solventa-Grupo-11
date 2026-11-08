@@ -21,6 +21,7 @@ from app.firmas.contrato import (
     CoberturaContrato,
     ContratoSeguro,
     clausulas_de,
+    exclusiones_de,
     nombre_ramo_de,
 )
 from app.firmas.modelos import (
@@ -177,6 +178,7 @@ class ServicioFirmas:
             referencia_pago=pago.referencia_pasarela,
             fecha_pago=pago.actualizado_en,
             clausulas=clausulas_de(cotizacion.ramo, cotizacion.datos_riesgo),
+            exclusiones_principales=exclusiones_de(cotizacion.ramo),
         )
         ahora = self._reloj()
         proceso = ProcesoFirma(
