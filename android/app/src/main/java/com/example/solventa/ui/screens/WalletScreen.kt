@@ -18,6 +18,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.outlined.CloudDone
+import androidx.compose.material.icons.outlined.CloudOff
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -42,6 +44,8 @@ import com.example.solventa.ui.components.SolventaPrimaryButton
 import com.example.solventa.ui.theme.Atencion
 import com.example.solventa.ui.theme.Avance
 import com.example.solventa.ui.theme.Navegacion
+import com.example.solventa.ui.theme.Offline
+import com.example.solventa.ui.theme.Sincronizado
 import com.example.solventa.ui.theme.SolventaTheme
 
 /** Billetera digital de pólizas (HU07 / BPM-31). Solo se compone con una sesión activa. */
@@ -50,6 +54,10 @@ fun WalletScreen(
     billetera: Billetera?,
     cargando: Boolean,
     error: String?,
+    sinConexion: Boolean = false,
+    ultimaSincronizacionMs: Long? = null,
+    datosAntiguos: Boolean = false,
+    falloSincronizacionPersistente: Boolean = false,
     onVerPoliza: (String) -> Unit,
     onReintentar: () -> Unit,
     onVolver: () -> Unit,
@@ -57,7 +65,17 @@ fun WalletScreen(
 ) {
     Surface(modifier = modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surface) {
         Column(modifier = Modifier.fillMaxSize()) {
-            Encabezado(titulo = "Mi billetera", onVolver = onVolver)
+            Encabezado(
+                titulo = "Pólizas",
+                onVolver = onVolver,
+                accion = { IndicadorConexion(sinConexion = sinConexion) }
+            )
+            EstadoSincronizacion(
+                sinConexion = sinConexion,
+                ultimaSincronizacionMs = ultimaSincronizacionMs,
+                datosAntiguos = datosAntiguos,
+                falloPersistente = falloSincronizacionPersistente
+            )
 
             when {
                 billetera == null && cargando -> Centrado {
@@ -95,6 +113,60 @@ fun WalletScreen(
             }
         }
     }
+}
+
+@Composable
+private fun EstadoSincronizacion(
+    sinConexion: Boolean,
+    ultimaSincronizacionMs: Long?,
+    datosAntiguos: Boolean,
+    falloPersistente: Boolean
+) {
+    val mensajes = buildList {
+        if (datosAntiguos) {
+            add("Estos datos tienen más de 30 días y podrían no estar actualizados." to Atencion)
+        }
+        if (falloPersistente) {
+            add("No pudimos actualizar tus pólizas. Volveremos a intentarlo." to Atencion)
+        }
+    }
+    Column(
+        modifier = Modifier.padding(horizontal = 24.dp, vertical = 4.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        SyncStatusBanner(
+            sinConexion = sinConexion,
+            ultimaSincronizacionMs = ultimaSincronizacionMs,
+            textoSinConexion = ultimaSincronizacionMs?.let {
+                "Sin conexión · Última actualización: ${Formatos.fechaHoraDoceHoras(it)}."
+            } ?: "Sin conexión · Mostrando datos guardados."
+        )
+        mensajes.forEach { (texto, color) ->
+            Surface(shape = RoundedCornerShape(12.dp), color = color.copy(alpha = 0.14f)) {
+                Text(
+                    text = texto,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = color,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 12.dp, vertical = 10.dp)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun IndicadorConexion(sinConexion: Boolean) {
+    val color = if (sinConexion) Offline else Sincronizado
+    Icon(
+        imageVector = if (sinConexion) Icons.Outlined.CloudOff else Icons.Outlined.CloudDone,
+        contentDescription = if (sinConexion) "Sin conexión" else "Datos actualizados",
+        tint = color,
+        modifier = Modifier
+            .padding(end = 12.dp)
+            .size(26.dp)
+    )
 }
 
 @Composable
@@ -187,7 +259,11 @@ fun EtiquetaEstado(estado: EstadoPoliza, modifier: Modifier = Modifier) {
 }
 
 @Composable
-internal fun Encabezado(titulo: String, onVolver: () -> Unit) {
+internal fun Encabezado(
+    titulo: String,
+    onVolver: () -> Unit,
+    accion: (@Composable () -> Unit)? = null
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -204,8 +280,10 @@ internal fun Encabezado(titulo: String, onVolver: () -> Unit) {
         Text(
             text = titulo,
             style = MaterialTheme.typography.titleLarge,
-            color = MaterialTheme.colorScheme.onSurface
+            color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier.weight(1f)
         )
+        accion?.invoke()
     }
 }
 

@@ -46,10 +46,8 @@ import androidx.compose.ui.unit.dp
 import com.example.solventa.domain.auth.Perfil
 import com.example.solventa.ui.components.SolventaNoticePill
 import com.example.solventa.ui.components.SolventaBottomNavigation
-import com.example.solventa.ui.theme.Avance
 import com.example.solventa.ui.theme.Navegacion
 import com.example.solventa.ui.theme.Noche
-import com.example.solventa.ui.theme.Offline
 import com.example.solventa.ui.theme.SolventaTheme
 
 /** Inicio privado del cliente. Conserva las funciones de sesión y billetera. */
@@ -71,7 +69,9 @@ fun HomeScreen(
     onVerPagos: (() -> Unit)? = null,
     onVerSiniestros: (() -> Unit)? = null,
     onCotizarSeguro: () -> Unit = {},
-    cantidadPolizasActivas: Int? = null
+    cantidadPolizasActivas: Int? = null,
+    sinConexion: Boolean = false,
+    ultimaSincronizacionMs: Long? = null
 ) {
     if (ofrecerActivarBiometria) {
         AlertDialog(
@@ -118,7 +118,9 @@ fun HomeScreen(
             TarjetaBilletera(
                 cantidadPolizasActivas = cantidadPolizasActivas,
                 onVerBilletera = onVerBilletera,
-                onCotizarSeguro = onCotizarSeguro
+                onCotizarSeguro = onCotizarSeguro,
+                sinConexion = sinConexion,
+                ultimaSincronizacionMs = ultimaSincronizacionMs
             )
 
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -148,23 +150,6 @@ fun HomeScreen(
                     onClick = onVerPagos,
                     modifier = Modifier.weight(1f)
                 )
-            }
-
-            Surface(shape = RoundedCornerShape(24.dp), color = Offline.copy(alpha = 0.15f)) {
-                Row(
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Surface(shape = RoundedCornerShape(50), color = Offline) {
-                        Spacer(modifier = Modifier.size(9.dp))
-                    }
-                    Spacer(modifier = Modifier.width(10.dp))
-                    Text(
-                        text = "Datos disponibles sin conexión",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = Offline
-                    )
-                }
             }
 
             if (mensaje != null) {
@@ -228,7 +213,9 @@ private fun EncabezadoInicio() {
 private fun TarjetaBilletera(
     cantidadPolizasActivas: Int?,
     onVerBilletera: (() -> Unit)?,
-    onCotizarSeguro: () -> Unit
+    onCotizarSeguro: () -> Unit,
+    sinConexion: Boolean,
+    ultimaSincronizacionMs: Long?
 ) {
     Surface(
         shape = RoundedCornerShape(24.dp),
@@ -254,13 +241,10 @@ private fun TarjetaBilletera(
                 style = MaterialTheme.typography.headlineMedium,
                 color = Color.White
             )
-            if (cantidadPolizasActivas != null) {
-                Text(
-                    text = "●  Actualizado recientemente",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = Avance
-                )
-            }
+            InlineSyncStatus(
+                sinConexion = sinConexion,
+                ultimaSincronizacionMs = ultimaSincronizacionMs
+            )
             if (onVerBilletera != null) {
                 Text(
                     text = "Ver mi billetera",

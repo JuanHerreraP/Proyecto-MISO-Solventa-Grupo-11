@@ -15,6 +15,7 @@ import com.example.solventa.domain.auth.GatewayFalso
 import com.example.solventa.domain.auth.RelojFalso
 import com.example.solventa.domain.auth.ResultadoApi
 import com.example.solventa.domain.polizas.BilleteraCoordinator
+import com.example.solventa.domain.polizas.CachePolizasFalsa
 import com.example.solventa.domain.polizas.PolizasGatewayFalso
 import com.example.solventa.ui.auth.AuthViewModel
 import com.example.solventa.ui.billetera.BilleteraViewModel
@@ -44,7 +45,14 @@ class NavGraphBilleteraTest {
     private fun mostrar() {
         val coordinador = AuthCoordinator(gatewayAuth, BovedaFalsa(), RelojFalso()) { false }
         val viewModel = AuthViewModel(coordinador)
-        billetera = BilleteraViewModel(BilleteraCoordinator(gatewayPolizas, viewModel.sesion))
+        billetera = BilleteraViewModel(
+            BilleteraCoordinator(
+                gatewayPolizas,
+                viewModel.sesion,
+                CachePolizasFalsa(),
+                RelojFalso()
+            )
+        )
         actividad = Robolectric.buildActivity(FragmentActivity::class.java).setup().get()
         compose.setContent {
             SolventaTheme {
@@ -69,7 +77,7 @@ class NavGraphBilleteraTest {
 
         compose.boton("Ver mi billetera").performClick()
         compose.waitForIdle()
-        compose.onNodeWithText("Mi billetera").assertIsDisplayed()
+        compose.onNodeWithText("Pólizas").assertIsDisplayed()
         // El inicio consulta el resumen y la billetera vuelve a cargar la fuente de verdad.
         assertEquals(listOf("access-1", "access-1"), gatewayPolizas.tokensUsados)
 
@@ -87,7 +95,7 @@ class NavGraphBilleteraTest {
 
         compose.onNodeWithContentDescription("Volver").performClick()
         compose.waitForIdle()
-        compose.onNodeWithText("Mi billetera").assertIsDisplayed()
+        compose.onNodeWithText("Pólizas").assertIsDisplayed()
         assertNull(billetera.estado.value.certificado)
     }
 
@@ -99,7 +107,7 @@ class NavGraphBilleteraTest {
         compose.boton("Ver mi billetera").performClick()
         compose.waitForIdle()
 
-        compose.onNodeWithText("Mi billetera").assertDoesNotExist()
+        compose.onNodeWithText("Pólizas").assertDoesNotExist()
         compose.onNodeWithText("Ver mi billetera").assertDoesNotExist()
         assertNull(billetera.estado.value.billetera)
     }

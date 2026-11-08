@@ -75,13 +75,64 @@ class PolizasGatewayFalso : PolizasGateway {
     }
 }
 
-class SesionFalsa(var token: String? = "access-1") : SesionAutenticada {
+class SesionFalsa(
+    var token: String? = "access-1",
+    var idUsuario: String? = "u-1"
+) : SesionPolizasOffline {
     var rechazos = 0
+
+    override fun usuarioId(): String? = idUsuario
 
     override fun accessTokenVigente(): String? = token
 
     override fun sesionRechazada() {
         rechazos++
         token = null
+    }
+}
+
+class CachePolizasFalsa : CachePolizas {
+    private data class Instantanea(
+        val billetera: Billetera,
+        val certificados: List<Certificado>,
+        val sincronizadaEnMs: Long
+    )
+
+    private val datos = mutableMapOf<ClaveUsuarioCache, Instantanea>()
+
+    override suspend fun reemplazar(
+        usuario: ClaveUsuarioCache,
+        billetera: Billetera,
+        certificados: List<Certificado>,
+        sincronizadaEnMs: Long
+    ) {
+        datos[usuario] = Instantanea(billetera, certificados, sincronizadaEnMs)
+    }
+
+    override suspend fun billetera(usuario: ClaveUsuarioCache): BilleteraCacheada? =
+        datos[usuario]?.let {
+            BilleteraCacheada(it.billetera, MetadatosSincronizacion(usuario, it.sincronizadaEnMs))
+        }
+
+    override suspend fun certificado(
+        usuario: ClaveUsuarioCache,
+        polizaId: String
+    ): CertificadoCacheado? = datos[usuario]
+        ?.let { instantanea ->
+            instantanea.certificados.firstOrNull { it.polizaId == polizaId }
+                ?.let {
+                    CertificadoCacheado(
+                        it,
+                        MetadatosSincronizacion(usuario, instantanea.sincronizadaEnMs)
+                    )
+                }
+        }
+
+    override suspend fun eliminar(usuario: ClaveUsuarioCache) {
+        datos.remove(usuario)
+    }
+
+    override suspend fun eliminarTodo() {
+        datos.clear()
     }
 }

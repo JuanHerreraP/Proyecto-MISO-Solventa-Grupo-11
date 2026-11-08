@@ -7,7 +7,9 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavHostController
@@ -68,13 +70,22 @@ fun NavGraph(
     val estadoCotizaciones = cotizaciones?.estado?.collectAsState()?.value ?: EstadoCotizaciones()
     val estadoPagos = pagos?.estado?.collectAsState()?.value ?: EstadoPagos()
     val autenticado = estado.sesion != null
+    val usuarioId = estado.sesion?.perfil?.id
+    var ultimoUsuarioAutenticado by remember { mutableStateOf<String?>(null) }
 
     // Guardia de navegación: con sesión se va al inicio; sin sesión nadie se queda en una
     // pantalla privada (inicio, billetera o certificado) y se descarta lo que se cargó.
-    LaunchedEffect(autenticado) {
+    LaunchedEffect(usuarioId) {
+        val usuarioAnterior = ultimoUsuarioAutenticado
+        when {
+            usuarioId == null && usuarioAnterior != null -> billetera?.eliminarDatosLocales()
+            usuarioId == null -> billetera?.limpiar()
+            else -> billetera?.registrarUsuario(usuarioId)
+        }
+        ultimoUsuarioAutenticado = usuarioId
+
         val actual = navController.currentDestination?.route
         if (!autenticado) {
-            billetera?.limpiar()
             cotizaciones?.limpiar()
             pagos?.limpiar()
             siniestros?.limpiar()
@@ -240,7 +251,12 @@ fun NavGraph(
                     },
                     onSolicitarActivacion = viewModel::solicitarActivacion,
                     onDescartarActivacion = { viewModel.descartarActivacion() },
-                    onCerrarSesion = viewModel::cerrarSesion,
+                    onCerrarSesion = {
+                        // Inicia el borrado inmediatamente; la guardia también lo confirma
+                        // cuando observe que la sesión quedó cerrada.
+                        billetera?.eliminarDatosLocales()
+                        viewModel.cerrarSesion()
+                    },
                     onCotizarSeguro = {
                         navController.navigate(ScreenRoute.NewQuote.route) { launchSingleTop = true }
                     },
@@ -256,7 +272,9 @@ fun NavGraph(
                     onVerSiniestros = siniestros?.let {
                         { navController.navigate(ScreenRoute.Claims.route) { launchSingleTop = true } }
                     },
-                    cantidadPolizasActivas = estadoBilletera?.billetera?.totalVigentes
+                    cantidadPolizasActivas = estadoBilletera?.billetera?.totalVigentes,
+                    sinConexion = estadoBilletera?.sinConexion == true,
+                    ultimaSincronizacionMs = estadoBilletera?.ultimaSincronizacionMs
                 )
             }
         }
@@ -435,6 +453,11 @@ fun NavGraph(
                         billetera = estadoBilletera.billetera,
                         cargando = estadoBilletera.cargando,
                         error = estadoBilletera.error,
+                        sinConexion = estadoBilletera.sinConexion,
+                        ultimaSincronizacionMs = estadoBilletera.ultimaSincronizacionMs,
+                        datosAntiguos = estadoBilletera.datosAntiguos,
+                        falloSincronizacionPersistente =
+                            estadoBilletera.falloSincronizacionPersistente,
                         onVerPoliza = { polizaId ->
                             navController.navigate(ScreenRoute.Certificate.ruta(polizaId))
                         },
