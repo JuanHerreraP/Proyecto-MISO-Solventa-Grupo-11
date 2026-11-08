@@ -45,7 +45,37 @@ data class Certificado(
     val descripcionCobertura: String? = null,
     val sumaAsegurada: String,
     val moneda: String,
-    val contenidoQr: String
+    val contenidoQr: String,
+    val ramo: String = "",
+    val primaTotal: String = "",
+    val emitidaEn: String = "",
+    val exclusionesPrincipales: List<String> = emptyList()
+)
+
+/** Cambio contractual registrado dentro de un endoso. */
+data class CambioEndoso(
+    val tipo: String,
+    val descripcion: String
+)
+
+/** Movimiento contractual confirmado. Las fechas llegan en ISO 8601. */
+data class EndosoPoliza(
+    val endosoId: String,
+    val numero: Int,
+    val tipo: String,
+    val fechaEfecto: String,
+    val creadoEn: String,
+    val cambios: List<CambioEndoso>,
+    val huellaDocumento: String
+)
+
+data class HistorialEndosos(val endosos: List<EndosoPoliza>)
+
+/** PDF autenticado descargado del backend, todavía sin persistir en el dispositivo. */
+class DocumentoPoliza(
+    val nombreArchivo: String,
+    val contenido: ByteArray,
+    val huellaSha256: String
 )
 
 /** Enlace temporal para compartir el certificado. [expiraEn] llega en ISO 8601. */
@@ -58,6 +88,11 @@ data class EnlaceCompartido(
 interface PolizasGateway {
     suspend fun billetera(accessToken: String): ResultadoApi<Billetera>
     suspend fun certificado(accessToken: String, polizaId: String): ResultadoApi<Certificado>
+    suspend fun historialEndosos(
+        accessToken: String,
+        polizaId: String
+    ): ResultadoApi<HistorialEndosos>
+    suspend fun documento(accessToken: String, polizaId: String): ResultadoApi<DocumentoPoliza>
     suspend fun compartir(accessToken: String, polizaId: String): ResultadoApi<EnlaceCompartido>
 }
 

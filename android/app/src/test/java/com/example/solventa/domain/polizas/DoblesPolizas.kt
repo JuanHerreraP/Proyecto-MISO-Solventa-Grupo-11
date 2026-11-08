@@ -52,6 +52,10 @@ class PolizasGatewayFalso : PolizasGateway {
     var respuestaBilletera: ResultadoApi<Billetera> = ResultadoApi.Exito(billeteraDe(resumen()))
     var respuestaCertificado: ResultadoApi<Certificado> = ResultadoApi.Exito(certificado())
     var respuestaCompartir: ResultadoApi<EnlaceCompartido> = ResultadoApi.Exito(ENLACE)
+    var respuestaHistorial: ResultadoApi<HistorialEndosos> = ResultadoApi.Exito(HistorialEndosos(emptyList()))
+    var respuestaDocumento: ResultadoApi<DocumentoPoliza> = ResultadoApi.Exito(
+        DocumentoPoliza("poliza.pdf", "%PDF-prueba".toByteArray(), "a".repeat(64))
+    )
 
     val tokensUsados = mutableListOf<String>()
     val certificadosPedidos = mutableListOf<String>()
@@ -66,6 +70,22 @@ class PolizasGatewayFalso : PolizasGateway {
         tokensUsados += accessToken
         certificadosPedidos += polizaId
         return respuestaCertificado
+    }
+
+    override suspend fun historialEndosos(
+        accessToken: String,
+        polizaId: String
+    ): ResultadoApi<HistorialEndosos> {
+        tokensUsados += accessToken
+        return respuestaHistorial
+    }
+
+    override suspend fun documento(
+        accessToken: String,
+        polizaId: String
+    ): ResultadoApi<DocumentoPoliza> {
+        tokensUsados += accessToken
+        return respuestaDocumento
     }
 
     override suspend fun compartir(accessToken: String, polizaId: String): ResultadoApi<EnlaceCompartido> {

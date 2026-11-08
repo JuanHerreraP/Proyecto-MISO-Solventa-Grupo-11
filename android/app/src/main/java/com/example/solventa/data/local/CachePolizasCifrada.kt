@@ -144,7 +144,7 @@ class CachePolizasCifrada private constructor(
 
     private companion object {
         const val ARCHIVO = "solventa_polizas_cifradas"
-        const val VERSION = 1
+        const val VERSION = 2
     }
 }
 
