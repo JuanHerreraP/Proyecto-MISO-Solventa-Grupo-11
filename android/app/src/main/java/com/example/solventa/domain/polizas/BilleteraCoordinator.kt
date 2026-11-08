@@ -20,6 +20,9 @@ data class EstadoBilletera(
     val cargandoHistorial: Boolean = false,
     val historialEndosos: HistorialEndosos? = null,
     val errorHistorial: String? = null,
+    val descargandoDocumento: Boolean = false,
+    /** Evento: la UI abre este PDF y luego lo consume. */
+    val documentoParaAbrir: DocumentoPoliza? = null,
     val compartiendo: Boolean = false,
     /** Evento: la UI debe abrir el menú de compartir con este enlace y luego consumirlo. */
     val enlaceParaCompartir: EnlaceCompartido? = null,
@@ -34,6 +37,8 @@ object MensajesBilletera {
     const val POLIZA_NO_ENCONTRADA = "No encontramos esa póliza en tu billetera."
     const val CERTIFICADO_NO_DISPONIBLE = "No pudimos cargar el certificado. Inténtalo de nuevo."
     const val HISTORIAL_NO_DISPONIBLE = "No pudimos cargar el historial. Inténtalo de nuevo."
+    const val DOCUMENTO_NO_DISPONIBLE = "No pudimos abrir el documento. Inténtalo de nuevo."
+    const val DOCUMENTO_REQUIERE_CONEXION = "Conéctate a internet para consultar el documento."
     const val COMPARTIR_FALLIDO = "No pudimos generar el enlace para compartir. Inténtalo de nuevo."
     const val SESION_VENCIDA = "Tu sesión expiró. Vuelve a ingresar."
 }
@@ -261,6 +266,45 @@ class BilleteraCoordinator(
         }
     }
 
+    suspend fun descargarDocumento(polizaId: String) {
+        if (estado.descargandoDocumento) return
+        val token = tokenOFinalizar() ?: return
+        estado = estado.copy(descargandoDocumento = true, mensaje = null)
+        val inicio = generacion
+        val resultado = gateway.documento(token, polizaId)
+        if (inicio != generacion) return
+
+        estado = when (resultado) {
+            is ResultadoApi.Exito -> estado.copy(
+                descargandoDocumento = false,
+                documentoParaAbrir = resultado.valor
+            )
+            is ResultadoApi.Fallo -> when (resultado.http) {
+                401 -> return rechazada()
+                403, 404 -> estado.copy(
+                    descargandoDocumento = false,
+                    mensaje = MensajesBilletera.POLIZA_NO_ENCONTRADA
+                )
+                else -> estado.copy(
+                    descargandoDocumento = false,
+                    mensaje = MensajesBilletera.DOCUMENTO_NO_DISPONIBLE
+                )
+            }
+            ResultadoApi.SinConexion -> estado.copy(
+                descargandoDocumento = false,
+                mensaje = MensajesBilletera.DOCUMENTO_REQUIERE_CONEXION
+            )
+        }
+    }
+
+    fun documentoAbierto(exito: Boolean) {
+        if (estado.documentoParaAbrir == null) return
+        estado = estado.copy(
+            documentoParaAbrir = null,
+            mensaje = if (exito) estado.mensaje else MensajesBilletera.DOCUMENTO_NO_DISPONIBLE
+        )
+    }
+
     fun enlaceCompartido() {
         if (estado.enlaceParaCompartir != null) estado = estado.copy(enlaceParaCompartir = null)
     }
@@ -277,6 +321,8 @@ class BilleteraCoordinator(
             cargandoHistorial = false,
             historialEndosos = null,
             errorHistorial = null,
+            descargandoDocumento = false,
+            documentoParaAbrir = null,
             compartiendo = false,
             enlaceParaCompartir = null,
             mensaje = null

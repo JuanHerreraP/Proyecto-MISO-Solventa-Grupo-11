@@ -30,7 +30,9 @@ import com.example.solventa.domain.pagos.EstadoPagos
 import com.example.solventa.domain.siniestros.SolicitudSiniestro
 import com.example.solventa.ui.auth.AuthViewModel
 import com.example.solventa.ui.billetera.BilleteraViewModel
+import com.example.solventa.ui.billetera.abrirDocumento
 import com.example.solventa.ui.billetera.compartirTexto
+import com.example.solventa.ui.billetera.eliminarDocumentosTemporales
 import com.example.solventa.ui.billetera.textoParaCompartir
 import com.example.solventa.ui.cotizaciones.CotizacionesViewModel
 import com.example.solventa.ui.pagos.PagosViewModel
@@ -71,6 +73,7 @@ fun NavGraph(
     val estadoPagos = pagos?.estado?.collectAsState()?.value ?: EstadoPagos()
     val autenticado = estado.sesion != null
     val usuarioId = estado.sesion?.perfil?.id
+    val contextoAplicacion = LocalContext.current.applicationContext
     var ultimoUsuarioAutenticado by remember { mutableStateOf<String?>(null) }
 
     // Guardia de navegación: con sesión se va al inicio; sin sesión nadie se queda en una
@@ -78,9 +81,17 @@ fun NavGraph(
     LaunchedEffect(usuarioId) {
         val usuarioAnterior = ultimoUsuarioAutenticado
         when {
-            usuarioId == null && usuarioAnterior != null -> billetera?.eliminarDatosLocales()
+            usuarioId == null && usuarioAnterior != null -> {
+                billetera?.eliminarDatosLocales()
+                contextoAplicacion.eliminarDocumentosTemporales()
+            }
             usuarioId == null -> billetera?.limpiar()
-            else -> billetera?.registrarUsuario(usuarioId)
+            else -> {
+                if (usuarioAnterior != null && usuarioAnterior != usuarioId) {
+                    contextoAplicacion.eliminarDocumentosTemporales()
+                }
+                billetera?.registrarUsuario(usuarioId)
+            }
         }
         ultimoUsuarioAutenticado = usuarioId
 
@@ -480,7 +491,10 @@ fun NavGraph(
                 if (estado.sesion == null) {
                     Box(modifier = Modifier.fillMaxSize())
                 } else {
-                    LaunchedEffect(polizaId) { billetera.verCertificado(polizaId) }
+                    LaunchedEffect(polizaId) {
+                        billetera.verCertificado(polizaId)
+                        billetera.verHistorialEndosos(polizaId)
+                    }
                     DisposableEffect(polizaId) { onDispose { billetera.cerrarCertificado() } }
 
                     LaunchedEffect(estadoBilletera.enlaceParaCompartir) {
@@ -491,15 +505,29 @@ fun NavGraph(
                         )
                     }
 
+                    LaunchedEffect(estadoBilletera.documentoParaAbrir) {
+                        val documento = estadoBilletera.documentoParaAbrir
+                            ?: return@LaunchedEffect
+                        billetera.documentoAbierto(contexto.abrirDocumento(documento))
+                    }
+
                     val certificado = estadoBilletera.certificado?.takeIf { it.polizaId == polizaId }
                     CertificateScreen(
                         certificado = certificado,
                         cargando = estadoBilletera.cargandoCertificado,
                         error = estadoBilletera.errorCertificado,
+                        historial = estadoBilletera.historialEndosos,
+                        cargandoHistorial = estadoBilletera.cargandoHistorial,
+                        errorHistorial = estadoBilletera.errorHistorial,
+                        descargandoDocumento = estadoBilletera.descargandoDocumento,
                         compartiendo = estadoBilletera.compartiendo,
                         mensaje = estadoBilletera.mensaje,
+                        onVerDocumento = { billetera.descargarDocumento(polizaId) },
                         onCompartir = { billetera.compartir(polizaId) },
-                        onReintentar = { billetera.verCertificado(polizaId) },
+                        onReintentar = {
+                            billetera.verCertificado(polizaId)
+                            billetera.verHistorialEndosos(polizaId)
+                        },
                         onVolver = { navController.popBackStack() }
                     )
                 }

@@ -83,7 +83,7 @@ class NavGraphBilleteraTest {
 
         compose.boton("Seguro de viaje", substring = true).performClick()
         compose.waitForIdle()
-        compose.onNodeWithContentDescription("Código QR de la póliza SOL-VJ-0001").assertIsDisplayed()
+        compose.onNodeWithText("Detalle de póliza").assertIsDisplayed()
         assertEquals(listOf("POL-1"), gatewayPolizas.certificadosPedidos)
 
         compose.boton("Compartir certificado").performScrollTo().performClick()

@@ -11,6 +11,8 @@ import com.google.gson.JsonParseException
 import com.google.gson.stream.MalformedJsonException
 import java.io.IOException
 import java.security.MessageDigest
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import retrofit2.Response
 
 class RemotePolizasGateway(private val api: PolizasApi) : PolizasGateway {
@@ -30,41 +32,43 @@ class RemotePolizasGateway(private val api: PolizasApi) : PolizasGateway {
     override suspend fun documento(
         accessToken: String,
         polizaId: String
-    ): ResultadoApi<DocumentoPoliza> = try {
-        val respuesta = api.documento(bearer(accessToken), polizaId)
-        if (!respuesta.isSuccessful) {
-            val (codigo, mensaje) = RemoteAuthGateway.leerError(respuesta.errorBody()?.string())
-            ResultadoApi.Fallo(respuesta.code(), codigo, mensaje)
-        } else {
-            val cuerpo = respuesta.body()
-            val longitud = cuerpo?.contentLength() ?: -1L
-            if (cuerpo == null || longitud > MAXIMO_PDF_BYTES) {
-                ResultadoApi.Fallo(CUERPO_INVALIDO, null, null)
+    ): ResultadoApi<DocumentoPoliza> = withContext(Dispatchers.IO) {
+        try {
+            val respuesta = api.documento(bearer(accessToken), polizaId)
+            if (!respuesta.isSuccessful) {
+                val (codigo, mensaje) = RemoteAuthGateway.leerError(respuesta.errorBody()?.string())
+                ResultadoApi.Fallo(respuesta.code(), codigo, mensaje)
             } else {
-                val contenido = cuerpo.bytes()
-                val huella = respuesta.headers()["X-Huella-Documento"]
-                if (
-                    contenido.size > MAXIMO_PDF_BYTES ||
-                    !contenido.esPdf() ||
-                    !contenido.coincideCon(huella)
-                ) {
+                val cuerpo = respuesta.body()
+                val longitud = cuerpo?.contentLength() ?: -1L
+                if (cuerpo == null || longitud > MAXIMO_PDF_BYTES) {
                     ResultadoApi.Fallo(CUERPO_INVALIDO, null, null)
                 } else {
-                    ResultadoApi.Exito(
-                        DocumentoPoliza(
-                            nombreArchivo = nombreArchivo(
-                                respuesta.headers()["Content-Disposition"],
-                                polizaId
-                            ),
-                            contenido = contenido,
-                            huellaSha256 = huella!!
+                    val contenido = cuerpo.bytes()
+                    val huella = respuesta.headers()["X-Huella-Documento"]
+                    if (
+                        contenido.size > MAXIMO_PDF_BYTES ||
+                        !contenido.esPdf() ||
+                        !contenido.coincideCon(huella)
+                    ) {
+                        ResultadoApi.Fallo(CUERPO_INVALIDO, null, null)
+                    } else {
+                        ResultadoApi.Exito(
+                            DocumentoPoliza(
+                                nombreArchivo = nombreArchivo(
+                                    respuesta.headers()["Content-Disposition"],
+                                    polizaId
+                                ),
+                                contenido = contenido,
+                                huellaSha256 = huella!!
+                            )
                         )
-                    )
+                    }
                 }
             }
+        } catch (error: IOException) {
+            ResultadoApi.SinConexion
         }
-    } catch (error: IOException) {
-        ResultadoApi.SinConexion
     }
 
     override suspend fun compartir(accessToken: String, polizaId: String): ResultadoApi<EnlaceCompartido> =

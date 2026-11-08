@@ -12,6 +12,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -29,6 +30,7 @@ import com.example.solventa.domain.polizas.Certificado
 import com.example.solventa.domain.polizas.CondicionParametrica
 import com.example.solventa.domain.polizas.EstadoPoliza
 import com.example.solventa.domain.polizas.Formatos
+import com.example.solventa.domain.polizas.HistorialEndosos
 import com.example.solventa.ui.components.SolventaCodigoQr
 import com.example.solventa.ui.components.SolventaNoticePill
 import com.example.solventa.ui.components.SolventaPrimaryButton
@@ -36,14 +38,19 @@ import com.example.solventa.ui.components.SolventaSecondaryButton
 import com.example.solventa.ui.theme.Navegacion
 import com.example.solventa.ui.theme.SolventaTheme
 
-/** Certificado digital de una póliza con su QR y la opción de compartirlo (HU07). */
+/** Detalle contractual de la póliza, certificado e historial de movimientos (HU09). */
 @Composable
 fun CertificateScreen(
     certificado: Certificado?,
     cargando: Boolean,
     error: String?,
+    historial: HistorialEndosos?,
+    cargandoHistorial: Boolean,
+    errorHistorial: String?,
+    descargandoDocumento: Boolean,
     compartiendo: Boolean,
     mensaje: String?,
+    onVerDocumento: () -> Unit,
     onCompartir: () -> Unit,
     onReintentar: () -> Unit,
     onVolver: () -> Unit,
@@ -51,7 +58,7 @@ fun CertificateScreen(
 ) {
     Surface(modifier = modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surface) {
         Column(modifier = Modifier.fillMaxSize()) {
-            Encabezado(titulo = "Certificado", onVolver = onVolver)
+            Encabezado(titulo = "Detalle de póliza", onVolver = onVolver)
 
             when {
                 certificado == null && cargando -> Box(
@@ -82,8 +89,13 @@ fun CertificateScreen(
 
                 else -> Contenido(
                     certificado = certificado,
+                    historial = historial,
+                    cargandoHistorial = cargandoHistorial,
+                    errorHistorial = errorHistorial,
+                    descargandoDocumento = descargandoDocumento,
                     compartiendo = compartiendo,
                     mensaje = mensaje,
+                    onVerDocumento = onVerDocumento,
                     onCompartir = onCompartir
                 )
             }
@@ -94,8 +106,13 @@ fun CertificateScreen(
 @Composable
 private fun Contenido(
     certificado: Certificado,
+    historial: HistorialEndosos?,
+    cargandoHistorial: Boolean,
+    errorHistorial: String?,
+    descargandoDocumento: Boolean,
     compartiendo: Boolean,
     mensaje: String?,
+    onVerDocumento: () -> Unit,
     onCompartir: () -> Unit
 ) {
     Column(
@@ -122,34 +139,29 @@ private fun Contenido(
             }
         }
 
-        Column(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            SolventaCodigoQr(
-                contenido = certificado.contenidoQr,
-                descripcion = "Código QR de la póliza ${certificado.numeroPoliza}"
-            )
-            Text(
-                text = certificado.numeroPoliza,
-                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                color = MaterialTheme.colorScheme.onSurface
-            )
+        Seccion("Información de la póliza") {
+            Dato("Número de póliza", certificado.numeroPoliza)
+            Dato("Titular", certificado.titular)
+            Dato("Documento", certificado.documentoTitular)
+            Dato("Vigencia", Formatos.vigencia(certificado.fechaInicio, certificado.fechaFin))
+            certificado.emitidaEn.takeIf { it.isNotBlank() }?.let {
+                Dato("Fecha de emisión", Formatos.fechaHora(it))
+            }
+            certificado.primaTotal.takeIf { it.isNotBlank() }?.let {
+                Dato("Prima total", Formatos.dinero(it, certificado.moneda))
+            }
         }
 
-        Surface(
-            shape = RoundedCornerShape(16.dp),
-            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.04f),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Dato("Titular", certificado.titular)
-                Dato("Documento", certificado.documentoTitular)
-                Dato("Vigencia", Formatos.vigencia(certificado.fechaInicio, certificado.fechaFin))
-                Dato("Cobertura principal", certificado.coberturaPrincipal)
-                Dato("Suma asegurada", Formatos.dinero(certificado.sumaAsegurada, certificado.moneda))
+        Seccion("Cobertura contratada", destacada = true) {
+            Dato("Cobertura principal", certificado.coberturaPrincipal)
+            certificado.descripcionCobertura?.takeIf { it.isNotBlank() }?.let {
+                Text(
+                    text = it,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.75f)
+                )
             }
+            Dato("Suma asegurada", Formatos.dinero(certificado.sumaAsegurada, certificado.moneda))
         }
 
         val condicion = CondicionParametrica.campos(certificado.descripcionCobertura)
@@ -180,9 +192,76 @@ private fun Contenido(
             }
         }
 
+        Seccion("Exclusiones principales") {
+            if (certificado.exclusionesPrincipales.isEmpty()) {
+                Text(
+                    text = "No se informan exclusiones principales para esta cobertura.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                )
+            } else {
+                certificado.exclusionesPrincipales.forEach { exclusion ->
+                    Text(
+                        text = "• $exclusion",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                }
+            }
+        }
+
+        Seccion("Movimientos de la póliza") {
+            when {
+                historial == null && cargandoHistorial -> CircularProgressIndicator(
+                    color = Navegacion,
+                    modifier = Modifier
+                        .size(24.dp)
+                        .semantics { contentDescription = "Cargando movimientos" }
+                )
+                historial == null && errorHistorial != null -> Text(
+                    text = errorHistorial,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.error
+                )
+                historial?.endosos.isNullOrEmpty() -> Text(
+                    text = "Esta póliza no tiene movimientos registrados.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                )
+                else -> historial?.endosos.orEmpty().forEachIndexed { indice, endoso ->
+                    if (indice > 0) HorizontalDivider()
+                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text(
+                            text = endoso.tipo.etiquetaMovimiento(),
+                            style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = Formatos.fecha(endoso.fechaEfecto),
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                        )
+                        endoso.cambios.forEach { cambio ->
+                            Text(
+                                text = cambio.descripcion,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
         if (mensaje != null) {
             SolventaNoticePill(text = mensaje, icon = painterResource(id = R.drawable.ic_main_page))
         }
+
+        SolventaPrimaryButton(
+            text = "Ver documento PDF",
+            onClick = onVerDocumento,
+            isLoading = descargandoDocumento
+        )
 
         SolventaSecondaryButton(
             text = "Compartir certificado",
@@ -194,8 +273,53 @@ private fun Contenido(
             style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
         )
+
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Text(
+                text = "Certificado digital",
+                style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            SolventaCodigoQr(
+                contenido = certificado.contenidoQr,
+                descripcion = "Código QR de la póliza ${certificado.numeroPoliza}"
+            )
+        }
     }
 }
+
+@Composable
+private fun Seccion(
+    titulo: String,
+    destacada: Boolean = false,
+    contenido: @Composable () -> Unit
+) {
+    Surface(
+        shape = RoundedCornerShape(16.dp),
+        color = if (destacada) Navegacion.copy(alpha = 0.06f)
+        else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.04f),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Text(
+                text = titulo,
+                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                color = if (destacada) Navegacion else MaterialTheme.colorScheme.onSurface
+            )
+            contenido()
+        }
+    }
+}
+
+private fun String.etiquetaMovimiento(): String =
+    lowercase().replace('_', ' ').replaceFirstChar { it.titlecase() }
 
 @Composable
 private fun Dato(etiqueta: String, valor: String) {
@@ -235,8 +359,13 @@ fun CertificateScreenPreview() {
             ),
             cargando = false,
             error = null,
+            historial = HistorialEndosos(emptyList()),
+            cargandoHistorial = false,
+            errorHistorial = null,
+            descargandoDocumento = false,
             compartiendo = false,
             mensaje = null,
+            onVerDocumento = {},
             onCompartir = {},
             onReintentar = {},
             onVolver = {}

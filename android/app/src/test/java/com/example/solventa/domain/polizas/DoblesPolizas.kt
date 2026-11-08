@@ -79,6 +79,7 @@ class PolizasGatewayFalso : PolizasGateway {
     val tokensUsados = mutableListOf<String>()
     val certificadosPedidos = mutableListOf<String>()
     val historialesPedidos = mutableListOf<String>()
+    val documentosPedidos = mutableListOf<String>()
     val compartidos = mutableListOf<String>()
 
     override suspend fun billetera(accessToken: String): ResultadoApi<Billetera> {
@@ -106,6 +107,7 @@ class PolizasGatewayFalso : PolizasGateway {
         polizaId: String
     ): ResultadoApi<DocumentoPoliza> {
         tokensUsados += accessToken
+        documentosPedidos += polizaId
         return respuestaDocumento
     }
 
