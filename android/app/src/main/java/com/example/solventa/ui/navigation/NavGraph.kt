@@ -1,7 +1,10 @@
 package com.example.solventa.ui.navigation
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -35,6 +38,8 @@ import com.example.solventa.ui.billetera.compartirTexto
 import com.example.solventa.ui.billetera.eliminarDocumentosTemporales
 import com.example.solventa.ui.billetera.textoParaCompartir
 import com.example.solventa.ui.cotizaciones.CotizacionesViewModel
+import com.example.solventa.ui.components.SeccionNavegacion
+import com.example.solventa.ui.components.SolventaBottomNavigation
 import com.example.solventa.ui.pagos.PagosViewModel
 import com.example.solventa.ui.siniestros.SiniestrosViewModel
 import com.example.solventa.ui.screens.BiometricalLoginScreen
@@ -275,13 +280,27 @@ fun NavGraph(
                         { navController.navigate(ScreenRoute.Quotes.route) { launchSingleTop = true } }
                     },
                     onVerBilletera = billetera?.let {
-                        { navController.navigate(ScreenRoute.Wallet.route) { launchSingleTop = true } }
+                        { navController.navigate(ScreenRoute.Wallet.ruta()) { launchSingleTop = true } }
                     },
                     onVerPagos = pagos?.let {
                         { navController.navigate(ScreenRoute.Payments.route) { launchSingleTop = true } }
                     },
                     onVerSiniestros = siniestros?.let {
-                        { navController.navigate(ScreenRoute.Claims.route) { launchSingleTop = true } }
+                        { navController.navigate(ScreenRoute.Claims.ruta()) { launchSingleTop = true } }
+                    },
+                    onNavbarPolizas = billetera?.let {
+                        {
+                            navController.navigate(ScreenRoute.Wallet.ruta(desdeNavbar = true)) {
+                                launchSingleTop = true
+                            }
+                        }
+                    },
+                    onNavbarSiniestros = siniestros?.let {
+                        {
+                            navController.navigate(ScreenRoute.Claims.ruta(desdeNavbar = true)) {
+                                launchSingleTop = true
+                            }
+                        }
                     },
                     cantidadPolizasActivas = estadoBilletera?.billetera?.totalVigentes,
                     sinConexion = estadoBilletera?.sinConexion == true,
@@ -303,7 +322,7 @@ fun NavGraph(
                     },
                     onInicio = { navController.popBackStack(ScreenRoute.Home.route, false) },
                     onVerBilletera = billetera?.let {
-                        { navController.navigate(ScreenRoute.Wallet.route) { launchSingleTop = true } }
+                        { navController.navigate(ScreenRoute.Wallet.ruta()) { launchSingleTop = true } }
                     }
                 )
             }
@@ -339,7 +358,7 @@ fun NavGraph(
                     errorRemoto = estadoCotizaciones.error,
                     onInicio = { navController.popBackStack(ScreenRoute.Home.route, false) },
                     onVerBilletera = billetera?.let {
-                        { navController.navigate(ScreenRoute.Wallet.route) { launchSingleTop = true } }
+                        { navController.navigate(ScreenRoute.Wallet.ruta()) { launchSingleTop = true } }
                     }
                 )
             }
@@ -380,7 +399,7 @@ fun NavGraph(
                         navController.popBackStack(ScreenRoute.Home.route, false)
                     },
                     onVerBilletera = billetera?.let {
-                        { navController.navigate(ScreenRoute.Wallet.route) { launchSingleTop = true } }
+                        { navController.navigate(ScreenRoute.Wallet.ruta()) { launchSingleTop = true } }
                     }
                 )
             }
@@ -441,7 +460,7 @@ fun NavGraph(
                         },
                         onVerBilletera = billetera?.let {
                             {
-                                navController.navigate(ScreenRoute.Wallet.route) {
+                                navController.navigate(ScreenRoute.Wallet.ruta()) {
                                     launchSingleTop = true
                                 }
                             }
@@ -453,38 +472,64 @@ fun NavGraph(
         }
 
         if (billetera != null) {
-            composable(route = ScreenRoute.Wallet.route) {
+            composable(
+                route = ScreenRoute.Wallet.route,
+                arguments = listOf(
+                    navArgument(ScreenRoute.Wallet.ORIGEN_NAVBAR) {
+                        type = NavType.BoolType
+                        defaultValue = false
+                    }
+                )
+            ) { entrada ->
+                val desdeNavbar = entrada.arguments?.getBoolean(ScreenRoute.Wallet.ORIGEN_NAVBAR) == true
                 val estadoBilletera by billetera.estado.collectAsState()
                 if (estado.sesion == null) {
                     Box(modifier = Modifier.fillMaxSize())
                 } else {
                     // Se vuelve a pedir cada vez que se entra: el backend es la fuente de verdad.
                     LaunchedEffect(Unit) { billetera.cargar() }
-                    WalletScreen(
-                        billetera = estadoBilletera.billetera,
-                        cargando = estadoBilletera.cargando,
-                        error = estadoBilletera.error,
-                        sinConexion = estadoBilletera.sinConexion,
-                        ultimaSincronizacionMs = estadoBilletera.ultimaSincronizacionMs,
-                        datosAntiguos = estadoBilletera.datosAntiguos,
-                        falloSincronizacionPersistente =
-                            estadoBilletera.falloSincronizacionPersistente,
-                        onVerPoliza = { polizaId ->
-                            navController.navigate(ScreenRoute.Certificate.ruta(polizaId))
-                        },
-                        onReintentar = billetera::cargar,
-                        onVolver = { navController.popBackStack() }
-                    )
+                    PantallaConNavegacion(
+                        visible = desdeNavbar,
+                        seleccionada = SeccionNavegacion.POLIZAS,
+                        navController = navController,
+                        polizasDisponibles = true,
+                        siniestrosDisponibles = siniestros != null
+                    ) { pantallaModifier ->
+                        WalletScreen(
+                            billetera = estadoBilletera.billetera,
+                            cargando = estadoBilletera.cargando,
+                            error = estadoBilletera.error,
+                            sinConexion = estadoBilletera.sinConexion,
+                            ultimaSincronizacionMs = estadoBilletera.ultimaSincronizacionMs,
+                            datosAntiguos = estadoBilletera.datosAntiguos,
+                            falloSincronizacionPersistente =
+                                estadoBilletera.falloSincronizacionPersistente,
+                            onVerPoliza = { polizaId ->
+                                navController.navigate(
+                                    ScreenRoute.Certificate.ruta(polizaId, desdeNavbar)
+                                )
+                            },
+                            onReintentar = billetera::cargar,
+                            onVolver = { navController.popBackStack() },
+                            modifier = pantallaModifier
+                        )
+                    }
                 }
             }
 
             composable(
                 route = ScreenRoute.Certificate.route,
                 arguments = listOf(
-                    navArgument(ScreenRoute.Certificate.ARGUMENTO) { type = NavType.StringType }
+                    navArgument(ScreenRoute.Certificate.ARGUMENTO) { type = NavType.StringType },
+                    navArgument(ScreenRoute.Certificate.ORIGEN_NAVBAR) {
+                        type = NavType.BoolType
+                        defaultValue = false
+                    }
                 )
             ) { entrada ->
                 val polizaId = entrada.arguments?.getString(ScreenRoute.Certificate.ARGUMENTO).orEmpty()
+                val desdeNavbar =
+                    entrada.arguments?.getBoolean(ScreenRoute.Certificate.ORIGEN_NAVBAR) == true
                 val estadoBilletera by billetera.estado.collectAsState()
                 val contexto = LocalContext.current
 
@@ -512,24 +557,33 @@ fun NavGraph(
                     }
 
                     val certificado = estadoBilletera.certificado?.takeIf { it.polizaId == polizaId }
-                    CertificateScreen(
-                        certificado = certificado,
-                        cargando = estadoBilletera.cargandoCertificado,
-                        error = estadoBilletera.errorCertificado,
-                        historial = estadoBilletera.historialEndosos,
-                        cargandoHistorial = estadoBilletera.cargandoHistorial,
-                        errorHistorial = estadoBilletera.errorHistorial,
-                        descargandoDocumento = estadoBilletera.descargandoDocumento,
-                        compartiendo = estadoBilletera.compartiendo,
-                        mensaje = estadoBilletera.mensaje,
-                        onVerDocumento = { billetera.descargarDocumento(polizaId) },
-                        onCompartir = { billetera.compartir(polizaId) },
-                        onReintentar = {
-                            billetera.verCertificado(polizaId)
-                            billetera.verHistorialEndosos(polizaId)
-                        },
-                        onVolver = { navController.popBackStack() }
-                    )
+                    PantallaConNavegacion(
+                        visible = desdeNavbar,
+                        seleccionada = SeccionNavegacion.POLIZAS,
+                        navController = navController,
+                        polizasDisponibles = true,
+                        siniestrosDisponibles = siniestros != null
+                    ) { pantallaModifier ->
+                        CertificateScreen(
+                            certificado = certificado,
+                            cargando = estadoBilletera.cargandoCertificado,
+                            error = estadoBilletera.errorCertificado,
+                            historial = estadoBilletera.historialEndosos,
+                            cargandoHistorial = estadoBilletera.cargandoHistorial,
+                            errorHistorial = estadoBilletera.errorHistorial,
+                            descargandoDocumento = estadoBilletera.descargandoDocumento,
+                            compartiendo = estadoBilletera.compartiendo,
+                            mensaje = estadoBilletera.mensaje,
+                            onVerDocumento = { billetera.descargarDocumento(polizaId) },
+                            onCompartir = { billetera.compartir(polizaId) },
+                            onReintentar = {
+                                billetera.verCertificado(polizaId)
+                                billetera.verHistorialEndosos(polizaId)
+                            },
+                            onVolver = { navController.popBackStack() },
+                            modifier = pantallaModifier
+                        )
+                    }
                 }
             }
         }
@@ -595,7 +649,7 @@ fun NavGraph(
                             navController.popBackStack(ScreenRoute.Home.route, false)
                         },
                         onVerBilletera = billetera?.let {
-                            { navController.navigate(ScreenRoute.Wallet.route) { launchSingleTop = true } }
+                            { navController.navigate(ScreenRoute.Wallet.ruta()) { launchSingleTop = true } }
                         }
                     )
                 }
@@ -634,7 +688,7 @@ fun NavGraph(
                         onVolver = { navController.popBackStack() },
                         onInicio = { navController.popBackStack(ScreenRoute.Home.route, false) },
                         onVerBilletera = billetera?.let {
-                            { navController.navigate(ScreenRoute.Wallet.route) { launchSingleTop = true } }
+                            { navController.navigate(ScreenRoute.Wallet.ruta()) { launchSingleTop = true } }
                         }
                     )
                 }
@@ -642,27 +696,57 @@ fun NavGraph(
         }
 
         if (siniestros != null) {
-            composable(route = ScreenRoute.Claims.route) {
+            composable(
+                route = ScreenRoute.Claims.route,
+                arguments = listOf(
+                    navArgument(ScreenRoute.Claims.ORIGEN_NAVBAR) {
+                        type = NavType.BoolType
+                        defaultValue = false
+                    }
+                )
+            ) { entrada ->
+                val desdeNavbar = entrada.arguments?.getBoolean(ScreenRoute.Claims.ORIGEN_NAVBAR) == true
                 val estadoSiniestros by siniestros.estado.collectAsState()
                 if (estado.sesion == null) {
                     Box(modifier = Modifier.fillMaxSize())
                 } else {
                     // Se vuelve a pedir cada vez que se entra: el backend es la fuente de verdad.
                     LaunchedEffect(Unit) { siniestros.cargar() }
-                    ClaimsScreen(
-                        siniestros = estadoSiniestros.siniestros,
-                        cargando = estadoSiniestros.cargando,
-                        error = estadoSiniestros.error,
-                        onReintentar = { siniestros.cargar() },
-                        onVolver = { navController.popBackStack() },
-                        onReportar = {
-                            navController.navigate(ScreenRoute.ClaimForm.route) { launchSingleTop = true }
-                        }
-                    )
+                    PantallaConNavegacion(
+                        visible = desdeNavbar,
+                        seleccionada = SeccionNavegacion.SINIESTROS,
+                        navController = navController,
+                        polizasDisponibles = billetera != null,
+                        siniestrosDisponibles = true
+                    ) { pantallaModifier ->
+                        ClaimsScreen(
+                            siniestros = estadoSiniestros.siniestros,
+                            cargando = estadoSiniestros.cargando,
+                            error = estadoSiniestros.error,
+                            onReintentar = { siniestros.cargar() },
+                            onVolver = { navController.popBackStack() },
+                            onReportar = {
+                                navController.navigate(ScreenRoute.ClaimForm.ruta(desdeNavbar)) {
+                                    launchSingleTop = true
+                                }
+                            },
+                            modifier = pantallaModifier
+                        )
+                    }
                 }
             }
 
-            composable(route = ScreenRoute.ClaimForm.route) {
+            composable(
+                route = ScreenRoute.ClaimForm.route,
+                arguments = listOf(
+                    navArgument(ScreenRoute.ClaimForm.ORIGEN_NAVBAR) {
+                        type = NavType.BoolType
+                        defaultValue = false
+                    }
+                )
+            ) { entrada ->
+                val desdeNavbar =
+                    entrada.arguments?.getBoolean(ScreenRoute.ClaimForm.ORIGEN_NAVBAR) == true
                 val estadoSiniestros by siniestros.estado.collectAsState()
                 if (estado.sesion == null) {
                     Box(modifier = Modifier.fillMaxSize())
@@ -681,31 +765,40 @@ fun NavGraph(
                     LaunchedEffect(estadoSiniestros.registroExitoso) {
                         if (estadoSiniestros.registroExitoso) {
                             siniestros.consumirRegistroExitoso()
-                            navController.popBackStack(ScreenRoute.Claims.route, inclusive = false)
+                            navController.popBackStack()
                         }
                     }
 
-                    ClaimFormScreen(
-                        polizas = elegibles,
-                        registrando = estadoSiniestros.registrando,
-                        error = estadoSiniestros.errorFormulario,
-                        onRegistrar = { polizaId, fecha, hora, lugar, descripcion, estimacion ->
-                            siniestros.registrar(
-                                SolicitudSiniestro(
-                                    polizaId = polizaId,
-                                    fechaEvento = fecha,
-                                    horaEvento = if (hora.length == 5) "$hora:00" else hora,
-                                    lugar = lugar,
-                                    descripcion = descripcion,
-                                    estimacionDanos = estimacion
+                    PantallaConNavegacion(
+                        visible = desdeNavbar,
+                        seleccionada = SeccionNavegacion.SINIESTROS,
+                        navController = navController,
+                        polizasDisponibles = billetera != null,
+                        siniestrosDisponibles = true
+                    ) { pantallaModifier ->
+                        ClaimFormScreen(
+                            polizas = elegibles,
+                            registrando = estadoSiniestros.registrando,
+                            error = estadoSiniestros.errorFormulario,
+                            onRegistrar = { polizaId, fecha, hora, lugar, descripcion, estimacion ->
+                                siniestros.registrar(
+                                    SolicitudSiniestro(
+                                        polizaId = polizaId,
+                                        fechaEvento = fecha,
+                                        horaEvento = if (hora.length == 5) "$hora:00" else hora,
+                                        lugar = lugar,
+                                        descripcion = descripcion,
+                                        estimacionDanos = estimacion
+                                    )
                                 )
-                            )
-                        },
-                        onVolver = {
-                            siniestros.consumirErrorFormulario()
-                            navController.popBackStack()
-                        }
-                    )
+                            },
+                            onVolver = {
+                                siniestros.consumirErrorFormulario()
+                                navController.popBackStack()
+                            },
+                            modifier = pantallaModifier
+                        )
+                    }
                 }
             }
         }
@@ -714,3 +807,50 @@ fun NavGraph(
 
 /** URL de retorno que el portal PSE usa para devolver al cliente a la app con ?pago=... */
 private const val URL_RETORNO_PSE = "https://solventa.app/pse-retorno"
+
+@Composable
+private fun PantallaConNavegacion(
+    visible: Boolean,
+    seleccionada: SeccionNavegacion,
+    navController: NavHostController,
+    polizasDisponibles: Boolean,
+    siniestrosDisponibles: Boolean,
+    contenido: @Composable (Modifier) -> Unit
+) {
+    Scaffold(
+        modifier = Modifier.fillMaxSize(),
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
+        bottomBar = {
+            if (visible) {
+                SolventaBottomNavigation(
+                    onInicio = {
+                        navController.popBackStack(ScreenRoute.Home.route, false)
+                    },
+                    onPolizas = if (polizasDisponibles) {
+                        {
+                            navController.navigate(ScreenRoute.Wallet.ruta(desdeNavbar = true)) {
+                                popUpTo(ScreenRoute.Home.route)
+                                launchSingleTop = true
+                            }
+                        }
+                    } else {
+                        null
+                    },
+                    onSiniestros = if (siniestrosDisponibles) {
+                        {
+                            navController.navigate(ScreenRoute.Claims.ruta(desdeNavbar = true)) {
+                                popUpTo(ScreenRoute.Home.route)
+                                launchSingleTop = true
+                            }
+                        }
+                    } else {
+                        null
+                    },
+                    seleccionada = seleccionada
+                )
+            }
+        }
+    ) { paddingValues ->
+        contenido(Modifier.fillMaxSize().padding(paddingValues))
+    }
+}

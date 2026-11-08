@@ -16,11 +16,18 @@ import androidx.compose.runtime.Composable
 import com.example.solventa.ui.theme.Navegacion
 import com.example.solventa.ui.theme.Noche
 
+enum class SeccionNavegacion {
+    INICIO,
+    POLIZAS,
+    SINIESTROS
+}
+
 @Composable
 fun SolventaBottomNavigation(
     onInicio: () -> Unit = {},
     onPolizas: (() -> Unit)? = null,
-    onSiniestros: (() -> Unit)? = null
+    onSiniestros: (() -> Unit)? = null,
+    seleccionada: SeccionNavegacion = SeccionNavegacion.INICIO
 ) {
     val colores = NavigationBarItemDefaults.colors(
         selectedIconColor = Navegacion,
@@ -37,24 +44,24 @@ fun SolventaBottomNavigation(
         windowInsets = WindowInsets(0, 0, 0, 0)
     ) {
         NavigationBarItem(
-            selected = true,
+            selected = seleccionada == SeccionNavegacion.INICIO,
             onClick = onInicio,
             icon = { Icon(Icons.Outlined.Home, contentDescription = null) },
             label = { Text("Inicio") },
             colors = colores
         )
         NavigationBarItem(
-            selected = false,
+            selected = seleccionada == SeccionNavegacion.POLIZAS,
             onClick = { onPolizas?.invoke() },
-            enabled = onPolizas != null,
+            enabled = onPolizas != null || seleccionada == SeccionNavegacion.POLIZAS,
             icon = { Icon(Icons.Outlined.Policy, contentDescription = null) },
             label = { Text("Pólizas") },
             colors = colores
         )
         NavigationBarItem(
-            selected = false,
+            selected = seleccionada == SeccionNavegacion.SINIESTROS,
             onClick = { onSiniestros?.invoke() },
-            enabled = onSiniestros != null,
+            enabled = onSiniestros != null || seleccionada == SeccionNavegacion.SINIESTROS,
             icon = { Icon(Icons.Outlined.Description, contentDescription = null) },
             label = { Text("Siniestros") },
             colors = colores

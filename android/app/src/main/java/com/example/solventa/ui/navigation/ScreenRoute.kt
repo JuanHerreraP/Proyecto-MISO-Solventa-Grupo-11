@@ -25,10 +25,18 @@ sealed class ScreenRoute(val route: String) {
         fun ruta(cotizacionId: String) =
             "quote_history/${URLEncoder.encode(cotizacionId, "UTF-8")}"
     }
-    object Wallet : ScreenRoute("wallet_screen")
-    object Certificate : ScreenRoute("certificate_screen/{polizaId}") {
+    object Wallet : ScreenRoute("wallet_screen?desdeNavbar={desdeNavbar}") {
+        const val ORIGEN_NAVBAR = "desdeNavbar"
+        fun ruta(desdeNavbar: Boolean = false) =
+            if (desdeNavbar) "wallet_screen?desdeNavbar=true" else "wallet_screen"
+    }
+    object Certificate : ScreenRoute("certificate_screen/{polizaId}?desdeNavbar={desdeNavbar}") {
         const val ARGUMENTO = "polizaId"
-        fun ruta(polizaId: String) = "certificate_screen/${URLEncoder.encode(polizaId, "UTF-8")}"
+        const val ORIGEN_NAVBAR = "desdeNavbar"
+        fun ruta(polizaId: String, desdeNavbar: Boolean = false): String {
+            val base = "certificate_screen/${URLEncoder.encode(polizaId, "UTF-8")}"
+            return if (desdeNavbar) "$base?desdeNavbar=true" else base
+        }
     }
     object Payment : ScreenRoute("payment_screen/{cotizacionId}") {
         const val ARGUMENTO = "cotizacionId"
@@ -38,8 +46,16 @@ sealed class ScreenRoute(val route: String) {
     object PsePortal : ScreenRoute("pse_portal_screen")
     object PaymentResult : ScreenRoute("payment_result_screen")
     object Payments : ScreenRoute("payments_screen")
-    object Claims : ScreenRoute("claims_screen")
-    object ClaimForm : ScreenRoute("claim_form_screen")
+    object Claims : ScreenRoute("claims_screen?desdeNavbar={desdeNavbar}") {
+        const val ORIGEN_NAVBAR = "desdeNavbar"
+        fun ruta(desdeNavbar: Boolean = false) =
+            if (desdeNavbar) "claims_screen?desdeNavbar=true" else "claims_screen"
+    }
+    object ClaimForm : ScreenRoute("claim_form_screen?desdeNavbar={desdeNavbar}") {
+        const val ORIGEN_NAVBAR = "desdeNavbar"
+        fun ruta(desdeNavbar: Boolean = false) =
+            if (desdeNavbar) "claim_form_screen?desdeNavbar=true" else "claim_form_screen"
+    }
 
     companion object {
         /** Rutas que solo se pueden ver con una sesión activa. */

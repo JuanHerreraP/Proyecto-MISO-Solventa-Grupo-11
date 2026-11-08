@@ -71,6 +71,8 @@ fun HomeScreen(
     onVerCotizaciones: (() -> Unit)? = null,
     onVerPagos: (() -> Unit)? = null,
     onVerSiniestros: (() -> Unit)? = null,
+    onNavbarPolizas: (() -> Unit)? = null,
+    onNavbarSiniestros: (() -> Unit)? = null,
     onCotizarSeguro: () -> Unit = {},
     cantidadPolizasActivas: Int? = null,
     sinConexion: Boolean = false,
@@ -95,7 +97,12 @@ fun HomeScreen(
         modifier = modifier.fillMaxSize(),
         containerColor = MaterialTheme.colorScheme.surface,
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
-        bottomBar = { SolventaBottomNavigation(onPolizas = onVerBilletera, onSiniestros = onVerSiniestros) }
+        bottomBar = {
+            SolventaBottomNavigation(
+                onPolizas = onNavbarPolizas ?: onVerBilletera,
+                onSiniestros = onNavbarSiniestros ?: onVerSiniestros
+            )
+        }
     ) { paddingValues ->
         Column(
             modifier = Modifier
