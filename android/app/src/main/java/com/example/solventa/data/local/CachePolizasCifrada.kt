@@ -11,6 +11,8 @@ import com.example.solventa.domain.polizas.CachePolizas
 import com.example.solventa.domain.polizas.Certificado
 import com.example.solventa.domain.polizas.CertificadoCacheado
 import com.example.solventa.domain.polizas.ClaveUsuarioCache
+import com.example.solventa.domain.polizas.HistorialEndosos
+import com.example.solventa.domain.polizas.HistorialEndososCacheado
 import com.example.solventa.domain.polizas.MetadatosSincronizacion
 import com.google.gson.Gson
 import java.io.IOException
@@ -62,16 +64,18 @@ class CachePolizasCifrada private constructor(
         require(certificados.all { it.polizaId in polizas }) {
             "No se puede guardar un certificado que no pertenezca a la billetera."
         }
+        val historiales = leer(usuario)?.historiales.orEmpty()
+            .filterKeys { it in polizas }
 
         val instantanea = InstantaneaPersistida(
             version = VERSION,
             usuarioId = usuario.valor,
             billetera = billetera,
             certificados = certificados.distinctBy { it.polizaId },
+            historiales = historiales,
             sincronizadaEnMs = sincronizadaEnMs
         )
-        val cifrado = cifrador.cifrar(gson.toJson(instantanea), aad(usuario))
-        almacen.guardar(claveAlmacen(usuario), gson.toJson(cifrado))
+        guardar(usuario, instantanea)
     }
 
     override suspend fun billetera(usuario: ClaveUsuarioCache): BilleteraCacheada? {
@@ -92,6 +96,30 @@ class CachePolizasCifrada private constructor(
         return CertificadoCacheado(
             certificado = certificado,
             metadatos = instantanea.metadatos(usuario)
+        )
+    }
+
+    override suspend fun historialEndosos(
+        usuario: ClaveUsuarioCache,
+        polizaId: String
+    ): HistorialEndososCacheado? {
+        val instantanea = leer(usuario) ?: return null
+        val historial = instantanea.historiales[polizaId] ?: return null
+        return HistorialEndososCacheado(historial, instantanea.metadatos(usuario))
+    }
+
+    override suspend fun guardarHistorialEndosos(
+        usuario: ClaveUsuarioCache,
+        polizaId: String,
+        historial: HistorialEndosos
+    ) {
+        val instantanea = leer(usuario) ?: return
+        require(instantanea.billetera.polizas.any { it.polizaId == polizaId }) {
+            "No se puede guardar el historial de una póliza ajena a la billetera."
+        }
+        guardar(
+            usuario,
+            instantanea.copy(historiales = instantanea.historiales + (polizaId to historial))
         )
     }
 
@@ -123,6 +151,11 @@ class CachePolizasCifrada private constructor(
         }
     }
 
+    private fun guardar(usuario: ClaveUsuarioCache, instantanea: InstantaneaPersistida) {
+        val cifrado = cifrador.cifrar(gson.toJson(instantanea), aad(usuario))
+        almacen.guardar(claveAlmacen(usuario), gson.toJson(cifrado))
+    }
+
     private fun aad(usuario: ClaveUsuarioCache): ByteArray =
         "$VERSION:${usuario.valor}".toByteArray(Charsets.UTF_8)
 
@@ -139,12 +172,13 @@ class CachePolizasCifrada private constructor(
         val usuarioId: String,
         val billetera: Billetera,
         val certificados: List<Certificado>,
+        val historiales: Map<String, HistorialEndosos>,
         val sincronizadaEnMs: Long
     )
 
     private companion object {
         const val ARCHIVO = "solventa_polizas_cifradas"
-        const val VERSION = 1
+        const val VERSION = 3
     }
 }
 

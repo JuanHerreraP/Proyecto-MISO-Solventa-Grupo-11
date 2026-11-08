@@ -1,9 +1,12 @@
 package com.example.solventa.data.remote
 
 import com.example.solventa.domain.polizas.Billetera
+import com.example.solventa.domain.polizas.CambioEndoso
 import com.example.solventa.domain.polizas.Certificado
+import com.example.solventa.domain.polizas.EndosoPoliza
 import com.example.solventa.domain.polizas.EnlaceCompartido
 import com.example.solventa.domain.polizas.EstadoPoliza
+import com.example.solventa.domain.polizas.HistorialEndosos
 import com.example.solventa.domain.polizas.PolizaResumen
 import com.google.gson.annotations.SerializedName
 
@@ -58,6 +61,7 @@ data class BilleteraDto(
 data class CertificadoDto(
     @SerializedName("poliza_id") val polizaId: String?,
     @SerializedName("numero_poliza") val numeroPoliza: String?,
+    @SerializedName("ramo") val ramo: String?,
     @SerializedName("nombre_ramo") val nombreRamo: String?,
     @SerializedName("estado") val estado: String?,
     @SerializedName("activa") val activa: Boolean?,
@@ -67,8 +71,11 @@ data class CertificadoDto(
     @SerializedName("fecha_fin") val fechaFin: String?,
     @SerializedName("cobertura_principal") val coberturaPrincipal: String?,
     @SerializedName("descripcion_cobertura") val descripcionCobertura: String?,
+    @SerializedName("exclusiones_principales") val exclusionesPrincipales: List<String>?,
     @SerializedName("suma_asegurada") val sumaAsegurada: String?,
+    @SerializedName("prima_total") val primaTotal: String?,
     @SerializedName("moneda") val moneda: String?,
+    @SerializedName("emitida_en") val emitidaEn: String?,
     @SerializedName("contenido_qr") val contenidoQr: String?
 ) {
     fun aCertificado(): Certificado? {
@@ -87,9 +94,53 @@ data class CertificadoDto(
             descripcionCobertura = descripcionCobertura,
             sumaAsegurada = sumaAsegurada.orEmpty(),
             moneda = moneda ?: "COP",
-            contenidoQr = contenidoQr ?: return null
+            contenidoQr = contenidoQr ?: return null,
+            ramo = ramo.orEmpty(),
+            primaTotal = primaTotal.orEmpty(),
+            emitidaEn = emitidaEn.orEmpty(),
+            exclusionesPrincipales = exclusionesPrincipales.orEmpty().filter { it.isNotBlank() }
         )
     }
+}
+
+data class CambioEndosoDto(
+    @SerializedName("tipo") val tipo: String?,
+    @SerializedName("descripcion") val descripcion: String?
+) {
+    fun aCambio(): CambioEndoso? {
+        return CambioEndoso(
+            tipo = tipo ?: return null,
+            descripcion = descripcion ?: return null
+        )
+    }
+}
+
+data class EndosoPolizaDto(
+    @SerializedName("endoso_id") val endosoId: String?,
+    @SerializedName("numero_endoso") val numero: Int?,
+    @SerializedName("tipo") val tipo: String?,
+    @SerializedName("fecha_efecto") val fechaEfecto: String?,
+    @SerializedName("creado_en") val creadoEn: String?,
+    @SerializedName("cambios") val cambios: List<CambioEndosoDto>?,
+    @SerializedName("huella_documento") val huellaDocumento: String?
+) {
+    fun aEndoso(): EndosoPoliza? {
+        return EndosoPoliza(
+            endosoId = endosoId ?: return null,
+            numero = numero ?: return null,
+            tipo = tipo ?: return null,
+            fechaEfecto = fechaEfecto ?: return null,
+            creadoEn = creadoEn ?: return null,
+            cambios = cambios.orEmpty().mapNotNull { it.aCambio() },
+            huellaDocumento = huellaDocumento ?: return null
+        )
+    }
+}
+
+data class HistorialEndososDto(
+    @SerializedName("endosos") val endosos: List<EndosoPolizaDto>?
+) {
+    fun aHistorial() = HistorialEndosos(endosos.orEmpty().mapNotNull { it.aEndoso() })
 }
 
 data class EnlaceCompartidoDto(

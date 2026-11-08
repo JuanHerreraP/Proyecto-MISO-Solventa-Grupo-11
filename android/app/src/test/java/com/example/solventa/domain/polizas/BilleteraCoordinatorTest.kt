@@ -308,6 +308,57 @@ class BilleteraCoordinatorTest {
     }
 
     @Test
+    fun unHistorialRemotoQuedaDisponibleParaLaSiguienteConsultaOffline() {
+        val historial = historialEndosos()
+        ejecutar { billetera.cargar() }
+        gateway.respuestaHistorial = ResultadoApi.Exito(historial)
+
+        ejecutar { billetera.verHistorialEndosos("POL-1") }
+
+        assertEquals(listOf("POL-1"), gateway.historialesPedidos)
+        assertEquals(historial, billetera.estado.historialEndosos)
+
+        billetera.cerrarCertificado()
+        gateway.respuestaHistorial = ResultadoApi.SinConexion
+        ejecutar { billetera.verHistorialEndosos("POL-1") }
+
+        assertEquals(historial, billetera.estado.historialEndosos)
+        assertNull(billetera.estado.errorHistorial)
+    }
+
+    @Test
+    fun sinConexionSinHistorialGuardadoInformaElProblema() {
+        gateway.respuestaHistorial = ResultadoApi.SinConexion
+
+        ejecutar { billetera.verHistorialEndosos("POL-1") }
+
+        assertNull(billetera.estado.historialEndosos)
+        assertEquals(MensajesBilletera.SIN_CONEXION, billetera.estado.errorHistorial)
+    }
+
+    @Test
+    fun descargarDocumentoEntregaUnEventoConsumibleALaUi() {
+        ejecutar { billetera.descargarDocumento("POL-1") }
+
+        assertEquals(listOf("POL-1"), gateway.documentosPedidos)
+        assertEquals("poliza.pdf", billetera.estado.documentoParaAbrir?.nombreArchivo)
+        assertFalse(billetera.estado.descargandoDocumento)
+
+        billetera.documentoAbierto(exito = true)
+        assertNull(billetera.estado.documentoParaAbrir)
+    }
+
+    @Test
+    fun documentoSinConexionInformaQueRequiereInternet() {
+        gateway.respuestaDocumento = ResultadoApi.SinConexion
+
+        ejecutar { billetera.descargarDocumento("POL-1") }
+
+        assertNull(billetera.estado.documentoParaAbrir)
+        assertEquals(MensajesBilletera.DOCUMENTO_REQUIERE_CONEXION, billetera.estado.mensaje)
+    }
+
+    @Test
     fun unaPolizaAjenaSeMuestraComoNoEncontrada() {
         gateway.respuestaCertificado = ResultadoApi.Fallo(404, "POLIZA_NO_ENCONTRADA", null)
 

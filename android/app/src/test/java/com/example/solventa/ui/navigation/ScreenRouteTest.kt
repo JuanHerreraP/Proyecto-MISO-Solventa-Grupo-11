@@ -34,8 +34,8 @@ class ScreenRouteTest {
                 "quote_result/{ramo}",
                 "quotes_screen",
                 "quote_history/{cotizacionId}",
-                "wallet_screen",
-                "certificate_screen/{polizaId}"
+                "wallet_screen?desdeNavbar={desdeNavbar}",
+                "certificate_screen/{polizaId}?desdeNavbar={desdeNavbar}"
             ),
             routes
         )
@@ -46,6 +46,23 @@ class ScreenRouteTest {
     fun laRutaDelCertificadoLlevaElIdCodificado() {
         assertEquals("certificate_screen/POL-1", ScreenRoute.Certificate.ruta("POL-1"))
         assertEquals("certificate_screen/a%2Fb", ScreenRoute.Certificate.ruta("a/b"))
+        assertEquals(
+            "certificate_screen/POL-1?desdeNavbar=true",
+            ScreenRoute.Certificate.ruta("POL-1", desdeNavbar = true)
+        )
+    }
+
+    @Test
+    fun lasSeccionesConservanElOrigenDelNavbar() {
+        assertEquals("wallet_screen", ScreenRoute.Wallet.ruta())
+        assertEquals("wallet_screen?desdeNavbar=true", ScreenRoute.Wallet.ruta(desdeNavbar = true))
+        assertEquals("claims_screen", ScreenRoute.Claims.ruta())
+        assertEquals("claims_screen?desdeNavbar=true", ScreenRoute.Claims.ruta(desdeNavbar = true))
+        assertEquals("claim_form_screen", ScreenRoute.ClaimForm.ruta())
+        assertEquals(
+            "claim_form_screen?desdeNavbar=true",
+            ScreenRoute.ClaimForm.ruta(desdeNavbar = true)
+        )
     }
 
     @Test
@@ -79,14 +96,14 @@ class ScreenRouteTest {
                 "quote_result/{ramo}",
                 "quotes_screen",
                 "quote_history/{cotizacionId}",
-                "wallet_screen",
-                "certificate_screen/{polizaId}",
+                "wallet_screen?desdeNavbar={desdeNavbar}",
+                "certificate_screen/{polizaId}?desdeNavbar={desdeNavbar}",
                 "payment_screen/{cotizacionId}",
                 "pse_portal_screen",
                 "payment_result_screen",
                 "payments_screen",
-                "claims_screen",
-                "claim_form_screen"
+                "claims_screen?desdeNavbar={desdeNavbar}",
+                "claim_form_screen?desdeNavbar={desdeNavbar}"
             ),
             ScreenRoute.privadas
         )

@@ -34,6 +34,16 @@ class BilleteraViewModel(private val coordinador: BilleteraCoordinator) : ViewMo
         viewModelScope.launch { coordinador.verCertificado(polizaId) }
     }
 
+    fun verHistorialEndosos(polizaId: String) {
+        viewModelScope.launch { coordinador.verHistorialEndosos(polizaId) }
+    }
+
+    fun descargarDocumento(polizaId: String) {
+        viewModelScope.launch { coordinador.descargarDocumento(polizaId) }
+    }
+
+    fun documentoAbierto(exito: Boolean) = coordinador.documentoAbierto(exito)
+
     fun compartir(polizaId: String) {
         viewModelScope.launch { coordinador.compartir(polizaId) }
     }

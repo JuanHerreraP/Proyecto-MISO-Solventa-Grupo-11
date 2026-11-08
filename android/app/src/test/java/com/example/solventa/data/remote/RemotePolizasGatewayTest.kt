@@ -3,6 +3,7 @@ package com.example.solventa.data.remote
 import com.example.solventa.domain.auth.ResultadoApi
 import com.example.solventa.domain.polizas.EnlaceCompartido
 import com.example.solventa.domain.polizas.EstadoPoliza
+import java.security.MessageDigest
 import kotlinx.coroutines.runBlocking
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
@@ -99,6 +100,7 @@ class RemotePolizasGatewayTest {
                 "titular":"Ana Pérez","documento_titular":"CC ****5678",
                 "fecha_inicio":"2026-10-01","fecha_fin":"2026-12-31",
                 "cobertura_principal":"Asistencia médica en viaje",
+                "descripcion_cobertura":"Emergencias cubiertas","exclusiones_principales":["Fuera de vigencia"],
                 "suma_asegurada":"40000000.00","prima_total":"85000.00","moneda":"COP",
                 "emitida_en":"2026-09-30T14:00:00Z","contenido_qr":"SOLVENTA|SOL-VJ-0001|abc"}"""
         )
@@ -108,7 +110,73 @@ class RemotePolizasGatewayTest {
         assertEquals("SOLVENTA|SOL-VJ-0001|abc", certificado.contenidoQr)
         assertEquals("CC ****5678", certificado.documentoTitular)
         assertEquals("40000000.00", certificado.sumaAsegurada)
+        assertEquals("85000.00", certificado.primaTotal)
+        assertEquals(listOf("Fuera de vigencia"), certificado.exclusionesPrincipales)
         assertEquals("/api/v1/billetera/polizas/POL-1/certificado", servidor.takeRequest().path)
+    }
+
+    @Test
+    fun historialMapeaLosEndososYUsaLaRutaDeLaPoliza() = runBlocking {
+        responder(
+            200,
+            """{"endosos":[{"endoso_id":"END-1","poliza_id":"POL-1","numero_endoso":1,
+                "tipo":"COBERTURAS","rol_solicitante":"CLIENTE","fecha_efecto":"2026-11-08",
+                "creado_en":"2026-11-08T15:00:00Z","dias_vigencia":365,"dias_restantes":200,
+                "prima_anterior":"85000","ajuste_prima":"5000","concepto_ajuste":"COBRO",
+                "prima_nueva":"90000","moneda":"COP","cambios":[
+                  {"tipo":"COBERTURA_INCLUIDA","descripcion":"Se agregó equipaje"}],
+                "coberturas_opcionales":[],"beneficiarios":[],"huella_documento":"${"a".repeat(64)}"}]}"""
+        )
+
+        val historial = (gateway.historialEndosos("access-1", "POL-1") as ResultadoApi.Exito).valor
+
+        assertEquals(1, historial.endosos.single().numero)
+        assertEquals("Se agregó equipaje", historial.endosos.single().cambios.single().descripcion)
+        val peticion = servidor.takeRequest()
+        assertEquals("/api/v1/polizas/POL-1/endosos", peticion.path)
+        assertEquals("Bearer access-1", peticion.getHeader("Authorization"))
+    }
+
+    @Test
+    fun documentoValidaPdfYConservaNombreYHuella() = runBlocking {
+        val contenido = "%PDF-contenido"
+        val huella = MessageDigest.getInstance("SHA-256")
+            .digest(contenido.toByteArray())
+            .joinToString("") { "%02x".format(it) }
+        servidor.enqueue(
+            MockResponse()
+                .setResponseCode(200)
+                .setHeader("Content-Type", "application/pdf")
+                .setHeader("Content-Disposition", "attachment; filename=\"poliza-SOL-1.pdf\"")
+                .setHeader("X-Huella-Documento", huella)
+                .setBody(contenido)
+        )
+
+        val documento = (gateway.documento("access-1", "POL-1") as ResultadoApi.Exito).valor
+
+        assertEquals("poliza-SOL-1.pdf", documento.nombreArchivo)
+        assertEquals("%PDF-contenido", String(documento.contenido))
+        assertEquals(huella, documento.huellaSha256)
+        assertEquals("/api/v1/polizas/POL-1/documento", servidor.takeRequest().path)
+    }
+
+    @Test
+    fun documentoRechazaContenidoQueNoEsPdf() = runBlocking {
+        servidor.enqueue(MockResponse().setResponseCode(200).setBody("<html>error</html>"))
+
+        assertEquals(ResultadoApi.Fallo(0, null, null), gateway.documento("access-1", "POL-1"))
+    }
+
+    @Test
+    fun documentoRechazaUnaHuellaQueNoCoincide() = runBlocking {
+        servidor.enqueue(
+            MockResponse()
+                .setResponseCode(200)
+                .setHeader("X-Huella-Documento", "0".repeat(64))
+                .setBody("%PDF-alterado")
+        )
+
+        assertEquals(ResultadoApi.Fallo(0, null, null), gateway.documento("access-1", "POL-1"))
     }
 
     @Test

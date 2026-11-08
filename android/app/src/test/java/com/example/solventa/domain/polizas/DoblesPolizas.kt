@@ -38,9 +38,28 @@ fun certificado(id: String = "POL-1", estado: EstadoPoliza = EstadoPoliza.VIGENT
     fechaInicio = "2026-10-01",
     fechaFin = "2026-12-31",
     coberturaPrincipal = "Asistencia médica en viaje",
+    descripcionCobertura = "Atención de emergencias cubiertas",
     sumaAsegurada = "40000000.00",
     moneda = "COP",
-    contenidoQr = "SOLVENTA|SOL-VJ-0001|a1b2c3d4e5f60718"
+    contenidoQr = "SOLVENTA|SOL-VJ-0001|a1b2c3d4e5f60718",
+    ramo = "VIAJE",
+    primaTotal = "84000.00",
+    emitidaEn = "2026-09-30T14:00:00Z",
+    exclusionesPrincipales = listOf("Viajes contra recomendación médica")
+)
+
+fun historialEndosos() = HistorialEndosos(
+    listOf(
+        EndosoPoliza(
+            endosoId = "END-1",
+            numero = 1,
+            tipo = "MODIFICACION_COBERTURA",
+            fechaEfecto = "2026-10-15",
+            creadoEn = "2026-10-14T14:00:00Z",
+            cambios = listOf(CambioEndoso("COBERTURA", "Aumenta la suma asegurada")),
+            huellaDocumento = "b".repeat(64)
+        )
+    )
 )
 
 val ENLACE = EnlaceCompartido(
@@ -52,9 +71,15 @@ class PolizasGatewayFalso : PolizasGateway {
     var respuestaBilletera: ResultadoApi<Billetera> = ResultadoApi.Exito(billeteraDe(resumen()))
     var respuestaCertificado: ResultadoApi<Certificado> = ResultadoApi.Exito(certificado())
     var respuestaCompartir: ResultadoApi<EnlaceCompartido> = ResultadoApi.Exito(ENLACE)
+    var respuestaHistorial: ResultadoApi<HistorialEndosos> = ResultadoApi.Exito(HistorialEndosos(emptyList()))
+    var respuestaDocumento: ResultadoApi<DocumentoPoliza> = ResultadoApi.Exito(
+        DocumentoPoliza("poliza.pdf", "%PDF-prueba".toByteArray(), "a".repeat(64))
+    )
 
     val tokensUsados = mutableListOf<String>()
     val certificadosPedidos = mutableListOf<String>()
+    val historialesPedidos = mutableListOf<String>()
+    val documentosPedidos = mutableListOf<String>()
     val compartidos = mutableListOf<String>()
 
     override suspend fun billetera(accessToken: String): ResultadoApi<Billetera> {
@@ -66,6 +91,24 @@ class PolizasGatewayFalso : PolizasGateway {
         tokensUsados += accessToken
         certificadosPedidos += polizaId
         return respuestaCertificado
+    }
+
+    override suspend fun historialEndosos(
+        accessToken: String,
+        polizaId: String
+    ): ResultadoApi<HistorialEndosos> {
+        tokensUsados += accessToken
+        historialesPedidos += polizaId
+        return respuestaHistorial
+    }
+
+    override suspend fun documento(
+        accessToken: String,
+        polizaId: String
+    ): ResultadoApi<DocumentoPoliza> {
+        tokensUsados += accessToken
+        documentosPedidos += polizaId
+        return respuestaDocumento
     }
 
     override suspend fun compartir(accessToken: String, polizaId: String): ResultadoApi<EnlaceCompartido> {
@@ -95,6 +138,7 @@ class CachePolizasFalsa : CachePolizas {
     private data class Instantanea(
         val billetera: Billetera,
         val certificados: List<Certificado>,
+        val historiales: Map<String, HistorialEndosos>,
         val sincronizadaEnMs: Long
     )
 
@@ -106,13 +150,39 @@ class CachePolizasFalsa : CachePolizas {
         certificados: List<Certificado>,
         sincronizadaEnMs: Long
     ) {
-        datos[usuario] = Instantanea(billetera, certificados, sincronizadaEnMs)
+        val polizas = billetera.polizas.mapTo(mutableSetOf()) { it.polizaId }
+        val historiales = datos[usuario]?.historiales.orEmpty().filterKeys { it in polizas }
+        datos[usuario] = Instantanea(billetera, certificados, historiales, sincronizadaEnMs)
     }
 
     override suspend fun billetera(usuario: ClaveUsuarioCache): BilleteraCacheada? =
         datos[usuario]?.let {
             BilleteraCacheada(it.billetera, MetadatosSincronizacion(usuario, it.sincronizadaEnMs))
         }
+
+    override suspend fun historialEndosos(
+        usuario: ClaveUsuarioCache,
+        polizaId: String
+    ): HistorialEndososCacheado? = datos[usuario]?.let { instantanea ->
+        instantanea.historiales[polizaId]?.let {
+            HistorialEndososCacheado(
+                it,
+                MetadatosSincronizacion(usuario, instantanea.sincronizadaEnMs)
+            )
+        }
+    }
+
+    override suspend fun guardarHistorialEndosos(
+        usuario: ClaveUsuarioCache,
+        polizaId: String,
+        historial: HistorialEndosos
+    ) {
+        val instantanea = datos[usuario] ?: return
+        require(instantanea.billetera.polizas.any { it.polizaId == polizaId })
+        datos[usuario] = instantanea.copy(
+            historiales = instantanea.historiales + (polizaId to historial)
+        )
+    }
 
     override suspend fun certificado(
         usuario: ClaveUsuarioCache,
