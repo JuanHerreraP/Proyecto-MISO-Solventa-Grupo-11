@@ -26,6 +26,7 @@ from app.polizas.endosos import (
 )
 from app.polizas.repositorio import RepositorioPolizasPostgres
 from app.polizas.repositorio_cancelaciones import RepositorioCancelacionesPostgres
+from app.polizas.repositorio_renovaciones import RepositorioRenovacionesPostgres
 from app.polizas.servicio import PolizaNoEncontrada
 from app.polizas.vistas_cancelacion import (
     CancelacionVista,
@@ -45,6 +46,7 @@ def obtener_servicio(db: Session = Depends(get_db)) -> ServicioCancelaciones:
         siniestros=RepositorioSiniestrosPostgres(db),
         desembolsos=RepositorioDesembolsosPostgres(db),
         cotizaciones=RepositorioCotizacionesPostgres(db),
+        renovaciones=RepositorioRenovacionesPostgres(db),
     )
 
 
@@ -57,7 +59,7 @@ def solicitante_actual(
         or actor.rol not in ROLES_QUE_MODIFICAN
     ):
         raise HTTPException(
-            status.HTTP_403_FORBIDDEN, "El actor no tiene permiso para cancelar pólizas."
+            status.HTTP_403_FORBIDDEN, "El actor no tiene permiso para gestionar pólizas."
         )
     return Solicitante(
         actor_id=actor.actor_id,

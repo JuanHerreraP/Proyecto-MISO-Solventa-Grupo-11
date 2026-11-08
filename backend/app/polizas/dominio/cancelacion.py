@@ -232,8 +232,11 @@ def proponer_cancelacion(
     elif siniestros_en_tramite:
         bloqueos.append(_bloqueo_por_siniestros(siniestros_en_tramite))
 
+    prima_total = poliza.prima_total
     if estado is EstadoPoliza.VIGENTE:
-        saldo, dias_totales, dias_sin_usar = calcular_saldo(periodos or [periodo_de(poliza)], hoy)
+        pagados = periodos or [periodo_de(poliza)]
+        saldo, dias_totales, dias_sin_usar = calcular_saldo(pagados, hoy)
+        prima_total = sum((p.prima for p in pagados), Decimal("0.00"))
     else:
         saldo, dias_totales, dias_sin_usar = Decimal("0.00"), 0, 0
 
@@ -245,7 +248,7 @@ def proponer_cancelacion(
         fecha_efecto=hoy,
         dias_totales=dias_totales,
         dias_no_transcurridos=dias_sin_usar,
-        prima_total=poliza.prima_total,
+        prima_total=prima_total,
         saldo_estimado=saldo,
         moneda=poliza.moneda,
         consecuencias=_consecuencias(saldo),

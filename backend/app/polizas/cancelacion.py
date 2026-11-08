@@ -16,12 +16,12 @@ import hmac
 import json
 import logging
 from collections.abc import Callable, Sequence
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from typing import Protocol
 
 from app.cotizaciones.repositorio import RepositorioCotizaciones
 from app.desembolsos.modelos import Desembolso, EstadoDesembolso
-from app.identidad.modelos import Rol
+from app.polizas.acceso import poliza_del_solicitante
 from app.polizas.dominio.cancelacion import (
     Bloqueo,
     Cancelacion,
@@ -29,20 +29,22 @@ from app.polizas.dominio.cancelacion import (
     CodigoBloqueo,
     ConfirmacionRequerida,
     EstadoDevolucion,
+    PeriodoPagado,
     PropuestaCancelacion,
     SolicitudCancelacion,
     cancelacion_id_de,
+    periodo_de,
     proponer_cancelacion,
 )
 from app.polizas.dominio.modelos import EstadoRegistroPoliza, Poliza, hoy_en_colombia
-from app.polizas.emision import AccesoDenegado
+from app.polizas.dominio.renovacion import EstadoRenovacion
 from app.polizas.endosos import ClaveIdempotenciaReutilizada, Solicitante
 from app.polizas.repositorio import RepositorioPolizas
 from app.polizas.repositorio_cancelaciones import (
     CancelacionConcurrente,
     RepositorioCancelaciones,
 )
-from app.polizas.servicio import PolizaNoEncontrada
+from app.polizas.repositorio_renovaciones import RepositorioRenovaciones
 from app.siniestros.modelos import EstadoSiniestro
 from app.siniestros.repositorio import RepositorioSiniestros
 
@@ -78,6 +80,7 @@ class ServicioCancelaciones:
         siniestros: RepositorioSiniestros,
         desembolsos: ConsultaDesembolsos,
         cotizaciones: RepositorioCotizaciones,
+        renovaciones: RepositorioRenovaciones | None = None,
         reloj: Callable[[], datetime] = lambda: datetime.now(UTC),
     ):
         self._polizas = polizas
@@ -85,27 +88,13 @@ class ServicioCancelaciones:
         self._siniestros = siniestros
         self._desembolsos = desembolsos
         self._cotizaciones = cotizaciones
+        self._renovaciones = renovaciones
         self._reloj = reloj
 
     # --- Consulta -----------------------------------------------------------------------
 
     def _poliza_del_solicitante(self, solicitante: Solicitante, poliza_id: str) -> Poliza:
-        if solicitante.rol is Rol.CLIENTE:
-            poliza = self._polizas.obtener_del_cliente(poliza_id, solicitante.actor_id)
-            if poliza is None:
-                raise PolizaNoEncontrada(poliza_id)
-            return poliza
-        if solicitante.rol is Rol.ASESOR_VENTAS:
-            poliza = self._polizas.obtener(poliza_id)
-            if poliza is None:
-                raise PolizaNoEncontrada(poliza_id)
-            cotizacion = (
-                self._cotizaciones.obtener(poliza.cotizacion_id) if poliza.cotizacion_id else None
-            )
-            if cotizacion is None or cotizacion.asesor_id != solicitante.actor_id:
-                raise AccesoDenegado(poliza_id)
-            return poliza
-        raise AccesoDenegado(poliza_id)
+        return poliza_del_solicitante(self._polizas, self._cotizaciones, solicitante, poliza_id)
 
     def _siniestros_en_tramite(self, poliza_id: str) -> list[str]:
         """Siniestros abiertos de la póliza.
@@ -123,9 +112,33 @@ class ServicioCancelaciones:
                     abiertos.append(siniestro.siniestro_id)
         return abiertos
 
+    def _periodos_pagados(self, poliza: Poliza, hoy: date) -> list[PeriodoPagado]:
+        """Periodos con prima pagada: el de la póliza y, si se renovó con anticipación, el actual.
+
+        Una póliza renovada antes de vencer ya muestra el nuevo periodo, que aún no empieza;
+        el periodo que sigue en curso es el que registró la renovación.
+        """
+        periodos = [periodo_de(poliza)]
+        if self._renovaciones is None or poliza.fecha_inicio <= hoy:
+            return periodos
+        for renovacion in self._renovaciones.por_poliza(poliza.poliza_id):
+            if (
+                renovacion.estado is EstadoRenovacion.APLICADA
+                and renovacion.nuevo_inicio == poliza.fecha_inicio
+            ):
+                anterior = PeriodoPagado(
+                    renovacion.anterior_inicio, renovacion.anterior_fin, renovacion.anterior_prima
+                )
+                return [anterior, *periodos]
+        return periodos
+
     def _proponer(self, poliza: Poliza, ahora: datetime) -> PropuestaCancelacion:
+        hoy = hoy_en_colombia(ahora)
         return proponer_cancelacion(
-            poliza, hoy_en_colombia(ahora), self._siniestros_en_tramite(poliza.poliza_id)
+            poliza,
+            hoy,
+            self._siniestros_en_tramite(poliza.poliza_id),
+            self._periodos_pagados(poliza, hoy),
         )
 
     def consultar(

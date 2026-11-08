@@ -27,6 +27,7 @@ from app.api import (
     pagos,
     perfilamiento,
     pse_simulado,
+    renovaciones,
     salud,
     sesion_web,
     siniestros,
@@ -150,6 +151,7 @@ def crear_app() -> FastAPI:
     app.include_router(emision.router)
     app.include_router(endosos.router)
     app.include_router(cancelaciones.router)
+    app.include_router(renovaciones.router)
     app.include_router(perfilamiento.router)
     app.include_router(enriquecimiento.router)
     app.include_router(socios.router)

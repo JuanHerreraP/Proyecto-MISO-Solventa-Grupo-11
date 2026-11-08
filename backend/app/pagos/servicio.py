@@ -66,12 +66,14 @@ class ServicioPagos:
         pasarela: PasarelaPagos,
         reloj: Callable[[], datetime] = lambda: datetime.now(UTC),
         generar_id: Callable[[], str] = lambda: f"PAG-{uuid.uuid4()}",
+        al_aprobar: Callable[[Pago], None] | None = None,
     ):
         self._pagos = pagos
         self._cotizaciones = cotizaciones
         self._pasarela = pasarela
         self._reloj = reloj
         self._generar_id = generar_id
+        self._al_aprobar = al_aprobar
 
     def pagar(
         self, cliente_id: str, idempotency_key: str, solicitud: SolicitudPago
@@ -208,4 +210,18 @@ class ServicioPagos:
                 self._cotizaciones.guardar(
                     cotizacion.model_copy(update={"estado": EstadoCotizacion.ACEPTADA})
                 )
+            self._notificar_aprobado(actualizado)
         return actualizado
+
+    def _notificar_aprobado(self, pago: Pago) -> None:
+        """Avisa a quien depende del pago (p. ej. la renovación de una póliza).
+
+        El cobro ya quedó registrado: si el aviso falla no se deshace. Quien lo recibe es
+        idempotente y se reintenta al consultar, así que el pago no se pierde.
+        """
+        if self._al_aprobar is None:
+            return
+        try:
+            self._al_aprobar(pago)
+        except Exception:
+            logger.exception("No se pudo aplicar el pago aprobado %s", pago.pago_id)
