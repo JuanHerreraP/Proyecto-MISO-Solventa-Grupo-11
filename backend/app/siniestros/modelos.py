@@ -1,4 +1,4 @@
-"""Modelo de dominio del siniestro y el contrato de registro manual (HU20)."""
+"""Modelo de dominio del siniestro, su registro (HU20) y su evaluación (HU15)."""
 
 from datetime import date, time
 from decimal import Decimal
@@ -8,7 +8,11 @@ from pydantic import AwareDatetime, BaseModel, ConfigDict, Field
 
 
 class EstadoSiniestro(str, Enum):
-    """Ciclo de vida del siniestro. En la parte manual solo se usa REGISTRADO."""
+    """Ciclo de vida del siniestro.
+
+    Se registra en REGISTRADO; Operaciones/Siniestros lo pasa a APROBADO o RECHAZADO (HU15).
+    Los paramétricos se aprueban solos al crearse.
+    """
 
     REGISTRADO = "REGISTRADO"
     EN_EVALUACION = "EN_EVALUACION"
@@ -48,6 +52,29 @@ class Siniestro(BaseModel):
     moneda: str = Field(default="COP", pattern=r"^[A-Z]{3}$")
     registrado_por: str = Field(min_length=1, max_length=50)
     registrado_en: AwareDatetime
+    # Evaluación (HU15): quién decidió, cuándo, por cuánto o por qué se rechazó.
+    monto_aprobado: Decimal | None = Field(default=None, gt=0, max_digits=18, decimal_places=2)
+    evaluado_por: str | None = Field(default=None, max_length=50)
+    evaluado_en: AwareDatetime | None = None
+    motivo_rechazo: str | None = Field(default=None, max_length=500)
+
+    @property
+    def evaluado(self) -> bool:
+        return self.estado in (EstadoSiniestro.APROBADO, EstadoSiniestro.RECHAZADO)
+
+
+class SolicitudAprobacion(BaseModel):
+    """Monto a indemnizar. Sin monto, se toma la estimación de daños hasta la suma asegurada."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    monto_aprobado: Decimal | None = Field(default=None, gt=0, max_digits=18, decimal_places=2)
+
+
+class SolicitudRechazo(BaseModel):
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    motivo: str = Field(min_length=5, max_length=500)
 
 
 class SolicitudSiniestro(BaseModel):
