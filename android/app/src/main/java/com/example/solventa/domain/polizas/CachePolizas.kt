@@ -52,6 +52,11 @@ data class CertificadoCacheado(
     val metadatos: MetadatosSincronizacion
 )
 
+data class HistorialEndososCacheado(
+    val historial: HistorialEndosos,
+    val metadatos: MetadatosSincronizacion
+)
+
 /**
  * Puerto de almacenamiento local para la HU08.
  *
@@ -72,6 +77,18 @@ interface CachePolizas {
         usuario: ClaveUsuarioCache,
         polizaId: String
     ): CertificadoCacheado?
+
+    suspend fun historialEndosos(
+        usuario: ClaveUsuarioCache,
+        polizaId: String
+    ): HistorialEndososCacheado?
+
+    /** Actualiza el historial sin descartar la billetera ni los certificados ya cifrados. */
+    suspend fun guardarHistorialEndosos(
+        usuario: ClaveUsuarioCache,
+        polizaId: String,
+        historial: HistorialEndosos
+    )
 
     suspend fun eliminar(usuario: ClaveUsuarioCache)
 

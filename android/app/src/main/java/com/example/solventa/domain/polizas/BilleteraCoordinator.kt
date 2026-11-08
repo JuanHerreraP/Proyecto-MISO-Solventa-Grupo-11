@@ -17,6 +17,9 @@ data class EstadoBilletera(
     val cargandoCertificado: Boolean = false,
     val certificado: Certificado? = null,
     val errorCertificado: String? = null,
+    val cargandoHistorial: Boolean = false,
+    val historialEndosos: HistorialEndosos? = null,
+    val errorHistorial: String? = null,
     val compartiendo: Boolean = false,
     /** Evento: la UI debe abrir el menú de compartir con este enlace y luego consumirlo. */
     val enlaceParaCompartir: EnlaceCompartido? = null,
@@ -30,6 +33,7 @@ object MensajesBilletera {
     const val ERROR_GENERICO = "No pudimos cargar tu billetera. Inténtalo de nuevo en unos minutos."
     const val POLIZA_NO_ENCONTRADA = "No encontramos esa póliza en tu billetera."
     const val CERTIFICADO_NO_DISPONIBLE = "No pudimos cargar el certificado. Inténtalo de nuevo."
+    const val HISTORIAL_NO_DISPONIBLE = "No pudimos cargar el historial. Inténtalo de nuevo."
     const val COMPARTIR_FALLIDO = "No pudimos generar el enlace para compartir. Inténtalo de nuevo."
     const val SESION_VENCIDA = "Tu sesión expiró. Vuelve a ingresar."
 }
@@ -213,6 +217,50 @@ class BilleteraCoordinator(
         }
     }
 
+    /** Consulta el historial remoto y conserva la última copia cifrada para uso offline. */
+    suspend fun verHistorialEndosos(polizaId: String) {
+        if (estado.cargandoHistorial) return
+        val usuario = usuarioOFinalizar() ?: return
+        activarUsuario(usuario)
+        val token = tokenOFinalizar() ?: return
+        val cacheado = leerHistorialEndosos(usuario, polizaId)
+        estado = estado.copy(
+            cargandoHistorial = true,
+            historialEndosos = cacheado?.historial,
+            errorHistorial = null
+        )
+        val inicio = generacion
+        val resultado = gateway.historialEndosos(token, polizaId)
+        if (inicio != generacion) return
+
+        estado = when (resultado) {
+            is ResultadoApi.Exito -> {
+                guardarHistorialEndosos(usuario, polizaId, resultado.valor)
+                estado.copy(cargandoHistorial = false, historialEndosos = resultado.valor)
+            }
+            is ResultadoApi.Fallo -> when (resultado.http) {
+                401 -> return rechazada()
+                403, 404 -> estado.copy(
+                    cargandoHistorial = false,
+                    historialEndosos = null,
+                    errorHistorial = MensajesBilletera.POLIZA_NO_ENCONTRADA
+                )
+                else -> estado.copy(
+                    cargandoHistorial = false,
+                    errorHistorial = MensajesBilletera.HISTORIAL_NO_DISPONIBLE
+                )
+            }
+            ResultadoApi.SinConexion -> if (cacheado != null) {
+                estado.copy(cargandoHistorial = false, historialEndosos = cacheado.historial)
+            } else {
+                estado.copy(
+                    cargandoHistorial = false,
+                    errorHistorial = MensajesBilletera.SIN_CONEXION
+                )
+            }
+        }
+    }
+
     fun enlaceCompartido() {
         if (estado.enlaceParaCompartir != null) estado = estado.copy(enlaceParaCompartir = null)
     }
@@ -226,6 +274,9 @@ class BilleteraCoordinator(
             cargandoCertificado = false,
             certificado = null,
             errorCertificado = null,
+            cargandoHistorial = false,
+            historialEndosos = null,
+            errorHistorial = null,
             compartiendo = false,
             enlaceParaCompartir = null,
             mensaje = null
@@ -285,6 +336,15 @@ class BilleteraCoordinator(
         null
     }
 
+    private suspend fun leerHistorialEndosos(
+        usuario: ClaveUsuarioCache,
+        polizaId: String
+    ): HistorialEndososCacheado? = try {
+        cache.historialEndosos(usuario, polizaId)
+    } catch (error: Exception) {
+        null
+    }
+
     private suspend fun guardarBilletera(
         usuario: ClaveUsuarioCache,
         billetera: Billetera,
@@ -318,6 +378,18 @@ class BilleteraCoordinator(
             )
         } catch (error: Exception) {
             // Mostrar el certificado remoto no depende de que el dispositivo pueda persistirlo.
+        }
+    }
+
+    private suspend fun guardarHistorialEndosos(
+        usuario: ClaveUsuarioCache,
+        polizaId: String,
+        historial: HistorialEndosos
+    ) {
+        try {
+            cache.guardarHistorialEndosos(usuario, polizaId, historial)
+        } catch (error: Exception) {
+            // Mostrar el historial remoto no depende de que el dispositivo pueda persistirlo.
         }
     }
 
