@@ -113,6 +113,8 @@ El código de retiro siempre se emite.
 3. Como Operaciones, entra a «Bandeja de siniestros» y aprueba el siniestro. Vuelve como cliente para ver el pago.
 4. Para el caso paramétrico, dispara un evento de telemetría (ver [siniestros.md](siniestros.md)). El siniestro aparece ya aprobado y pagado.
 
+Evidencias de la prueba manual: [evidencias/hu15](evidencias/hu15/README.md).
+
 ## Fuera de alcance
 
 - El onboarding no captura la cuenta bancaria. El cliente la registra después, desde «Mis siniestros».
