@@ -172,6 +172,7 @@ curl -X POST http://localhost:8004/simulate/flight-delay \
 - [Siniestros: registro manual y detección paramétrica por telemetría (HU20)](docs/siniestros.md)
 - [Firma electrónica del contrato (HU14)](docs/firma-electronica.md)
 - [Modificación de coberturas, beneficiarios y endosos (HU16)](docs/endosos.md)
+- [Desembolso automatizado e idempotente de indemnizaciones (HU15)](docs/desembolsos.md)
 
 ## Integración continua
 

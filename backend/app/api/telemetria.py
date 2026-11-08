@@ -17,6 +17,7 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy.orm import Session
 
+from app.api.desembolsos import construir_evaluacion
 from app.infraestructura.database import get_db
 from app.polizas.repositorio import RepositorioPolizasPostgres
 from app.siniestros.repositorio import RepositorioSiniestrosPostgres
@@ -46,9 +47,12 @@ def verificar_api_key(x_api_key: str | None = Header(default=None)) -> None:
 
 
 def obtener_servicio(db: Session = Depends(get_db)) -> ServicioTelemetria:
+    # El siniestro paramétrico se aprueba solo y su desembolso se ordena de inmediato (HU15).
+    evaluacion = construir_evaluacion(db)
     return ServicioTelemetria(
         siniestros=RepositorioSiniestrosPostgres(db),
         polizas=RepositorioPolizasPostgres(db),
+        al_crear=evaluacion.aprobar_automatico,
     )
 
 

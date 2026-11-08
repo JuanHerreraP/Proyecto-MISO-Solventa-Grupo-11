@@ -6,7 +6,7 @@ from typing import Protocol
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.siniestros.modelos import Siniestro
+from app.siniestros.modelos import EstadoSiniestro, Siniestro
 from app.siniestros.modelos_db import SiniestroDB
 
 
@@ -18,6 +18,10 @@ class RepositorioSiniestros(Protocol):
     def obtener_por_evento(self, evento_id: str) -> Siniestro | None: ...
 
     def listar_por_cliente(self, cliente_id: str) -> list[Siniestro]: ...
+
+    def listar(self, estado: EstadoSiniestro | None = None, limite: int = 200) -> list[Siniestro]:
+        """Todos los siniestros (bandeja de Operaciones), del más reciente al más antiguo."""
+        ...
 
 
 class RepositorioSiniestrosEnMemoria:
@@ -41,6 +45,11 @@ class RepositorioSiniestrosEnMemoria:
         propios = [s for s in self._por_id.values() if s.cliente_id == cliente_id]
         propios.sort(key=lambda s: s.registrado_en, reverse=True)
         return [s.model_copy(deep=True) for s in propios]
+
+    def listar(self, estado: EstadoSiniestro | None = None, limite: int = 200) -> list[Siniestro]:
+        todos = [s for s in self._por_id.values() if estado is None or s.estado is estado]
+        todos.sort(key=lambda s: s.registrado_en, reverse=True)
+        return [s.model_copy(deep=True) for s in todos[:limite]]
 
 
 class RepositorioSiniestrosPostgres:
@@ -74,6 +83,12 @@ class RepositorioSiniestrosPostgres:
         )
         return [_a_dominio(fila) for fila in self._db.scalars(sentencia).all()]
 
+    def listar(self, estado: EstadoSiniestro | None = None, limite: int = 200) -> list[Siniestro]:
+        sentencia = select(SiniestroDB).order_by(SiniestroDB.registrado_en.desc()).limit(limite)
+        if estado is not None:
+            sentencia = sentencia.where(SiniestroDB.estado == estado.value)
+        return [_a_dominio(fila) for fila in self._db.scalars(sentencia).all()]
+
 
 def _a_persistencia(siniestro: Siniestro) -> dict[str, object]:
     datos = siniestro.model_dump()
@@ -98,9 +113,15 @@ def _a_dominio(registro: SiniestroDB) -> Siniestro:
             "moneda": registro.moneda,
             "registrado_por": registro.registrado_por,
             "registrado_en": _con_zona(registro.registrado_en),
+            "monto_aprobado": registro.monto_aprobado,
+            "evaluado_por": registro.evaluado_por,
+            "evaluado_en": _con_zona(registro.evaluado_en),
+            "motivo_rechazo": registro.motivo_rechazo,
         }
     )
 
 
-def _con_zona(fecha: datetime) -> datetime:
+def _con_zona(fecha: datetime | None) -> datetime | None:
+    if fecha is None:
+        return None
     return fecha.replace(tzinfo=UTC) if fecha.tzinfo is None else fecha

@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { cerrarSesion } from "../services/session";
-import { ROLES_ADMINISTRACION_SOCIOS } from "../types/permisos";
+import { ROLES_ADMINISTRACION_SOCIOS, ROLES_OPERACIONES_SINIESTROS } from "../types/permisos";
 import logoSolventa from "../assets/solventa-logo.png";
 import "../styles/home.css";
 
@@ -15,7 +15,13 @@ const MENU = [
 ] as const;
 
 type Props = {
-  activo: "Inicio" | "Pagos" | "Mis cotizaciones" | "Mis pólizas" | "Siniestros";
+  activo:
+    | "Inicio"
+    | "Pagos"
+    | "Mis cotizaciones"
+    | "Mis pólizas"
+    | "Siniestros"
+    | "Bandeja de siniestros";
   rol: string | null;
   children: ReactNode;
 };
@@ -25,6 +31,7 @@ export default function AppLayout({ activo, rol, children }: Props) {
   const navigate = useNavigate();
   const [errorSesion, setErrorSesion] = useState("");
   const puedeCrearSocios = ROLES_ADMINISTRACION_SOCIOS.some((permitido) => permitido === rol);
+  const evaluaSiniestros = ROLES_OPERACIONES_SINIESTROS.some((permitido) => permitido === rol);
 
   return (
     <div className="home-layout">
@@ -48,6 +55,17 @@ export default function AppLayout({ activo, rol, children }: Props) {
               {texto}
             </button>
           ))}
+          {evaluaSiniestros && (
+            <button
+              type="button"
+              className="home-nav-item"
+              aria-current={activo === "Bandeja de siniestros" ? "page" : undefined}
+              onClick={() => navigate("/operaciones/siniestros")}
+            >
+              <span className="material-symbols-outlined" aria-hidden="true">fact_check</span>
+              Bandeja de siniestros
+            </button>
+          )}
           {puedeCrearSocios && (
             <button type="button" className="home-nav-item" onClick={() => navigate("/admin/socios/nuevo")}>
               <span className="material-symbols-outlined" aria-hidden="true">group_add</span>

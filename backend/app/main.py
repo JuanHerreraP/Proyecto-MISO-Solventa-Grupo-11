@@ -16,6 +16,7 @@ from app.api import (
     billetera,
     cotizaciones,
     credenciales_socios,
+    desembolsos,
     emision,
     endosos,
     enriquecimiento,
@@ -31,6 +32,7 @@ from app.api import (
     socios,
     telemetria,
 )
+from app.desembolsos import modelos_db as modelos_db_desembolsos  # noqa: F401
 from app.firmas import modelos_db as modelos_db_firmas  # noqa: F401
 from app.identidad import (
     auditoria,
@@ -110,6 +112,8 @@ def crear_app() -> FastAPI:
                     "/api/v1/socios",
                     "/api/v1/billetera",
                     "/api/v1/firmas",
+                    "/api/v1/desembolsos",
+                    "/api/v1/operaciones",
                 )
             )
         )
@@ -138,6 +142,8 @@ def crear_app() -> FastAPI:
     app.include_router(pagos.router)
     app.include_router(pse_simulado.router)
     app.include_router(siniestros.router)
+    app.include_router(desembolsos.router_cliente)
+    app.include_router(desembolsos.router_operaciones)
     app.include_router(telemetria.router)
     app.include_router(firmas.router)
     app.include_router(emision.router)

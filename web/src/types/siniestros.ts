@@ -26,4 +26,8 @@ export interface Siniestro {
   moneda: string;
   registrado_por: string;
   registrado_en: string;
+  /** Evaluación (HU15): monto aprobado o motivo del rechazo. */
+  monto_aprobado?: string | null;
+  evaluado_en?: string | null;
+  motivo_rechazo?: string | null;
 }

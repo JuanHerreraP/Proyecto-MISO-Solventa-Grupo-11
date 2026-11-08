@@ -34,3 +34,8 @@ class SiniestroDB(Base):
     moneda: Mapped[str] = mapped_column(String(3), nullable=False)
     registrado_por: Mapped[str] = mapped_column(String(50), nullable=False)
     registrado_en: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    # Evaluación (HU15). Columnas aditivas: los siniestros anteriores quedan en NULL.
+    monto_aprobado: Mapped[Decimal | None] = mapped_column(Numeric(18, 2), nullable=True)
+    evaluado_por: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    evaluado_en: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    motivo_rechazo: Mapped[str | None] = mapped_column(String(500), nullable=True)

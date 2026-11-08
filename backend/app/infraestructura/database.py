@@ -94,6 +94,16 @@ def preparar_esquema_registro() -> None:
             # Columna aditiva para la idempotencia de eventos de telemetría (HU20).
             with engine.begin() as conexion:
                 conexion.execute(text("ALTER TABLE siniestros ADD COLUMN evento_id VARCHAR(120)"))
+        # Columnas aditivas de la evaluación del siniestro (HU15).
+        for columna, tipo in (
+            ("monto_aprobado", "NUMERIC(18, 2)"),
+            ("evaluado_por", "VARCHAR(50)"),
+            ("evaluado_en", "TIMESTAMP WITH TIME ZONE"),
+            ("motivo_rechazo", "VARCHAR(500)"),
+        ):
+            if columna not in columnas_sin:
+                with engine.begin() as conexion:
+                    conexion.execute(text(f"ALTER TABLE siniestros ADD COLUMN {columna} {tipo}"))
         indices_sin = {i["name"] for i in inspector.get_indexes("siniestros")}
         if "uq_siniestros_evento" not in indices_sin:
             from app.siniestros.modelos_db import SiniestroDB

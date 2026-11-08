@@ -1,8 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import AppLayout from "../components/AppLayout";
+import CuentaIndemnizaciones from "../components/desembolso/CuentaIndemnizaciones";
+import DetalleDesembolso from "../components/desembolso/DetalleDesembolso";
 import { obtenerPerfil, type Perfil } from "../services/auth.service";
 import { obtenerBilletera, type PolizaResumen } from "../services/billetera.service";
+import { listarDesembolsos, type Desembolso } from "../services/desembolsos.service";
 import { listarSiniestros } from "../services/siniestros.service";
 import type { EstadoSiniestro, Siniestro } from "../types/siniestros";
 
@@ -33,6 +36,7 @@ export default function SiniestrosPage() {
   const [polizas, setPolizas] = useState<PolizaResumen[]>([]);
   const [error, setError] = useState("");
   const [expandido, setExpandido] = useState<string | null>(null);
+  const [desembolsos, setDesembolsos] = useState<Desembolso[]>([]);
 
   useEffect(() => {
     let activo = true;
@@ -43,6 +47,11 @@ export default function SiniestrosPage() {
     listarSiniestros().then(
       (lista) => { if (activo) setSiniestros(lista); },
       (fallo: Error) => { if (activo) setError(fallo.message); },
+    );
+    // El estado de cada indemnización (HU15); sin ella, la lista se muestra igual.
+    listarDesembolsos().then(
+      (lista) => { if (activo) setDesembolsos(lista); },
+      () => undefined,
     );
     // La billetera aporta el nombre del ramo y número de la póliza asociada.
     obtenerBilletera().then(
@@ -59,6 +68,12 @@ export default function SiniestrosPage() {
     for (const p of polizas) mapa[p.poliza_id] = p;
     return mapa;
   }, [polizas]);
+
+  const desembolsoPorSiniestro = useMemo(() => {
+    const mapa: Record<string, Desembolso> = {};
+    for (const d of desembolsos) mapa[d.siniestro_id] = d;
+    return mapa;
+  }, [desembolsos]);
 
   return (
     <AppLayout activo="Siniestros" rol={rol}>
@@ -78,6 +93,8 @@ export default function SiniestrosPage() {
 
       {error && <p role="alert" className="home-aviso">{error}</p>}
 
+      <CuentaIndemnizaciones />
+
       <section aria-label="Lista de siniestros" className="cotizaciones-lista">
         {siniestros === null && !error && (
           <p role="status" className="home-card-vacio">Cargando tus siniestros…</p>
@@ -90,6 +107,7 @@ export default function SiniestrosPage() {
         {siniestros?.map((siniestro) => {
           const abierto = expandido === siniestro.siniestro_id;
           const poliza = polizaPorId[siniestro.poliza_id];
+          const desembolso = desembolsoPorSiniestro[siniestro.siniestro_id];
           return (
             <article key={siniestro.siniestro_id} className="cotizacion-item">
               <button
@@ -120,6 +138,14 @@ export default function SiniestrosPage() {
                       <span>Póliza afectada</span>
                       <strong>{poliza.nombre_ramo}</strong>
                       <small>{poliza.numero_poliza} · {poliza.cobertura_principal}</small>
+                    </div>
+                  )}
+
+                  {desembolso && <DetalleDesembolso desembolso={desembolso} />}
+                  {siniestro.estado === "RECHAZADO" && siniestro.motivo_rechazo && (
+                    <div className="cotizar-detalle">
+                      <span>Motivo del rechazo</span>
+                      <strong>{siniestro.motivo_rechazo}</strong>
                     </div>
                   )}
 
