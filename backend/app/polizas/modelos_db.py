@@ -118,3 +118,38 @@ class EndosoDB(Base):
     huella_documento: Mapped[str] = mapped_column(String(64), nullable=False)
     tamano_documento: Mapped[int] = mapped_column(Integer, nullable=False)
     creado_en: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+
+class CancelacionDB(Base):
+    """Cancelación de una póliza: motivo, quién la pidió y el saldo a favor calculado (HU22).
+
+    Una póliza se cancela una sola vez (restricción única por póliza) y el registro no se
+    modifica. El saldo queda con devolución pendiente; gestionarla es otra historia.
+    """
+
+    __tablename__ = "cancelaciones"
+    __table_args__ = (
+        UniqueConstraint("poliza_id", name="uq_cancelaciones_poliza"),
+        UniqueConstraint("poliza_id", "clave_idempotencia", name="uq_cancelaciones_poliza_clave"),
+    )
+
+    cancelacion_id: Mapped[str] = mapped_column(String(60), primary_key=True)
+    poliza_id: Mapped[str] = mapped_column(
+        String(50), ForeignKey("polizas.poliza_id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    motivo: Mapped[str] = mapped_column(String(40), nullable=False)
+    detalle: Mapped[str | None] = mapped_column(String(300), nullable=True)
+    solicitado_por: Mapped[str] = mapped_column(String(50), nullable=False)
+    rol_solicitante: Mapped[str] = mapped_column(String(40), nullable=False)
+    clave_idempotencia: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    huella_solicitud: Mapped[str] = mapped_column(String(64), nullable=False)
+    ip_solicitante: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    user_agent: Mapped[str | None] = mapped_column(String(300), nullable=True)
+    fecha_efecto: Mapped[date] = mapped_column(Date, nullable=False)
+    dias_totales: Mapped[int] = mapped_column(Integer, nullable=False)
+    dias_no_transcurridos: Mapped[int] = mapped_column(Integer, nullable=False)
+    prima_total: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False)
+    saldo_estimado: Mapped[Decimal] = mapped_column(Numeric(18, 2), nullable=False)
+    moneda: Mapped[str] = mapped_column(String(3), nullable=False)
+    estado_devolucion: Mapped[str] = mapped_column(String(20), nullable=False)
+    creado_en: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
