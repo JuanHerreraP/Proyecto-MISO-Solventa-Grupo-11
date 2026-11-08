@@ -16,6 +16,7 @@ import PagosPage from "./pages/PagosPage";
 import CotizarPage from "./pages/CotizarPage";
 import CotizacionesPage from "./pages/CotizacionesPage";
 import PolizasPage from "./pages/PolizasPage";
+import ModificarPolizaPage from "./pages/ModificarPolizaPage";
 import ClaimRegistrationPage from "./pages/ClaimRegistrationPage";
 import SiniestrosPage from "./pages/SiniestrosPage";
 import FirmaPage from "./pages/FirmaPage";
@@ -79,6 +80,11 @@ function App() {
       <Route
         path="/polizas"
         element={<RutaProtegida><PolizasPage /></RutaProtegida>}
+      />
+
+      <Route
+        path="/polizas/:polizaId/modificar"
+        element={<RutaProtegida roles={ROLES_CLIENTE}><ModificarPolizaPage /></RutaProtegida>}
       />
 
       <Route

@@ -1,4 +1,4 @@
-"""Compilación del documento PDF de la póliza (HU12).
+"""Compilación de los documentos PDF de la póliza (HU12) y de sus endosos (HU16).
 
 La salida es determinista: los mismos datos producen los mismos bytes (`invariant=1` fija
 fechas e identificador internos y la página va sin comprimir). Así, emitir dos veces la misma
@@ -16,6 +16,7 @@ from reportlab.lib.units import cm
 from reportlab.pdfgen.canvas import Canvas
 
 from app.firmas.modelos import ProcesoFirma
+from app.polizas.dominio.endosos import Endoso
 from app.polizas.dominio.modelos import ZONA_COLOMBIA, Poliza
 
 _MARGEN = 2 * cm
@@ -65,12 +66,12 @@ class _Pagina:
         self.c.line(_MARGEN, self.y, A4[0] - _MARGEN, self.y)
         self.y -= 0.45 * cm
 
-    def par(self, etiqueta: str, valor: str) -> None:
+    def par(self, etiqueta: str, valor: str, ancho_etiqueta: float = 5 * cm) -> None:
         self.espacio(0.6 * cm)
         self.c.setFont("Helvetica-Bold", 9)
         self.c.drawString(_MARGEN, self.y, etiqueta)
         self.c.setFont("Helvetica", 9)
-        self.c.drawString(_MARGEN + 5 * cm, self.y, valor)
+        self.c.drawString(_MARGEN + ancho_etiqueta, self.y, valor)
         self.y -= 0.45 * cm
 
     def parrafo(self, texto: str, tamano: float = 9, fuente: str = "Helvetica") -> None:
@@ -154,6 +155,97 @@ def generar_pdf_poliza(poliza: Poliza, proceso: ProcesoFirma) -> bytes:
     dibujo.add(qr)
     renderPDF.draw(dibujo, canvas, _MARGEN, pag.y - lado)
     pag.y -= lado
+
+    canvas.save()
+    return buffer.getvalue()
+
+
+_ROLES_SOLICITANTE = {
+    "CLIENTE": "El asegurado, desde el portal web",
+    "ASESOR_VENTAS": "Asesor de ventas, a solicitud del asegurado",
+}
+
+
+def generar_pdf_endoso(poliza: Poliza, endoso: Endoso) -> bytes:
+    """Anexo de la póliza con los cambios del endoso. El documento de la póliza no se toca."""
+
+    buffer = io.BytesIO()
+    canvas = Canvas(
+        buffer,
+        pagesize=A4,
+        pageCompression=0,
+        invariant=1,
+        title=f"Endoso {endoso.numero_endoso} a la póliza {poliza.numero_poliza}",
+        author="Solventa",
+    )
+    pag = _Pagina(canvas)
+
+    canvas.setFont("Helvetica-Bold", 18)
+    canvas.drawString(_MARGEN, pag.y, "Solventa")
+    canvas.setFont("Helvetica", 10)
+    canvas.drawString(_MARGEN, pag.y - 0.6 * cm, "Endoso a la póliza de seguro")
+    canvas.setFont("Helvetica-Bold", 13)
+    canvas.drawRightString(A4[0] - _MARGEN, pag.y, f"Endoso No. {endoso.numero_endoso}")
+    pag.y -= 1.2 * cm
+
+    pag.titulo("Póliza")
+    pag.par("Número", poliza.numero_poliza)
+    pag.par("Seguro", poliza.nombre_ramo)
+    pag.par("Asegurado", poliza.titular_nombre)
+    pag.par("Documento", f"{poliza.titular_tipo_documento} {poliza.titular_numero_documento}")
+    pag.par("Vigencia", f"{poliza.fecha_inicio.isoformat()} a {poliza.fecha_fin.isoformat()}")
+
+    pag.titulo("Endoso")
+    pag.par("Identificador", endoso.endoso_id)
+    pag.par("Rige desde", endoso.fecha_efecto.isoformat())
+    pag.par("Registrado", _fecha_hora(endoso.creado_en))
+    solicitante = _ROLES_SOLICITANTE.get(endoso.rol_solicitante, endoso.rol_solicitante)
+    pag.par("Solicitado por", solicitante)
+
+    pag.titulo("Cambios")
+    for numero, cambio in enumerate(endoso.cambios, start=1):
+        pag.parrafo(f"{numero}. {cambio.descripcion}")
+
+    pag.titulo("Coberturas vigentes")
+    principal = poliza.cobertura_principal
+    for cobertura in (principal, *endoso.coberturas_opcionales):
+        pag.par(cobertura.nombre, _moneda(cobertura.suma_asegurada, poliza.moneda), 7 * cm)
+
+    if endoso.beneficiarios or poliza.ramo.value == "VIDA":
+        pag.titulo("Beneficiarios")
+        if not endoso.beneficiarios:
+            pag.parrafo(
+                "Sin beneficiarios designados: la indemnización se paga a los herederos "
+                "legales del asegurado."
+            )
+        for b in endoso.beneficiarios:
+            pag.par(
+                f"{b.porcentaje:.2f}".replace(".", ",") + " %",
+                f"{b.nombre_completo} ({b.parentesco}) - {b.tipo_documento} {b.numero_documento}",
+            )
+
+    pag.titulo("Ajuste de prima")
+    pag.par("Prima anterior", _moneda(endoso.prima_anterior, endoso.moneda))
+    if endoso.es_cobro:
+        concepto = "Cobro adicional"
+    elif endoso.es_devolucion:
+        concepto = "Devolución de prima no devengada"
+    else:
+        concepto = "Sin ajuste"
+    pag.par(concepto, _moneda(abs(endoso.ajuste_prima), endoso.moneda))
+    pag.par("Prima total", _moneda(endoso.prima_nueva, endoso.moneda))
+    pag.parrafo(
+        f"El ajuste corresponde a {endoso.dias_restantes} de los {endoso.dias_vigencia} días de "
+        "vigencia de la póliza, contados desde la fecha en que rige el endoso."
+    )
+
+    pag.titulo("Condiciones")
+    pag.parrafo(
+        "Este endoso hace parte integral de la póliza. Las condiciones no modificadas aquí "
+        "continúan vigentes en los términos del documento de la póliza."
+    )
+    pag.par("Huella de la solicitud", "")
+    pag.parrafo(endoso.huella_solicitud, tamano=7, fuente="Courier")
 
     canvas.save()
     return buffer.getvalue()

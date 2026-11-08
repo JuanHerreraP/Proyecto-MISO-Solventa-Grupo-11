@@ -568,7 +568,7 @@
 
 .cotizacion-datos { margin: 0 0 8px; }
 
-.poliza-acciones { display: flex; justify-content: flex-end; margin-top: 8px; }
+.poliza-acciones { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 12px; margin-top: 8px; }
 .poliza-acciones .material-symbols-outlined { font-size: 18px; }
 
 .cotizacion-datos > div {
