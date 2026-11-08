@@ -1,7 +1,7 @@
 package com.example.solventa.ui.screens
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,17 +15,13 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -35,7 +31,6 @@ import androidx.compose.ui.unit.sp
 import com.example.solventa.R
 import com.example.solventa.ui.components.SolventaPrimaryButton
 import com.example.solventa.ui.components.SolventaSecondaryButton
-import com.example.solventa.ui.theme.Avance
 import com.example.solventa.ui.theme.Navegacion
 import com.example.solventa.ui.theme.Noche
 import com.example.solventa.ui.theme.Offline
@@ -59,21 +54,16 @@ fun WelcomeScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
 
-            // 1. Logo Badge Box
             Box(
                 modifier = Modifier
-                    .size(120.dp)
-                    .background(
-                        color = Noche,
-                        shape = RoundedCornerShape(36.dp)
-                    ),
+                    .size(128.dp)
+                    .background(Noche, RoundedCornerShape(36.dp)),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(
-                    painter = painterResource(id = R.drawable.ic_main_page),
-                    contentDescription = "Solventa Logo",
-                    modifier = Modifier.size(56.dp),
-                    tint = Avance
+                Image(
+                    painter = painterResource(id = R.drawable.solventa_shield),
+                    contentDescription = "Icono de Solventa",
+                    modifier = Modifier.size(72.dp)
                 )
             }
 
@@ -122,8 +112,8 @@ fun WelcomeScreen(
                     horizontalArrangement = Arrangement.Center
                 ) {
                     Icon(
-                        painter = painterResource(id = R.drawable.ic_main_page), // Replace with shield icon if separate
-                        contentDescription = null,
+                        painter = painterResource(id = R.drawable.ic_shield_person),
+                        contentDescription = "Identidad verificada",
                         modifier = Modifier.size(16.dp),
                         tint = Offline
                     )

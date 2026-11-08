@@ -1,6 +1,7 @@
 package com.example.solventa.ui.screens
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -17,6 +18,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
+import androidx.compose.material.icons.outlined.Fingerprint
+import androidx.compose.material.icons.outlined.LockPerson
 import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -28,6 +31,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -36,6 +40,7 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.solventa.R
+import com.example.solventa.domain.auth.MensajesAuth
 import com.example.solventa.ui.components.SolventaNoticePill
 import com.example.solventa.ui.components.SolventaPrimaryButton
 import com.example.solventa.ui.components.SolventaSecondaryButton
@@ -88,11 +93,10 @@ fun BiometricalLoginScreen(
 
                 Spacer(modifier = Modifier.width(12.dp))
 
-                Icon(
-                    painter = painterResource(id = R.drawable.ic_main_page),
-                    contentDescription = null,
-                    modifier = Modifier.size(20.dp),
-                    tint = Navegacion
+                Image(
+                    painter = painterResource(id = R.drawable.solventa_shield),
+                    contentDescription = "Escudo de Solventa",
+                    modifier = Modifier.size(28.dp)
                 )
 
                 Spacer(modifier = Modifier.width(8.dp))
@@ -120,9 +124,9 @@ fun BiometricalLoginScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
-                        painter = painterResource(id = R.drawable.ic_main_page), // Replace with R.drawable.ic_fingerprint if separate
+                        imageVector = Icons.Outlined.Fingerprint,
                         contentDescription = "Huella dactilar",
-                        modifier = Modifier.size(56.dp),
+                        modifier = Modifier.size(72.dp),
                         tint = Navegacion
                     )
                 }
@@ -187,9 +191,16 @@ fun BiometricalLoginScreen(
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 if (mensaje != null) {
+                    val sesionCerrada = mensaje == MensajesAuth.SESION_CERRADA
                     SolventaNoticePill(
                         text = mensaje,
-                        icon = painterResource(id = R.drawable.ic_main_page)
+                        icon = if (sesionCerrada) {
+                            rememberVectorPainter(Icons.Outlined.LockPerson)
+                        } else {
+                            painterResource(id = R.drawable.ic_main_page)
+                        },
+                        centered = sesionCerrada,
+                        iconDescription = if (sesionCerrada) "Sesión cerrada" else null
                     )
                 }
 
