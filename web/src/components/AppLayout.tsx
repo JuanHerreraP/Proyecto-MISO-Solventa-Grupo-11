@@ -16,7 +16,7 @@ const MENU = [
   { icono: "shield", texto: "Mis pólizas", ruta: "/polizas" },
   { icono: "error", texto: "Siniestros", ruta: "/siniestros" },
   { icono: "payments", texto: "Pagos", ruta: "/pagos" },
-  { icono: "person", texto: "Perfil", ruta: null },
+  { icono: "person", texto: "Perfil", ruta: "/perfil" },
 ] as const;
 
 type Props = {
@@ -26,6 +26,7 @@ type Props = {
     | "Mis cotizaciones"
     | "Mis pólizas"
     | "Siniestros"
+    | "Perfil"
     | "Bandeja de siniestros"
     | "Historial contractual";
   rol: string | null;

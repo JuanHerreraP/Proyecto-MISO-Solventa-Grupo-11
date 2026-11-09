@@ -32,6 +32,7 @@ import FirmaPage from "./pages/FirmaPage";
 import SocioRegistrationPage from "./pages/SocioRegistrationPage";
 import AsesorRegistrationPage from "./pages/AsesorRegistrationPage";
 import AuditorRegistrationPage from "./pages/AuditorRegistrationPage";
+import ProfilePage from "./pages/ProfilePage";
 
 function App() {
   const navigate = useNavigate();
@@ -76,6 +77,11 @@ function App() {
       <Route
         path="/pagos"
         element={<RutaProtegida><PagosPage /></RutaProtegida>}
+      />
+
+      <Route
+        path="/perfil"
+        element={<RutaProtegida><ProfilePage /></RutaProtegida>}
       />
 
       <Route
