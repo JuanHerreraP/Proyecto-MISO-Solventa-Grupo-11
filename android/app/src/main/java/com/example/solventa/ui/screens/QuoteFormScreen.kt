@@ -20,7 +20,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.outlined.KeyboardArrowDown
 import androidx.compose.material.icons.outlined.CalendarMonth
-import androidx.compose.material.icons.outlined.Shield
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.DropdownMenuItem
@@ -44,12 +43,13 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.rememberVectorPainter
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.example.solventa.R
 import com.example.solventa.domain.cotizaciones.CampoCotizacion
 import com.example.solventa.domain.cotizaciones.CatalogoCotizaciones
 import com.example.solventa.domain.cotizaciones.DefinicionRamoCotizacion
@@ -153,7 +153,8 @@ fun QuoteFormScreen(
 
                 SolventaNoticePill(
                     text = "Usaremos únicamente los datos financieros que autorizaste para personalizar el precio.",
-                    icon = rememberVectorPainter(Icons.Outlined.Shield)
+                    icon = painterResource(id = R.drawable.ic_shield_card),
+                    iconDescription = "Protección de datos financieros"
                 )
 
                 if (errorRemoto != null) {

@@ -17,7 +17,11 @@ from app.api import (
     billetera,
     cotizaciones,
     credenciales_socios,
+    desembolsos,
+    emision,
+    endosos,
     enriquecimiento,
+    firmas,
     identidad,
     oauth_socios,
     pagos,
@@ -29,6 +33,8 @@ from app.api import (
     socios,
     telemetria,
 )
+from app.desembolsos import modelos_db as modelos_db_desembolsos  # noqa: F401
+from app.firmas import modelos_db as modelos_db_firmas  # noqa: F401
 from app.identidad import (
     asociacion_db,  # noqa: F401
     auditoria,
@@ -72,13 +78,16 @@ def crear_app() -> FastAPI:
             "X-Scope",
             "Idempotency-Key",
         ],
+        # El navegador solo deja leer estos encabezados de una respuesta de otro origen si se
+        # exponen: el portal toma de ahí el nombre del PDF de la póliza.
+        expose_headers=["Content-Disposition", "X-Huella-Documento"],
     )
 
     @app.exception_handler(RequestValidationError)
     async def errores_de_validacion(request: Request, error: RequestValidationError):
         detalle = jsonable_encoder(error.errors())
-        if request.url.path.startswith("/api/v1/pagos"):
-            # Los errores de FastAPI devuelven el valor recibido; en pagos podría ser un PAN.
+        if request.url.path.startswith(("/api/v1/pagos", "/api/v1/firmas")):
+            # Los errores de FastAPI devuelven el valor recibido: un PAN o un código OTP.
             detalle = [
                 {campo: valor for campo, valor in e.items() if campo not in {"input", "ctx"}}
                 for e in detalle
@@ -106,6 +115,9 @@ def crear_app() -> FastAPI:
                     "/api/v1/enriquecimientos",
                     "/api/v1/socios",
                     "/api/v1/billetera",
+                    "/api/v1/firmas",
+                    "/api/v1/desembolsos",
+                    "/api/v1/operaciones",
                 )
             )
         )
@@ -135,7 +147,12 @@ def crear_app() -> FastAPI:
     app.include_router(pse_simulado.router)
     app.include_router(siniestros.router)
     app.include_router(asesor.router)
+    app.include_router(desembolsos.router_cliente)
+    app.include_router(desembolsos.router_operaciones)
     app.include_router(telemetria.router)
+    app.include_router(firmas.router)
+    app.include_router(emision.router)
+    app.include_router(endosos.router)
     app.include_router(perfilamiento.router)
     app.include_router(enriquecimiento.router)
     app.include_router(socios.router)

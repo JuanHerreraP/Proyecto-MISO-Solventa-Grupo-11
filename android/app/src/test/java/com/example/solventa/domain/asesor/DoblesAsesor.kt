@@ -28,7 +28,8 @@ fun polizaVigente(id: String = "POL-1") = PolizaResumen(
     activa = true,
     fechaInicio = "2026-10-01",
     fechaFin = "2026-12-31",
-    coberturaPrincipal = "Asistencia médica en viaje"
+    coberturaPrincipal = "Asistencia médica en viaje",
+    emitidaEn = "2026-09-30T14:00:00Z"
 )
 
 fun nuevoAsesor() = DatosNuevoAsesor(

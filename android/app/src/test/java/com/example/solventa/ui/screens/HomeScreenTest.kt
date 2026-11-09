@@ -27,7 +27,9 @@ class HomeScreenTest {
         ofrecerActivar: Boolean = false,
         mensaje: String? = null,
         cerrandoSesion: Boolean = false,
-        cantidadPolizasActivas: Int? = 2
+        cantidadPolizasActivas: Int? = 2,
+        sinConexion: Boolean = false,
+        ultimaSincronizacionMs: Long? = 1_798_000_000_000L
     ) {
         compose.setContent {
             SolventaTheme {
@@ -45,7 +47,9 @@ class HomeScreenTest {
                     onVerBilletera = { eventos += "billetera" },
                     onVerCotizaciones = { eventos += "cotizaciones" },
                     onCotizarSeguro = { eventos += "cotizar" },
-                    cantidadPolizasActivas = cantidadPolizasActivas
+                    cantidadPolizasActivas = cantidadPolizasActivas,
+                    sinConexion = sinConexion,
+                    ultimaSincronizacionMs = ultimaSincronizacionMs
                 )
             }
         }
@@ -132,5 +136,25 @@ class HomeScreenTest {
         compose.boton("Cotizaciones").performScrollTo().performClick()
 
         assertEquals(listOf("cotizaciones"), eventos)
+    }
+
+    @Test
+    fun enLineaMuestraLaUltimaSincronizacionDespuesDeLasAcciones() {
+        mostrar()
+
+        compose.onNodeWithText("Actualizado", substring = true)
+            .performScrollTo()
+            .assertIsDisplayed()
+    }
+
+    @Test
+    fun sinConexionMuestraDisponibilidadLocal() {
+        mostrar(sinConexion = true)
+
+        compose.onNodeWithText("Sin conexión · Mostrando datos guardados")
+            .performScrollTo()
+            .assertIsDisplayed()
+        compose.onNodeWithText("Actualizado", substring = true)
+            .assertDoesNotExist()
     }
 }

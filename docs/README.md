@@ -26,19 +26,23 @@ se mantienen en la [wiki del proyecto](https://github.com/JuanHerreraP/Proyecto-
 | Documento | Contenido |
 | --- | --- |
 | [Billetera digital de pólizas](billetera-digital.md) | HU07: billetera, estados, certificado con QR y enlace temporal para compartir |
+| [Modificación de coberturas y endosos](endosos.md) | HU16: beneficiarios, coberturas opcionales, ajuste pro-rata, PDF del endoso y trazabilidad |
 
-## Pagos
+## Pagos y contratación
 
 | Documento | Contenido |
 | --- | --- |
 | [Recaudo inicial de la prima](recaudo-pagos.md) | HU13: pago con tarjeta o PSE, idempotencia, webhook firmado de la pasarela y configuración |
 | [Comprar un seguro desde la web](compra-web.md) | HU23: flujo web cotizar → aceptar → pagar, reutilizando HU03 y HU13 |
+| [Firma electrónica del contrato](firma-electronica.md) | HU14: contrato prellenado tras el pago, OTP por SMS o correo, huella del documento y metadatos de la firma |
+| [Emisión de la póliza y su documento](emision-poliza.md) | HU12: emisión automática al firmar, PDF inmutable con su huella, descarga para cliente y asesor, correo y notificación asíncronos |
 
 ## Siniestros
 
 | Documento | Contenido |
 | --- | --- |
 | [Siniestros: registro manual y detección paramétrica](siniestros.md) | HU20: registro manual, telemetría externa que empuja eventos y creación automática del siniestro |
+| [Desembolso de indemnizaciones](desembolsos.md) | HU15: aprobación o rechazo desde la bandeja de Operaciones, pago automático e idempotente a cuenta tokenizada o código de retiro, reintentos |
 
 ## Clientes, ejecución y evidencias
 
@@ -48,6 +52,8 @@ se mantienen en la [wiki del proyecto](https://github.com/JuanHerreraP/Proyecto-
 - [Infraestructura](../infra/README.md).
 - [Evidencias de HU02](evidencias/hu02/README.md).
 - [Evidencias de HU07](evidencias/hu07/README.md).
+- [Evidencias de HU14](evidencias/hu14/README.md).
+- [Evidencias de HU15](evidencias/hu15/README.md).
 
 Los contratos ejecutables de la API están disponibles en `/docs` y `/openapi.json`
 al iniciar el backend; las rutas de este directorio describen su uso y contexto.

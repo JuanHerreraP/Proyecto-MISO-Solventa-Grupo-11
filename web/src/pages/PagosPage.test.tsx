@@ -59,3 +59,25 @@ it("vuelve a Inicio desde la barra lateral", async () => {
   await userEvent.click(await screen.findByRole("button", { name: /Inicio/ }));
   expect(await screen.findByRole("heading", { name: "Inicio" })).toBeInTheDocument();
 });
+
+it("abre el contrato para firmar desde un pago aprobado", async () => {
+  vi.mocked(listarPagos).mockResolvedValue([
+    {
+      pago_id: "p1", cotizacion_id: "COT-001", metodo: "TARJETA", monto: "94500.00", moneda: "COP",
+      estado: "APROBADO", motivo_rechazo: null, creado_en: "2026-09-17T15:00:00Z",
+    },
+    {
+      pago_id: "p2", cotizacion_id: "COT-002", metodo: "PSE", monto: "91200.00", moneda: "COP",
+      estado: "PENDIENTE", motivo_rechazo: null, creado_en: "2026-08-17T15:00:00Z",
+    },
+  ]);
+  render(<MemoryRouter initialEntries={["/pagos"]}><Routes>
+    <Route path="/pagos" element={<PagosPage />} />
+    <Route path="/firma/:cotizacionId" element={<h1>Firma</h1>} />
+  </Routes></MemoryRouter>);
+
+  const enlaces = await screen.findAllByRole("button", { name: "Contrato" });
+  expect(enlaces).toHaveLength(1);
+  await userEvent.click(enlaces[0]);
+  expect(await screen.findByRole("heading", { name: "Firma" })).toBeInTheDocument();
+});

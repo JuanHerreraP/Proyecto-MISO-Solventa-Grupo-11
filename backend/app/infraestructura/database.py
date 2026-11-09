@@ -74,6 +74,7 @@ def preparar_esquema_registro() -> None:
                 conexion.execute(
                     text("UPDATE sesiones_refresh SET ultima_actividad = fecha_emision")
                 )
+    _agregar_columnas_endosos(inspector)
     if not inspector.has_table("usuarios"):
         return
 
@@ -93,6 +94,16 @@ def preparar_esquema_registro() -> None:
             # Columna aditiva para la idempotencia de eventos de telemetría (HU20).
             with engine.begin() as conexion:
                 conexion.execute(text("ALTER TABLE siniestros ADD COLUMN evento_id VARCHAR(120)"))
+        # Columnas aditivas de la evaluación del siniestro (HU15).
+        for columna, tipo in (
+            ("monto_aprobado", "NUMERIC(18, 2)"),
+            ("evaluado_por", "VARCHAR(50)"),
+            ("evaluado_en", "TIMESTAMP WITH TIME ZONE"),
+            ("motivo_rechazo", "VARCHAR(500)"),
+        ):
+            if columna not in columnas_sin:
+                with engine.begin() as conexion:
+                    conexion.execute(text(f"ALTER TABLE siniestros ADD COLUMN {columna} {tipo}"))
         indices_sin = {i["name"] for i in inspector.get_indexes("siniestros")}
         if "uq_siniestros_evento" not in indices_sin:
             from app.siniestros.modelos_db import SiniestroDB
@@ -100,6 +111,17 @@ def preparar_esquema_registro() -> None:
             for indice in SiniestroDB.__table__.indexes:
                 if indice.name == "uq_siniestros_evento":
                     indice.create(bind=engine, checkfirst=True)
+
+
+def _agregar_columnas_endosos(inspector) -> None:
+    """Coberturas opcionales y beneficiarios de la póliza (HU16): columnas aditivas y nulas."""
+    if not inspector.has_table("polizas"):
+        return
+    columnas = {c["name"] for c in inspector.get_columns("polizas")}
+    for columna in ("coberturas_opcionales", "beneficiarios"):
+        if columna not in columnas:
+            with engine.begin() as conexion:
+                conexion.execute(text(f"ALTER TABLE polizas ADD COLUMN {columna} JSON"))
 
 
 def get_db():

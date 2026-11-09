@@ -1,0 +1,95 @@
+/* ---- Modificación de coberturas y endosos (HU16) ---- */
+
+.endoso-pagina { display: flex; flex-direction: column; gap: 20px; max-width: 860px; }
+
+.endoso-seccion h2 { margin: 0 0 4px; font-size: 16px; }
+.endoso-seccion > p { margin: 0 0 16px; color: var(--solventa-muted); font-size: 13px; }
+
+.endoso-coberturas { display: flex; flex-direction: column; gap: 12px; }
+
+.endoso-cobertura {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 220px;
+  gap: 8px 20px;
+  align-items: center;
+  padding: 14px 16px;
+  border: 1px solid var(--solventa-border);
+  border-radius: 10px;
+}
+
+.endoso-cobertura-activa { border-color: var(--solventa-blue); background: #f4f7ff; }
+
+.endoso-cobertura label { display: flex; gap: 10px; align-items: flex-start; cursor: pointer; }
+.endoso-cobertura input[type="checkbox"] { margin-top: 3px; width: 16px; height: 16px; }
+.endoso-cobertura strong { display: block; font-size: 14px; }
+.endoso-cobertura small { color: var(--solventa-muted); font-size: 12px; line-height: 1.4; }
+.endoso-cobertura .cotizar-campo input { width: 100%; box-sizing: border-box; }
+
+.endoso-principal { color: var(--solventa-muted); font-size: 13px; margin: 0 0 12px; }
+
+.endoso-beneficiario {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) 90px minmax(0, 1.3fr) minmax(0, 1fr) 90px auto;
+  gap: 10px;
+  align-items: end;
+  min-width: 0;
+  margin: 0;
+  padding: 12px 0;
+  border: 0;
+  border-bottom: 1px solid var(--solventa-border);
+}
+
+.endoso-beneficiario .cotizar-campo { min-width: 0; }
+.endoso-beneficiario .cotizar-campo input,
+.endoso-beneficiario .cotizar-campo select { width: 100%; box-sizing: border-box; }
+
+.endoso-beneficiario .cotizar-campo label { font-size: 12px; }
+.endoso-beneficiario .cotizar-campo input,
+.endoso-beneficiario .cotizar-campo select { padding: 10px 12px; font-size: 14px; }
+
+.endoso-quitar {
+  border: 0;
+  background: transparent;
+  color: #c0392b;
+  cursor: pointer;
+  padding: 10px 6px;
+}
+
+.endoso-total { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; }
+.endoso-total-ok { color: #1b8a4a; font-weight: 700; font-size: 13px; }
+.endoso-total-error { color: #c0392b; font-weight: 700; font-size: 13px; }
+
+.endoso-cambios { margin: 0 0 16px; padding-left: 20px; font-size: 14px; line-height: 1.7; }
+
+.endoso-aceptar { display: flex; gap: 10px; align-items: flex-start; font-size: 13px; margin: 8px 0 0; }
+
+.endoso-historial { list-style: none; margin: 0; padding: 0; }
+
+.endoso-historial li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--solventa-border);
+  font-size: 13px;
+}
+
+.endoso-historial li:last-child { border-bottom: 0; }
+.endoso-historial small { display: block; color: var(--solventa-muted); }
+
+.endoso-enlace {
+  border: 0;
+  background: transparent;
+  color: var(--solventa-blue);
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+@media (max-width: 720px) {
+  .endoso-cobertura { grid-template-columns: 1fr; }
+  .endoso-beneficiario { grid-template-columns: 1fr 1fr; }
+}

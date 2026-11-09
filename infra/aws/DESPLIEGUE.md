@@ -88,6 +88,34 @@ echo "$JWT_SECRET_ARN"
 > secreto ya existe de un despliegue previo, reutilizar su ARN con
 > `aws secretsmanager describe-secret --secret-id solventa-mvp-jwt`.
 
+## Paso 2b — Guardar los secretos de la aplicación
+
+La API lee `PAGOS_WEBHOOK_SECRET` (el secreto compartido con la pasarela de pagos) de un
+secreto de AWS. En el workflow **AWS Infra** ese valor sale del secret de GitHub
+`PAGOS_WEBHOOK_SECRET`; a mano se hace así:
+
+```bash
+# Un valor aleatorio, o el que entregue la pasarela (mínimo 32 caracteres).
+export PAGOS_WEBHOOK_SECRET=$(python3 -c "import secrets; print(secrets.token_hex(32))")
+
+python3 - <<'PY'
+import json, os
+from pathlib import Path
+p = Path('infra/secrets/app.json')
+p.write_text(json.dumps({'pagos_webhook_secret': os.environ['PAGOS_WEBHOOK_SECRET']}))
+p.chmod(0o600)
+PY
+
+export APP_SECRETS_ARN=$(aws secretsmanager create-secret --name solventa-mvp-app \
+  --secret-string file://infra/secrets/app.json --query ARN --output text)
+echo "$APP_SECRETS_ARN"
+```
+
+> Si el secreto ya existe, actualizar su valor con `aws secretsmanager put-secret-value
+> --secret-id solventa-mvp-app --secret-string file://infra/secrets/app.json` y reiniciar el
+> servicio con `aws ecs update-service --cluster <cluster> --service <servicio>
+> --force-new-deployment`: ECS lee los secretos solo al iniciar cada tarea.
+
 ## Paso 3 — Elegir la versión de PostgreSQL y crear la infraestructura
 
 ```bash
@@ -99,13 +127,14 @@ aws rds describe-orderable-db-instance-options --engine postgres \
 # 3.2 Fijar una versión de esa lista (ej. 16.9).
 export POSTGRES_ENGINE_VERSION=16.9
 
-# 3.3 Generar el archivo de parámetros con los tres valores.
+# 3.3 Generar el archivo de parámetros con los cuatro valores.
 python3 - <<'PY'
 import json, os
 from pathlib import Path
 values = {
     'BackendImage': os.environ['BACKEND_REPO'] + ':' + os.environ['IMAGE_TAG'],
     'JwtSecretArn': os.environ['JWT_SECRET_ARN'],
+    'AppSecretsArn': os.environ['APP_SECRETS_ARN'],
     'PostgresEngineVersion': os.environ['POSTGRES_ENGINE_VERSION'],
 }
 p = Path('infra/secrets/parameters.json')
@@ -121,10 +150,16 @@ aws cloudformation deploy --stack-name solventa-mvp \
   --parameter-overrides file://infra/secrets/parameters.json \
   --capabilities CAPABILITY_IAM
 
-# 3.5 Ver las salidas (URL pública, bucket web, cluster, etc.).
+# 3.5 Ver las salidas (URL pública, bucket web, bucket de PDF de pólizas, cluster, etc.).
 aws cloudformation describe-stacks --stack-name solventa-mvp \
   --query "Stacks[0].Outputs" --output table
 ```
+
+> `SOLVENTA_URL_PUBLICA` (la dirección pública que usa la API para el retorno de PSE y
+> los enlaces de certificados) toma por defecto el dominio de CloudFront del propio stack.
+> Para usar un dominio propio, agregar `{'ParameterKey': 'PublicUrl', 'ParameterValue':
+> 'https://app.ejemplo.com'}` al archivo de parámetros (en el workflow, definir la
+> variable del repositorio `SOLVENTA_URL_PUBLICA`).
 
 > Si falla con `ECS Deployment Circuit Breaker was triggered`, suele ser que el
 > contenedor no quedó sano. Revisar los logs (prefijo de stream `backend`) con:
@@ -213,5 +248,12 @@ aws cloudformation wait stack-delete-complete --stack-name solventa-mvp
 ```
 
 > Eliminar `solventa-mvp` borra la base y los NAT Gateway. **Se conservan** (por
-> política de retención) el bucket web versionado, el repositorio ECR y el
-> secreto JWT; retirarlos aparte si ya no se necesitan.
+> política de retención) el bucket web versionado, el bucket versionado de los
+> PDF de pólizas (`PolizasBucket`), el repositorio ECR y los secretos (`solventa-mvp-jwt`
+> y `solventa-mvp-app`); retirarlos aparte si ya no se necesitan. El workflow **AWS Infra**
+> con la acción `eliminar` ya vacía (todas las versiones) y borra ambos buckets, el ECR y
+> los dos secretos.
+>
+> **Los PDF de pólizas son documentos de clientes:** por eso su bucket sobrevive a un
+> `delete-stack` manual. Si se borra solo el stack, el bucket queda huérfano con los
+> documentos, y un despliegue nuevo crea otro bucket vacío.

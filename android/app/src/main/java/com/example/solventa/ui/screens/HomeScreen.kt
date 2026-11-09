@@ -1,6 +1,7 @@
 package com.example.solventa.ui.screens
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -40,17 +41,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.example.solventa.R
 import com.example.solventa.domain.auth.Perfil
 import com.example.solventa.ui.components.SolventaNoticePill
 import com.example.solventa.ui.components.SolventaBottomNavigation
-import com.example.solventa.ui.theme.Avance
 import com.example.solventa.ui.theme.Navegacion
 import com.example.solventa.ui.theme.Noche
-import com.example.solventa.ui.theme.Offline
 import com.example.solventa.ui.theme.SolventaTheme
 
 /** Inicio privado del cliente. Conserva las funciones de sesión y billetera. */
@@ -71,9 +72,13 @@ fun HomeScreen(
     onVerCotizaciones: (() -> Unit)? = null,
     onVerPagos: (() -> Unit)? = null,
     onVerSiniestros: (() -> Unit)? = null,
+    onNavbarPolizas: (() -> Unit)? = null,
+    onNavbarSiniestros: (() -> Unit)? = null,
     onCotizarSeguro: () -> Unit = {},
     cantidadPolizasActivas: Int? = null,
-    onCrearAsesor: (() -> Unit)? = null
+    onCrearAsesor: (() -> Unit)? = null,
+    sinConexion: Boolean = false,
+    ultimaSincronizacionMs: Long? = null
 ) {
     if (ofrecerActivarBiometria) {
         AlertDialog(
@@ -94,7 +99,12 @@ fun HomeScreen(
         modifier = modifier.fillMaxSize(),
         containerColor = MaterialTheme.colorScheme.surface,
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
-        bottomBar = { SolventaBottomNavigation(onPolizas = onVerBilletera, onSiniestros = onVerSiniestros) }
+        bottomBar = {
+            SolventaBottomNavigation(
+                onPolizas = onNavbarPolizas ?: onVerBilletera,
+                onSiniestros = onNavbarSiniestros ?: onVerSiniestros
+            )
+        }
     ) { paddingValues ->
         Column(
             modifier = Modifier
@@ -120,7 +130,9 @@ fun HomeScreen(
             TarjetaBilletera(
                 cantidadPolizasActivas = cantidadPolizasActivas,
                 onVerBilletera = onVerBilletera,
-                onCotizarSeguro = onCotizarSeguro
+                onCotizarSeguro = onCotizarSeguro,
+                sinConexion = sinConexion,
+                ultimaSincronizacionMs = ultimaSincronizacionMs
             )
 
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -150,23 +162,6 @@ fun HomeScreen(
                     onClick = onVerPagos,
                     modifier = Modifier.weight(1f)
                 )
-            }
-
-            Surface(shape = RoundedCornerShape(24.dp), color = Offline.copy(alpha = 0.15f)) {
-                Row(
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Surface(shape = RoundedCornerShape(50), color = Offline) {
-                        Spacer(modifier = Modifier.size(9.dp))
-                    }
-                    Spacer(modifier = Modifier.width(10.dp))
-                    Text(
-                        text = "Datos disponibles sin conexión",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = Offline
-                    )
-                }
             }
 
             if (onCrearAsesor != null) {
@@ -226,13 +221,12 @@ private fun EncabezadoInicio() {
         verticalAlignment = Alignment.CenterVertically
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(
-                imageVector = Icons.Outlined.Shield,
-                contentDescription = null,
-                modifier = Modifier.size(24.dp),
-                tint = Navegacion
+            Image(
+                painter = painterResource(id = R.drawable.solventa_shield),
+                contentDescription = "Escudo de Solventa",
+                modifier = Modifier.size(28.dp)
             )
-            Spacer(modifier = Modifier.width(10.dp))
+            Spacer(modifier = Modifier.width(8.dp))
             Text(
                 text = "Solventa",
                 style = MaterialTheme.typography.titleLarge,
@@ -253,7 +247,9 @@ private fun EncabezadoInicio() {
 private fun TarjetaBilletera(
     cantidadPolizasActivas: Int?,
     onVerBilletera: (() -> Unit)?,
-    onCotizarSeguro: () -> Unit
+    onCotizarSeguro: () -> Unit,
+    sinConexion: Boolean,
+    ultimaSincronizacionMs: Long?
 ) {
     Surface(
         shape = RoundedCornerShape(24.dp),
@@ -279,13 +275,10 @@ private fun TarjetaBilletera(
                 style = MaterialTheme.typography.headlineMedium,
                 color = Color.White
             )
-            if (cantidadPolizasActivas != null) {
-                Text(
-                    text = "●  Actualizado recientemente",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = Avance
-                )
-            }
+            InlineSyncStatus(
+                sinConexion = sinConexion,
+                ultimaSincronizacionMs = ultimaSincronizacionMs
+            )
             if (onVerBilletera != null) {
                 Text(
                     text = "Ver mi billetera",

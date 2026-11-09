@@ -1,4 +1,4 @@
-from datetime import date, timedelta
+from datetime import UTC, date, datetime, timedelta
 
 import pytest
 
@@ -78,7 +78,7 @@ def test_muestra_numero_ramo_estado_y_fechas(servicio, repositorios):
     assert vista.fecha_fin == date(2026, 12, 31)
 
 
-def test_vigentes_primero_y_luego_inactivas(servicio, repositorios):
+def test_ordenadas_por_fecha_de_emision_la_mas_reciente_arriba(servicio, repositorios):
     sembrar(
         repositorios,
         poliza(
@@ -86,20 +86,31 @@ def test_vigentes_primero_y_luego_inactivas(servicio, repositorios):
             numero_poliza="SOL-VI-000010",
             fecha_inicio=date(2025, 1, 1),
             fecha_fin=date(2025, 6, 30),
+            emitida_en=datetime(2025, 1, 1, 10, 0, tzinfo=UTC),
         ),
-        poliza(poliza_id="LARGA", numero_poliza="SOL-VI-000011", fecha_fin=date(2027, 9, 30)),
+        poliza(
+            poliza_id="LARGA",
+            numero_poliza="SOL-VI-000011",
+            fecha_fin=date(2027, 9, 30),
+            emitida_en=datetime(2026, 10, 15, 10, 0, tzinfo=UTC),
+        ),
         poliza(
             poliza_id="CANCELADA",
             numero_poliza="SOL-VI-000012",
             estado=EstadoRegistroPoliza.CANCELADA,
+            emitida_en=datetime(2026, 10, 20, 10, 0, tzinfo=UTC),
         ),
-        poliza(poliza_id="CORTA", numero_poliza="SOL-VI-000013", fecha_fin=date(2026, 11, 15)),
+        poliza(
+            poliza_id="CORTA",
+            numero_poliza="SOL-VI-000013",
+            fecha_fin=date(2026, 11, 15),
+            emitida_en=datetime(2026, 9, 1, 10, 0, tzinfo=UTC),
+        ),
     )
 
     billetera = servicio.billetera("CLI-001")
 
-    assert [p.poliza_id for p in billetera.polizas] == ["CORTA", "LARGA", "CANCELADA", "VENCIDA"]
-    assert [p.activa for p in billetera.polizas] == [True, True, False, False]
+    assert [p.poliza_id for p in billetera.polizas] == ["CANCELADA", "LARGA", "CORTA", "VENCIDA"]
     assert billetera.total_vigentes == 2
     assert billetera.total_inactivas == 2
 

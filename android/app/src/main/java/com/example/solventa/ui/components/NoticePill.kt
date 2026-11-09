@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -26,7 +27,9 @@ fun SolventaNoticePill(
     icon: Painter,
     modifier: Modifier = Modifier,
     containerColor: Color = Offline.copy(alpha = 0.08f),
-    contentColor: Color = Offline
+    contentColor: Color = Offline,
+    centered: Boolean = false,
+    iconDescription: String? = null
 ) {
     Surface(
         color = containerColor,
@@ -34,12 +37,15 @@ fun SolventaNoticePill(
         modifier = modifier.fillMaxWidth()
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
-            verticalAlignment = Alignment.CenterVertically
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = if (centered) Arrangement.Center else Arrangement.Start
         ) {
             Icon(
                 painter = icon,
-                contentDescription = null,
+                contentDescription = iconDescription,
                 modifier = Modifier.size(18.dp),
                 tint = contentColor
             )
@@ -51,7 +57,8 @@ fun SolventaNoticePill(
                 style = MaterialTheme.typography.labelMedium.copy(
                     fontWeight = FontWeight.Normal,
                     color = contentColor
-                )
+                ),
+                modifier = if (centered) Modifier else Modifier.weight(1f)
             )
         }
     }

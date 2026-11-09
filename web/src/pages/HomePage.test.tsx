@@ -112,6 +112,7 @@ it("saluda al cliente por su nombre y muestra su póliza activa", async () => {
       poliza_id: "p1", numero_poliza: "SOLV-VH-2026-004821", ramo: "VIDA",
       nombre_ramo: "Vida hipotecario", estado: "VIGENTE", activa: true,
       fecha_inicio: "2026-09-17", fecha_fin: "2027-09-17", cobertura_principal: "Vida",
+      emitida_en: "2026-09-17T12:00:00Z",
     }],
   });
   inicio();

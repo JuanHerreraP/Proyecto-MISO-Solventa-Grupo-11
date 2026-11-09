@@ -1,5 +1,10 @@
 import RutaProtegida from "./components/auth/RutaProtegida";
-import { ROLES_ADMINISTRACION_SOCIOS, ROLES_CREAR_ASESOR } from "./types/permisos";
+import {
+  ROLES_ADMINISTRACION_SOCIOS,
+  ROLES_CREAR_ASESOR,
+  ROLES_CLIENTE,
+  ROLES_OPERACIONES_SINIESTROS,
+} from "./types/permisos";
 import { useEffect, useState } from "react";
 import { iniciarControlSesion, restaurarSesion } from "./services/session";
 import {
@@ -16,8 +21,11 @@ import PagosPage from "./pages/PagosPage";
 import CotizarPage from "./pages/CotizarPage";
 import CotizacionesPage from "./pages/CotizacionesPage";
 import PolizasPage from "./pages/PolizasPage";
+import ModificarPolizaPage from "./pages/ModificarPolizaPage";
 import ClaimRegistrationPage from "./pages/ClaimRegistrationPage";
 import SiniestrosPage from "./pages/SiniestrosPage";
+import BandejaSiniestrosPage from "./pages/BandejaSiniestrosPage";
+import FirmaPage from "./pages/FirmaPage";
 import SocioRegistrationPage from "./pages/SocioRegistrationPage";
 import AsesorRegistrationPage from "./pages/AsesorRegistrationPage";
 
@@ -82,6 +90,11 @@ function App() {
       />
 
       <Route
+        path="/polizas/:polizaId/modificar"
+        element={<RutaProtegida roles={ROLES_CLIENTE}><ModificarPolizaPage /></RutaProtegida>}
+      />
+
+      <Route
         path="/siniestros"
         element={<RutaProtegida><SiniestrosPage /></RutaProtegida>}
       />
@@ -89,6 +102,20 @@ function App() {
       <Route
         path="/siniestros/nuevo"
         element={<RutaProtegida><ClaimRegistrationPage /></RutaProtegida>}
+      />
+
+      <Route
+        path="/operaciones/siniestros"
+        element={
+          <RutaProtegida roles={ROLES_OPERACIONES_SINIESTROS}>
+            <BandejaSiniestrosPage />
+          </RutaProtegida>
+        }
+      />
+
+      <Route
+        path="/firma/:cotizacionId"
+        element={<RutaProtegida roles={ROLES_CLIENTE}><FirmaPage /></RutaProtegida>}
       />
 
       <Route

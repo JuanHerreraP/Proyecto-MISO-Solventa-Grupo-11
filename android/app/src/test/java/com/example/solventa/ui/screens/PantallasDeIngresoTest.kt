@@ -36,6 +36,8 @@ class PantallasDeIngresoTest {
             }
         }
 
+        compose.onNodeWithContentDescription("Icono de Solventa").assertIsDisplayed()
+        compose.onNodeWithContentDescription("Identidad verificada").assertIsDisplayed()
         compose.onNodeWithText("Identidad verificada y datos protegidos").assertIsDisplayed()
         compose.boton("Ingresar").performClick()
         compose.boton("Crear una cuenta").performClick()
@@ -69,6 +71,8 @@ class PantallasDeIngresoTest {
     fun ingresoBiometricoNotificaCadaAccion() {
         mostrarBiometrico()
 
+        compose.onNodeWithContentDescription("Escudo de Solventa").assertIsDisplayed()
+        compose.onNodeWithContentDescription("Huella dactilar").assertIsDisplayed()
         compose.onNodeWithText("Hola de nuevo").assertIsDisplayed()
         compose.boton("Ingresar con biometría").assertIsEnabled().performClick()
         compose.boton("Usar correo y contraseña").performClick()
@@ -84,6 +88,14 @@ class PantallasDeIngresoTest {
 
         compose.boton("Ingresar con biometría").assertIsNotEnabled()
         compose.onNodeWithText("Este dispositivo no tiene lector biométrico.").assertIsDisplayed()
+    }
+
+    @Test
+    fun sesionCerradaUsaElAvisoProtegido() {
+        mostrarBiometrico(mensaje = "Cerraste sesión.")
+
+        compose.onNodeWithContentDescription("Sesión cerrada").assertIsDisplayed()
+        compose.onNodeWithText("Cerraste sesión.").assertIsDisplayed()
     }
 
     @Test

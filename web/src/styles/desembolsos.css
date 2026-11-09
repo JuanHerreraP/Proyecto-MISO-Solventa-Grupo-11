@@ -1,0 +1,97 @@
+/* ---- Evaluación de siniestros y desembolso de indemnizaciones (HU15) ---- */
+
+.bandeja-filtros { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 18px; }
+
+.bandeja-filtro {
+  padding: 8px 16px;
+  border: 1px solid var(--solventa-border);
+  border-radius: 999px;
+  background: var(--solventa-white);
+  color: var(--solventa-night);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.bandeja-filtro[aria-pressed="true"] {
+  border-color: var(--solventa-blue);
+  background: #f4f7ff;
+  color: var(--solventa-blue);
+}
+
+.bandeja-decision {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 16px;
+  margin-top: 12px;
+}
+
+.bandeja-decision > div {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid var(--solventa-border);
+  border-radius: 10px;
+}
+
+.bandeja-decision h4 { margin: 0; font-size: 14px; }
+.bandeja-decision .cotizar-campo input,
+.bandeja-decision .cotizar-campo textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  border: 1px solid var(--solventa-border);
+  border-radius: 10px;
+  font: inherit;
+  font-size: 14px;
+}
+
+.bandeja-decision button { align-self: flex-start; }
+
+.boton-rechazar {
+  padding: 11px 22px;
+  border: 1px solid #c0392b;
+  border-radius: 10px;
+  background: var(--solventa-white);
+  color: #c0392b;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.boton-rechazar:disabled { opacity: 0.55; cursor: default; }
+
+/* Dentro de .cotizar-detalle los span salen en mayúscula y pequeños: el chip y el código no. */
+.cotizar-detalle .home-chip { text-transform: none; letter-spacing: normal; margin-left: 6px; }
+.cotizar-detalle .desembolso-chip-COMPLETADA { background: #e3f7ea; color: #1b8a4a; }
+.cotizar-detalle .desembolso-chip-PENDIENTE { background: #fff4e5; color: #b36b00; }
+.cotizar-detalle .desembolso-chip-FALLIDA { background: #fdecea; color: #c0392b; }
+
+.cotizar-detalle .desembolso-codigo {
+  font-family: var(--font-heading);
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  color: var(--solventa-blue);
+}
+
+.cuenta-panel { margin-bottom: 20px; }
+.cuenta-panel h2 { margin: 0 0 4px; font-size: 16px; }
+.cuenta-panel > p { margin: 0 0 14px; color: var(--solventa-muted); font-size: 13px; }
+
+.cuenta-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr) minmax(0, 1.3fr) auto;
+  gap: 12px;
+  align-items: end;
+}
+
+.cuenta-form .cotizar-campo select,
+.cuenta-form .cotizar-campo input { width: 100%; box-sizing: border-box; padding: 11px 12px; font-size: 14px; }
+
+.cuenta-actual { display: flex; justify-content: space-between; align-items: center; gap: 16px; }
+
+@media (max-width: 720px) {
+  .bandeja-decision, .cuenta-form { grid-template-columns: 1fr; }
+}

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import AppLayout from "../components/AppLayout";
 import { obtenerPerfil, type Perfil } from "../services/auth.service";
@@ -8,6 +8,7 @@ import {
   type Certificado,
   type PolizaResumen,
 } from "../services/billetera.service";
+import { descargarDocumentoPoliza } from "../services/poliza-documento.service";
 
 const ICONO_RAMO: Record<string, string> = {
   VIAJE: "flight_takeoff",
@@ -46,6 +47,15 @@ export default function PolizasPage() {
   const [error, setError] = useState("");
   const [expandida, setExpandida] = useState<string | null>(null);
   const [certificados, setCertificados] = useState<Record<string, Certificado>>({});
+  const [descargando, setDescargando] = useState<string | null>(null);
+  const [errorDescarga, setErrorDescarga] = useState<Record<string, string>>({});
+
+  const cargarBilletera = useCallback(() => {
+    return obtenerBilletera().then(
+      (billetera) => { setPolizas(billetera.polizas); setError(""); },
+      (fallo: Error) => { setError(fallo.message); },
+    );
+  }, []);
 
   useEffect(() => {
     let activo = true;
@@ -53,12 +63,20 @@ export default function PolizasPage() {
       (datos) => { if (activo) setPerfil(datos); },
       () => { if (activo) navigate("/login", { replace: true }); },
     );
-    obtenerBilletera().then(
-      (billetera) => { if (activo) setPolizas(billetera.polizas); },
-      (fallo: Error) => { if (activo) setError(fallo.message); },
-    );
-    return () => { activo = false; };
-  }, [navigate]);
+    void cargarBilletera();
+    // Al volver a esta pantalla (por ejemplo, tras firmar y emitir una póliza nueva)
+    // se vuelve a consultar la billetera para mostrarla sin recargar la página.
+    const alVolver = () => {
+      if (document.visibilityState === "visible") void cargarBilletera();
+    };
+    window.addEventListener("focus", alVolver);
+    document.addEventListener("visibilitychange", alVolver);
+    return () => {
+      activo = false;
+      window.removeEventListener("focus", alVolver);
+      document.removeEventListener("visibilitychange", alVolver);
+    };
+  }, [navigate, cargarBilletera]);
 
   const rol = perfil?.rol ?? null;
 
@@ -71,6 +89,18 @@ export default function PolizasPage() {
         (cert) => setCertificados((previo) => ({ ...previo, [poliza.poliza_id]: cert })),
         () => undefined,
       );
+    }
+  }
+
+  async function descargar(polizaId: string) {
+    setErrorDescarga((previo) => ({ ...previo, [polizaId]: "" }));
+    setDescargando(polizaId);
+    try {
+      await descargarDocumentoPoliza(polizaId);
+    } catch (fallo) {
+      setErrorDescarga((previo) => ({ ...previo, [polizaId]: (fallo as Error).message }));
+    } finally {
+      setDescargando(null);
     }
   }
 
@@ -160,6 +190,30 @@ export default function PolizasPage() {
                       <dd>{poliza.numero_poliza}</dd>
                     </div>
                   </dl>
+
+                  <div className="poliza-acciones">
+                    {poliza.activa && (
+                      <button
+                        type="button"
+                        className="cotizar-boton-secundario"
+                        onClick={() => navigate(`/polizas/${encodeURIComponent(poliza.poliza_id)}/modificar`)}
+                      >
+                        Modificar coberturas y beneficiarios
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      className="cotizar-boton-primario"
+                      onClick={() => void descargar(poliza.poliza_id)}
+                      disabled={descargando === poliza.poliza_id}
+                    >
+                      <span className="material-symbols-outlined" aria-hidden="true">download</span>
+                      {descargando === poliza.poliza_id ? "Descargando…" : "Descargar póliza (PDF)"}
+                    </button>
+                  </div>
+                  {errorDescarga[poliza.poliza_id] && (
+                    <p role="alert" className="home-aviso">{errorDescarga[poliza.poliza_id]}</p>
+                  )}
                 </div>
               )}
             </article>

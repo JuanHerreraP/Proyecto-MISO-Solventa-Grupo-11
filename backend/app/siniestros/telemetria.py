@@ -4,6 +4,7 @@ Solventa recibe una observación externa (retraso de vuelo, evento climático) y
 proveedor solo informa; aquí está la lógica de negocio: buscar pólizas paramétricas vigentes
 que apliquen al evento, comparar el valor observado contra el umbral contratado y, si lo
 alcanza, crear un siniestro AUTOMATICO. La idempotencia se garantiza por `evento_id`.
+Creado el siniestro, `al_crear` lo aprueba y ordena su desembolso (HU15).
 
 La condición contratada se guardó al sembrar la póliza en `cobertura_principal.descripcion`
 como pares `clave=valor` (mismos códigos del catálogo de cotización), por ejemplo:
@@ -89,11 +90,13 @@ class ServicioTelemetria:
         polizas: RepositorioPolizas,
         reloj: Callable[[], datetime] = lambda: datetime.now(UTC),
         generar_id: Callable[[], str] = lambda: f"SIN-{uuid.uuid4()}",
+        al_crear: Callable[[Siniestro], object] | None = None,
     ):
         self._siniestros = siniestros
         self._polizas = polizas
         self._reloj = reloj
         self._generar_id = generar_id
+        self._al_crear = al_crear
 
     def procesar(self, evento: EventoParametrico) -> RespuestaTelemetria:
         # 1) Idempotencia: un evento ya visto no vuelve a generar siniestro.
@@ -122,6 +125,8 @@ class ServicioTelemetria:
 
             siniestro = self._crear_siniestro(poliza, evento, ahora)
             self._siniestros.guardar(siniestro)
+            if self._al_crear is not None:
+                self._al_crear(siniestro)
             return RespuestaTelemetria(
                 evento_id=evento.evento_id,
                 resultado=ResultadoTelemetria.SINIESTRO_CREADO,

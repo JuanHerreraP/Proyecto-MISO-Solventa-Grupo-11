@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import UTC, datetime, timedelta
 
 import pytest
 from fastapi.testclient import TestClient
@@ -52,24 +52,26 @@ def test_billetera_vacia(cliente):
 
 
 def test_el_cliente_ve_sus_polizas_con_vigentes_e_inactivas(cliente, polizas):
-    polizas.guardar(poliza())
+    polizas.guardar(poliza(emitida_en=datetime(2026, 9, 1, 10, 0, tzinfo=UTC)))
     polizas.guardar(
         poliza(
             poliza_id="POL-2",
             numero_poliza="SOL-VI-000002",
             estado=EstadoRegistroPoliza.CANCELADA,
+            emitida_en=datetime(2026, 10, 5, 10, 0, tzinfo=UTC),
         )
     )
 
     cuerpo = cliente.get(RUTA, headers=CLIENTE).json()
 
+    # Ordenadas por fecha de emisión, la más reciente arriba.
     assert [(p["numero_poliza"], p["estado"], p["activa"]) for p in cuerpo["polizas"]] == [
-        ("SOL-VI-000001", "VIGENTE", True),
         ("SOL-VI-000002", "CANCELADA", False),
+        ("SOL-VI-000001", "VIGENTE", True),
     ]
-    assert cuerpo["polizas"][0]["fecha_inicio"] == "2026-10-01"
-    assert cuerpo["polizas"][0]["fecha_fin"] == "2026-12-31"
-    assert cuerpo["polizas"][0]["nombre_ramo"] == "Seguro de viaje"
+    assert cuerpo["polizas"][1]["fecha_inicio"] == "2026-10-01"
+    assert cuerpo["polizas"][1]["fecha_fin"] == "2026-12-31"
+    assert cuerpo["polizas"][1]["nombre_ramo"] == "Seguro de viaje"
 
 
 def test_el_cliente_no_ve_polizas_de_otro_titular(cliente, polizas):
@@ -94,7 +96,17 @@ def test_sin_sesion_se_rechaza(cliente):
 
 
 def test_certificado_con_qr(cliente, polizas):
-    polizas.guardar(poliza())
+    polizas.guardar(
+        poliza(
+            cobertura_principal=poliza().cobertura_principal.model_copy(
+                update={
+                    "exclusiones_principales": (
+                        "No se cubren eventos fuera de las fechas declaradas.",
+                    )
+                }
+            )
+        )
+    )
 
     respuesta = cliente.get(f"{RUTA}/POL-1/certificado", headers=CLIENTE)
 
@@ -105,6 +117,9 @@ def test_certificado_con_qr(cliente, polizas):
     assert "1012345678" not in respuesta.text
     # Sin descripción contratada, el campo viaja como null (no rompe la app).
     assert cuerpo["descripcion_cobertura"] is None
+    assert cuerpo["exclusiones_principales"] == [
+        "No se cubren eventos fuera de las fechas declaradas."
+    ]
 
 
 def test_certificado_expone_la_descripcion_parametrica(cliente, polizas):

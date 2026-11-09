@@ -85,6 +85,7 @@ dependencies {
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.retrofit)
     implementation(libs.retrofit.converter.gson)
+    implementation(libs.gson)
     implementation(libs.okhttp)
     // HU07: código QR del certificado, generado en el dispositivo
     implementation(libs.zxing.core)

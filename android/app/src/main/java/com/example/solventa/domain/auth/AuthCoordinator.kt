@@ -1,7 +1,7 @@
 package com.example.solventa.domain.auth
 
 import com.example.solventa.biometric.FalloBiometrico
-import com.example.solventa.domain.polizas.SesionAutenticada
+import com.example.solventa.domain.polizas.SesionPolizasOffline
 
 /**
  * Reglas de la HU02 (BPM-23), sin dependencias de Android para poder probarlas en la JVM.
@@ -20,7 +20,7 @@ class AuthCoordinator(
     private val boveda: BovedaSesion,
     private val reloj: Reloj,
     private val biometriaDisponible: () -> Boolean
-) : SesionAutenticada {
+) : SesionPolizasOffline {
     var observador: ((EstadoAuth) -> Unit)? = null
         set(value) {
             field = value
@@ -263,6 +263,8 @@ class AuthCoordinator(
         val access = tokens?.accessToken ?: return null
         return if (verificarExpiracion()) null else access
     }
+
+    override fun usuarioId(): String? = estado.sesion?.perfil?.id
 
     override fun sesionRechazada() {
         if (tokens != null || estado.sesion != null) sesionExpirada()

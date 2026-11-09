@@ -23,13 +23,25 @@ class WalletScreenTest {
 
     private val eventos = mutableListOf<String>()
 
-    private fun mostrar(billetera: Billetera?, cargando: Boolean = false, error: String? = null) {
+    private fun mostrar(
+        billetera: Billetera?,
+        cargando: Boolean = false,
+        error: String? = null,
+        sinConexion: Boolean = false,
+        ultimaSincronizacionMs: Long? = null,
+        datosAntiguos: Boolean = false,
+        falloPersistente: Boolean = false
+    ) {
         compose.setContent {
             SolventaTheme {
                 WalletScreen(
                     billetera = billetera,
                     cargando = cargando,
                     error = error,
+                    sinConexion = sinConexion,
+                    ultimaSincronizacionMs = ultimaSincronizacionMs,
+                    datosAntiguos = datosAntiguos,
+                    falloSincronizacionPersistente = falloPersistente,
                     onVerPoliza = { eventos += "ver:$it" },
                     onReintentar = { eventos += "reintentar" },
                     onVolver = { eventos += "volver" }
@@ -42,7 +54,6 @@ class WalletScreenTest {
     fun muestraNumeroRamoEstadoYVigenciaDeCadaPoliza() {
         mostrar(billeteraDe(resumen()))
 
-        compose.onNodeWithText("Vigentes (1)").assertIsDisplayed()
         compose.onNodeWithText("Seguro de viaje").assertIsDisplayed()
         compose.onNodeWithText("Póliza SOL-VJ-0001").assertIsDisplayed()
         compose.onNodeWithText("Vigente").assertIsDisplayed()
@@ -50,7 +61,7 @@ class WalletScreenTest {
     }
 
     @Test
-    fun separaLasInactivasYDiceSuEstado() {
+    fun muestraVigentesEInactivasEnUnaSolaLista() {
         mostrar(
             billeteraDe(
                 resumen(id = "A", numero = "SOL-1"),
@@ -59,8 +70,7 @@ class WalletScreenTest {
             )
         )
 
-        compose.onNodeWithText("Vigentes (1)").assertIsDisplayed()
-        compose.onNodeWithText("Inactivas (2)").assertIsDisplayed()
+        // Ya no hay secciones "Vigentes"/"Inactivas": es una sola lista por fecha de emisión.
         compose.onNodeWithText("Vencida").assertIsDisplayed()
         compose.onNodeWithText("Cancelada").assertIsDisplayed()
     }
@@ -105,5 +115,45 @@ class WalletScreenTest {
 
         compose.onNodeWithText("Sin conexión").assertIsDisplayed()
         compose.onNodeWithText("Seguro de viaje").assertIsDisplayed()
+    }
+
+    @Test
+    fun sinConexionMuestraLaFechaDeLosDatosLocales() {
+        mostrar(
+            billeteraDe(resumen()),
+            sinConexion = true,
+            ultimaSincronizacionMs = 1_798_000_000_000L
+        )
+
+        compose.onNodeWithText("Sin conexión · Última actualización:", substring = true)
+            .assertIsDisplayed()
+        compose.onNodeWithContentDescription("Sin conexión").assertIsDisplayed()
+    }
+
+    @Test
+    fun datosAntiguosMuestranUnaAdvertenciaClara() {
+        mostrar(billeteraDe(resumen()), datosAntiguos = true)
+
+        compose.onNodeWithText("Estos datos tienen más de 30 días", substring = true)
+            .assertIsDisplayed()
+    }
+
+    @Test
+    fun enLineaNoMuestraUnaFallaDeSincronizacion() {
+        mostrar(billeteraDe(resumen()), ultimaSincronizacionMs = 1_798_000_000_000L)
+
+        compose.onNodeWithText("No pudimos actualizar tus pólizas", substring = true)
+            .assertDoesNotExist()
+        compose.onNodeWithText("Actualizado", substring = true)
+            .assertIsDisplayed()
+        compose.onNodeWithContentDescription("Datos actualizados").assertIsDisplayed()
+    }
+
+    @Test
+    fun fallaPersistenteMuestraUnaAdvertencia() {
+        mostrar(billeteraDe(resumen()), falloPersistente = true)
+
+        compose.onNodeWithText("No pudimos actualizar tus pólizas", substring = true)
+            .assertIsDisplayed()
     }
 }

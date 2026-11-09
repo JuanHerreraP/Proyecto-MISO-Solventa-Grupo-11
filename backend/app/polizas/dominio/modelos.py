@@ -2,6 +2,8 @@
 
 La póliza guarda una foto del titular y de la cobertura al momento de la emisión (HU12):
 el certificado debe mostrar lo que se contrató, aunque luego cambien los datos del cliente.
+Las coberturas opcionales y los beneficiarios solo cambian mediante un endoso (HU16), que
+deja constancia de quién hizo el cambio y conserva el documento original sin tocarlo.
 """
 
 from datetime import UTC, date, datetime, timedelta, timezone
@@ -53,6 +55,23 @@ class CoberturaPoliza(BaseModel):
     nombre: str = Field(min_length=2, max_length=120)
     suma_asegurada: Decimal = Field(gt=0, max_digits=18, decimal_places=2)
     descripcion: str | None = Field(default=None, max_length=500)
+    exclusiones_principales: tuple[str, ...] = ()
+
+
+class Beneficiario(BaseModel):
+    """Persona designada para recibir la indemnización de una póliza de vida (HU16)."""
+
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    nombre_completo: str = Field(min_length=2, max_length=200)
+    tipo_documento: str = Field(min_length=2, max_length=20, pattern=r"^[A-Z]{2,20}$")
+    numero_documento: str = Field(min_length=3, max_length=50, pattern=r"^[A-Za-z0-9-]+$")
+    parentesco: str = Field(min_length=2, max_length=60)
+    porcentaje: Decimal = Field(gt=0, le=100, max_digits=5, decimal_places=2)
+
+    @property
+    def clave(self) -> tuple[str, str]:
+        return self.tipo_documento, self.numero_documento.upper()
 
 
 class Poliza(BaseModel):
@@ -72,6 +91,8 @@ class Poliza(BaseModel):
     prima_total: Decimal = Field(gt=0, max_digits=18, decimal_places=2)
     moneda: str = Field(default="COP", pattern=r"^[A-Z]{3}$")
     cobertura_principal: CoberturaPoliza
+    coberturas_opcionales: list[CoberturaPoliza] = Field(default_factory=list)
+    beneficiarios: list[Beneficiario] = Field(default_factory=list)
     codigo_verificacion: str = Field(min_length=8, max_length=64)
     emitida_en: AwareDatetime
     cancelada_en: AwareDatetime | None = None

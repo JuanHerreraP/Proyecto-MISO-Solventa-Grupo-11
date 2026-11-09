@@ -1,10 +1,12 @@
 package com.example.solventa.data.remote
 
+import okhttp3.ResponseBody
 import retrofit2.Response
 import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.POST
 import retrofit2.http.Path
+import retrofit2.http.Streaming
 
 /**
  * Endpoints de la billetera (HU07). El backend filtra por la identidad del token: la app
@@ -19,6 +21,19 @@ interface PolizasApi {
         @Header("Authorization") autorizacion: String,
         @Path("polizaId") polizaId: String
     ): Response<CertificadoDto>
+
+    @GET("api/v1/polizas/{polizaId}/endosos")
+    suspend fun historialEndosos(
+        @Header("Authorization") autorizacion: String,
+        @Path("polizaId") polizaId: String
+    ): Response<HistorialEndososDto>
+
+    @Streaming
+    @GET("api/v1/polizas/{polizaId}/documento")
+    suspend fun documento(
+        @Header("Authorization") autorizacion: String,
+        @Path("polizaId") polizaId: String
+    ): Response<ResponseBody>
 
     @POST("api/v1/billetera/polizas/{polizaId}/enlaces")
     suspend fun compartir(
