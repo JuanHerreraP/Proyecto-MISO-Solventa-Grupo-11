@@ -15,6 +15,7 @@ from app.api import (
     autenticacion,
     autorizacion_socios,
     billetera,
+    cancelaciones,
     cotizaciones,
     credenciales_socios,
     desembolsos,
@@ -28,6 +29,7 @@ from app.api import (
     pagos,
     perfilamiento,
     pse_simulado,
+    renovaciones,
     salud,
     sesion_web,
     siniestros,
@@ -159,6 +161,8 @@ def crear_app() -> FastAPI:
     app.include_router(endosos.router)
     app.include_router(historial_poliza.router)
     app.include_router(api_auditoria.router)
+    app.include_router(cancelaciones.router)
+    app.include_router(renovaciones.router)
     app.include_router(perfilamiento.router)
     app.include_router(enriquecimiento.router)
     app.include_router(socios.router)

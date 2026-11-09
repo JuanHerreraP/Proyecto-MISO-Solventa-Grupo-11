@@ -19,6 +19,10 @@ class RepositorioSiniestros(Protocol):
 
     def listar_por_cliente(self, cliente_id: str) -> list[Siniestro]: ...
 
+    def listar_por_poliza(self, poliza_id: str) -> list[Siniestro]:
+        """Siniestros de una póliza, del más reciente al más antiguo."""
+        ...
+
     def listar(self, estado: EstadoSiniestro | None = None, limite: int = 200) -> list[Siniestro]:
         """Todos los siniestros (bandeja de Operaciones), del más reciente al más antiguo."""
         ...
@@ -45,6 +49,11 @@ class RepositorioSiniestrosEnMemoria:
         propios = [s for s in self._por_id.values() if s.cliente_id == cliente_id]
         propios.sort(key=lambda s: s.registrado_en, reverse=True)
         return [s.model_copy(deep=True) for s in propios]
+
+    def listar_por_poliza(self, poliza_id: str) -> list[Siniestro]:
+        de_la_poliza = [s for s in self._por_id.values() if s.poliza_id == poliza_id]
+        de_la_poliza.sort(key=lambda s: s.registrado_en, reverse=True)
+        return [s.model_copy(deep=True) for s in de_la_poliza]
 
     def listar(self, estado: EstadoSiniestro | None = None, limite: int = 200) -> list[Siniestro]:
         todos = [s for s in self._por_id.values() if estado is None or s.estado is estado]
@@ -79,6 +88,14 @@ class RepositorioSiniestrosPostgres:
         sentencia = (
             select(SiniestroDB)
             .where(SiniestroDB.cliente_id == cliente_id)
+            .order_by(SiniestroDB.registrado_en.desc())
+        )
+        return [_a_dominio(fila) for fila in self._db.scalars(sentencia).all()]
+
+    def listar_por_poliza(self, poliza_id: str) -> list[Siniestro]:
+        sentencia = (
+            select(SiniestroDB)
+            .where(SiniestroDB.poliza_id == poliza_id)
             .order_by(SiniestroDB.registrado_en.desc())
         )
         return [_a_dominio(fila) for fila in self._db.scalars(sentencia).all()]
