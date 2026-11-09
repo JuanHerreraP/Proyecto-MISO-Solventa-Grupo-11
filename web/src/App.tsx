@@ -1,6 +1,7 @@
 import RutaProtegida from "./components/auth/RutaProtegida";
 import {
   ROLES_ADMINISTRACION_SOCIOS,
+  ROLES_CREAR_ASESOR,
   ROLES_CLIENTE,
   ROLES_OPERACIONES_SINIESTROS,
 } from "./types/permisos";
@@ -26,6 +27,7 @@ import SiniestrosPage from "./pages/SiniestrosPage";
 import BandejaSiniestrosPage from "./pages/BandejaSiniestrosPage";
 import FirmaPage from "./pages/FirmaPage";
 import SocioRegistrationPage from "./pages/SocioRegistrationPage";
+import AsesorRegistrationPage from "./pages/AsesorRegistrationPage";
 
 function App() {
   const navigate = useNavigate();
@@ -121,6 +123,15 @@ function App() {
         element={
           <RutaProtegida roles={ROLES_ADMINISTRACION_SOCIOS}>
             <SocioRegistrationPage />
+          </RutaProtegida>
+        }
+      />
+
+      <Route
+        path="/admin/asesores/nuevo"
+        element={
+          <RutaProtegida roles={ROLES_CREAR_ASESOR}>
+            <AsesorRegistrationPage />
           </RutaProtegida>
         }
       />

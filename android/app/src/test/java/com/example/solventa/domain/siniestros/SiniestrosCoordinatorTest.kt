@@ -208,4 +208,68 @@ class SiniestrosCoordinatorTest {
 
         assertFalse(coordinador.estado.registroExitoso)
     }
+
+    // --- Registro asistido por un asesor -----------------------------------------------
+
+    private fun solicitudAsistida(clienteId: String = "CLI-1", polizaId: String = "POL-1") =
+        SolicitudSiniestroAsistido(
+            clienteId = clienteId,
+            polizaId = polizaId,
+            fechaEvento = "2026-10-20",
+            horaEvento = "18:30:00",
+            lugar = "Aeropuerto El Dorado",
+            descripcion = "El vuelo fue cancelado y hubo gastos adicionales.",
+            estimacionDanos = "850000"
+        )
+
+    @Test
+    fun registrarAsistidoExitosoEnviaLaSolicitudConElCliente() = runBlocking {
+        val gateway = SiniestrosGatewayFalso()
+        gateway.respuestaAsistido = ResultadoApi.Exito(siniestro(id = "SIN-ASIST"))
+        val coordinador = SiniestrosCoordinator(gateway, SesionSiniestrosFalsa(token = "access-1"))
+
+        coordinador.registrarAsistido(solicitudAsistida(clienteId = "CLI-7", polizaId = "POL-9"))
+
+        assertTrue(coordinador.estado.registroExitoso)
+        assertNull(coordinador.estado.errorFormulario)
+        val enviada = gateway.solicitudesAsistidas.single()
+        assertEquals("CLI-7", enviada.clienteId)
+        assertEquals("POL-9", enviada.polizaId)
+    }
+
+    @Test
+    fun registrarAsistidoClienteNoAsociadoDa403ConMensajePropio() = runBlocking {
+        val gateway = SiniestrosGatewayFalso()
+        gateway.respuestaAsistido = ResultadoApi.Fallo(403, "CLIENTE_NO_ASOCIADO", null)
+        val coordinador = SiniestrosCoordinator(gateway, SesionSiniestrosFalsa())
+
+        coordinador.registrarAsistido(solicitudAsistida())
+
+        assertEquals(MensajesSiniestros.CLIENTE_NO_ASOCIADO, coordinador.estado.errorFormulario)
+        assertFalse(coordinador.estado.registroExitoso)
+    }
+
+    @Test
+    fun registrarAsistidoPolizaAjenaDa403() = runBlocking {
+        val gateway = SiniestrosGatewayFalso()
+        gateway.respuestaAsistido = ResultadoApi.Fallo(403, "POLIZA_AJENA", null)
+        val coordinador = SiniestrosCoordinator(gateway, SesionSiniestrosFalsa())
+
+        coordinador.registrarAsistido(solicitudAsistida())
+
+        assertEquals(MensajesSiniestros.POLIZA_AJENA, coordinador.estado.errorFormulario)
+    }
+
+    @Test
+    fun registrarAsistido401CierraLaSesion() = runBlocking {
+        val gateway = SiniestrosGatewayFalso()
+        gateway.respuestaAsistido = ResultadoApi.Fallo(401, "TOKEN_EXPIRED", null)
+        val sesion = SesionSiniestrosFalsa(token = "viejo")
+        val coordinador = SiniestrosCoordinator(gateway, sesion)
+
+        coordinador.registrarAsistido(solicitudAsistida())
+
+        assertEquals(1, sesion.rechazos)
+        assertEquals(MensajesSiniestros.SESION_VENCIDA, coordinador.estado.mensaje)
+    }
 }

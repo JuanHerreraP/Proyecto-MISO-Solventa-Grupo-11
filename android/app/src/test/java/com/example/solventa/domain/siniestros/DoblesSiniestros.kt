@@ -45,8 +45,11 @@ fun solicitud(
 class SiniestrosGatewayFalso : SiniestrosGateway {
     var respuesta: ResultadoApi<Siniestros> = ResultadoApi.Exito(siniestrosDe(siniestro()))
     var respuestaRegistro: ResultadoApi<Siniestro> = ResultadoApi.Exito(siniestro(id = "SIN-NUEVO"))
+    var respuestaAsistido: ResultadoApi<Siniestro> = ResultadoApi.Exito(siniestro(id = "SIN-ASIST"))
     val tokensUsados = mutableListOf<String>()
     val solicitudes = mutableListOf<SolicitudSiniestro>()
+    val solicitudesAsistidas = mutableListOf<SolicitudSiniestroAsistido>()
+    val clientesConsultados = mutableListOf<String>()
 
     override suspend fun listar(accessToken: String): ResultadoApi<Siniestros> {
         tokensUsados += accessToken
@@ -60,6 +63,24 @@ class SiniestrosGatewayFalso : SiniestrosGateway {
         tokensUsados += accessToken
         solicitudes += solicitud
         return respuestaRegistro
+    }
+
+    override suspend fun registrarAsistido(
+        accessToken: String,
+        solicitud: SolicitudSiniestroAsistido
+    ): ResultadoApi<Siniestro> {
+        tokensUsados += accessToken
+        solicitudesAsistidas += solicitud
+        return respuestaAsistido
+    }
+
+    override suspend fun listarDeCliente(
+        accessToken: String,
+        clienteId: String
+    ): ResultadoApi<Siniestros> {
+        tokensUsados += accessToken
+        clientesConsultados += clienteId
+        return respuesta
     }
 }
 

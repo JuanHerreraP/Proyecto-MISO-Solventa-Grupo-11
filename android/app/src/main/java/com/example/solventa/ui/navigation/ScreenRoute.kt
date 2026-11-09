@@ -57,6 +57,16 @@ sealed class ScreenRoute(val route: String) {
             if (desdeNavbar) "claim_form_screen?desdeNavbar=true" else "claim_form_screen"
     }
 
+    /** Registro asistido de un asesor para un cliente asociado (HU20). */
+    object AssistedClaimForm : ScreenRoute("assisted_claim_form/{clienteId}") {
+        const val ARGUMENTO = "clienteId"
+        fun ruta(clienteId: String) =
+            "assisted_claim_form/${URLEncoder.encode(clienteId, "UTF-8")}"
+    }
+
+    /** Alta de un asesor de ventas por un manager (HU20). */
+    object CreateAdvisor : ScreenRoute("create_advisor_screen")
+
     companion object {
         /** Rutas que solo se pueden ver con una sesión activa. */
         val privadas: Set<String>
@@ -74,7 +84,9 @@ sealed class ScreenRoute(val route: String) {
                 PaymentResult.route,
                 Payments.route,
                 Claims.route,
-                ClaimForm.route
+                ClaimForm.route,
+                AssistedClaimForm.route,
+                CreateAdvisor.route
             )
     }
 }

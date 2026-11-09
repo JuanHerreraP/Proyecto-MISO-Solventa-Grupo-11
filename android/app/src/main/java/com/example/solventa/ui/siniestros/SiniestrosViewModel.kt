@@ -27,6 +27,12 @@ class SiniestrosViewModel(private val coordinador: SiniestrosCoordinator) : View
         viewModelScope.launch { coordinador.registrar(solicitud) }
     }
 
+    fun registrarAsistido(
+        solicitud: com.example.solventa.domain.siniestros.SolicitudSiniestroAsistido
+    ) {
+        viewModelScope.launch { coordinador.registrarAsistido(solicitud) }
+    }
+
     fun consumirRegistroExitoso() = coordinador.consumirRegistroExitoso()
 
     fun consumirErrorFormulario() = coordinador.consumirErrorFormulario()

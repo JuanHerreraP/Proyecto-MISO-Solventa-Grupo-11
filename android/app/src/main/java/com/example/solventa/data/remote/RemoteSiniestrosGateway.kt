@@ -5,6 +5,7 @@ import com.example.solventa.domain.siniestros.Siniestro
 import com.example.solventa.domain.siniestros.Siniestros
 import com.example.solventa.domain.siniestros.SiniestrosGateway
 import com.example.solventa.domain.siniestros.SolicitudSiniestro
+import com.example.solventa.domain.siniestros.SolicitudSiniestroAsistido
 import com.google.gson.JsonParseException
 import com.google.gson.stream.MalformedJsonException
 import java.io.IOException
@@ -20,6 +21,18 @@ class RemoteSiniestrosGateway(private val api: SiniestrosApi) : SiniestrosGatewa
         solicitud: SolicitudSiniestro
     ): ResultadoApi<Siniestro> =
         llamar({ api.registrar(bearer(accessToken), solicitud.aDto()) }) { it.aSiniestro() }
+
+    override suspend fun registrarAsistido(
+        accessToken: String,
+        solicitud: SolicitudSiniestroAsistido
+    ): ResultadoApi<Siniestro> =
+        llamar({ api.registrarAsistido(bearer(accessToken), solicitud.aDto()) }) { it.aSiniestro() }
+
+    override suspend fun listarDeCliente(
+        accessToken: String,
+        clienteId: String
+    ): ResultadoApi<Siniestros> =
+        llamar({ api.listarDeCliente(bearer(accessToken), clienteId) }) { it.aSiniestros() }
 
     private fun bearer(accessToken: String) = "Bearer $accessToken"
 

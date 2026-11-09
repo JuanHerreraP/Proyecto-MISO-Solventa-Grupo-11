@@ -5,6 +5,7 @@ import com.example.solventa.domain.siniestros.OrigenSiniestro
 import com.example.solventa.domain.siniestros.Siniestro
 import com.example.solventa.domain.siniestros.Siniestros
 import com.example.solventa.domain.siniestros.SolicitudSiniestro
+import com.example.solventa.domain.siniestros.SolicitudSiniestroAsistido
 import com.google.gson.annotations.SerializedName
 import java.math.BigDecimal
 
@@ -64,6 +65,30 @@ data class SolicitudSiniestroDto(
 )
 
 fun SolicitudSiniestro.aDto(): SolicitudSiniestroDto = SolicitudSiniestroDto(
+    polizaId = polizaId,
+    fechaEvento = fechaEvento,
+    horaEvento = horaEvento,
+    lugar = lugar,
+    descripcion = descripcion,
+    estimacionDanos = estimacionDanos.toBigDecimalOrNull() ?: BigDecimal.ZERO
+)
+
+/**
+ * Cuerpo del registro asistido (HU20): igual al manual pero incluye el `cliente_id` en cuyo
+ * nombre registra el asesor. El backend valida la asociación asesor-cliente.
+ */
+data class SolicitudSiniestroAsistidoDto(
+    @SerializedName("cliente_id") val clienteId: String,
+    @SerializedName("poliza_id") val polizaId: String,
+    @SerializedName("fecha_evento") val fechaEvento: String,
+    @SerializedName("hora_evento") val horaEvento: String,
+    @SerializedName("lugar") val lugar: String,
+    @SerializedName("descripcion") val descripcion: String,
+    @SerializedName("estimacion_danos") val estimacionDanos: BigDecimal
+)
+
+fun SolicitudSiniestroAsistido.aDto(): SolicitudSiniestroAsistidoDto = SolicitudSiniestroAsistidoDto(
+    clienteId = clienteId,
     polizaId = polizaId,
     fechaEvento = fechaEvento,
     horaEvento = horaEvento,
