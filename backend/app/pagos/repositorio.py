@@ -46,6 +46,12 @@ class RepositorioPagosEnMemoria:
         propios.sort(key=lambda p: p.creado_en, reverse=True)
         return [p.model_copy(deep=True) for p in propios]
 
+    def listar_por_cotizacion(self, cotizacion_id: str) -> list[Pago]:
+        """Pagos asociados a una cotización, del más reciente al más antiguo (HU25)."""
+        pagos = [p for p in self._por_id.values() if p.cotizacion_id == cotizacion_id]
+        pagos.sort(key=lambda p: p.creado_en, reverse=True)
+        return [p.model_copy(deep=True) for p in pagos]
+
     def _buscar(self, criterio: Callable[[Pago], bool]) -> Pago | None:
         for pago in self._por_id.values():
             if criterio(pago):
@@ -98,6 +104,15 @@ class RepositorioPagosPostgres:
     def listar_de_cliente(self, cliente_id: str) -> list[Pago]:
         sentencia = (
             select(PagoDB).where(PagoDB.cliente_id == cliente_id).order_by(PagoDB.creado_en.desc())
+        )
+        return [self._a_dominio(fila) for fila in self._db.scalars(sentencia)]
+
+    def listar_por_cotizacion(self, cotizacion_id: str) -> list[Pago]:
+        """Pagos asociados a una cotización, del más reciente al más antiguo (HU25)."""
+        sentencia = (
+            select(PagoDB)
+            .where(PagoDB.cotizacion_id == cotizacion_id)
+            .order_by(PagoDB.creado_en.desc())
         )
         return [self._a_dominio(fila) for fila in self._db.scalars(sentencia)]
 

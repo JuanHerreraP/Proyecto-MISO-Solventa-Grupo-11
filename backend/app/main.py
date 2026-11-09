@@ -22,6 +22,7 @@ from app.api import (
     endosos,
     enriquecimiento,
     firmas,
+    historial_poliza,
     identidad,
     oauth_socios,
     pagos,
@@ -153,6 +154,7 @@ def crear_app() -> FastAPI:
     app.include_router(firmas.router)
     app.include_router(emision.router)
     app.include_router(endosos.router)
+    app.include_router(historial_poliza.router)
     app.include_router(perfilamiento.router)
     app.include_router(enriquecimiento.router)
     app.include_router(socios.router)

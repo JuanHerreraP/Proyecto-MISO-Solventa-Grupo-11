@@ -22,6 +22,7 @@ import CotizarPage from "./pages/CotizarPage";
 import CotizacionesPage from "./pages/CotizacionesPage";
 import PolizasPage from "./pages/PolizasPage";
 import ModificarPolizaPage from "./pages/ModificarPolizaPage";
+import HistorialPolizaPage from "./pages/HistorialPolizaPage";
 import ClaimRegistrationPage from "./pages/ClaimRegistrationPage";
 import SiniestrosPage from "./pages/SiniestrosPage";
 import BandejaSiniestrosPage from "./pages/BandejaSiniestrosPage";
@@ -92,6 +93,11 @@ function App() {
       <Route
         path="/polizas/:polizaId/modificar"
         element={<RutaProtegida roles={ROLES_CLIENTE}><ModificarPolizaPage /></RutaProtegida>}
+      />
+
+      <Route
+        path="/polizas/:polizaId/historial"
+        element={<RutaProtegida><HistorialPolizaPage /></RutaProtegida>}
       />
 
       <Route
