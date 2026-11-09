@@ -62,6 +62,67 @@ fun historialEndosos() = HistorialEndosos(
     )
 )
 
+fun historialPoliza(id: String = "POL-1") = HistorialPoliza(
+    polizaId = id,
+    numeroPoliza = "SOL-VJ-0001",
+    nombreRamo = "Seguro de viaje",
+    estado = "VIGENTE",
+    movimientos = listOf(
+        MovimientoPoliza(
+            movimientoId = "MOV-ENDOSO",
+            polizaId = id,
+            categoria = CategoriaMovimiento.CONTRACTUAL,
+            tipo = TipoMovimiento.ENDOSO,
+            fecha = "2026-10-15T14:00:00Z",
+            descripcion = "Modificación de cobertura.",
+            referencia = "END-1",
+            referenciaExterna = null,
+            estado = "CONFIRMADO",
+            monto = "5000.00",
+            moneda = "COP",
+            naturalezaMonto = NaturalezaMonto.COBRO,
+            cambios = listOf(
+                CambioMovimiento(
+                    tipo = "COBERTURA",
+                    descripcion = "Aumenta la suma asegurada",
+                    antes = mapOf("suma" to "40000000"),
+                    despues = mapOf("suma" to "45000000")
+                )
+            )
+        ),
+        MovimientoPoliza(
+            movimientoId = "MOV-PAGO",
+            polizaId = id,
+            categoria = CategoriaMovimiento.FINANCIERO,
+            tipo = TipoMovimiento.PAGO_PRIMA_INICIAL,
+            fecha = "2026-10-01T10:05:00Z",
+            descripcion = "Pago de la prima inicial.",
+            referencia = "PAGO-1",
+            referenciaExterna = "PSE-9",
+            estado = "CONFIRMADO",
+            monto = "84000.00",
+            moneda = "COP",
+            naturalezaMonto = NaturalezaMonto.COBRO,
+            cambios = emptyList()
+        ),
+        MovimientoPoliza(
+            movimientoId = "MOV-EMISION",
+            polizaId = id,
+            categoria = CategoriaMovimiento.POLIZA,
+            tipo = TipoMovimiento.EMISION,
+            fecha = "2026-10-01T10:00:00Z",
+            descripcion = "Se emitió la póliza.",
+            referencia = null,
+            referenciaExterna = null,
+            estado = "EMITIDA",
+            monto = null,
+            moneda = null,
+            naturalezaMonto = null,
+            cambios = emptyList()
+        )
+    )
+)
+
 val ENLACE = EnlaceCompartido(
     url = "https://api.solventa.co/api/v1/certificados-compartidos/abc",
     expiraEn = "2026-10-22T15:00:00Z"
@@ -71,7 +132,16 @@ class PolizasGatewayFalso : PolizasGateway {
     var respuestaBilletera: ResultadoApi<Billetera> = ResultadoApi.Exito(billeteraDe(resumen()))
     var respuestaCertificado: ResultadoApi<Certificado> = ResultadoApi.Exito(certificado())
     var respuestaCompartir: ResultadoApi<EnlaceCompartido> = ResultadoApi.Exito(ENLACE)
-    var respuestaHistorial: ResultadoApi<HistorialEndosos> = ResultadoApi.Exito(HistorialEndosos(emptyList()))
+    var respuestaHistorial: ResultadoApi<HistorialPoliza> =
+        ResultadoApi.Exito(
+            HistorialPoliza(
+                polizaId = "POL-1",
+                numeroPoliza = "SOL-VJ-0001",
+                nombreRamo = "Seguro de viaje",
+                estado = "VIGENTE",
+                movimientos = emptyList()
+            )
+        )
     var respuestaDocumento: ResultadoApi<DocumentoPoliza> = ResultadoApi.Exito(
         DocumentoPoliza("poliza.pdf", "%PDF-prueba".toByteArray(), "a".repeat(64))
     )
@@ -93,10 +163,10 @@ class PolizasGatewayFalso : PolizasGateway {
         return respuestaCertificado
     }
 
-    override suspend fun historialEndosos(
+    override suspend fun historialPoliza(
         accessToken: String,
         polizaId: String
-    ): ResultadoApi<HistorialEndosos> {
+    ): ResultadoApi<HistorialPoliza> {
         tokensUsados += accessToken
         historialesPedidos += polizaId
         return respuestaHistorial
@@ -138,7 +208,7 @@ class CachePolizasFalsa : CachePolizas {
     private data class Instantanea(
         val billetera: Billetera,
         val certificados: List<Certificado>,
-        val historiales: Map<String, HistorialEndosos>,
+        val historiales: Map<String, HistorialPoliza>,
         val sincronizadaEnMs: Long
     )
 
@@ -160,22 +230,22 @@ class CachePolizasFalsa : CachePolizas {
             BilleteraCacheada(it.billetera, MetadatosSincronizacion(usuario, it.sincronizadaEnMs))
         }
 
-    override suspend fun historialEndosos(
+    override suspend fun historialPoliza(
         usuario: ClaveUsuarioCache,
         polizaId: String
-    ): HistorialEndososCacheado? = datos[usuario]?.let { instantanea ->
+    ): HistorialPolizaCacheado? = datos[usuario]?.let { instantanea ->
         instantanea.historiales[polizaId]?.let {
-            HistorialEndososCacheado(
+            HistorialPolizaCacheado(
                 it,
                 MetadatosSincronizacion(usuario, instantanea.sincronizadaEnMs)
             )
         }
     }
 
-    override suspend fun guardarHistorialEndosos(
+    override suspend fun guardarHistorialPoliza(
         usuario: ClaveUsuarioCache,
         polizaId: String,
-        historial: HistorialEndosos
+        historial: HistorialPoliza
     ) {
         val instantanea = datos[usuario] ?: return
         require(instantanea.billetera.polizas.any { it.polizaId == polizaId })

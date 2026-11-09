@@ -98,6 +98,7 @@ class ScreenRouteTest {
                 "quote_history/{cotizacionId}",
                 "wallet_screen?desdeNavbar={desdeNavbar}",
                 "certificate_screen/{polizaId}?desdeNavbar={desdeNavbar}",
+                "policy_history/{polizaId}?desdeNavbar={desdeNavbar}",
                 "payment_screen/{cotizacionId}",
                 "pse_portal_screen",
                 "payment_result_screen",
@@ -105,9 +106,15 @@ class ScreenRouteTest {
                 "claims_screen?desdeNavbar={desdeNavbar}",
                 "claim_form_screen?desdeNavbar={desdeNavbar}",
                 "assisted_claim_form/{clienteId}",
-                "create_advisor_screen"
+                "create_advisor_screen",
+                "create_auditor_screen"
             ),
             ScreenRoute.privadas
         )
+    }
+
+    @Test
+    fun laRutaDelAltaDeAnalistaEsEstable() {
+        assertEquals("create_auditor_screen", ScreenRoute.CreateAuditor.route)
     }
 }

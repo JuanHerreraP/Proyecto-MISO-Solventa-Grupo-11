@@ -4,6 +4,7 @@ import {
   ROLES_CREAR_ASESOR,
   ROLES_CLIENTE,
   ROLES_OPERACIONES_SINIESTROS,
+  ROLES_AUDITORIA,
 } from "./types/permisos";
 import { useEffect, useState } from "react";
 import { iniciarControlSesion, restaurarSesion } from "./services/session";
@@ -22,12 +23,15 @@ import CotizarPage from "./pages/CotizarPage";
 import CotizacionesPage from "./pages/CotizacionesPage";
 import PolizasPage from "./pages/PolizasPage";
 import ModificarPolizaPage from "./pages/ModificarPolizaPage";
+import HistorialPolizaPage from "./pages/HistorialPolizaPage";
+import ConsultaHistorialContractualPage from "./pages/ConsultaHistorialContractualPage";
 import ClaimRegistrationPage from "./pages/ClaimRegistrationPage";
 import SiniestrosPage from "./pages/SiniestrosPage";
 import BandejaSiniestrosPage from "./pages/BandejaSiniestrosPage";
 import FirmaPage from "./pages/FirmaPage";
 import SocioRegistrationPage from "./pages/SocioRegistrationPage";
 import AsesorRegistrationPage from "./pages/AsesorRegistrationPage";
+import AuditorRegistrationPage from "./pages/AuditorRegistrationPage";
 
 function App() {
   const navigate = useNavigate();
@@ -95,6 +99,11 @@ function App() {
       />
 
       <Route
+        path="/polizas/:polizaId/historial"
+        element={<RutaProtegida><HistorialPolizaPage /></RutaProtegida>}
+      />
+
+      <Route
         path="/siniestros"
         element={<RutaProtegida><SiniestrosPage /></RutaProtegida>}
       />
@@ -109,6 +118,15 @@ function App() {
         element={
           <RutaProtegida roles={ROLES_OPERACIONES_SINIESTROS}>
             <BandejaSiniestrosPage />
+          </RutaProtegida>
+        }
+      />
+
+      <Route
+        path="/auditoria/historial"
+        element={
+          <RutaProtegida roles={ROLES_AUDITORIA}>
+            <ConsultaHistorialContractualPage />
           </RutaProtegida>
         }
       />
@@ -132,6 +150,15 @@ function App() {
         element={
           <RutaProtegida roles={ROLES_CREAR_ASESOR}>
             <AsesorRegistrationPage />
+          </RutaProtegida>
+        }
+      />
+
+      <Route
+        path="/admin/auditores/nuevo"
+        element={
+          <RutaProtegida roles={ROLES_CREAR_ASESOR}>
+            <AuditorRegistrationPage />
           </RutaProtegida>
         }
       />

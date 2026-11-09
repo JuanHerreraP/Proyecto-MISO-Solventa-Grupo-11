@@ -2,12 +2,18 @@ package com.example.solventa.data.remote
 
 import com.example.solventa.domain.polizas.Billetera
 import com.example.solventa.domain.polizas.CambioEndoso
+import com.example.solventa.domain.polizas.CambioMovimiento
+import com.example.solventa.domain.polizas.CategoriaMovimiento
 import com.example.solventa.domain.polizas.Certificado
 import com.example.solventa.domain.polizas.EndosoPoliza
 import com.example.solventa.domain.polizas.EnlaceCompartido
 import com.example.solventa.domain.polizas.EstadoPoliza
 import com.example.solventa.domain.polizas.HistorialEndosos
+import com.example.solventa.domain.polizas.HistorialPoliza
+import com.example.solventa.domain.polizas.MovimientoPoliza
+import com.example.solventa.domain.polizas.NaturalezaMonto
 import com.example.solventa.domain.polizas.PolizaResumen
+import com.example.solventa.domain.polizas.TipoMovimiento
 import com.google.gson.annotations.SerializedName
 
 /**
@@ -143,6 +149,78 @@ data class HistorialEndososDto(
     fun aHistorial() = HistorialEndosos(endosos.orEmpty().mapNotNull { it.aEndoso() })
 }
 
+/**
+ * Historial consolidado de movimientos de la póliza (HU25). Gson puede dejar cualquier campo
+ * en null; el mapeo descarta lo incompleto para no romper la pantalla.
+ */
+data class CambioMovimientoDto(
+    @SerializedName("tipo") val tipo: String?,
+    @SerializedName("descripcion") val descripcion: String?,
+    @SerializedName("antes") val antes: Map<String, String>?,
+    @SerializedName("despues") val despues: Map<String, String>?
+) {
+    fun aCambio(): CambioMovimiento? {
+        return CambioMovimiento(
+            tipo = tipo ?: return null,
+            descripcion = descripcion ?: return null,
+            antes = antes,
+            despues = despues
+        )
+    }
+}
+
+data class MovimientoPolizaDto(
+    @SerializedName("movimiento_id") val movimientoId: String?,
+    @SerializedName("poliza_id") val polizaId: String?,
+    @SerializedName("categoria") val categoria: String?,
+    @SerializedName("tipo") val tipo: String?,
+    @SerializedName("fecha") val fecha: String?,
+    @SerializedName("descripcion") val descripcion: String?,
+    @SerializedName("referencia") val referencia: String?,
+    @SerializedName("referencia_externa") val referenciaExterna: String?,
+    @SerializedName("estado") val estado: String?,
+    @SerializedName("monto") val monto: String?,
+    @SerializedName("moneda") val moneda: String?,
+    @SerializedName("naturaleza_monto") val naturalezaMonto: String?,
+    @SerializedName("cambios") val cambios: List<CambioMovimientoDto>?
+) {
+    fun aMovimiento(): MovimientoPoliza? {
+        return MovimientoPoliza(
+            movimientoId = movimientoId ?: return null,
+            polizaId = polizaId ?: return null,
+            categoria = categoria.aCategoriaMovimiento() ?: return null,
+            tipo = tipo.aTipoMovimiento() ?: return null,
+            fecha = fecha ?: return null,
+            descripcion = descripcion ?: return null,
+            referencia = referencia,
+            referenciaExterna = referenciaExterna,
+            estado = estado,
+            monto = monto,
+            moneda = moneda,
+            naturalezaMonto = naturalezaMonto.aNaturalezaMonto(),
+            cambios = cambios.orEmpty().mapNotNull { it.aCambio() }
+        )
+    }
+}
+
+data class HistorialPolizaDto(
+    @SerializedName("poliza_id") val polizaId: String?,
+    @SerializedName("numero_poliza") val numeroPoliza: String?,
+    @SerializedName("nombre_ramo") val nombreRamo: String?,
+    @SerializedName("estado") val estado: String?,
+    @SerializedName("movimientos") val movimientos: List<MovimientoPolizaDto>?
+) {
+    fun aHistorial(): HistorialPoliza? {
+        return HistorialPoliza(
+            polizaId = polizaId ?: return null,
+            numeroPoliza = numeroPoliza ?: return null,
+            nombreRamo = nombreRamo.orEmpty(),
+            estado = estado.orEmpty(),
+            movimientos = movimientos.orEmpty().mapNotNull { it.aMovimiento() }
+        )
+    }
+}
+
 data class EnlaceCompartidoDto(
     @SerializedName("url") val url: String?,
     @SerializedName("expira_en") val expiraEn: String?
@@ -156,3 +234,12 @@ data class EnlaceCompartidoDto(
 
 private fun String?.aEstado(): EstadoPoliza? =
     this?.let { valor -> EstadoPoliza.entries.firstOrNull { it.name == valor } }
+
+private fun String?.aCategoriaMovimiento(): CategoriaMovimiento? =
+    this?.let { valor -> CategoriaMovimiento.entries.firstOrNull { it.name == valor } }
+
+private fun String?.aTipoMovimiento(): TipoMovimiento? =
+    this?.let { valor -> TipoMovimiento.entries.firstOrNull { it.name == valor } }
+
+private fun String?.aNaturalezaMonto(): NaturalezaMonto? =
+    this?.let { valor -> NaturalezaMonto.entries.firstOrNull { it.name == valor } }

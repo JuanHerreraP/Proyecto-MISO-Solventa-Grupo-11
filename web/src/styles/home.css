@@ -676,3 +676,75 @@
   text-decoration: underline;
   cursor: pointer;
 }
+
+/* Historial de movimientos de la póliza (HU25). */
+.historial-consentimiento {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 8px 0 0;
+  color: #1b6b3a;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.historial-consentimiento .material-symbols-outlined {
+  font-size: 18px;
+}
+
+.historial-cambios {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.historial-cambio {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 14px;
+  border: 1px solid #e3e7ee;
+  border-radius: 10px;
+}
+
+.historial-linaje {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.historial-linaje > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.historial-linaje small {
+  color: #5b6573;
+}
+
+.historial-linaje-rotulo {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: #8a93a2;
+}
+
+/* Filas del historial reciente en la página de inicio (HU25). */
+.home-fila-clic {
+  cursor: pointer;
+}
+
+.home-fila-clic:hover,
+.home-fila-clic:focus-visible {
+  background: #f4f7fb;
+  outline: none;
+}
+
+.home-fila-detalle {
+  display: block;
+  color: #5b6573;
+  font-size: 12px;
+}

@@ -38,6 +38,14 @@ sealed class ScreenRoute(val route: String) {
             return if (desdeNavbar) "$base?desdeNavbar=true" else base
         }
     }
+    object PolicyHistory : ScreenRoute("policy_history/{polizaId}?desdeNavbar={desdeNavbar}") {
+        const val ARGUMENTO = "polizaId"
+        const val ORIGEN_NAVBAR = "desdeNavbar"
+        fun ruta(polizaId: String, desdeNavbar: Boolean = false): String {
+            val base = "policy_history/${URLEncoder.encode(polizaId, "UTF-8")}"
+            return if (desdeNavbar) "$base?desdeNavbar=true" else base
+        }
+    }
     object Payment : ScreenRoute("payment_screen/{cotizacionId}") {
         const val ARGUMENTO = "cotizacionId"
         fun ruta(cotizacionId: String) =
@@ -67,6 +75,9 @@ sealed class ScreenRoute(val route: String) {
     /** Alta de un asesor de ventas por un manager (HU20). */
     object CreateAdvisor : ScreenRoute("create_advisor_screen")
 
+    /** Alta de un analista de cumplimiento por un manager (HU25). */
+    object CreateAuditor : ScreenRoute("create_auditor_screen")
+
     companion object {
         /** Rutas que solo se pueden ver con una sesión activa. */
         val privadas: Set<String>
@@ -79,6 +90,7 @@ sealed class ScreenRoute(val route: String) {
                 QuoteHistoryDetail.route,
                 Wallet.route,
                 Certificate.route,
+                PolicyHistory.route,
                 Payment.route,
                 PsePortal.route,
                 PaymentResult.route,
@@ -86,7 +98,8 @@ sealed class ScreenRoute(val route: String) {
                 Claims.route,
                 ClaimForm.route,
                 AssistedClaimForm.route,
-                CreateAdvisor.route
+                CreateAdvisor.route,
+                CreateAuditor.route
             )
     }
 }

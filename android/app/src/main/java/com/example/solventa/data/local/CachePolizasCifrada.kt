@@ -11,8 +11,8 @@ import com.example.solventa.domain.polizas.CachePolizas
 import com.example.solventa.domain.polizas.Certificado
 import com.example.solventa.domain.polizas.CertificadoCacheado
 import com.example.solventa.domain.polizas.ClaveUsuarioCache
-import com.example.solventa.domain.polizas.HistorialEndosos
-import com.example.solventa.domain.polizas.HistorialEndososCacheado
+import com.example.solventa.domain.polizas.HistorialPoliza
+import com.example.solventa.domain.polizas.HistorialPolizaCacheado
 import com.example.solventa.domain.polizas.MetadatosSincronizacion
 import com.google.gson.Gson
 import java.io.IOException
@@ -99,19 +99,19 @@ class CachePolizasCifrada private constructor(
         )
     }
 
-    override suspend fun historialEndosos(
+    override suspend fun historialPoliza(
         usuario: ClaveUsuarioCache,
         polizaId: String
-    ): HistorialEndososCacheado? {
+    ): HistorialPolizaCacheado? {
         val instantanea = leer(usuario) ?: return null
         val historial = instantanea.historiales[polizaId] ?: return null
-        return HistorialEndososCacheado(historial, instantanea.metadatos(usuario))
+        return HistorialPolizaCacheado(historial, instantanea.metadatos(usuario))
     }
 
-    override suspend fun guardarHistorialEndosos(
+    override suspend fun guardarHistorialPoliza(
         usuario: ClaveUsuarioCache,
         polizaId: String,
-        historial: HistorialEndosos
+        historial: HistorialPoliza
     ) {
         val instantanea = leer(usuario) ?: return
         require(instantanea.billetera.polizas.any { it.polizaId == polizaId }) {
@@ -172,13 +172,13 @@ class CachePolizasCifrada private constructor(
         val usuarioId: String,
         val billetera: Billetera,
         val certificados: List<Certificado>,
-        val historiales: Map<String, HistorialEndosos>,
+        val historiales: Map<String, HistorialPoliza>,
         val sincronizadaEnMs: Long
     )
 
     private companion object {
         const val ARCHIVO = "solventa_polizas_cifradas"
-        const val VERSION = 3
+        const val VERSION = 4
     }
 }
 

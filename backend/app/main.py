@@ -23,6 +23,7 @@ from app.api import (
     endosos,
     enriquecimiento,
     firmas,
+    historial_poliza,
     identidad,
     oauth_socios,
     pagos,
@@ -34,6 +35,9 @@ from app.api import (
     siniestros,
     socios,
     telemetria,
+)
+from app.api import (
+    auditoria as api_auditoria,
 )
 from app.desembolsos import modelos_db as modelos_db_desembolsos  # noqa: F401
 from app.firmas import modelos_db as modelos_db_firmas  # noqa: F401
@@ -155,6 +159,8 @@ def crear_app() -> FastAPI:
     app.include_router(firmas.router)
     app.include_router(emision.router)
     app.include_router(endosos.router)
+    app.include_router(historial_poliza.router)
+    app.include_router(api_auditoria.router)
     app.include_router(cancelaciones.router)
     app.include_router(renovaciones.router)
     app.include_router(perfilamiento.router)

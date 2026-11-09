@@ -23,6 +23,8 @@ class RepositorioPolizas(Protocol):
 
     def obtener(self, poliza_id: str) -> Poliza | None: ...
 
+    def buscar_por_numero(self, numero_poliza: str) -> Poliza | None: ...
+
     def listar_parametricas(self) -> list[Poliza]: ...
 
 
@@ -55,6 +57,12 @@ class RepositorioPolizasEnMemoria:
     def obtener(self, poliza_id: str) -> Poliza | None:
         poliza = self._por_id.get(poliza_id)
         return poliza.model_copy(deep=True) if poliza is not None else None
+
+    def buscar_por_numero(self, numero_poliza: str) -> Poliza | None:
+        for poliza in self._por_id.values():
+            if poliza.numero_poliza == numero_poliza:
+                return poliza.model_copy(deep=True)
+        return None
 
     def listar_parametricas(self) -> list[Poliza]:
         return [
@@ -104,6 +112,11 @@ class RepositorioPolizasPostgres:
 
     def obtener(self, poliza_id: str) -> Poliza | None:
         registro = self._db.get(PolizaDB, poliza_id)
+        return _poliza_a_dominio(registro) if registro is not None else None
+
+    def buscar_por_numero(self, numero_poliza: str) -> Poliza | None:
+        sentencia = select(PolizaDB).where(PolizaDB.numero_poliza == numero_poliza)
+        registro = self._db.scalars(sentencia).first()
         return _poliza_a_dominio(registro) if registro is not None else None
 
     def listar_parametricas(self) -> list[Poliza]:

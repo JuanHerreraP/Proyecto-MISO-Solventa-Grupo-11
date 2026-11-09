@@ -52,8 +52,8 @@ data class CertificadoCacheado(
     val metadatos: MetadatosSincronizacion
 )
 
-data class HistorialEndososCacheado(
-    val historial: HistorialEndosos,
+data class HistorialPolizaCacheado(
+    val historial: HistorialPoliza,
     val metadatos: MetadatosSincronizacion
 )
 
@@ -78,16 +78,16 @@ interface CachePolizas {
         polizaId: String
     ): CertificadoCacheado?
 
-    suspend fun historialEndosos(
+    suspend fun historialPoliza(
         usuario: ClaveUsuarioCache,
         polizaId: String
-    ): HistorialEndososCacheado?
+    ): HistorialPolizaCacheado?
 
     /** Actualiza el historial sin descartar la billetera ni los certificados ya cifrados. */
-    suspend fun guardarHistorialEndosos(
+    suspend fun guardarHistorialPoliza(
         usuario: ClaveUsuarioCache,
         polizaId: String,
-        historial: HistorialEndosos
+        historial: HistorialPoliza
     )
 
     suspend fun eliminar(usuario: ClaveUsuarioCache)

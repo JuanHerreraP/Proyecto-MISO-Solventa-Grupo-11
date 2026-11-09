@@ -4,3 +4,5 @@ export const ROLES_ADMINISTRACION_SOCIOS = ["INGENIERO_INTEGRACIONES", "SERVICIO
 export const ROLES_CREAR_ASESOR = ["SERVICIO_INTERNO"] as const;
 export const ROLES_CLIENTE = ["CLIENTE"] as const;
 export const ROLES_OPERACIONES_SINIESTROS = ["OPERACIONES_SINIESTROS"] as const;
+// Rol interno de solo lectura: consulta el historial contractual de cualquier póliza (HU25).
+export const ROLES_AUDITORIA = ["ANALISTA_CUMPLIMIENTO"] as const;

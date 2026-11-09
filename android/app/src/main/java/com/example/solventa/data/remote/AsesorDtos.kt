@@ -61,5 +61,21 @@ data class RespuestaCrearAsesorDto(
     }
 }
 
+/**
+ * Cuerpo del alta de un analista de cumplimiento (POST /api/v1/auth/users). Igual que el del
+ * asesor pero con el rol ANALISTA_CUMPLIMIENTO (HU25), como en el portal web.
+ */
+data class SolicitudCrearAnalistaDto(
+    @SerializedName("nombre") val nombre: String,
+    @SerializedName("apellido") val apellido: String,
+    @SerializedName("email") val email: String,
+    @SerializedName("password") val password: String,
+    @SerializedName("tipo_documento") val tipoDocumento: String,
+    @SerializedName("numero_documento") val numeroDocumento: String,
+    @SerializedName("fecha_nacimiento") val fechaNacimiento: String,
+    @SerializedName("acepta_validacion_identidad") val aceptaValidacionIdentidad: Boolean = true,
+    @SerializedName("rol") val rol: String = "ANALISTA_CUMPLIMIENTO"
+)
+
 /** Mapea la lista JSON a dominio, conservando el orden del backend (alfabético por nombre). */
 fun List<ClienteDeAsesorDto>.aClientes(): List<ClienteDeAsesor> = mapNotNull { it.aCliente() }

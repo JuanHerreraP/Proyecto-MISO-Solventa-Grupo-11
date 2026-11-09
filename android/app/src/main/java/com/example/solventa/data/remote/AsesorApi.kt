@@ -38,4 +38,14 @@ interface AsesorApi {
         @Header("Authorization") autorizacion: String,
         @Body solicitud: SolicitudCrearAsesorDto
     ): Response<RespuestaCrearAsesorDto>
+
+    /**
+     * Alta de un analista de cumplimiento. La realiza un manager (SERVICIO_INTERNO) contra el
+     * mismo endpoint administrativo de usuarios; el rol se fija en el cuerpo.
+     */
+    @POST("api/v1/auth/users")
+    suspend fun crearAnalista(
+        @Header("Authorization") autorizacion: String,
+        @Body solicitud: SolicitudCrearAnalistaDto
+    ): Response<RespuestaCrearAsesorDto>
 }

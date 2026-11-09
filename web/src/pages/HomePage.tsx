@@ -3,6 +3,8 @@ import { useLocation, useNavigate } from "react-router-dom";
 import AppLayout from "../components/AppLayout";
 import { obtenerPerfil, type Perfil } from "../services/auth.service";
 import { obtenerBilletera, type PolizaResumen } from "../services/billetera.service";
+import { obtenerHistorialPoliza } from "../services/historial-poliza.service";
+import type { MovimientoPoliza, NaturalezaMonto, TipoMovimiento } from "../types/historial";
 import {
   asociarCliente,
   listarClientesDeAsesor,
@@ -14,6 +16,21 @@ const ACCIONES = [
   { icono: "schedule", titulo: "Consultar estado de siniestro", detalle: "Sigue tu reclamación", ruta: null },
   { icono: "request_quote", titulo: "Cotizar un nuevo seguro", detalle: "Viaje, vida, dispositivos y más", ruta: "/cotizar" },
 ] as const;
+
+const MOVIMIENTO_NOMBRE: Record<TipoMovimiento, string> = {
+  EMISION: "Emisión de póliza",
+  PAGO_PRIMA_INICIAL: "Pago de prima inicial",
+  ENDOSO: "Modificación contractual",
+  RENOVACION: "Renovación",
+  CANCELACION: "Cancelación",
+  DESEMBOLSO_INDEMNIZACION: "Pago de indemnización",
+  REEMBOLSO: "Reembolso",
+};
+
+/** Movimiento del historial junto con la póliza a la que pertenece (vista de inicio, HU25). */
+type MovimientoReciente = MovimientoPoliza & { nombre_ramo: string };
+
+const MAX_RECIENTES = 5;
 
 function iniciales(perfil: Perfil | null): string {
   const letras = `${perfil?.nombre?.[0] ?? ""}${perfil?.apellido?.[0] ?? ""}`;
@@ -27,9 +44,51 @@ function formatearFecha(iso: string): string {
   });
 }
 
+function formatearFechaMovimiento(iso: string): string {
+  return new Date(iso).toLocaleDateString("es-CO", {
+    day: "numeric", month: "short", year: "numeric",
+  });
+}
+
+/** Monto con signo según la perspectiva del cliente; "—" si el movimiento no tiene monto. */
+function montoConSigno(movimiento: MovimientoPoliza): string {
+  if (movimiento.monto === null) return "—";
+  const valor = Number(movimiento.monto).toLocaleString("es-CO", {
+    style: "currency",
+    currency: movimiento.moneda ?? "COP",
+    maximumFractionDigits: 0,
+  });
+  const naturaleza: NaturalezaMonto | null = movimiento.naturaleza_monto;
+  if (naturaleza === "COBRO") return `-${valor}`;
+  if (naturaleza === "REEMBOLSO" || naturaleza === "INDEMNIZACION") return `+${valor}`;
+  return valor;
+}
+
+/**
+ * Reúne los movimientos recientes de todas las pólizas del cliente (HU25) para la vista de
+ * inicio. Cada póliza se consulta en paralelo; un fallo individual no rompe el listado.
+ */
+async function cargarRecientes(polizas: PolizaResumen[]): Promise<MovimientoReciente[]> {
+  if (polizas.length === 0) return [];
+  const resultados = await Promise.all(
+    polizas.map((poliza) =>
+      obtenerHistorialPoliza(poliza.poliza_id).then(
+        (historial) =>
+          historial.movimientos.map((m) => ({ ...m, nombre_ramo: poliza.nombre_ramo })),
+        () => [] as MovimientoReciente[],
+      ),
+    ),
+  );
+  return resultados
+    .flat()
+    .sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime())
+    .slice(0, MAX_RECIENTES);
+}
+
 export default function HomePage() {
   const [perfil, setPerfil] = useState<Perfil | null>(null);
   const [polizas, setPolizas] = useState<PolizaResumen[] | null>(null);
+  const [movimientos, setMovimientos] = useState<MovimientoReciente[] | null>(null);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -41,8 +100,15 @@ export default function HomePage() {
         setPerfil(datos);
         if (datos.rol === "CLIENTE") {
           obtenerBilletera().then(
-            (billetera) => { if (activo) setPolizas(billetera.polizas); },
-            () => { if (activo) setPolizas([]); },
+            (billetera) => {
+              if (!activo) return;
+              setPolizas(billetera.polizas);
+              cargarRecientes(billetera.polizas).then(
+                (recientes) => { if (activo) setMovimientos(recientes); },
+                () => { if (activo) setMovimientos([]); },
+              );
+            },
+            () => { if (activo) { setPolizas([]); setMovimientos([]); } },
           );
         }
       },
@@ -104,10 +170,45 @@ export default function HomePage() {
             <h2 id="historial">Historial reciente</h2>
             <table>
               <thead>
-                <tr><th>Fecha</th><th>Movimiento</th><th>Referencia</th><th>Estado</th></tr>
+                <tr><th>Fecha</th><th>Movimiento</th><th>Monto</th><th>Estado</th></tr>
               </thead>
               <tbody>
-                <tr><td colSpan={4} className="home-card-vacio">Todavía no hay movimientos.</td></tr>
+                {movimientos === null && (
+                  <tr><td colSpan={4} className="home-card-vacio">Cargando movimientos…</td></tr>
+                )}
+                {movimientos !== null && movimientos.length === 0 && (
+                  <tr><td colSpan={4} className="home-card-vacio">Todavía no hay movimientos.</td></tr>
+                )}
+                {movimientos?.map((movimiento) => (
+                  <tr
+                    key={movimiento.movimiento_id}
+                    className="home-fila-clic"
+                    tabIndex={0}
+                    role="button"
+                    aria-label={`Ver historial de ${movimiento.nombre_ramo}`}
+                    onClick={() =>
+                      navigate(`/polizas/${encodeURIComponent(movimiento.poliza_id)}/historial`)
+                    }
+                    onKeyDown={(evento) => {
+                      if (evento.key === "Enter" || evento.key === " ") {
+                        evento.preventDefault();
+                        navigate(`/polizas/${encodeURIComponent(movimiento.poliza_id)}/historial`);
+                      }
+                    }}
+                  >
+                    <td>{formatearFechaMovimiento(movimiento.fecha)}</td>
+                    <td>
+                      <strong>{MOVIMIENTO_NOMBRE[movimiento.tipo] ?? movimiento.tipo}</strong>
+                      <small className="home-fila-detalle">{movimiento.nombre_ramo}</small>
+                    </td>
+                    <td>{montoConSigno(movimiento)}</td>
+                    <td>
+                      {movimiento.estado && (
+                        <span className="home-chip cotizacion-estado">{movimiento.estado}</span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </section>
