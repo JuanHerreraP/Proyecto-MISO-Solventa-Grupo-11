@@ -24,7 +24,12 @@ data class EstadoAsesor(
     val creandoAsesor: Boolean = false,
     val errorCrearAsesor: String? = null,
     /** Evento: se creó un asesor; la UI muestra la confirmación y lo consume. */
-    val asesorCreado: ClienteDeAsesor? = null
+    val asesorCreado: ClienteDeAsesor? = null,
+    /** Alta de un analista de cumplimiento por el manager en curso (SERVICIO_INTERNO). */
+    val creandoAnalista: Boolean = false,
+    val errorCrearAnalista: String? = null,
+    /** Evento: se creó un analista; la UI muestra la confirmación y lo consume. */
+    val analistaCreado: ClienteDeAsesor? = null
 )
 
 object MensajesAsesor {
@@ -41,6 +46,8 @@ object MensajesAsesor {
     const val KYC_RECHAZADO = "La validación de identidad no fue aprobada."
     const val CREAR_ASESOR_FALLIDO = "No pudimos crear el asesor. Inténtalo de nuevo."
     const val SIN_PERMISOS = "No tienes permisos para crear asesores."
+    const val CREAR_ANALISTA_FALLIDO = "No pudimos crear el analista. Inténtalo de nuevo."
+    const val SIN_PERMISOS_ANALISTA = "No tienes permisos para crear analistas de cumplimiento."
 }
 
 /**
@@ -155,6 +162,27 @@ class AsesorCoordinator(
         }
     }
 
+    suspend fun crearAnalistaCumplimiento(datos: DatosNuevoAnalista) {
+        if (estado.creandoAnalista) return
+        val token = tokenOFinalizar() ?: return
+        estado = estado.copy(creandoAnalista = true, errorCrearAnalista = null, analistaCreado = null)
+        val inicio = generacion
+        val resultado = gateway.crearAnalista(token, datos)
+        if (inicio != generacion) return
+
+        estado = when (resultado) {
+            is ResultadoApi.Exito -> estado.copy(creandoAnalista = false, analistaCreado = resultado.valor)
+            is ResultadoApi.Fallo -> {
+                if (resultado.http == 401) return rechazada()
+                estado.copy(
+                    creandoAnalista = false,
+                    errorCrearAnalista = mensajeCrearAnalista(resultado.codigo, resultado.http)
+                )
+            }
+            ResultadoApi.SinConexion -> estado.copy(creandoAnalista = false, errorCrearAnalista = MensajesAsesor.SIN_CONEXION)
+        }
+    }
+
     fun consumirClienteAsociado() {
         if (estado.clienteAsociado != null) estado = estado.copy(clienteAsociado = null)
     }
@@ -169,6 +197,14 @@ class AsesorCoordinator(
 
     fun consumirErrorCrearAsesor() {
         if (estado.errorCrearAsesor != null) estado = estado.copy(errorCrearAsesor = null)
+    }
+
+    fun consumirAnalistaCreado() {
+        if (estado.analistaCreado != null) estado = estado.copy(analistaCreado = null)
+    }
+
+    fun consumirErrorCrearAnalista() {
+        if (estado.errorCrearAnalista != null) estado = estado.copy(errorCrearAnalista = null)
     }
 
     /** Limpia la selección del cliente y sus pólizas, al salir del formulario asistido. */
@@ -211,5 +247,13 @@ class AsesorCoordinator(
         codigo == "KYC_REJECTED" -> MensajesAsesor.KYC_RECHAZADO
         http == 403 -> MensajesAsesor.SIN_PERMISOS
         else -> MensajesAsesor.CREAR_ASESOR_FALLIDO
+    }
+
+    private fun mensajeCrearAnalista(codigo: String?, http: Int): String = when {
+        codigo == "EMAIL_ALREADY_EXISTS" -> MensajesAsesor.EMAIL_YA_EXISTE
+        codigo == "DOCUMENT_ALREADY_EXISTS" -> MensajesAsesor.DOCUMENTO_YA_EXISTE
+        codigo == "KYC_REJECTED" -> MensajesAsesor.KYC_RECHAZADO
+        http == 403 -> MensajesAsesor.SIN_PERMISOS_ANALISTA
+        else -> MensajesAsesor.CREAR_ANALISTA_FALLIDO
     }
 }

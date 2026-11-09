@@ -309,30 +309,63 @@ class BilleteraCoordinatorTest {
 
     @Test
     fun unHistorialRemotoQuedaDisponibleParaLaSiguienteConsultaOffline() {
-        val historial = historialEndosos()
+        val historial = historialPoliza()
         ejecutar { billetera.cargar() }
         gateway.respuestaHistorial = ResultadoApi.Exito(historial)
 
-        ejecutar { billetera.verHistorialEndosos("POL-1") }
+        ejecutar { billetera.verHistorialPoliza("POL-1") }
 
         assertEquals(listOf("POL-1"), gateway.historialesPedidos)
-        assertEquals(historial, billetera.estado.historialEndosos)
+        assertEquals(historial, billetera.estado.historial)
 
         billetera.cerrarCertificado()
         gateway.respuestaHistorial = ResultadoApi.SinConexion
-        ejecutar { billetera.verHistorialEndosos("POL-1") }
+        ejecutar { billetera.verHistorialPoliza("POL-1") }
 
-        assertEquals(historial, billetera.estado.historialEndosos)
+        assertEquals(historial, billetera.estado.historial)
         assertNull(billetera.estado.errorHistorial)
+    }
+
+    @Test
+    fun cerrarCertificadoConservaElHistorialParaNoBorrarLoQueLaPantallaAcabaDeCargar() {
+        val historial = historialPoliza()
+        ejecutar { billetera.cargar() }
+        gateway.respuestaHistorial = ResultadoApi.Exito(historial)
+        ejecutar { billetera.verHistorialPoliza("POL-1") }
+        assertEquals(historial, billetera.estado.historial)
+
+        // Al navegar del detalle al historial, el detalle se descarta y llama a cerrarCertificado().
+        // Eso no debe borrar el historial que la pantalla de historial acaba de mostrar.
+        billetera.cerrarCertificado()
+
+        assertEquals(historial, billetera.estado.historial)
+        assertNull(billetera.estado.certificado)
+    }
+
+    @Test
+    fun cerrarHistorialLimpiaSoloElHistorial() {
+        val historial = historialPoliza()
+        ejecutar { billetera.cargar() }
+        gateway.respuestaHistorial = ResultadoApi.Exito(historial)
+        ejecutar { billetera.verHistorialPoliza("POL-1") }
+        ejecutar { billetera.verCertificado("POL-1") }
+        assertEquals(historial, billetera.estado.historial)
+        assertEquals(certificado(), billetera.estado.certificado)
+
+        billetera.cerrarHistorial()
+
+        assertNull(billetera.estado.historial)
+        assertNull(billetera.estado.errorHistorial)
+        assertEquals(certificado(), billetera.estado.certificado)
     }
 
     @Test
     fun sinConexionSinHistorialGuardadoInformaElProblema() {
         gateway.respuestaHistorial = ResultadoApi.SinConexion
 
-        ejecutar { billetera.verHistorialEndosos("POL-1") }
+        ejecutar { billetera.verHistorialPoliza("POL-1") }
 
-        assertNull(billetera.estado.historialEndosos)
+        assertNull(billetera.estado.historial)
         assertEquals(MensajesBilletera.SIN_CONEXION, billetera.estado.errorHistorial)
     }
 

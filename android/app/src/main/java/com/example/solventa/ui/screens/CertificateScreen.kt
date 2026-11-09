@@ -12,7 +12,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -30,7 +29,6 @@ import com.example.solventa.domain.polizas.Certificado
 import com.example.solventa.domain.polizas.CondicionParametrica
 import com.example.solventa.domain.polizas.EstadoPoliza
 import com.example.solventa.domain.polizas.Formatos
-import com.example.solventa.domain.polizas.HistorialEndosos
 import com.example.solventa.ui.components.SolventaCodigoQr
 import com.example.solventa.ui.components.SolventaNoticePill
 import com.example.solventa.ui.components.SolventaPrimaryButton
@@ -44,14 +42,12 @@ fun CertificateScreen(
     certificado: Certificado?,
     cargando: Boolean,
     error: String?,
-    historial: HistorialEndosos?,
-    cargandoHistorial: Boolean,
-    errorHistorial: String?,
     descargandoDocumento: Boolean,
     compartiendo: Boolean,
     mensaje: String?,
     onVerDocumento: () -> Unit,
     onCompartir: () -> Unit,
+    onVerHistorial: () -> Unit,
     onReintentar: () -> Unit,
     onVolver: () -> Unit,
     modifier: Modifier = Modifier
@@ -89,14 +85,12 @@ fun CertificateScreen(
 
                 else -> Contenido(
                     certificado = certificado,
-                    historial = historial,
-                    cargandoHistorial = cargandoHistorial,
-                    errorHistorial = errorHistorial,
                     descargandoDocumento = descargandoDocumento,
                     compartiendo = compartiendo,
                     mensaje = mensaje,
                     onVerDocumento = onVerDocumento,
-                    onCompartir = onCompartir
+                    onCompartir = onCompartir,
+                    onVerHistorial = onVerHistorial
                 )
             }
         }
@@ -106,14 +100,12 @@ fun CertificateScreen(
 @Composable
 private fun Contenido(
     certificado: Certificado,
-    historial: HistorialEndosos?,
-    cargandoHistorial: Boolean,
-    errorHistorial: String?,
     descargandoDocumento: Boolean,
     compartiendo: Boolean,
     mensaje: String?,
     onVerDocumento: () -> Unit,
-    onCompartir: () -> Unit
+    onCompartir: () -> Unit,
+    onVerHistorial: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -210,47 +202,16 @@ private fun Contenido(
             }
         }
 
-        Seccion("Movimientos de la póliza") {
-            when {
-                historial == null && cargandoHistorial -> CircularProgressIndicator(
-                    color = Navegacion,
-                    modifier = Modifier
-                        .size(24.dp)
-                        .semantics { contentDescription = "Cargando movimientos" }
-                )
-                historial == null && errorHistorial != null -> Text(
-                    text = errorHistorial,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.error
-                )
-                historial?.endosos.isNullOrEmpty() -> Text(
-                    text = "Esta póliza no tiene movimientos registrados.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-                )
-                else -> historial?.endosos.orEmpty().forEachIndexed { indice, endoso ->
-                    if (indice > 0) HorizontalDivider()
-                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Text(
-                            text = endoso.tipo.etiquetaMovimiento(),
-                            style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                        Text(
-                            text = Formatos.fecha(endoso.fechaEfecto),
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                        )
-                        endoso.cambios.forEach { cambio ->
-                            Text(
-                                text = cambio.descripcion,
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-                        }
-                    }
-                }
-            }
+        Seccion("Historial de movimientos") {
+            Text(
+                text = "Consulta los endosos y cambios registrados sobre esta póliza.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.75f)
+            )
+            SolventaSecondaryButton(
+                text = "Ver historial de la póliza",
+                onClick = onVerHistorial
+            )
         }
 
         if (mensaje != null) {
@@ -318,9 +279,6 @@ private fun Seccion(
     }
 }
 
-private fun String.etiquetaMovimiento(): String =
-    lowercase().replace('_', ' ').replaceFirstChar { it.titlecase() }
-
 @Composable
 private fun Dato(etiqueta: String, valor: String) {
     Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
@@ -359,14 +317,12 @@ fun CertificateScreenPreview() {
             ),
             cargando = false,
             error = null,
-            historial = HistorialEndosos(emptyList()),
-            cargandoHistorial = false,
-            errorHistorial = null,
             descargandoDocumento = false,
             compartiendo = false,
             mensaje = null,
             onVerDocumento = {},
             onCompartir = {},
+            onVerHistorial = {},
             onReintentar = {},
             onVolver = {}
         )

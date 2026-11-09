@@ -22,11 +22,11 @@ interface PolizasApi {
         @Path("polizaId") polizaId: String
     ): Response<CertificadoDto>
 
-    @GET("api/v1/polizas/{polizaId}/endosos")
-    suspend fun historialEndosos(
+    @GET("api/v1/polizas/{polizaId}/historial")
+    suspend fun historialPoliza(
         @Header("Authorization") autorizacion: String,
         @Path("polizaId") polizaId: String
-    ): Response<HistorialEndososDto>
+    ): Response<HistorialPolizaDto>
 
     @Streaming
     @GET("api/v1/polizas/{polizaId}/documento")

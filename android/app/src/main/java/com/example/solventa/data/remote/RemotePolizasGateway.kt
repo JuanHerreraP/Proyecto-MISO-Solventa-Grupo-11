@@ -5,7 +5,7 @@ import com.example.solventa.domain.polizas.Billetera
 import com.example.solventa.domain.polizas.Certificado
 import com.example.solventa.domain.polizas.DocumentoPoliza
 import com.example.solventa.domain.polizas.EnlaceCompartido
-import com.example.solventa.domain.polizas.HistorialEndosos
+import com.example.solventa.domain.polizas.HistorialPoliza
 import com.example.solventa.domain.polizas.PolizasGateway
 import com.google.gson.JsonParseException
 import com.google.gson.stream.MalformedJsonException
@@ -23,11 +23,11 @@ class RemotePolizasGateway(private val api: PolizasApi) : PolizasGateway {
     override suspend fun certificado(accessToken: String, polizaId: String): ResultadoApi<Certificado> =
         llamar({ api.certificado(bearer(accessToken), polizaId) }) { it.aCertificado() }
 
-    override suspend fun historialEndosos(
+    override suspend fun historialPoliza(
         accessToken: String,
         polizaId: String
-    ): ResultadoApi<HistorialEndosos> =
-        llamar({ api.historialEndosos(bearer(accessToken), polizaId) }) { it.aHistorial() }
+    ): ResultadoApi<HistorialPoliza> =
+        llamar({ api.historialPoliza(bearer(accessToken), polizaId) }) { it.aHistorial() }
 
     override suspend fun documento(
         accessToken: String,

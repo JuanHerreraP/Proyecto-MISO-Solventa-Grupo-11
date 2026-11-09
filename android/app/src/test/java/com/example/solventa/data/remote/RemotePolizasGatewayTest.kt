@@ -3,6 +3,8 @@ package com.example.solventa.data.remote
 import com.example.solventa.domain.auth.ResultadoApi
 import com.example.solventa.domain.polizas.EnlaceCompartido
 import com.example.solventa.domain.polizas.EstadoPoliza
+import com.example.solventa.domain.polizas.NaturalezaMonto
+import com.example.solventa.domain.polizas.TipoMovimiento
 import java.security.MessageDigest
 import kotlinx.coroutines.runBlocking
 import okhttp3.mockwebserver.MockResponse
@@ -116,24 +118,34 @@ class RemotePolizasGatewayTest {
     }
 
     @Test
-    fun historialMapeaLosEndososYUsaLaRutaDeLaPoliza() = runBlocking {
+    fun historialMapeaLosMovimientosYUsaLaRutaDeLaPoliza() = runBlocking {
         responder(
             200,
-            """{"endosos":[{"endoso_id":"END-1","poliza_id":"POL-1","numero_endoso":1,
-                "tipo":"COBERTURAS","rol_solicitante":"CLIENTE","fecha_efecto":"2026-11-08",
-                "creado_en":"2026-11-08T15:00:00Z","dias_vigencia":365,"dias_restantes":200,
-                "prima_anterior":"85000","ajuste_prima":"5000","concepto_ajuste":"COBRO",
-                "prima_nueva":"90000","moneda":"COP","cambios":[
-                  {"tipo":"COBERTURA_INCLUIDA","descripcion":"Se agregó equipaje"}],
-                "coberturas_opcionales":[],"beneficiarios":[],"huella_documento":"${"a".repeat(64)}"}]}"""
+            """{"poliza_id":"POL-1","numero_poliza":"SOL-VJ-0001","cliente_id":"CLI-1",
+                "nombre_ramo":"Seguro de viaje","estado":"VIGENTE","movimientos":[
+                  {"movimiento_id":"MOV-1","poliza_id":"POL-1","categoria":"POLIZA",
+                   "tipo":"EMISION","fecha":"2026-10-01T10:00:00Z",
+                   "descripcion":"Se emitió la póliza.","referencia":null,
+                   "referencia_externa":null,"estado":"EMITIDA","monto":null,"moneda":null,
+                   "naturaleza_monto":null,"cambios":[]},
+                  {"movimiento_id":"MOV-2","poliza_id":"POL-1","categoria":"FINANCIERO",
+                   "tipo":"PAGO_PRIMA_INICIAL","fecha":"2026-10-01T10:05:00Z",
+                   "descripcion":"Pago de la prima inicial.","referencia":"PAGO-1",
+                   "referencia_externa":"PSE-9","estado":"CONFIRMADO","monto":"84000.00",
+                   "moneda":"COP","naturaleza_monto":"COBRO","cambios":[]}]}"""
         )
 
-        val historial = (gateway.historialEndosos("access-1", "POL-1") as ResultadoApi.Exito).valor
+        val historial = (gateway.historialPoliza("access-1", "POL-1") as ResultadoApi.Exito).valor
 
-        assertEquals(1, historial.endosos.single().numero)
-        assertEquals("Se agregó equipaje", historial.endosos.single().cambios.single().descripcion)
+        assertEquals("SOL-VJ-0001", historial.numeroPoliza)
+        assertEquals(2, historial.movimientos.size)
+        assertEquals(TipoMovimiento.EMISION, historial.movimientos[0].tipo)
+        assertEquals(TipoMovimiento.PAGO_PRIMA_INICIAL, historial.movimientos[1].tipo)
+        assertEquals(NaturalezaMonto.COBRO, historial.movimientos[1].naturalezaMonto)
+        assertEquals("84000.00", historial.movimientos[1].monto)
         val peticion = servidor.takeRequest()
-        assertEquals("/api/v1/polizas/POL-1/endosos", peticion.path)
+        assertTrue(peticion.path!!.contains("/historial"))
+        assertEquals("/api/v1/polizas/POL-1/historial", peticion.path)
         assertEquals("Bearer access-1", peticion.getHeader("Authorization"))
     }
 

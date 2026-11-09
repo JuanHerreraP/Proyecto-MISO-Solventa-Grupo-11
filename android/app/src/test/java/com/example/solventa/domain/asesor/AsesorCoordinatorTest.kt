@@ -115,6 +115,52 @@ class AsesorCoordinatorTest {
     }
 
     @Test
+    fun crearAnalistaEnviaLosDatosYMarcaCreado() = runBlocking {
+        val gateway = AsesorGatewayFalso()
+        val coordinador = AsesorCoordinator(gateway, SesionAsesorFalsa())
+
+        coordinador.crearAnalistaCumplimiento(nuevoAnalista())
+
+        val estado = coordinador.estado
+        assertEquals("Laura", estado.analistaCreado?.nombre)
+        assertEquals(1, gateway.analistasCreados.size)
+        assertEquals("laura@solventa.com", gateway.analistasCreados.first().email)
+    }
+
+    @Test
+    fun crearAnalistaConCorreoDuplicadoTraduceElCodigo() = runBlocking {
+        val gateway = AsesorGatewayFalso()
+        gateway.respuestaCrearAnalista = ResultadoApi.Fallo(409, "EMAIL_ALREADY_EXISTS", null)
+        val coordinador = AsesorCoordinator(gateway, SesionAsesorFalsa())
+
+        coordinador.crearAnalistaCumplimiento(nuevoAnalista())
+
+        assertEquals(MensajesAsesor.EMAIL_YA_EXISTE, coordinador.estado.errorCrearAnalista)
+    }
+
+    @Test
+    fun crearAnalistaSinPermisosTraduceElCodigo() = runBlocking {
+        val gateway = AsesorGatewayFalso()
+        gateway.respuestaCrearAnalista = ResultadoApi.Fallo(403, "ACCESS_DENIED", null)
+        val coordinador = AsesorCoordinator(gateway, SesionAsesorFalsa())
+
+        coordinador.crearAnalistaCumplimiento(nuevoAnalista())
+
+        assertEquals(MensajesAsesor.SIN_PERMISOS_ANALISTA, coordinador.estado.errorCrearAnalista)
+    }
+
+    @Test
+    fun consumirAnalistaCreadoLimpiaElEvento() = runBlocking {
+        val gateway = AsesorGatewayFalso()
+        val coordinador = AsesorCoordinator(gateway, SesionAsesorFalsa())
+        coordinador.crearAnalistaCumplimiento(nuevoAnalista())
+
+        coordinador.consumirAnalistaCreado()
+
+        assertNull(coordinador.estado.analistaCreado)
+    }
+
+    @Test
     fun token401CierraLaSesion() = runBlocking {
         val gateway = AsesorGatewayFalso()
         gateway.respuestaClientes = ResultadoApi.Fallo(401, "TOKEN_EXPIRED", null)

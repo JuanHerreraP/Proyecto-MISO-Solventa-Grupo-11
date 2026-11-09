@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.solventa.domain.asesor.AsesorCoordinator
 import com.example.solventa.domain.asesor.ClienteDeAsesor
+import com.example.solventa.domain.asesor.DatosNuevoAnalista
 import com.example.solventa.domain.asesor.DatosNuevoAsesor
 import com.example.solventa.domain.asesor.EstadoAsesor
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -37,6 +38,10 @@ class AsesorViewModel(private val coordinador: AsesorCoordinator) : ViewModel() 
         viewModelScope.launch { coordinador.crearAsesor(datos) }
     }
 
+    fun crearAnalista(datos: DatosNuevoAnalista) {
+        viewModelScope.launch { coordinador.crearAnalistaCumplimiento(datos) }
+    }
+
     fun consumirClienteAsociado() = coordinador.consumirClienteAsociado()
 
     fun consumirErrorAsociar() = coordinador.consumirErrorAsociar()
@@ -44,6 +49,10 @@ class AsesorViewModel(private val coordinador: AsesorCoordinator) : ViewModel() 
     fun consumirAsesorCreado() = coordinador.consumirAsesorCreado()
 
     fun consumirErrorCrearAsesor() = coordinador.consumirErrorCrearAsesor()
+
+    fun consumirAnalistaCreado() = coordinador.consumirAnalistaCreado()
+
+    fun consumirErrorCrearAnalista() = coordinador.consumirErrorCrearAnalista()
 
     fun limpiarSeleccion() = coordinador.limpiarSeleccion()
 

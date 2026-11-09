@@ -42,17 +42,30 @@ fun nuevoAsesor() = DatosNuevoAsesor(
     fechaNacimiento = "1990-01-01"
 )
 
+fun nuevoAnalista() = DatosNuevoAnalista(
+    nombre = "Laura",
+    apellido = "Gómez",
+    email = "laura@solventa.com",
+    password = "Password123!",
+    tipoDocumento = "CC",
+    numeroDocumento = "1020304050",
+    fechaNacimiento = "1992-05-10"
+)
+
 class AsesorGatewayFalso : AsesorGateway {
     var respuestaClientes: ResultadoApi<List<ClienteDeAsesor>> = ResultadoApi.Exito(listOf(cliente()))
     var respuestaAsociar: ResultadoApi<ClienteDeAsesor> = ResultadoApi.Exito(cliente(id = "CLI-9"))
     var respuestaPolizas: ResultadoApi<Billetera> = ResultadoApi.Exito(billeteraDe(polizaVigente()))
     var respuestaCrear: ResultadoApi<ClienteDeAsesor> =
         ResultadoApi.Exito(cliente(id = "ASE-NUEVO", nombre = "María", apellido = "Torres"))
+    var respuestaCrearAnalista: ResultadoApi<ClienteDeAsesor> =
+        ResultadoApi.Exito(cliente(id = "ANA-NUEVO", nombre = "Laura", apellido = "Gómez"))
 
     val tokensUsados = mutableListOf<String>()
     val correosAsociados = mutableListOf<String>()
     val clientesConsultados = mutableListOf<String>()
     val asesoresCreados = mutableListOf<DatosNuevoAsesor>()
+    val analistasCreados = mutableListOf<DatosNuevoAnalista>()
 
     override suspend fun listarClientes(accessToken: String): ResultadoApi<List<ClienteDeAsesor>> {
         tokensUsados += accessToken
@@ -84,6 +97,15 @@ class AsesorGatewayFalso : AsesorGateway {
         tokensUsados += accessToken
         asesoresCreados += datos
         return respuestaCrear
+    }
+
+    override suspend fun crearAnalista(
+        accessToken: String,
+        datos: DatosNuevoAnalista
+    ): ResultadoApi<ClienteDeAsesor> {
+        tokensUsados += accessToken
+        analistasCreados += datos
+        return respuestaCrearAnalista
     }
 }
 

@@ -6,8 +6,10 @@ traduce las excepciones de dominio a códigos HTTP. No expone endpoints de escri
 Alcance por rol:
 - CLIENTE: solo el historial de sus propias pólizas (se filtra por `cliente_id` de la sesión).
 - Roles internos de solo lectura (SERVICIO_INTERNO, OPERACIONES_SINIESTROS): cualquier póliza,
-  como apoyo de auditoría/cumplimiento. El proyecto aún no tiene un rol AUDITOR dedicado; cuando
-  exista, basta añadirlo a `ROLES_LECTURA_INTERNA`.
+  como apoyo de auditoría/cumplimiento.
+- ANALISTA_CUMPLIMIENTO: cualquier póliza, además con la vista de auditoría (HU25 §19-20): se
+  añaden el desglose del ajuste de prima y los datos técnicos de la solicitud (IP, user-agent,
+  huella) de los endosos. El cliente nunca ve esos campos.
 """
 
 from fastapi import APIRouter, Depends, HTTPException, Response, status
@@ -31,6 +33,8 @@ router = APIRouter(prefix="/api/v1/polizas", tags=["historial"])
 
 # Roles internos con acceso de solo lectura al historial de cualquier póliza (HU25 §26).
 ROLES_LECTURA_INTERNA = frozenset({Rol.SERVICIO_INTERNO.value, Rol.OPERACIONES_SINIESTROS.value})
+# El analista de cumplimiento, además del acceso de lectura, recibe la vista de auditoría.
+ROL_AUDITORIA = Rol.ANALISTA_CUMPLIMIENTO.value
 
 
 def obtener_servicio(db: Session = Depends(get_db)) -> ServicioHistorialPoliza:
@@ -59,8 +63,12 @@ def consultar_historial(
 ) -> HistorialPoliza:
     respuesta.headers["Cache-Control"] = "no-store"
 
+    incluir_auditoria = False
     if usuario.rol == Rol.CLIENTE.value:
         cliente_id: str | None = str(usuario.id)
+    elif usuario.rol == ROL_AUDITORIA:
+        cliente_id = None
+        incluir_auditoria = True
     elif usuario.rol in ROLES_LECTURA_INTERNA:
         cliente_id = None
     else:
@@ -73,7 +81,7 @@ def consultar_historial(
         )
 
     try:
-        return servicio.consultar(poliza_id, cliente_id)
+        return servicio.consultar(poliza_id, cliente_id, incluir_auditoria)
     except PolizaNoEncontrada:
         raise HTTPException(
             status.HTTP_404_NOT_FOUND,

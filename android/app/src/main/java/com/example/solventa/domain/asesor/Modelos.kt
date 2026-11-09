@@ -31,6 +31,20 @@ data class DatosNuevoAsesor(
 )
 
 /**
+ * Datos que un manager ingresa para crear un analista de cumplimiento (HU25). Mismos campos
+ * que un asesor; solo cambia el rol que fija la capa de datos (ANALISTA_CUMPLIMIENTO).
+ */
+data class DatosNuevoAnalista(
+    val nombre: String,
+    val apellido: String,
+    val email: String,
+    val password: String,
+    val tipoDocumento: String,
+    val numeroDocumento: String,
+    val fechaNacimiento: String
+)
+
+/**
  * Puerto hacia el backend del asesor (endpoints `/api/v1/asesor/...`). El `asesor_id` lo toma
  * el backend de la identidad del token; la app nunca lo envía.
  */
@@ -51,5 +65,11 @@ interface AsesorGateway {
     suspend fun crearAsesor(
         accessToken: String,
         datos: DatosNuevoAsesor
+    ): ResultadoApi<ClienteDeAsesor>
+
+    /** Alta de un analista de cumplimiento. Solo un manager (SERVICIO_INTERNO) puede hacerla. */
+    suspend fun crearAnalista(
+        accessToken: String,
+        datos: DatosNuevoAnalista
     ): ResultadoApi<ClienteDeAsesor>
 }

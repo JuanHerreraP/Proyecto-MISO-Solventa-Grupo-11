@@ -71,6 +71,60 @@ data class EndosoPoliza(
 
 data class HistorialEndosos(val endosos: List<EndosoPoliza>)
 
+/** Categoría del movimiento consolidado del historial de la póliza (HU25). */
+enum class CategoriaMovimiento { FINANCIERO, CONTRACTUAL, POLIZA }
+
+/** Tipo de movimiento consolidado del historial de la póliza (HU25). */
+enum class TipoMovimiento {
+    EMISION,
+    PAGO_PRIMA_INICIAL,
+    ENDOSO,
+    RENOVACION,
+    CANCELACION,
+    DESEMBOLSO_INDEMNIZACION,
+    REEMBOLSO
+}
+
+/** Naturaleza del monto de un movimiento; define el signo que se muestra. */
+enum class NaturalezaMonto { COBRO, REEMBOLSO, INDEMNIZACION, AJUSTE }
+
+/** Cambio contractual registrado dentro de un movimiento del historial consolidado. */
+data class CambioMovimiento(
+    val tipo: String,
+    val descripcion: String,
+    val antes: Map<String, String>?,
+    val despues: Map<String, String>?
+)
+
+/** Movimiento consolidado del historial de la póliza. Las fechas llegan en ISO 8601. */
+data class MovimientoPoliza(
+    val movimientoId: String,
+    val polizaId: String,
+    val categoria: CategoriaMovimiento,
+    val tipo: TipoMovimiento,
+    val fecha: String,
+    val descripcion: String,
+    val referencia: String?,
+    val referenciaExterna: String?,
+    val estado: String?,
+    val monto: String?,
+    val moneda: String?,
+    val naturalezaMonto: NaturalezaMonto?,
+    val cambios: List<CambioMovimiento>
+)
+
+/**
+ * Historial consolidado de movimientos de una póliza (HU25): emisión, pago de prima inicial,
+ * endosos, desembolsos y demás. El backend ya ordena los movimientos del más reciente al más antiguo.
+ */
+data class HistorialPoliza(
+    val polizaId: String,
+    val numeroPoliza: String,
+    val nombreRamo: String,
+    val estado: String,
+    val movimientos: List<MovimientoPoliza>
+)
+
 /** PDF autenticado descargado del backend, todavía sin persistir en el dispositivo. */
 class DocumentoPoliza(
     val nombreArchivo: String,
@@ -88,10 +142,10 @@ data class EnlaceCompartido(
 interface PolizasGateway {
     suspend fun billetera(accessToken: String): ResultadoApi<Billetera>
     suspend fun certificado(accessToken: String, polizaId: String): ResultadoApi<Certificado>
-    suspend fun historialEndosos(
+    suspend fun historialPoliza(
         accessToken: String,
         polizaId: String
-    ): ResultadoApi<HistorialEndosos>
+    ): ResultadoApi<HistorialPoliza>
     suspend fun documento(accessToken: String, polizaId: String): ResultadoApi<DocumentoPoliza>
     suspend fun compartir(accessToken: String, polizaId: String): ResultadoApi<EnlaceCompartido>
 }

@@ -731,3 +731,20 @@
   letter-spacing: 0.4px;
   color: #8a93a2;
 }
+
+/* Filas del historial reciente en la página de inicio (HU25). */
+.home-fila-clic {
+  cursor: pointer;
+}
+
+.home-fila-clic:hover,
+.home-fila-clic:focus-visible {
+  background: #f4f7fb;
+  outline: none;
+}
+
+.home-fila-detalle {
+  display: block;
+  color: #5b6573;
+  font-size: 12px;
+}

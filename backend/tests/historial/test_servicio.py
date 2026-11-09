@@ -199,3 +199,34 @@ def test_rol_interno_consulta_cualquier_poliza() -> None:
     # cliente_id=None representa un rol interno de solo lectura.
     historial = servicio.consultar(POLIZA, None)
     assert historial.poliza_id == POLIZA
+
+
+def test_respuesta_incluye_metadatos_de_la_poliza() -> None:
+    servicio = _servicio()
+    historial = servicio.consultar(POLIZA, CLIENTE)
+    assert historial.cliente_id == CLIENTE
+    assert historial.nombre_ramo == "Seguro de viaje"
+    assert historial.estado in {"VIGENTE", "VENCIDA", "CANCELADA"}
+
+
+def test_vista_de_auditoria_agrega_ajuste_y_datos_tecnicos_del_endoso() -> None:
+    servicio = _servicio(endosos=[endoso()])
+    historial = servicio.consultar(POLIZA, None, incluir_auditoria=True)
+
+    mov = next(m for m in historial.movimientos if m.tipo is TipoMovimiento.ENDOSO)
+    assert mov.auditoria is not None
+    assert mov.auditoria.ip_solicitante == "10.0.0.1"
+    assert mov.auditoria.user_agent == "pruebas"
+    assert mov.ajuste_prima is not None
+    assert mov.ajuste_prima.prima_anterior == Decimal("125000.00")
+    assert mov.ajuste_prima.ajuste == Decimal("25000.00")
+    assert mov.ajuste_prima.prima_nueva == Decimal("150000.00")
+
+
+def test_sin_vista_de_auditoria_no_expone_datos_tecnicos() -> None:
+    servicio = _servicio(endosos=[endoso()])
+    historial = servicio.consultar(POLIZA, CLIENTE)
+
+    mov = next(m for m in historial.movimientos if m.tipo is TipoMovimiento.ENDOSO)
+    assert mov.auditoria is None
+    assert mov.ajuste_prima is None

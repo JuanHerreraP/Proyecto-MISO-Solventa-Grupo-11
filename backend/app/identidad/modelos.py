@@ -19,6 +19,9 @@ class Rol(str, Enum):
     INGENIERO_INTEGRACIONES = "INGENIERO_INTEGRACIONES"
     # Administra usuarios y socios; puede generar perfiles de riesgo y consultar su detalle.
     SERVICIO_INTERNO = "SERVICIO_INTERNO"
+    # Rol interno de solo lectura: consulta la bitácora histórica de una póliza para auditoría
+    # y cumplimiento (HU25). No crea ni modifica pólizas, endosos, pagos ni siniestros.
+    ANALISTA_CUMPLIMIENTO = "ANALISTA_CUMPLIMIENTO"
     CLIENTE = "CLIENTE"
 
 

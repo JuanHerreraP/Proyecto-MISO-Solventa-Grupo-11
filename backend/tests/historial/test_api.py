@@ -122,6 +122,44 @@ def test_rol_interno_consulta_cualquier_poliza_200(entorno) -> None:
     assert r.json()["poliza_id"] == POLIZA
 
 
+def test_analista_cumplimiento_consulta_poliza_ajena_200(entorno) -> None:
+    app.dependency_overrides[get_current_user] = lambda: SimpleNamespace(
+        id="AUD-1", email="auditor@solventa.com", rol=Rol.ANALISTA_CUMPLIMIENTO.value
+    )
+    r = entorno.get(RUTA)
+    assert r.status_code == 200
+    cuerpo = r.json()
+    # El auditor revisa pólizas de cualquier cliente: la póliza es del CLIENTE, no del auditor.
+    assert cuerpo["poliza_id"] == POLIZA
+    assert cuerpo["cliente_id"] == CLIENTE
+    assert cuerpo["nombre_ramo"] == "Seguro de viaje"
+    assert cuerpo["estado"] in {"VIGENTE", "VENCIDA", "CANCELADA"}
+
+
+def test_analista_cumplimiento_ve_informacion_de_auditoria_del_endoso(entorno) -> None:
+    app.dependency_overrides[get_current_user] = lambda: SimpleNamespace(
+        id="AUD-1", email="auditor@solventa.com", rol=Rol.ANALISTA_CUMPLIMIENTO.value
+    )
+    endoso_mov = next(m for m in entorno.get(RUTA).json()["movimientos"] if m["tipo"] == "ENDOSO")
+    # Datos técnicos que el cliente no ve, pero el auditor sí (HU25 §19).
+    assert endoso_mov["auditoria"]["ip_solicitante"] == "10.0.0.1"
+    assert endoso_mov["auditoria"]["user_agent"] == "pruebas"
+    assert endoso_mov["auditoria"]["usuario_id"] == "USR-1"
+    assert endoso_mov["auditoria"]["rol"] == "CLIENTE"
+    # Desglose del ajuste de prima (HU25 §20).
+    assert endoso_mov["ajuste_prima"]["prima_anterior"] == "125000.00"
+    assert endoso_mov["ajuste_prima"]["ajuste"] == "25000.00"
+    assert endoso_mov["ajuste_prima"]["prima_nueva"] == "150000.00"
+    assert endoso_mov["ajuste_prima"]["moneda"] == "COP"
+
+
+def test_cliente_no_ve_informacion_de_auditoria(entorno) -> None:
+    # El fixture usa un CLIENTE; la vista de auditoría debe quedar en None.
+    endoso_mov = next(m for m in entorno.get(RUTA).json()["movimientos"] if m["tipo"] == "ENDOSO")
+    assert endoso_mov["auditoria"] is None
+    assert endoso_mov["ajuste_prima"] is None
+
+
 def test_sin_autenticacion_responde_401() -> None:
     app.dependency_overrides.clear()
     r = TestClient(app).get(RUTA)

@@ -79,6 +79,35 @@ class ConsentimientoHistorial(BaseModel):
     huella_solicitud: str | None = None
 
 
+class InformacionAuditoria(BaseModel):
+    """Datos técnicos de un movimiento que solo ve un rol interno de auditoría (HU25 §19).
+
+    No se exponen al cliente (principio de mínimo privilegio). Solo se incluyen cuando el
+    endpoint construye la vista de auditoría (`incluir_auditoria=True`). No se inventan datos:
+    cada campo refleja algo realmente persistido por la fuente (p. ej. el endoso de HU16).
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    usuario_id: str | None = None
+    rol: str | None = None
+    ip_solicitante: str | None = None
+    user_agent: str | None = None
+    huella_solicitud: str | None = None
+    creado_en: datetime | None = None
+
+
+class AjustePrimaHistorial(BaseModel):
+    """Ajuste contractual de prima de un endoso (HU25 §20). No es un cobro ya ejecutado."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    prima_anterior: Decimal
+    ajuste: Decimal
+    prima_nueva: Decimal
+    moneda: str
+
+
 class MovimientoPoliza(BaseModel):
     """Movimiento neutral del historial. No sustituye a Pago/Endoso/Desembolso: los normaliza."""
 
@@ -98,6 +127,9 @@ class MovimientoPoliza(BaseModel):
     naturaleza_monto: NaturalezaMonto | None = None
     cambios: list[CambioHistorial] = []
     consentimiento: ConsentimientoHistorial | None = None
+    # Solo presentes en la vista de auditoría. Para el cliente quedan en None.
+    ajuste_prima: AjustePrimaHistorial | None = None
+    auditoria: InformacionAuditoria | None = None
 
 
 class HistorialPoliza(BaseModel):
@@ -107,6 +139,11 @@ class HistorialPoliza(BaseModel):
 
     poliza_id: str
     numero_poliza: str
+    # Metadatos de contexto de la póliza. El cliente ya conoce su póliza, pero la vista de
+    # auditoría necesita situarla (de quién es, qué ramo, en qué estado). Siempre se incluyen.
+    cliente_id: str
+    nombre_ramo: str
+    estado: str
     movimientos: list[MovimientoPoliza]
 
 
@@ -185,11 +222,15 @@ def _naturaleza_ajuste_endoso(endoso: Endoso) -> NaturalezaMonto | None:
     return NaturalezaMonto.AJUSTE
 
 
-def movimiento_endoso(endoso: Endoso) -> MovimientoPoliza:
+def movimiento_endoso(endoso: Endoso, incluir_auditoria: bool = False) -> MovimientoPoliza:
     """Endoso confirmado (HU16). Conserva el linaje antes/después y el consentimiento.
 
     El monto es el ajuste de prima en valor absoluto; `naturaleza_monto=AJUSTE` deja claro que
     es un cambio contractual y no un cobro o devolución ya procesados.
+
+    Si `incluir_auditoria` es True (vista interna del analista de cumplimiento, HU25 §19-20), se
+    añaden el desglose del ajuste de prima y los datos técnicos de la solicitud (IP, user-agent,
+    huella). Para el cliente estos campos quedan en None.
     """
     ajuste = abs(endoso.ajuste_prima) if endoso.ajuste_prima != 0 else None
     return MovimientoPoliza(
@@ -212,6 +253,28 @@ def movimiento_endoso(endoso: Endoso) -> MovimientoPoliza:
             rol=endoso.rol_solicitante,
             fecha=endoso.creado_en,
             huella_solicitud=endoso.huella_solicitud,
+        ),
+        ajuste_prima=(
+            AjustePrimaHistorial(
+                prima_anterior=endoso.prima_anterior,
+                ajuste=endoso.ajuste_prima,
+                prima_nueva=endoso.prima_nueva,
+                moneda=endoso.moneda,
+            )
+            if incluir_auditoria
+            else None
+        ),
+        auditoria=(
+            InformacionAuditoria(
+                usuario_id=endoso.solicitado_por,
+                rol=endoso.rol_solicitante,
+                ip_solicitante=endoso.ip_solicitante,
+                user_agent=endoso.user_agent,
+                huella_solicitud=endoso.huella_solicitud,
+                creado_en=endoso.creado_en,
+            )
+            if incluir_auditoria
+            else None
         ),
     )
 

@@ -27,6 +27,7 @@ import com.example.solventa.biometric.FalloBiometrico
 import com.example.solventa.biometric.mensaje
 import com.example.solventa.domain.auth.MensajesAuth
 import com.example.solventa.domain.asesor.DatosNuevoAsesor
+import com.example.solventa.domain.asesor.DatosNuevoAnalista
 import com.example.solventa.domain.cotizaciones.CatalogoCotizaciones
 import com.example.solventa.domain.cotizaciones.EstadoCotizaciones
 import com.example.solventa.domain.cotizaciones.RamoCotizacion
@@ -51,12 +52,14 @@ import com.example.solventa.ui.screens.CertificateScreen
 import com.example.solventa.ui.screens.ClaimFormScreen
 import com.example.solventa.ui.screens.ClaimsScreen
 import com.example.solventa.ui.screens.CreateAdvisorScreen
+import com.example.solventa.ui.screens.CreateAuditorScreen
 import com.example.solventa.ui.screens.CredentialsLoginScreen
 import com.example.solventa.ui.screens.HomeScreen
 import com.example.solventa.ui.screens.NewQuoteScreen
 import com.example.solventa.ui.screens.PaymentResultScreen
 import com.example.solventa.ui.screens.PaymentScreen
 import com.example.solventa.ui.screens.PaymentsScreen
+import com.example.solventa.ui.screens.PolicyHistoryScreen
 import com.example.solventa.ui.screens.PsePortalScreen
 import com.example.solventa.ui.screens.QuoteFormScreen
 import com.example.solventa.ui.screens.QuoteResultScreen
@@ -347,6 +350,11 @@ fun NavGraph(
                         { navController.navigate(ScreenRoute.CreateAdvisor.route) { launchSingleTop = true } }
                     } else {
                         null
+                    },
+                    onCrearAnalista = if (sesion.perfil.rol == "SERVICIO_INTERNO" && asesor != null) {
+                        { navController.navigate(ScreenRoute.CreateAuditor.route) { launchSingleTop = true } }
+                    } else {
+                        null
                     }
                 )
             }
@@ -581,7 +589,6 @@ fun NavGraph(
                 } else {
                     LaunchedEffect(polizaId) {
                         billetera.verCertificado(polizaId)
-                        billetera.verHistorialEndosos(polizaId)
                     }
                     DisposableEffect(polizaId) { onDispose { billetera.cerrarCertificado() } }
 
@@ -611,18 +618,75 @@ fun NavGraph(
                             certificado = certificado,
                             cargando = estadoBilletera.cargandoCertificado,
                             error = estadoBilletera.errorCertificado,
-                            historial = estadoBilletera.historialEndosos,
-                            cargandoHistorial = estadoBilletera.cargandoHistorial,
-                            errorHistorial = estadoBilletera.errorHistorial,
                             descargandoDocumento = estadoBilletera.descargandoDocumento,
                             compartiendo = estadoBilletera.compartiendo,
                             mensaje = estadoBilletera.mensaje,
                             onVerDocumento = { billetera.descargarDocumento(polizaId) },
                             onCompartir = { billetera.compartir(polizaId) },
+                            onVerHistorial = {
+                                navController.navigate(
+                                    ScreenRoute.PolicyHistory.ruta(polizaId, desdeNavbar)
+                                )
+                            },
                             onReintentar = {
                                 billetera.verCertificado(polizaId)
-                                billetera.verHistorialEndosos(polizaId)
                             },
+                            onVolver = { navController.popBackStack() },
+                            modifier = pantallaModifier
+                        )
+                    }
+                }
+            }
+
+            composable(
+                route = ScreenRoute.PolicyHistory.route,
+                arguments = listOf(
+                    navArgument(ScreenRoute.PolicyHistory.ARGUMENTO) { type = NavType.StringType },
+                    navArgument(ScreenRoute.PolicyHistory.ORIGEN_NAVBAR) {
+                        type = NavType.BoolType
+                        defaultValue = false
+                    }
+                )
+            ) { entrada ->
+                val polizaId =
+                    entrada.arguments?.getString(ScreenRoute.PolicyHistory.ARGUMENTO).orEmpty()
+                val desdeNavbar =
+                    entrada.arguments?.getBoolean(ScreenRoute.PolicyHistory.ORIGEN_NAVBAR) == true
+                val estadoBilletera by billetera.estado.collectAsState()
+
+                if (estado.sesion == null) {
+                    Box(modifier = Modifier.fillMaxSize())
+                } else {
+                    LaunchedEffect(polizaId) { billetera.verHistorialPoliza(polizaId) }
+                    DisposableEffect(polizaId) { onDispose { billetera.cerrarHistorial() } }
+
+                    val certificado =
+                        estadoBilletera.certificado?.takeIf { it.polizaId == polizaId }
+                    val resumen = estadoBilletera.billetera?.polizas
+                        ?.firstOrNull { it.polizaId == polizaId }
+                    val historialPoliza =
+                        estadoBilletera.historial?.takeIf { it.polizaId == polizaId }
+                    val numeroPoliza = historialPoliza?.numeroPoliza?.takeIf { it.isNotBlank() }
+                        ?: certificado?.numeroPoliza
+                        ?: resumen?.numeroPoliza.orEmpty()
+                    val nombreRamo = historialPoliza?.nombreRamo?.takeIf { it.isNotBlank() }
+                        ?: certificado?.nombreRamo
+                        ?: resumen?.nombreRamo.orEmpty()
+
+                    PantallaConNavegacion(
+                        visible = desdeNavbar,
+                        seleccionada = SeccionNavegacion.POLIZAS,
+                        navController = navController,
+                        polizasDisponibles = true,
+                        siniestrosDisponibles = siniestros != null
+                    ) { pantallaModifier ->
+                        PolicyHistoryScreen(
+                            numeroPoliza = numeroPoliza,
+                            nombreRamo = nombreRamo,
+                            historial = historialPoliza,
+                            cargando = estadoBilletera.cargandoHistorial,
+                            error = estadoBilletera.errorHistorial,
+                            onReintentar = { billetera.verHistorialPoliza(polizaId) },
                             onVolver = { navController.popBackStack() },
                             modifier = pantallaModifier
                         )
@@ -926,6 +990,31 @@ fun NavGraph(
                         },
                         onHecho = {
                             asesor.consumirAsesorCreado()
+                            navController.popBackStack()
+                        }
+                    )
+                }
+            }
+
+            composable(route = ScreenRoute.CreateAuditor.route) {
+                val estadoAsesor by asesor.estado.collectAsState()
+                if (estado.sesion == null) {
+                    Box(modifier = Modifier.fillMaxSize())
+                } else {
+                    CreateAuditorScreen(
+                        creando = estadoAsesor.creandoAnalista,
+                        error = estadoAsesor.errorCrearAnalista,
+                        creadoNombre = estadoAsesor.analistaCreado?.nombreCompleto,
+                        onCrear = { datos: DatosNuevoAnalista ->
+                            asesor.consumirErrorCrearAnalista()
+                            asesor.crearAnalista(datos)
+                        },
+                        onVolver = {
+                            asesor.consumirErrorCrearAnalista()
+                            navController.popBackStack()
+                        },
+                        onHecho = {
+                            asesor.consumirAnalistaCreado()
                             navController.popBackStack()
                         }
                     )

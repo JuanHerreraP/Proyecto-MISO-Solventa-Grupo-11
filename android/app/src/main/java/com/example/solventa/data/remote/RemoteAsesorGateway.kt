@@ -2,6 +2,7 @@ package com.example.solventa.data.remote
 
 import com.example.solventa.domain.asesor.AsesorGateway
 import com.example.solventa.domain.asesor.ClienteDeAsesor
+import com.example.solventa.domain.asesor.DatosNuevoAnalista
 import com.example.solventa.domain.asesor.DatosNuevoAsesor
 import com.example.solventa.domain.auth.ResultadoApi
 import com.example.solventa.domain.polizas.Billetera
@@ -37,6 +38,25 @@ class RemoteAsesorGateway(private val api: AsesorApi) : AsesorGateway {
             api.crearAsesor(
                 bearer(accessToken),
                 SolicitudCrearAsesorDto(
+                    nombre = datos.nombre,
+                    apellido = datos.apellido,
+                    email = datos.email,
+                    password = datos.password,
+                    tipoDocumento = datos.tipoDocumento,
+                    numeroDocumento = datos.numeroDocumento,
+                    fechaNacimiento = datos.fechaNacimiento
+                )
+            )
+        }) { it.aCliente() }
+
+    override suspend fun crearAnalista(
+        accessToken: String,
+        datos: DatosNuevoAnalista
+    ): ResultadoApi<ClienteDeAsesor> =
+        llamar({
+            api.crearAnalista(
+                bearer(accessToken),
+                SolicitudCrearAnalistaDto(
                     nombre = datos.nombre,
                     apellido = datos.apellido,
                     email = datos.email,

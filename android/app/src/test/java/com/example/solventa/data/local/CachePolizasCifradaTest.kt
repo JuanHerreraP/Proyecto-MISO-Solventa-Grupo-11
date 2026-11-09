@@ -3,7 +3,7 @@ package com.example.solventa.data.local
 import com.example.solventa.domain.polizas.ClaveUsuarioCache
 import com.example.solventa.domain.polizas.billeteraDe
 import com.example.solventa.domain.polizas.certificado
-import com.example.solventa.domain.polizas.historialEndosos
+import com.example.solventa.domain.polizas.historialPoliza
 import com.example.solventa.domain.polizas.resumen
 import javax.crypto.KeyGenerator
 import kotlinx.coroutines.test.runTest
@@ -34,16 +34,16 @@ class CachePolizasCifradaTest {
 
     @Test
     fun guardaYRecuperaElDetalleCompletoCifrado() = runTest {
-        val historial = historialEndosos()
+        val historial = historialPoliza()
         cache.reemplazar(ana, billeteraDe(resumen()), listOf(certificado()), 123_456L)
 
-        cache.guardarHistorialEndosos(ana, "POL-1", historial)
+        cache.guardarHistorialPoliza(ana, "POL-1", historial)
 
-        assertEquals(historial, cache.historialEndosos(ana, "POL-1")?.historial)
-        assertEquals(123_456L, cache.historialEndosos(ana, "POL-1")?.metadatos?.sincronizadaEnMs)
+        assertEquals(historial, cache.historialPoliza(ana, "POL-1")?.historial)
+        assertEquals(123_456L, cache.historialPoliza(ana, "POL-1")?.metadatos?.sincronizadaEnMs)
         val persistido = almacen.valores.values.single()
         assertFalse(persistido.contains("Aumenta la suma asegurada"))
-        assertFalse(persistido.contains("Viajes contra recomendación médica"))
+        assertFalse(persistido.contains("Pago de la prima inicial"))
     }
 
     @Test
@@ -55,10 +55,10 @@ class CachePolizasCifradaTest {
             listOf(certificado(id = "POL-REINICIO")),
             123_456L
         )
-        CachePolizasCifrada(almacen, llave).guardarHistorialEndosos(
+        CachePolizasCifrada(almacen, llave).guardarHistorialPoliza(
             ana,
             "POL-REINICIO",
-            historialEndosos()
+            historialPoliza(id = "POL-REINICIO")
         )
 
         val cacheTrasReinicio = CachePolizasCifrada(almacen, llave)
@@ -68,7 +68,10 @@ class CachePolizasCifradaTest {
             "POL-REINICIO",
             cacheTrasReinicio.certificado(ana, "POL-REINICIO")?.certificado?.polizaId
         )
-        assertEquals(historialEndosos(), cacheTrasReinicio.historialEndosos(ana, "POL-REINICIO")?.historial)
+        assertEquals(
+            historialPoliza(id = "POL-REINICIO"),
+            cacheTrasReinicio.historialPoliza(ana, "POL-REINICIO")?.historial
+        )
     }
 
     @Test
@@ -105,20 +108,20 @@ class CachePolizasCifradaTest {
     @Test
     fun resincronizarConservaSoloLosHistorialesDePolizasPresentes() = runTest {
         cache.reemplazar(ana, billeteraDe(resumen()), emptyList(), 1L)
-        cache.guardarHistorialEndosos(ana, "POL-1", historialEndosos())
+        cache.guardarHistorialPoliza(ana, "POL-1", historialPoliza())
 
         cache.reemplazar(ana, billeteraDe(resumen()), emptyList(), 2L)
-        assertEquals(historialEndosos(), cache.historialEndosos(ana, "POL-1")?.historial)
+        assertEquals(historialPoliza(), cache.historialPoliza(ana, "POL-1")?.historial)
 
         cache.reemplazar(ana, billeteraDe(resumen(id = "POL-2")), emptyList(), 3L)
-        assertNull(cache.historialEndosos(ana, "POL-1"))
+        assertNull(cache.historialPoliza(ana, "POL-1"))
     }
 
     @Test(expected = IllegalArgumentException::class)
     fun rechazaElHistorialDeUnaPolizaAjena() = runTest {
         cache.reemplazar(ana, billeteraDe(resumen()), emptyList(), 1L)
 
-        cache.guardarHistorialEndosos(ana, "POL-AJENA", historialEndosos())
+        cache.guardarHistorialPoliza(ana, "POL-AJENA", historialPoliza())
     }
 
     @Test

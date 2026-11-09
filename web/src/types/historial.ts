@@ -31,6 +31,25 @@ export interface ConsentimientoHistorial {
   huella_solicitud: string | null;
 }
 
+/** Datos técnicos de un movimiento, solo visibles para el analista de cumplimiento (HU25 §19). */
+export interface InformacionAuditoria {
+  usuario_id: string | null;
+  rol: string | null;
+  ip_solicitante: string | null;
+  user_agent: string | null;
+  huella_solicitud: string | null;
+  creado_en: string | null;
+}
+
+/** Desglose del ajuste de prima de un endoso en la vista de auditoría (HU25 §20). */
+export interface AjustePrimaHistorial {
+  /** Decimales serializados como texto desde el backend. */
+  prima_anterior: string;
+  ajuste: string;
+  prima_nueva: string;
+  moneda: string;
+}
+
 export interface MovimientoPoliza {
   movimiento_id: string;
   poliza_id: string;
@@ -47,10 +66,18 @@ export interface MovimientoPoliza {
   naturaleza_monto: NaturalezaMonto | null;
   cambios: CambioHistorial[];
   consentimiento: ConsentimientoHistorial | null;
+  /** Solo en la vista de auditoría; para el cliente llegan en null. */
+  ajuste_prima?: AjustePrimaHistorial | null;
+  auditoria?: InformacionAuditoria | null;
 }
 
 export interface HistorialPoliza {
   poliza_id: string;
   numero_poliza: string;
+  /** Metadatos de contexto de la póliza. El backend siempre los envía; opcionales en el tipo
+   *  para no obligar a los consumidores que solo usan los movimientos. */
+  cliente_id?: string;
+  nombre_ramo?: string;
+  estado?: string;
   movimientos: MovimientoPoliza[];
 }
