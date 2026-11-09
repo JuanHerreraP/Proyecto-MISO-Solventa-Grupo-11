@@ -19,7 +19,8 @@ import com.example.solventa.ui.theme.Noche
 enum class SeccionNavegacion {
     INICIO,
     POLIZAS,
-    SINIESTROS
+    SINIESTROS,
+    PERFIL
 }
 
 @Composable
@@ -27,6 +28,7 @@ fun SolventaBottomNavigation(
     onInicio: () -> Unit = {},
     onPolizas: (() -> Unit)? = null,
     onSiniestros: (() -> Unit)? = null,
+    onPerfil: (() -> Unit)? = null,
     seleccionada: SeccionNavegacion = SeccionNavegacion.INICIO
 ) {
     val colores = NavigationBarItemDefaults.colors(
@@ -67,8 +69,9 @@ fun SolventaBottomNavigation(
             colors = colores
         )
         NavigationBarItem(
-            selected = false,
-            onClick = {},
+            selected = seleccionada == SeccionNavegacion.PERFIL,
+            onClick = { onPerfil?.invoke() },
+            enabled = onPerfil != null || seleccionada == SeccionNavegacion.PERFIL,
             icon = { Icon(Icons.Outlined.PersonOutline, contentDescription = null) },
             label = { Text("Perfil") },
             colors = colores

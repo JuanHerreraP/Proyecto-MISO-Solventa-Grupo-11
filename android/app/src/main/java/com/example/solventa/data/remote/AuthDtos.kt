@@ -69,7 +69,19 @@ data class PerfilDto(
     @SerializedName("nombre") val nombre: String,
     @SerializedName("apellido") val apellido: String,
     @SerializedName("email") val email: String,
-    @SerializedName("rol") val rol: String
+    @SerializedName("rol") val rol: String,
+    @SerializedName("tipo_documento") val tipoDocumento: String? = null,
+    @SerializedName("numero_documento") val numeroDocumento: String? = null,
+    @SerializedName("celular") val celular: String? = null
 ) {
-    fun aPerfil() = Perfil(id = id, nombre = nombre, apellido = apellido, email = email, rol = rol)
+    fun aPerfil() = Perfil(
+        id = id,
+        nombre = nombre,
+        apellido = apellido,
+        email = email,
+        rol = rol,
+        tipoDocumento = tipoDocumento,
+        numeroDocumento = numeroDocumento,
+        celular = celular
+    )
 }

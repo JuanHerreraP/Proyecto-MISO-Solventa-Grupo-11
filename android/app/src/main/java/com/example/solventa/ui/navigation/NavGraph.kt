@@ -60,6 +60,7 @@ import com.example.solventa.ui.screens.PaymentResultScreen
 import com.example.solventa.ui.screens.PaymentScreen
 import com.example.solventa.ui.screens.PaymentsScreen
 import com.example.solventa.ui.screens.PolicyHistoryScreen
+import com.example.solventa.ui.screens.ProfileScreen
 import com.example.solventa.ui.screens.PsePortalScreen
 import com.example.solventa.ui.screens.QuoteFormScreen
 import com.example.solventa.ui.screens.QuoteResultScreen
@@ -343,6 +344,11 @@ fun NavGraph(
                             }
                         }
                     },
+                    onNavbarPerfil = {
+                        navController.navigate(ScreenRoute.Profile.route) {
+                            launchSingleTop = true
+                        }
+                    },
                     cantidadPolizasActivas = estadoBilletera?.billetera?.totalVigentes,
                     sinConexion = estadoBilletera?.sinConexion == true,
                     ultimaSincronizacionMs = estadoBilletera?.ultimaSincronizacionMs,
@@ -355,6 +361,44 @@ fun NavGraph(
                         { navController.navigate(ScreenRoute.CreateAuditor.route) { launchSingleTop = true } }
                     } else {
                         null
+                    }
+                )
+            }
+        }
+
+        composable(route = ScreenRoute.Profile.route) {
+            val sesion = estado.sesion
+            if (sesion == null) {
+                Box(modifier = Modifier.fillMaxSize())
+            } else {
+                val estadoBilletera = billetera?.estado?.collectAsState()?.value
+                ProfileScreen(
+                    perfil = sesion.perfil,
+                    biometriaActivada = estado.biometriaActivada,
+                    sinConexion = estadoBilletera?.sinConexion == true,
+                    cerrandoSesion = estado.cargando,
+                    onCerrarSesion = {
+                        billetera?.eliminarDatosLocales()
+                        viewModel.cerrarSesion()
+                    },
+                    onInicio = {
+                        navController.popBackStack(ScreenRoute.Home.route, false)
+                    },
+                    onPolizas = billetera?.let {
+                        {
+                            navController.navigate(ScreenRoute.Wallet.ruta(desdeNavbar = true)) {
+                                popUpTo(ScreenRoute.Home.route)
+                                launchSingleTop = true
+                            }
+                        }
+                    },
+                    onSiniestros = siniestros?.let {
+                        {
+                            navController.navigate(ScreenRoute.Claims.ruta(desdeNavbar = true)) {
+                                popUpTo(ScreenRoute.Home.route)
+                                launchSingleTop = true
+                            }
+                        }
                     }
                 )
             }
@@ -1064,6 +1108,12 @@ private fun PantallaConNavegacion(
                         }
                     } else {
                         null
+                    },
+                    onPerfil = {
+                        navController.navigate(ScreenRoute.Profile.route) {
+                            popUpTo(ScreenRoute.Home.route)
+                            launchSingleTop = true
+                        }
                     },
                     seleccionada = seleccionada
                 )
