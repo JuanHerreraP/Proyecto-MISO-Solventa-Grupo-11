@@ -30,6 +30,10 @@ object ApiClient {
     fun crearSiniestrosApi(urlBase: String = BuildConfig.API_BASE_URL): SiniestrosApi =
         retrofit(urlBase).create(SiniestrosApi::class.java)
 
+    /** Gestión de clientes del asesor de ventas (HU20). */
+    fun crearAsesorApi(urlBase: String = BuildConfig.API_BASE_URL): AsesorApi =
+        retrofit(urlBase).create(AsesorApi::class.java)
+
     private val cliente: OkHttpClient by lazy {
         OkHttpClient.Builder()
             .connectTimeout(10, TimeUnit.SECONDS)

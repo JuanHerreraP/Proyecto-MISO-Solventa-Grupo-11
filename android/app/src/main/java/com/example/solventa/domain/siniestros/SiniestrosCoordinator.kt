@@ -29,6 +29,7 @@ object MensajesSiniestros {
     const val POLIZA_AJENA = "No tienes acceso a esta póliza."
     const val POLIZA_NO_VIGENTE = "La póliza no está vigente."
     const val DATOS_INVALIDOS = "Revisa los datos del siniestro e inténtalo de nuevo."
+    const val CLIENTE_NO_ASOCIADO = "El cliente no está asociado a tu cuenta de asesor."
 }
 
 /**
@@ -118,6 +119,35 @@ class SiniestrosCoordinator(
 
     fun consumirErrorFormulario() {
         if (estado.errorFormulario != null) estado = estado.copy(errorFormulario = null)
+    }
+
+    /**
+     * Registra un siniestro asistido por un asesor (HU20), en nombre del cliente indicado.
+     * El backend valida la asociación asesor-cliente y la titularidad de la póliza.
+     */
+    suspend fun registrarAsistido(solicitud: SolicitudSiniestroAsistido) {
+        if (estado.registrando) return
+        val token = tokenOFinalizar() ?: return
+        estado = estado.copy(registrando = true, errorFormulario = null, registroExitoso = false)
+        val inicio = generacion
+        val resultado = gateway.registrarAsistido(token, solicitud)
+        if (inicio != generacion) return
+
+        when (resultado) {
+            is ResultadoApi.Exito ->
+                estado = estado.copy(registrando = false, errorFormulario = null, registroExitoso = true)
+            is ResultadoApi.Fallo -> {
+                if (resultado.http == 401) return rechazada()
+                val mensaje = if (resultado.http == 403 && resultado.codigo == "CLIENTE_NO_ASOCIADO") {
+                    MensajesSiniestros.CLIENTE_NO_ASOCIADO
+                } else {
+                    mensajeRegistro(resultado.http)
+                }
+                estado = estado.copy(registrando = false, errorFormulario = mensaje)
+            }
+            ResultadoApi.SinConexion ->
+                estado = estado.copy(registrando = false, errorFormulario = MensajesSiniestros.SIN_CONEXION)
+        }
     }
 
     /** Se llama al cerrar o perder la sesión. */

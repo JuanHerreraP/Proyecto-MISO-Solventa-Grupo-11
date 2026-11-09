@@ -11,6 +11,7 @@ from starlette.concurrency import run_in_threadpool
 
 from app import __version__
 from app.api import (
+    asesor,
     autenticacion,
     autorizacion_socios,
     billetera,
@@ -29,9 +30,11 @@ from app.api import (
     telemetria,
 )
 from app.identidad import (
+    asociacion_db,  # noqa: F401
     auditoria,
     modelos_db,  # noqa: F401
 )
+from app.identidad.bootstrap import asegurar_manager_bootstrap
 from app.identidad.web import opciones_cookie, origenes_web
 from app.infraestructura.database import (
     Base,
@@ -50,6 +53,7 @@ def crear_app() -> FastAPI:
     esperar_base_disponible()
     Base.metadata.create_all(bind=engine)
     preparar_esquema_registro()
+    asegurar_manager_bootstrap()
 
     app = FastAPI(
         title="Solventa API",
@@ -130,6 +134,7 @@ def crear_app() -> FastAPI:
     app.include_router(pagos.router)
     app.include_router(pse_simulado.router)
     app.include_router(siniestros.router)
+    app.include_router(asesor.router)
     app.include_router(telemetria.router)
     app.include_router(perfilamiento.router)
     app.include_router(enriquecimiento.router)

@@ -86,7 +86,9 @@ class ScreenRouteTest {
                 "payment_result_screen",
                 "payments_screen",
                 "claims_screen",
-                "claim_form_screen"
+                "claim_form_screen",
+                "assisted_claim_form/{clienteId}",
+                "create_advisor_screen"
             ),
             ScreenRoute.privadas
         )

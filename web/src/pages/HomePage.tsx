@@ -3,6 +3,11 @@ import { useLocation, useNavigate } from "react-router-dom";
 import AppLayout from "../components/AppLayout";
 import { obtenerPerfil, type Perfil } from "../services/auth.service";
 import { obtenerBilletera, type PolizaResumen } from "../services/billetera.service";
+import {
+  asociarCliente,
+  listarClientesDeAsesor,
+  type ClienteDeAsesor,
+} from "../services/asesor.service";
 
 const ACCIONES = [
   { icono: "error", titulo: "Reportar un siniestro", detalle: "Registra lo ocurrido", ruta: "/siniestros/nuevo" },
@@ -47,6 +52,11 @@ export default function HomePage() {
   }, [navigate]);
 
   const rol = perfil?.rol ?? null;
+
+  if (rol === "ASESOR_VENTAS") {
+    return <HomeAsesor perfil={perfil} />;
+  }
+
   const polizaActiva = polizas?.find((poliza) => poliza.activa);
 
   return (
@@ -124,6 +134,120 @@ export default function HomePage() {
             </div>
           </section>
         </div>
+    </AppLayout>
+  );
+}
+
+/** Inicio del asesor de ventas: gestiona sus clientes y registra siniestros en su nombre. */
+function HomeAsesor({ perfil }: { perfil: Perfil | null }) {
+  const navigate = useNavigate();
+  const [clientes, setClientes] = useState<ClienteDeAsesor[] | null>(null);
+  const [error, setError] = useState("");
+  const [email, setEmail] = useState("");
+  const [asociando, setAsociando] = useState(false);
+  const [errorAsociar, setErrorAsociar] = useState("");
+  const [exito, setExito] = useState("");
+
+  useEffect(() => {
+    let activo = true;
+    listarClientesDeAsesor().then(
+      (lista) => { if (activo) setClientes(lista); },
+      (fallo: Error) => { if (activo) setError(fallo.message); },
+    );
+    return () => { activo = false; };
+  }, []);
+
+  async function asociar(evento: React.FormEvent) {
+    evento.preventDefault();
+    if (email.trim() === "") return;
+    setAsociando(true);
+    setErrorAsociar("");
+    setExito("");
+    try {
+      const cliente = await asociarCliente(email.trim());
+      setClientes((previos) => [...(previos ?? []), cliente]);
+      setExito(`Cliente ${cliente.nombre} ${cliente.apellido} asociado.`);
+      setEmail("");
+    } catch (fallo) {
+      setErrorAsociar((fallo as Error).message);
+    } finally {
+      setAsociando(false);
+    }
+  }
+
+  return (
+    <AppLayout activo="Inicio" rol="ASESOR_VENTAS">
+      <header className="home-header">
+        <div>
+          <h1>{perfil?.nombre ? `Hola, ${perfil.nombre}` : "Hola"}</h1>
+          <p>Gestiona tus clientes y registra siniestros en su nombre.</p>
+        </div>
+        <div className="home-user">
+          <span className="material-symbols-outlined" aria-label="Notificaciones" role="img">notifications</span>
+          <span className="home-avatar" aria-hidden="true">{iniciales(perfil)}</span>
+        </div>
+      </header>
+
+      <div className="home-grid">
+        <section className="home-panel" aria-labelledby="mis-clientes">
+          <h2 id="mis-clientes">Mis clientes</h2>
+          {error && <p role="alert" className="home-aviso">{error}</p>}
+          {clientes === null && !error && (
+            <p role="status" className="home-card-vacio">Cargando tus clientes…</p>
+          )}
+          {clientes?.length === 0 && (
+            <p className="home-card-vacio">Aún no tienes clientes asociados.</p>
+          )}
+          {clientes && clientes.length > 0 && (
+            <ul className="home-clientes">
+              {clientes.map((cliente) => (
+                <li key={cliente.cliente_id} className="home-cliente">
+                  <span className="material-symbols-outlined" aria-hidden="true">person</span>
+                  <span className="home-cliente-texto">
+                    <strong>{cliente.nombre} {cliente.apellido}</strong>
+                    <small>{cliente.email}</small>
+                  </span>
+                  <button
+                    type="button"
+                    className="cotizar-boton-secundario"
+                    onClick={() => navigate("/siniestros/nuevo")}
+                  >
+                    Registrar siniestro
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+
+        <section aria-labelledby="asociar">
+          <h2 id="asociar" className="home-acciones-titulo">Asociar un cliente</h2>
+          <form onSubmit={asociar} className="home-panel" aria-label="Asociar cliente">
+            <div className="cotizar-campo cotizar-campo-ancho">
+              <label htmlFor="email-cliente">Correo del cliente</label>
+              <input
+                id="email-cliente"
+                type="email"
+                value={email}
+                required
+                placeholder="cliente@correo.com"
+                onChange={(e) => setEmail(e.target.value)}
+              />
+            </div>
+            {errorAsociar && <p role="alert" className="home-aviso">{errorAsociar}</p>}
+            {exito && <p role="status" className="home-exito">{exito}</p>}
+            <div className="cotizar-acciones">
+              <button
+                type="submit"
+                className="cotizar-boton-primario"
+                disabled={asociando || email.trim() === ""}
+              >
+                {asociando ? "Asociando…" : "Asociar cliente"}
+              </button>
+            </div>
+          </form>
+        </section>
+      </div>
     </AppLayout>
   );
 }

@@ -9,6 +9,10 @@ import HomePage from "./HomePage";
 
 vi.mock("../services/auth.service", () => ({ obtenerPerfil: vi.fn() }));
 vi.mock("../services/session", () => ({ cerrarSesion: vi.fn() }));
+vi.mock("../services/asesor.service", () => ({
+  listarClientesDeAsesor: vi.fn().mockResolvedValue([]),
+  asociarCliente: vi.fn(),
+}));
 vi.mock("../services/billetera.service", () => ({
   obtenerBilletera: vi.fn().mockResolvedValue({ polizas: [], total_vigentes: 0, total_inactivas: 0 }),
 }));
@@ -19,8 +23,27 @@ function inicio() {
     <Route path="/home" element={<HomePage />} />
     <Route path="/login" element={<h1>Inicia sesión</h1>} />
     <Route path="/admin/socios/nuevo" element={<h1>Registro de socio</h1>} />
+    <Route path="/admin/asesores/nuevo" element={<h1>Crear asesor</h1>} />
   </Routes></MemoryRouter>);
 }
+
+it("el manager puede abrir el formulario de creación de asesor", async () => {
+  vi.mocked(obtenerPerfil).mockResolvedValue({ rol: "SERVICIO_INTERNO" });
+  inicio();
+  await userEvent.click(await screen.findByRole("button", { name: "Crear un asesor de ventas" }));
+  expect(await screen.findByRole("heading", { name: "Crear asesor" })).toBeInTheDocument();
+});
+
+it.each(["CLIENTE", "ASESOR_VENTAS", "INGENIERO_INTEGRACIONES", "ANALISTA_RIESGOS"])(
+  "%s no ve el botón de crear asesor", async (rol) => {
+    vi.mocked(obtenerPerfil).mockResolvedValue({ rol });
+    inicio();
+    await screen.findByRole("heading", { name: "Hola" });
+    expect(
+      screen.queryByRole("button", { name: "Crear un asesor de ventas" }),
+    ).not.toBeInTheDocument();
+  },
+);
 
 it.each(["INGENIERO_INTEGRACIONES", "SERVICIO_INTERNO"])(
   "%s puede abrir el formulario de socios", async (rol) => {

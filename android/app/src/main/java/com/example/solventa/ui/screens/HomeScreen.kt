@@ -21,6 +21,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.automirrored.outlined.Logout
 import androidx.compose.material.icons.outlined.NotificationsNone
 import androidx.compose.material.icons.outlined.Payments
+import androidx.compose.material.icons.outlined.PersonAddAlt
 import androidx.compose.material.icons.outlined.RequestQuote
 import androidx.compose.material.icons.outlined.Shield
 import androidx.compose.material.icons.outlined.VerifiedUser
@@ -71,7 +72,8 @@ fun HomeScreen(
     onVerPagos: (() -> Unit)? = null,
     onVerSiniestros: (() -> Unit)? = null,
     onCotizarSeguro: () -> Unit = {},
-    cantidadPolizasActivas: Int? = null
+    cantidadPolizasActivas: Int? = null,
+    onCrearAsesor: (() -> Unit)? = null
 ) {
     if (ofrecerActivarBiometria) {
         AlertDialog(
@@ -164,6 +166,29 @@ fun HomeScreen(
                         style = MaterialTheme.typography.bodyMedium,
                         color = Offline
                     )
+                }
+            }
+
+            if (onCrearAsesor != null) {
+                Surface(
+                    shape = RoundedCornerShape(18.dp),
+                    color = Navegacion.copy(alpha = 0.1f),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable(role = Role.Button, onClick = onCrearAsesor)
+                ) {
+                    Row(
+                        modifier = Modifier.padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(Icons.Outlined.PersonAddAlt, contentDescription = null, tint = Navegacion)
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Text(
+                            text = "Crear un asesor de ventas",
+                            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
                 }
             }
 

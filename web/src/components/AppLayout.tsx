@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { cerrarSesion } from "../services/session";
-import { ROLES_ADMINISTRACION_SOCIOS } from "../types/permisos";
+import { ROLES_ADMINISTRACION_SOCIOS, ROLES_CREAR_ASESOR } from "../types/permisos";
 import logoSolventa from "../assets/solventa-logo.png";
 import "../styles/home.css";
 
@@ -25,6 +25,7 @@ export default function AppLayout({ activo, rol, children }: Props) {
   const navigate = useNavigate();
   const [errorSesion, setErrorSesion] = useState("");
   const puedeCrearSocios = ROLES_ADMINISTRACION_SOCIOS.some((permitido) => permitido === rol);
+  const puedeCrearAsesor = ROLES_CREAR_ASESOR.some((permitido) => permitido === rol);
 
   return (
     <div className="home-layout">
@@ -52,6 +53,12 @@ export default function AppLayout({ activo, rol, children }: Props) {
             <button type="button" className="home-nav-item" onClick={() => navigate("/admin/socios/nuevo")}>
               <span className="material-symbols-outlined" aria-hidden="true">group_add</span>
               Crear un nuevo socio
+            </button>
+          )}
+          {puedeCrearAsesor && (
+            <button type="button" className="home-nav-item" onClick={() => navigate("/admin/asesores/nuevo")}>
+              <span className="material-symbols-outlined" aria-hidden="true">support_agent</span>
+              Crear un asesor de ventas
             </button>
           )}
         </nav>

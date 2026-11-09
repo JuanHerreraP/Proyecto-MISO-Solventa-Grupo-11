@@ -5,12 +5,22 @@ import { beforeEach, expect, it, vi } from "vitest";
 import { obtenerPerfil } from "../services/auth.service";
 import { obtenerBilletera, type PolizaResumen } from "../services/billetera.service";
 import { crearSiniestro } from "../services/siniestros.service";
+import {
+  crearSiniestroAsistido,
+  listarClientesDeAsesor,
+  obtenerPolizasDeCliente,
+} from "../services/asesor.service";
 import type { Siniestro } from "../types/siniestros";
 import ClaimRegistrationPage from "./ClaimRegistrationPage";
 
 vi.mock("../services/auth.service", () => ({ obtenerPerfil: vi.fn() }));
 vi.mock("../services/billetera.service", () => ({ obtenerBilletera: vi.fn() }));
 vi.mock("../services/siniestros.service", () => ({ crearSiniestro: vi.fn() }));
+vi.mock("../services/asesor.service", () => ({
+  crearSiniestroAsistido: vi.fn(),
+  listarClientesDeAsesor: vi.fn(),
+  obtenerPolizasDeCliente: vi.fn(),
+}));
 vi.mock("../services/session", () => ({ cerrarSesion: vi.fn() }));
 
 const VIGENTE: PolizaResumen = {
@@ -126,4 +136,51 @@ it("permite volver al inicio tras el registro", async () => {
   await waitFor(() =>
     expect(screen.getByRole("heading", { name: "Inicio" })).toBeInTheDocument(),
   );
+});
+
+it("el asesor elige un cliente, carga sus pólizas y registra el siniestro asistido", async () => {
+  vi.mocked(obtenerPerfil).mockResolvedValue({ id: "ASE-1", rol: "ASESOR_VENTAS" });
+  vi.mocked(listarClientesDeAsesor).mockResolvedValue([
+    { cliente_id: "CLI-1", nombre: "Ana", apellido: "Pérez", email: "ana@correo.com" },
+  ]);
+  vi.mocked(obtenerPolizasDeCliente).mockResolvedValue({
+    polizas: [VIGENTE], total_vigentes: 1, total_inactivas: 0,
+  });
+  vi.mocked(crearSiniestroAsistido).mockResolvedValue({ ...SINIESTRO, registrado_por: "ASE-1" });
+
+  montar();
+
+  // Selección de cliente carga sus pólizas.
+  const selector = await screen.findByLabelText("Cliente que atiendes");
+  await userEvent.selectOptions(selector, "CLI-1");
+  expect(obtenerPolizasDeCliente).toHaveBeenCalledWith("CLI-1");
+
+  await userEvent.click(await screen.findByRole("radio", { name: /Seguro de viaje/ }));
+  await userEvent.type(screen.getByLabelText("Fecha del evento"), "2026-10-20");
+  await userEvent.type(screen.getByLabelText("Hora del evento"), "18:30");
+  await userEvent.type(screen.getByLabelText("Lugar"), "El Dorado");
+  await userEvent.type(
+    screen.getByLabelText("Descripción detallada"),
+    "El vuelo fue cancelado por mal clima.",
+  );
+  await userEvent.type(
+    screen.getByLabelText("Estimación preliminar de daños (COP)"),
+    "850000",
+  );
+
+  await userEvent.click(screen.getByRole("button", { name: "Registrar siniestro" }));
+
+  expect(crearSiniestroAsistido).toHaveBeenCalledWith(
+    expect.objectContaining({ cliente_id: "CLI-1", poliza_id: "POL-1" }),
+  );
+  expect(await screen.findByText("Siniestro registrado")).toBeInTheDocument();
+});
+
+it("el asesor sin clientes ve el aviso para asociarlos", async () => {
+  vi.mocked(obtenerPerfil).mockResolvedValue({ id: "ASE-1", rol: "ASESOR_VENTAS" });
+  vi.mocked(listarClientesDeAsesor).mockResolvedValue([]);
+  montar();
+  expect(
+    await screen.findByText(/Aún no tienes clientes asociados/),
+  ).toBeInTheDocument();
 });

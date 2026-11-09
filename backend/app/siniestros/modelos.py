@@ -61,3 +61,20 @@ class SolicitudSiniestro(BaseModel):
     lugar: str = Field(min_length=1, max_length=200)
     descripcion: str = Field(min_length=10, max_length=2000)
     estimacion_danos: Decimal = Field(ge=0, max_digits=18, decimal_places=2)
+
+
+class SolicitudSiniestroAsesor(BaseModel):
+    """Cuerpo del registro asistido por un asesor: incluye el cliente en cuyo nombre registra.
+
+    El asesor debe estar asociado al `cliente_id`; esa verificación la hace la capa de API.
+    """
+
+    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+
+    cliente_id: str = Field(min_length=1, max_length=50)
+    poliza_id: str = Field(min_length=1, max_length=50)
+    fecha_evento: date
+    hora_evento: time
+    lugar: str = Field(min_length=1, max_length=200)
+    descripcion: str = Field(min_length=10, max_length=2000)
+    estimacion_danos: Decimal = Field(ge=0, max_digits=18, decimal_places=2)

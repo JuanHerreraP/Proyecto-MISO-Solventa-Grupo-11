@@ -44,6 +44,21 @@ interface SiniestrosGateway {
         accessToken: String,
         solicitud: SolicitudSiniestro
     ): ResultadoApi<Siniestro>
+
+    /**
+     * Registro asistido por un asesor (HU20): el asesor registra en nombre de un cliente que
+     * atiende. El backend valida que el asesor esté asociado a ese cliente.
+     */
+    suspend fun registrarAsistido(
+        accessToken: String,
+        solicitud: SolicitudSiniestroAsistido
+    ): ResultadoApi<Siniestro>
+
+    /** Siniestros de un cliente asociado, consultados por un asesor. */
+    suspend fun listarDeCliente(
+        accessToken: String,
+        clienteId: String
+    ): ResultadoApi<Siniestros>
 }
 
 /**
@@ -51,6 +66,20 @@ interface SiniestrosGateway {
  * el backend lo toma de la sesión. Las fechas van en ISO (aaaa-mm-dd y hh:mm:ss).
  */
 data class SolicitudSiniestro(
+    val polizaId: String,
+    val fechaEvento: String,
+    val horaEvento: String,
+    val lugar: String,
+    val descripcion: String,
+    val estimacionDanos: String
+)
+
+/**
+ * Datos del registro asistido (HU20): incluye el cliente en cuyo nombre registra el asesor.
+ * El asesor debe estar asociado a ese cliente; el backend lo verifica.
+ */
+data class SolicitudSiniestroAsistido(
+    val clienteId: String,
     val polizaId: String,
     val fechaEvento: String,
     val horaEvento: String,

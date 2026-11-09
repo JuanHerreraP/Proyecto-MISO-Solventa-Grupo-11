@@ -1,1 +1,4 @@
 export const ROLES_ADMINISTRACION_SOCIOS = ["INGENIERO_INTEGRACIONES", "SERVICIO_INTERNO"] as const;
+
+// Solo el manager (SERVICIO_INTERNO) puede crear usuarios administrativos como el asesor.
+export const ROLES_CREAR_ASESOR = ["SERVICIO_INTERNO"] as const;
