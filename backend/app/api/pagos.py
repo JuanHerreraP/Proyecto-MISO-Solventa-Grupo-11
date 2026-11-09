@@ -8,7 +8,10 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError
 from sqlalchemy.orm import Session
 
 from app.api.cotizaciones import ActorCotizacion, TipoActorCotizacion, actor_actual
+from app.api.enriquecimiento import obtener_consentimientos
+from app.api.perfilamiento import obtener_repositorio as obtener_perfiles
 from app.cotizaciones.repositorio import RepositorioCotizacionesPostgres
+from app.cotizaciones.servicio_personalizacion import ServicioPersonalizacionCotizacion
 from app.identidad.modelos import Rol
 from app.infraestructura.database import get_db
 from app.pagos.modelos import EstadoPago, Pago, SolicitudPago
@@ -22,6 +25,11 @@ from app.pagos.servicio import (
     PagoNoEncontrado,
     ServicioPagos,
 )
+from app.perfilamiento.enriquecimiento.puertos import RepositorioConsentimientos
+from app.perfilamiento.repositorio import RepositorioPerfiles
+from app.polizas.renovacion import ServicioRenovaciones
+from app.polizas.repositorio import RepositorioPolizasPostgres
+from app.polizas.repositorio_renovaciones import RepositorioRenovacionesPostgres
 
 router = APIRouter(prefix="/api/v1/pagos", tags=["pagos"])
 
@@ -36,11 +44,26 @@ def obtener_pasarela(request: Request) -> PasarelaPagos:
 def obtener_servicio(
     db: Session = Depends(get_db),
     pasarela: PasarelaPagos = Depends(obtener_pasarela),
+    perfiles: RepositorioPerfiles = Depends(obtener_perfiles),
+    consentimientos: RepositorioConsentimientos = Depends(obtener_consentimientos),
 ) -> ServicioPagos:
+    pagos = RepositorioPagosPostgres(db)
+    cotizaciones = RepositorioCotizacionesPostgres(db)
+    # Un pago aprobado de una cotización de renovación actualiza la póliza (HU22).
+    renovaciones = ServicioRenovaciones(
+        polizas=RepositorioPolizasPostgres(db),
+        renovaciones=RepositorioRenovacionesPostgres(db),
+        cotizaciones=cotizaciones,
+        personalizador=ServicioPersonalizacionCotizacion(
+            perfiles=perfiles, consentimientos=consentimientos
+        ),
+        pagos=pagos,
+    )
     return ServicioPagos(
-        pagos=RepositorioPagosPostgres(db),
-        cotizaciones=RepositorioCotizacionesPostgres(db),
+        pagos=pagos,
+        cotizaciones=cotizaciones,
         pasarela=pasarela,
+        al_aprobar=renovaciones.aplicar_pago,
     )
 
 
