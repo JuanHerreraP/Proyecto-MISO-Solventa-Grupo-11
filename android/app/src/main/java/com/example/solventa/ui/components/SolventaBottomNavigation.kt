@@ -42,7 +42,7 @@ fun SolventaBottomNavigation(
     )
 
     NavigationBar(
-        containerColor = MaterialTheme.colorScheme.surface,
+        containerColor = MaterialTheme.colorScheme.surfaceContainer,
         windowInsets = WindowInsets(0, 0, 0, 0)
     ) {
         NavigationBarItem(

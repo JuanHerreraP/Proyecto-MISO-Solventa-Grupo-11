@@ -192,7 +192,7 @@ private fun OpcionPerfil(
             .semantics { if (!habilitada) disabled() }
             .alpha(if (habilitada) 1f else 0.45f),
         shape = RoundedCornerShape(18.dp),
-        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.04f)
+        color = MaterialTheme.colorScheme.surfaceContainer
     ) {
         Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
             Surface(shape = RoundedCornerShape(13.dp), color = Navegacion.copy(alpha = 0.1f)) {
@@ -269,7 +269,7 @@ private fun CampoPerfil(etiqueta: String, valor: String) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
-        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.04f)
+        color = MaterialTheme.colorScheme.surfaceContainer
     ) {
         Column(Modifier.padding(16.dp)) {
             Text(etiqueta, style = MaterialTheme.typography.labelMedium)

@@ -7,12 +7,15 @@ import android.os.Bundle
 import android.view.WindowManager
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.SystemBarStyle
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.toArgb
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.lifecycleScope
@@ -44,6 +47,8 @@ import com.example.solventa.ui.pagos.PagosViewModel
 import com.example.solventa.ui.siniestros.SiniestrosViewModel
 import com.example.solventa.ui.navigation.NavGraph
 import com.example.solventa.ui.theme.SolventaTheme
+import com.example.solventa.ui.theme.SuperficieContenedor
+import com.example.solventa.ui.theme.SuperficieContenedorOscura
 
 /** FragmentActivity porque BiometricPrompt la necesita para mostrar su diálogo. */
 class MainActivity : FragmentActivity() {
@@ -131,10 +136,21 @@ class MainActivity : FragmentActivity() {
         pedirPermisoRedLocalSiAplica()
         // Evita capturas de pantalla y que la vista previa de recientes muestre datos del cliente.
         window.setFlags(WindowManager.LayoutParams.FLAG_SECURE, WindowManager.LayoutParams.FLAG_SECURE)
-        enableEdgeToEdge()
+        enableEdgeToEdge(
+            navigationBarStyle = SystemBarStyle.auto(
+                lightScrim = SuperficieContenedor.toArgb(),
+                darkScrim = SuperficieContenedorOscura.toArgb()
+            )
+        )
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            window.isNavigationBarContrastEnforced = false
+        }
         setContent {
             SolventaTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
+                Scaffold(
+                    modifier = Modifier.fillMaxSize(),
+                    containerColor = MaterialTheme.colorScheme.surfaceContainer
+                ) { innerPadding ->
                     NavGraph(
                         viewModel = viewModel,
                         autenticador = autenticador,
