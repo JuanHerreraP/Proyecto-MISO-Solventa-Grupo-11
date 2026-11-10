@@ -179,3 +179,60 @@ def test_listar_vacio_cuando_no_hay_siniestros(entorno) -> None:
     r = cliente.get(RUTA)
     assert r.status_code == 200
     assert r.json() == []
+
+
+# --- HU04: tipo de siniestro y registro idempotente desde la app --------------------------
+
+
+def test_registro_con_tipo_de_siniestro(entorno) -> None:
+    cliente, _, siniestros = entorno
+
+    r = cliente.post(RUTA, json=cuerpo(tipo_siniestro="ROBO_HURTO"))
+
+    assert r.status_code == 201
+    assert r.json()["tipo_siniestro"] == "ROBO_HURTO"
+    assert siniestros.listar_por_cliente("CLI-001")[0].tipo_siniestro.value == "ROBO_HURTO"
+
+
+def test_tipo_de_siniestro_es_opcional_y_desconocido_responde_422(entorno) -> None:
+    cliente, _, _ = entorno
+    assert cliente.post(RUTA, json=cuerpo()).json()["tipo_siniestro"] is None
+    assert cliente.post(RUTA, json=cuerpo(tipo_siniestro="TERREMOTO")).status_code == 422
+
+
+def test_reintento_con_la_misma_idempotency_key_no_duplica(entorno) -> None:
+    cliente, _, siniestros = entorno
+    encabezados = {"Idempotency-Key": "borrador-7f3a2c"}
+
+    primero = cliente.post(RUTA, json=cuerpo(), headers=encabezados)
+    segundo = cliente.post(RUTA, json=cuerpo(), headers=encabezados)
+
+    assert (primero.status_code, segundo.status_code) == (201, 200)
+    assert primero.json()["siniestro_id"] == segundo.json()["siniestro_id"]
+    assert len(siniestros.listar_por_cliente("CLI-001")) == 1
+    # La clave es interna: no se devuelve.
+    assert "clave_idempotencia" not in primero.json()
+
+
+def test_misma_idempotency_key_con_otros_datos_responde_409(entorno) -> None:
+    cliente, _, _ = entorno
+    encabezados = {"Idempotency-Key": "borrador-7f3a2c"}
+    cliente.post(RUTA, json=cuerpo(), headers=encabezados)
+
+    r = cliente.post(RUTA, json=cuerpo(lugar="Otro lugar"), headers=encabezados)
+
+    assert r.status_code == 409
+    assert r.json()["detail"]["codigo"] == "IDEMPOTENCY_KEY_REUTILIZADA"
+
+
+def test_sin_idempotency_key_cada_registro_es_nuevo(entorno) -> None:
+    cliente, _, siniestros = entorno
+    cliente.post(RUTA, json=cuerpo())
+    cliente.post(RUTA, json=cuerpo())
+    assert len(siniestros.listar_por_cliente("CLI-001")) == 2
+
+
+def test_idempotency_key_muy_corta_responde_422(entorno) -> None:
+    cliente, _, _ = entorno
+    r = cliente.post(RUTA, json=cuerpo(), headers={"Idempotency-Key": "abc"})
+    assert r.status_code == 422

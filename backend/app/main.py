@@ -22,6 +22,7 @@ from app.api import (
     emision,
     endosos,
     enriquecimiento,
+    evidencias_siniestro,
     firmas,
     historial_poliza,
     identidad,
@@ -83,10 +84,11 @@ def crear_app() -> FastAPI:
             "X-CSRF-Token",
             "X-Scope",
             "Idempotency-Key",
+            "X-Contenido-SHA256",
         ],
         # El navegador solo deja leer estos encabezados de una respuesta de otro origen si se
         # exponen: el portal toma de ahí el nombre del PDF de la póliza.
-        expose_headers=["Content-Disposition", "X-Huella-Documento"],
+        expose_headers=["Content-Disposition", "X-Huella-Documento", "X-Huella-Evidencia"],
     )
 
     @app.exception_handler(RequestValidationError)
@@ -152,6 +154,7 @@ def crear_app() -> FastAPI:
     app.include_router(pagos.router)
     app.include_router(pse_simulado.router)
     app.include_router(siniestros.router)
+    app.include_router(evidencias_siniestro.router)
     app.include_router(asesor.router)
     app.include_router(desembolsos.router_cliente)
     app.include_router(desembolsos.router_operaciones)

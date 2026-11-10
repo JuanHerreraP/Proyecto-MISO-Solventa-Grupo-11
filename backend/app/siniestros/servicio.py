@@ -1,11 +1,15 @@
-"""Caso de uso del registro manual de siniestros (HU20).
+"""Caso de uso del registro manual de siniestros (HU20, HU04).
 
 Reglas: la póliza debe existir, pertenecer al cliente, estar vigente y cubrir la fecha del
 evento, que no puede ser futura. El `cliente_id` sale de la sesión, nunca del cliente.
+
+Con una `Idempotency-Key` (HU04), repetir el mismo registro devuelve el siniestro ya creado:
+la app reenvía un borrador después de perder la conexión sin duplicarlo.
 """
 
 import uuid
 from collections.abc import Callable
+from dataclasses import dataclass
 from datetime import UTC, date, datetime
 
 from app.polizas.dominio.modelos import EstadoPoliza, hoy_en_colombia
@@ -16,7 +20,7 @@ from app.siniestros.modelos import (
     Siniestro,
     SolicitudSiniestro,
 )
-from app.siniestros.repositorio import RepositorioSiniestros
+from app.siniestros.repositorio import ClaveIdempotenciaDuplicada, RepositorioSiniestros
 
 
 class PolizaNoEncontrada(Exception):
@@ -40,6 +44,18 @@ class FechaEventoInvalida(Exception):
         self.mensaje = mensaje
 
 
+class ClaveIdempotenciaReutilizada(Exception):
+    """La misma Idempotency-Key llegó con datos de un siniestro distinto."""
+
+
+@dataclass(frozen=True)
+class RegistroSiniestro:
+    """Resultado del registro: `creado` es False cuando se repitió una solicitud ya atendida."""
+
+    siniestro: Siniestro
+    creado: bool
+
+
 class ServicioSiniestros:
     def __init__(
         self,
@@ -59,6 +75,20 @@ class ServicioSiniestros:
         registrado_por: str,
         solicitud: SolicitudSiniestro,
     ) -> Siniestro:
+        return self.registrar(cliente_id, registrado_por, solicitud).siniestro
+
+    def registrar(
+        self,
+        cliente_id: str,
+        registrado_por: str,
+        solicitud: SolicitudSiniestro,
+        clave_idempotencia: str | None = None,
+    ) -> RegistroSiniestro:
+        if clave_idempotencia is not None:
+            previo = self._siniestros.obtener_por_clave(cliente_id, clave_idempotencia)
+            if previo is not None:
+                return self._repeticion(previo, solicitud)
+
         poliza = self._polizas.obtener(solicitud.poliza_id)
         if poliza is None:
             raise PolizaNoEncontrada(solicitud.poliza_id)
@@ -81,6 +111,7 @@ class ServicioSiniestros:
             poliza_id=poliza.poliza_id,
             origen=OrigenSiniestro.MANUAL,
             estado=EstadoSiniestro.REGISTRADO,
+            tipo_siniestro=solicitud.tipo_siniestro,
             fecha_evento=solicitud.fecha_evento,
             hora_evento=solicitud.hora_evento,
             lugar=solicitud.lugar,
@@ -89,9 +120,33 @@ class ServicioSiniestros:
             moneda="COP",
             registrado_por=registrado_por,
             registrado_en=ahora,
+            clave_idempotencia=clave_idempotencia,
         )
-        self._siniestros.guardar(siniestro)
-        return siniestro
+        try:
+            self._siniestros.guardar(siniestro)
+        except ClaveIdempotenciaDuplicada:
+            # Dos reintentos simultáneos: gana el primero y el segundo recibe ese siniestro.
+            previo = self._siniestros.obtener_por_clave(cliente_id, clave_idempotencia or "")
+            if previo is None:
+                raise
+            return self._repeticion(previo, solicitud)
+        return RegistroSiniestro(siniestro=siniestro, creado=True)
+
+    @staticmethod
+    def _repeticion(previo: Siniestro, solicitud: SolicitudSiniestro) -> RegistroSiniestro:
+        """Devuelve el siniestro ya creado si la solicitud es la misma; si no, es un error."""
+        mismos_datos = (
+            previo.poliza_id == solicitud.poliza_id
+            and previo.fecha_evento == solicitud.fecha_evento
+            and previo.hora_evento == solicitud.hora_evento
+            and previo.lugar == solicitud.lugar
+            and previo.descripcion == solicitud.descripcion
+            and previo.estimacion_danos == solicitud.estimacion_danos
+            and previo.tipo_siniestro == solicitud.tipo_siniestro
+        )
+        if not mismos_datos:
+            raise ClaveIdempotenciaReutilizada(previo.clave_idempotencia)
+        return RegistroSiniestro(siniestro=previo, creado=False)
 
     def listar_de_cliente(self, cliente_id: str) -> list[Siniestro]:
         """Siniestros del cliente, del más reciente al más antiguo."""
