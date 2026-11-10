@@ -97,3 +97,7 @@ fun esFormularioSiniestroValido(
         errorLugarSiniestro(lugar) == null &&
         errorDescripcionSiniestro(descripcion) == null &&
         errorEstimacionSiniestro(estimacion) == null
+
+/** HU04: el reporte pide el tipo de siniestro. */
+fun errorTipoSiniestro(tipo: com.example.solventa.domain.siniestros.TipoSiniestro?): String? =
+    if (tipo == null) "Selecciona el tipo de siniestro" else null

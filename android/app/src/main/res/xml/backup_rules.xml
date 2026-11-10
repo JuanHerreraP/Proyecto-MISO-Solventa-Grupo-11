@@ -6,4 +6,6 @@
 -->
 <full-backup-content>
     <exclude domain="sharedpref" path="solventa_sesion.xml" />
+    <!-- Borradores de siniestro y sus fotos: datos del cliente que no salen del dispositivo. -->
+    <exclude domain="file" path="borradores_siniestro/" />
 </full-backup-content>

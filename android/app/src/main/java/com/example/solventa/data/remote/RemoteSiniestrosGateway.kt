@@ -1,6 +1,9 @@
 package com.example.solventa.data.remote
 
 import com.example.solventa.domain.auth.ResultadoApi
+import com.example.solventa.domain.siniestros.CODIGO_ARCHIVO_LOCAL_AUSENTE
+import com.example.solventa.domain.siniestros.EvidenciaLocal
+import com.example.solventa.domain.siniestros.EvidenciaRegistrada
 import com.example.solventa.domain.siniestros.Siniestro
 import com.example.solventa.domain.siniestros.Siniestros
 import com.example.solventa.domain.siniestros.SiniestrosGateway
@@ -8,7 +11,15 @@ import com.example.solventa.domain.siniestros.SolicitudSiniestro
 import com.example.solventa.domain.siniestros.SolicitudSiniestroAsistido
 import com.google.gson.JsonParseException
 import com.google.gson.stream.MalformedJsonException
+import java.io.File
 import java.io.IOException
+import java.util.Locale
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.MultipartBody
+import okhttp3.RequestBody
+import okhttp3.RequestBody.Companion.asRequestBody
+import okhttp3.RequestBody.Companion.toRequestBody
 import retrofit2.Response
 
 class RemoteSiniestrosGateway(private val api: SiniestrosApi) : SiniestrosGateway {
@@ -20,7 +31,9 @@ class RemoteSiniestrosGateway(private val api: SiniestrosApi) : SiniestrosGatewa
         accessToken: String,
         solicitud: SolicitudSiniestro
     ): ResultadoApi<Siniestro> =
-        llamar({ api.registrar(bearer(accessToken), solicitud.aDto()) }) { it.aSiniestro() }
+        llamar({
+            api.registrar(bearer(accessToken), solicitud.aDto(), solicitud.claveIdempotencia)
+        }) { it.aSiniestro() }
 
     override suspend fun registrarAsistido(
         accessToken: String,
@@ -34,7 +47,41 @@ class RemoteSiniestrosGateway(private val api: SiniestrosApi) : SiniestrosGatewa
     ): ResultadoApi<Siniestros> =
         llamar({ api.listarDeCliente(bearer(accessToken), clienteId) }) { it.aSiniestros() }
 
+    override suspend fun subirEvidencia(
+        accessToken: String,
+        siniestroId: String,
+        evidencia: EvidenciaLocal
+    ): ResultadoApi<EvidenciaRegistrada> {
+        val archivo = File(evidencia.rutaArchivo)
+        if (!archivo.isFile) {
+            return ResultadoApi.Fallo(CUERPO_INVALIDO, CODIGO_ARCHIVO_LOCAL_AUSENTE, null)
+        }
+        val parte = MultipartBody.Part.createFormData(
+            "archivo",
+            evidencia.nombreArchivo ?: archivo.name,
+            archivo.asRequestBody(evidencia.tipoContenido.toMediaTypeOrNull())
+        )
+        val ubicacion = evidencia.ubicacion
+        return llamar({
+            api.subirEvidencia(
+                autorizacion = bearer(accessToken),
+                huella = evidencia.huellaSha256,
+                siniestroId = siniestroId,
+                archivo = parte,
+                capturadaEn = evidencia.capturadaEn?.let { texto(it) },
+                latitud = ubicacion?.latitud?.let { texto(numero(it)) },
+                longitud = ubicacion?.longitud?.let { texto(numero(it)) },
+                precisionMetros = ubicacion?.precisionMetros?.let { texto(numero(it.toDouble())) }
+            )
+        }) { it.aEvidencia() }
+    }
+
     private fun bearer(accessToken: String) = "Bearer $accessToken"
+
+    private fun texto(valor: String): RequestBody = valor.toRequestBody(TEXTO_PLANO)
+
+    /** Punto decimal siempre, sin importar el idioma del teléfono. */
+    private fun numero(valor: Double): String = String.format(Locale.US, "%.7f", valor)
 
     /** Un cuerpo exitoso que no se puede mapear se trata como fallo, sin romper la UI. */
     private suspend fun <D : Any, T : Any> llamar(
@@ -62,5 +109,6 @@ class RemoteSiniestrosGateway(private val api: SiniestrosApi) : SiniestrosGatewa
     private companion object {
         /** Código para respuestas que no se pudieron leer; no coincide con ningún HTTP real. */
         const val CUERPO_INVALIDO = 0
+        val TEXTO_PLANO = "text/plain".toMediaType()
     }
 }

@@ -3,4 +3,8 @@
     <cache-path
         name="polizas"
         path="polizas/" />
+    <!-- HU04: la cámara escribe las evidencias en la carpeta privada del borrador. -->
+    <files-path
+        name="evidencias_siniestro"
+        path="borradores_siniestro/" />
 </paths>

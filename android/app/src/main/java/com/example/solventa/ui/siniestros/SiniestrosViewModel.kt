@@ -35,6 +35,28 @@ class SiniestrosViewModel(private val coordinador: SiniestrosCoordinator) : View
 
     fun consumirRegistroExitoso() = coordinador.consumirRegistroExitoso()
 
+    /** HU04: borrador del reporte y evidencias. */
+    fun cargarBorrador() {
+        viewModelScope.launch { coordinador.cargarBorrador() }
+    }
+
+    fun agregarEvidencia(
+        importada: com.example.solventa.domain.siniestros.EvidenciaImportada,
+        desdeGaleria: Boolean
+    ) {
+        viewModelScope.launch { coordinador.agregarEvidencia(importada, desdeGaleria) }
+    }
+
+    fun quitarEvidencia(evidenciaId: String) {
+        viewModelScope.launch { coordinador.quitarEvidencia(evidenciaId) }
+    }
+
+    fun descartarBorrador() {
+        viewModelScope.launch { coordinador.descartarBorrador() }
+    }
+
+    fun consumirAvisoEvidencia() = coordinador.consumirAvisoEvidencia()
+
     fun consumirErrorFormulario() = coordinador.consumirErrorFormulario()
 
     fun consumirMensaje() = coordinador.consumirMensaje()

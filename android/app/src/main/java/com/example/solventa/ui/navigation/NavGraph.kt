@@ -46,6 +46,7 @@ import com.example.solventa.ui.components.SeccionNavegacion
 import com.example.solventa.ui.components.SolventaBottomNavigation
 import com.example.solventa.ui.pagos.PagosViewModel
 import com.example.solventa.ui.siniestros.SiniestrosViewModel
+import com.example.solventa.ui.siniestros.rememberCapturaEvidencias
 import com.example.solventa.ui.screens.AdvisorHomeScreen
 import com.example.solventa.ui.screens.BiometricalLoginScreen
 import com.example.solventa.ui.screens.CertificateScreen
@@ -876,6 +877,27 @@ fun NavGraph(
                         }
                     }
 
+                    // HU04: borrador del reporte y captura de evidencias en la carpeta privada.
+                    LaunchedEffect(usuarioId) { siniestros.cargarBorrador() }
+                    val contexto = LocalContext.current.applicationContext
+                    val borradoresArchivo = remember(contexto) {
+                        com.example.solventa.data.local.BorradoresSiniestroArchivo(contexto)
+                    }
+                    val archivosEvidencia = remember(borradoresArchivo) {
+                        com.example.solventa.data.local.ArchivosEvidencia(contexto, borradoresArchivo)
+                    }
+                    val proveedorUbicacion = remember(contexto) {
+                        com.example.solventa.data.local.ProveedorUbicacion(contexto)
+                    }
+                    val accionesEvidencia = rememberCapturaEvidencias(
+                        usuarioId = usuarioId,
+                        archivos = archivosEvidencia,
+                        ubicacion = proveedorUbicacion,
+                        onEvidencia = { importada, desdeGaleria ->
+                            siniestros.agregarEvidencia(importada, desdeGaleria)
+                        }
+                    )
+
                     PantallaConNavegacion(
                         visible = desdeNavbar,
                         seleccionada = SeccionNavegacion.SINIESTROS,
@@ -887,7 +909,7 @@ fun NavGraph(
                             polizas = elegibles,
                             registrando = estadoSiniestros.registrando,
                             error = estadoSiniestros.errorFormulario,
-                            onRegistrar = { polizaId, fecha, hora, lugar, descripcion, estimacion ->
+                            onRegistrar = { polizaId, tipo, fecha, hora, lugar, descripcion, estimacion ->
                                 siniestros.registrar(
                                     SolicitudSiniestro(
                                         polizaId = polizaId,
@@ -895,15 +917,22 @@ fun NavGraph(
                                         horaEvento = if (hora.length == 5) "$hora:00" else hora,
                                         lugar = lugar,
                                         descripcion = descripcion,
-                                        estimacionDanos = estimacion
+                                        estimacionDanos = estimacion,
+                                        tipoSiniestro = tipo
                                     )
                                 )
                             },
                             onVolver = {
                                 siniestros.consumirErrorFormulario()
+                                siniestros.consumirAvisoEvidencia()
                                 navController.popBackStack()
                             },
-                            modifier = pantallaModifier
+                            modifier = pantallaModifier,
+                            borrador = estadoSiniestros.borrador,
+                            acciones = accionesEvidencia,
+                            avisoEvidencia = estadoSiniestros.avisoEvidencia,
+                            onQuitarEvidencia = { siniestros.quitarEvidencia(it) },
+                            onDescartarBorrador = { siniestros.descartarBorrador() }
                         )
                     }
                 }
@@ -947,7 +976,7 @@ fun NavGraph(
                         error = estadoSiniestros.errorFormulario,
                         clienteNombre = cliente.nombreCompleto,
                         cargandoPolizas = estadoAsesor.cargandoPolizas,
-                        onRegistrar = { polizaId, fecha, hora, lugar, descripcion, estimacion ->
+                        onRegistrar = { polizaId, tipo, fecha, hora, lugar, descripcion, estimacion ->
                             siniestros.registrarAsistido(
                                 SolicitudSiniestroAsistido(
                                     clienteId = cliente.clienteId,
@@ -956,7 +985,8 @@ fun NavGraph(
                                     horaEvento = if (hora.length == 5) "$hora:00" else hora,
                                     lugar = lugar,
                                     descripcion = descripcion,
-                                    estimacionDanos = estimacion
+                                    estimacionDanos = estimacion,
+                                    tipoSiniestro = tipo
                                 )
                             )
                         },

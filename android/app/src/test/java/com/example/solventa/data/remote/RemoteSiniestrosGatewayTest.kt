@@ -2,7 +2,14 @@ package com.example.solventa.data.remote
 
 import com.example.solventa.domain.auth.ResultadoApi
 import com.example.solventa.domain.siniestros.EstadoSiniestro
+import com.example.solventa.domain.siniestros.CODIGO_ARCHIVO_LOCAL_AUSENTE
+import com.example.solventa.domain.siniestros.EvidenciaLocal
 import com.example.solventa.domain.siniestros.OrigenSiniestro
+import com.example.solventa.domain.siniestros.SolicitudSiniestro
+import com.example.solventa.domain.siniestros.TipoEvidencia
+import com.example.solventa.domain.siniestros.TipoSiniestro
+import com.example.solventa.domain.siniestros.Ubicacion
+import java.io.File
 import kotlinx.coroutines.runBlocking
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
@@ -178,5 +185,141 @@ class RemoteSiniestrosGatewayTest {
             ResultadoApi.Fallo(409, "POLIZA_NO_VIGENTE", "La póliza no está vigente."),
             resultado
         )
+    }
+
+    // --- HU04 -----------------------------------------------------------------------------
+
+    private val siniestroJson = """
+        {"siniestro_id":"SIN-9","cliente_id":"CLI-1","poliza_id":"POL-1",
+         "origen":"MANUAL","estado":"REGISTRADO","evento_id":null,"tipo_siniestro":"ROBO_HURTO",
+         "fecha_evento":"2026-10-20","hora_evento":"18:30:00","lugar":"Bus",
+         "descripcion":"Me robaron el celular.","estimacion_danos":"850000.00",
+         "moneda":"COP","registrado_por":"CLI-1","registrado_en":"2026-10-20T19:00:00Z"}
+    """.trimIndent()
+
+    private fun evidenciaLocal(archivo: File, ubicacion: Ubicacion?) = EvidenciaLocal(
+        id = "E1",
+        rutaArchivo = archivo.absolutePath,
+        tipoContenido = "image/jpeg",
+        tipo = TipoEvidencia.FOTO,
+        tamanoBytes = archivo.length(),
+        huellaSha256 = "b".repeat(64),
+        capturadaEn = "2026-11-10T15:00:00Z",
+        ubicacion = ubicacion,
+        nombreArchivo = "foto.jpg"
+    )
+
+    @Test
+    fun registrarEnviaElTipoYLaIdempotencyKey() = runBlocking {
+        responder(201, siniestroJson)
+
+        val resultado = gateway.registrar(
+            "access-1",
+            SolicitudSiniestro(
+                polizaId = "POL-1",
+                fechaEvento = "2026-10-20",
+                horaEvento = "18:30:00",
+                lugar = "Bus",
+                descripcion = "Me robaron el celular.",
+                estimacionDanos = "850000",
+                tipoSiniestro = TipoSiniestro.ROBO_HURTO,
+                claveIdempotencia = "BORRADOR-1"
+            )
+        )
+
+        assertEquals(TipoSiniestro.ROBO_HURTO, (resultado as ResultadoApi.Exito).valor.tipoSiniestro)
+        val peticion = servidor.takeRequest()
+        assertEquals("BORRADOR-1", peticion.getHeader("Idempotency-Key"))
+        val cuerpo = peticion.body.readUtf8()
+        assertTrue(cuerpo.contains("\"tipo_siniestro\":\"ROBO_HURTO\""))
+        // La clave no viaja en el cuerpo.
+        assertTrue(!cuerpo.contains("BORRADOR-1"))
+    }
+
+    @Test
+    fun registrarSinTipoNiClaveNoLosEnvia() = runBlocking {
+        responder(201, siniestroJson)
+
+        gateway.registrar(
+            "access-1",
+            SolicitudSiniestro("POL-1", "2026-10-20", "18:30:00", "Bus", "Descripción larga.", "1000")
+        )
+
+        val peticion = servidor.takeRequest()
+        assertNull(peticion.getHeader("Idempotency-Key"))
+        assertTrue(!peticion.body.readUtf8().contains("tipo_siniestro"))
+    }
+
+    @Test
+    fun subirEvidenciaEnviaMultipartConHuellaYUbicacion() = runBlocking {
+        responder(201, """{"evidencia_id":"EVI-1","huella_sha256":"${"b".repeat(64)}","geoetiquetada":true}""")
+        val archivo = File.createTempFile("evidencia", ".jpg").apply {
+            writeBytes(byteArrayOf(-1, -40, -1, 1, 2, 3))
+            deleteOnExit()
+        }
+
+        val resultado = gateway.subirEvidencia(
+            "access-1",
+            "SIN-9",
+            evidenciaLocal(archivo, Ubicacion(4.7016, -74.1469, 12.5f))
+        )
+
+        val registrada = (resultado as ResultadoApi.Exito).valor
+        assertEquals("EVI-1", registrada.evidenciaId)
+        assertTrue(registrada.geoetiquetada)
+        val peticion = servidor.takeRequest()
+        assertEquals("POST", peticion.method)
+        assertEquals("/api/v1/siniestros/SIN-9/evidencias", peticion.path)
+        assertEquals("Bearer access-1", peticion.getHeader("Authorization"))
+        assertEquals("b".repeat(64), peticion.getHeader("X-Contenido-SHA256"))
+        assertTrue(peticion.getHeader("Content-Type")!!.startsWith("multipart/form-data"))
+        val cuerpo = peticion.body.readUtf8()
+        assertTrue(cuerpo.contains("name=\"archivo\"; filename=\"foto.jpg\""))
+        assertTrue(cuerpo.contains("Content-Type: image/jpeg"))
+        assertTrue(cuerpo.contains("name=\"capturada_en\""))
+        assertTrue(cuerpo.contains("2026-11-10T15:00:00Z"))
+        assertTrue(cuerpo.contains("4.7016000"))
+        assertTrue(cuerpo.contains("-74.1469000"))
+        assertTrue(cuerpo.contains("name=\"precision_metros\""))
+    }
+
+    @Test
+    fun subirEvidenciaSinUbicacionOmiteEsasPartes() = runBlocking {
+        responder(201, """{"evidencia_id":"EVI-2","huella_sha256":"${"b".repeat(64)}","geoetiquetada":false}""")
+        val archivo = File.createTempFile("evidencia", ".jpg").apply {
+            writeBytes(byteArrayOf(-1, -40, -1))
+            deleteOnExit()
+        }
+
+        gateway.subirEvidencia("access-1", "SIN-9", evidenciaLocal(archivo, ubicacion = null))
+
+        val cuerpo = servidor.takeRequest().body.readUtf8()
+        assertTrue(!cuerpo.contains("name=\"latitud\""))
+        assertTrue(!cuerpo.contains("name=\"longitud\""))
+    }
+
+    @Test
+    fun subirEvidenciaConArchivoAusenteNoLlamaAlServidor() = runBlocking {
+        val resultado = gateway.subirEvidencia(
+            "access-1",
+            "SIN-9",
+            evidenciaLocal(File("/no/existe/foto.jpg"), ubicacion = null)
+        )
+
+        assertEquals(CODIGO_ARCHIVO_LOCAL_AUSENTE, (resultado as ResultadoApi.Fallo).codigo)
+        assertEquals(0, servidor.requestCount)
+    }
+
+    @Test
+    fun subirEvidenciaRechazadaDevuelveElCodigo() = runBlocking {
+        responder(415, """{"detail":{"codigo":"TIPO_NO_PERMITIDO","mensaje":"Formato no admitido."}}""")
+        val archivo = File.createTempFile("evidencia", ".jpg").apply {
+            writeBytes(byteArrayOf(1))
+            deleteOnExit()
+        }
+
+        val resultado = gateway.subirEvidencia("access-1", "SIN-9", evidenciaLocal(archivo, null))
+
+        assertEquals(ResultadoApi.Fallo(415, "TIPO_NO_PERMITIDO", "Formato no admitido."), resultado)
     }
 }

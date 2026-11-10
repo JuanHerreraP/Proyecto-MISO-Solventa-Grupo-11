@@ -1,11 +1,13 @@
 package com.example.solventa.data.remote
 
 import com.example.solventa.domain.siniestros.EstadoSiniestro
+import com.example.solventa.domain.siniestros.EvidenciaRegistrada
 import com.example.solventa.domain.siniestros.OrigenSiniestro
 import com.example.solventa.domain.siniestros.Siniestro
 import com.example.solventa.domain.siniestros.Siniestros
 import com.example.solventa.domain.siniestros.SolicitudSiniestro
 import com.example.solventa.domain.siniestros.SolicitudSiniestroAsistido
+import com.example.solventa.domain.siniestros.TipoSiniestro
 import com.google.gson.annotations.SerializedName
 import java.math.BigDecimal
 
@@ -25,7 +27,8 @@ data class SiniestroDto(
     @SerializedName("descripcion") val descripcion: String?,
     @SerializedName("estimacion_danos") val estimacionDanos: String?,
     @SerializedName("moneda") val moneda: String?,
-    @SerializedName("registrado_en") val registradoEn: String?
+    @SerializedName("registrado_en") val registradoEn: String?,
+    @SerializedName("tipo_siniestro") val tipoSiniestro: String? = null
 ) {
     fun aSiniestro(): Siniestro? {
         val origenSiniestro = origen.aOrigen() ?: return null
@@ -42,7 +45,8 @@ data class SiniestroDto(
             descripcion = descripcion.orEmpty(),
             estimacionDanos = estimacionDanos.orEmpty(),
             moneda = moneda ?: "COP",
-            registradoEn = registradoEn ?: return null
+            registradoEn = registradoEn ?: return null,
+            tipoSiniestro = TipoSiniestro.desdeCodigo(tipoSiniestro)
         )
     }
 }
@@ -61,7 +65,9 @@ data class SolicitudSiniestroDto(
     @SerializedName("hora_evento") val horaEvento: String,
     @SerializedName("lugar") val lugar: String,
     @SerializedName("descripcion") val descripcion: String,
-    @SerializedName("estimacion_danos") val estimacionDanos: BigDecimal
+    @SerializedName("estimacion_danos") val estimacionDanos: BigDecimal,
+    /** Gson omite los nulos: sin tipo, el campo no viaja (HU04). */
+    @SerializedName("tipo_siniestro") val tipoSiniestro: String? = null
 )
 
 fun SolicitudSiniestro.aDto(): SolicitudSiniestroDto = SolicitudSiniestroDto(
@@ -70,7 +76,8 @@ fun SolicitudSiniestro.aDto(): SolicitudSiniestroDto = SolicitudSiniestroDto(
     horaEvento = horaEvento,
     lugar = lugar,
     descripcion = descripcion,
-    estimacionDanos = estimacionDanos.toBigDecimalOrNull() ?: BigDecimal.ZERO
+    estimacionDanos = estimacionDanos.toBigDecimalOrNull() ?: BigDecimal.ZERO,
+    tipoSiniestro = tipoSiniestro?.name
 )
 
 /**
@@ -84,7 +91,8 @@ data class SolicitudSiniestroAsistidoDto(
     @SerializedName("hora_evento") val horaEvento: String,
     @SerializedName("lugar") val lugar: String,
     @SerializedName("descripcion") val descripcion: String,
-    @SerializedName("estimacion_danos") val estimacionDanos: BigDecimal
+    @SerializedName("estimacion_danos") val estimacionDanos: BigDecimal,
+    @SerializedName("tipo_siniestro") val tipoSiniestro: String? = null
 )
 
 fun SolicitudSiniestroAsistido.aDto(): SolicitudSiniestroAsistidoDto = SolicitudSiniestroAsistidoDto(
@@ -94,8 +102,26 @@ fun SolicitudSiniestroAsistido.aDto(): SolicitudSiniestroAsistidoDto = Solicitud
     horaEvento = horaEvento,
     lugar = lugar,
     descripcion = descripcion,
-    estimacionDanos = estimacionDanos.toBigDecimalOrNull() ?: BigDecimal.ZERO
+    estimacionDanos = estimacionDanos.toBigDecimalOrNull() ?: BigDecimal.ZERO,
+    tipoSiniestro = tipoSiniestro?.name
 )
+
+/** Respuesta de la carga de una evidencia (HU04). */
+data class EvidenciaDto(
+    @SerializedName("evidencia_id") val evidenciaId: String?,
+    @SerializedName("huella_sha256") val huellaSha256: String?,
+    @SerializedName("geoetiquetada") val geoetiquetada: Boolean?
+) {
+    fun aEvidencia(): EvidenciaRegistrada? {
+        val id = evidenciaId ?: return null
+        val huella = huellaSha256 ?: return null
+        return EvidenciaRegistrada(
+            evidenciaId = id,
+            huellaSha256 = huella,
+            geoetiquetada = geoetiquetada ?: false
+        )
+    }
+}
 
 private fun String?.aOrigen(): OrigenSiniestro? =
     this?.let { valor -> OrigenSiniestro.entries.firstOrNull { it.name == valor } }

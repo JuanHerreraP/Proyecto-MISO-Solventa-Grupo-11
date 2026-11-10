@@ -24,6 +24,7 @@ import com.example.solventa.data.remote.RemoteAsesorGateway
 import com.example.solventa.data.remote.RemoteCotizacionesGateway
 import com.example.solventa.data.remote.RemotePagosGateway
 import com.example.solventa.data.remote.RemotePolizasGateway
+import com.example.solventa.data.local.BorradoresSiniestroArchivo
 import com.example.solventa.data.local.CachePolizasCifrada
 import com.example.solventa.data.connectivity.MonitorConexionPolizas
 import com.example.solventa.data.remote.RemoteSiniestrosGateway
@@ -108,7 +109,10 @@ class MainActivity : FragmentActivity() {
         SiniestrosViewModel.Fabrica {
             SiniestrosCoordinator(
                 gateway = RemoteSiniestrosGateway(ApiClient.crearSiniestrosApi()),
-                sesion = viewModel.sesion
+                sesion = viewModel.sesion,
+                // HU04: el reporte y sus evidencias se guardan como borrador por usuario.
+                borradores = BorradoresSiniestroArchivo(applicationContext),
+                usuarioActual = { viewModel.sesion.usuarioId() }
             )
         }
     }

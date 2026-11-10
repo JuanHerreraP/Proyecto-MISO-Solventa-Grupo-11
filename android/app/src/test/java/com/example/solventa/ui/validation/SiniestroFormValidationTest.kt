@@ -98,4 +98,12 @@ class SiniestroFormValidationTest {
             )
         )
     }
+
+    @Test
+    fun elTipoDeSiniestroEsObligatorio() {
+        assertEquals("Selecciona el tipo de siniestro", errorTipoSiniestro(null))
+        assertNull(
+            errorTipoSiniestro(com.example.solventa.domain.siniestros.TipoSiniestro.ACCIDENTE)
+        )
+    }
 }
