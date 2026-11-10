@@ -42,6 +42,7 @@ se mantienen en la [wiki del proyecto](https://github.com/JuanHerreraP/Proyecto-
 | Documento | Contenido |
 | --- | --- |
 | [Siniestros: registro manual y detección paramétrica](siniestros.md) | HU20: registro manual, telemetría externa que empuja eventos y creación automática del siniestro |
+| [Reporte de siniestro con evidencias](siniestros-evidencias.md) | HU04 y EC10: tipo de siniestro, fotos y videos con huella y ubicación, borrador sin conexión, integridad y auditoría de las evidencias |
 | [Desembolso de indemnizaciones](desembolsos.md) | HU15: aprobación o rechazo desde la bandeja de Operaciones, pago automático e idempotente a cuenta tokenizada o código de retiro, reintentos |
 
 ## Clientes, ejecución y evidencias

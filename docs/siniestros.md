@@ -53,6 +53,8 @@ Cómo levantar el proveedor y disparar un evento: ver el README del repositorio.
 
 ## App Android
 
+El reporte con tipo de siniestro, fotos o videos con ubicación y borrador sin conexión está en [Reporte de siniestro con evidencias](siniestros-evidencias.md) (HU04).
+
 Desde el inicio o la pestaña **Siniestros** se abre «Mis siniestros» (`GET /api/v1/siniestros`), con etiquetas de origen (Automático/Manual) y estado. «Reportar siniestro» abre un formulario con selector de póliza, fecha y hora (pickers nativos), lugar, descripción y estimación, y registra vía `POST /api/v1/siniestros`.
 
 ## Pruebas
