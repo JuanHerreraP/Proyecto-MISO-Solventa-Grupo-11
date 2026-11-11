@@ -84,6 +84,61 @@ data class EnlaceCompartido(
     val expiraEn: String
 )
 
+/** Vigencia de una póliza; las fechas llegan en ISO (aaaa-mm-dd). */
+data class VigenciaRenovacion(val inicio: String, val fin: String)
+
+data class CoberturaRenovacion(val nombre: String, val principal: Boolean)
+
+/** Motivo por el que la póliza no se puede renovar ahora. */
+data class BloqueoRenovacion(val codigo: String, val mensaje: String)
+
+/** Renovación creada que espera el pago de [cotizacionId] por [primaTotal]. */
+data class RenovacionEnCurso(
+    val renovacionId: String,
+    val polizaId: String,
+    val cotizacionId: String,
+    val estado: String,
+    val nuevoInicio: String,
+    val nuevoFin: String,
+    val primaTotal: String,
+    val moneda: String
+)
+
+/** Lo que el cliente revisa antes de confirmar y pagar la renovación (HU22). */
+data class PropuestaRenovacion(
+    val polizaId: String,
+    val renovable: Boolean,
+    val bloqueos: List<BloqueoRenovacion>,
+    val nuevaVigencia: VigenciaRenovacion?,
+    val coberturas: List<CoberturaRenovacion>,
+    val primaNueva: String?,
+    val moneda: String,
+    val renovacion: RenovacionEnCurso?
+)
+
+data class MotivoCancelacion(val codigo: String, val etiqueta: String)
+
+/** Motivo por el que la póliza no se puede cancelar ahora (p. ej. un siniestro en trámite). */
+data class BloqueoCancelacion(val codigo: String, val mensaje: String)
+
+/** Lo que el cliente revisa antes de confirmar la cancelación (HU22). */
+data class PropuestaCancelacion(
+    val polizaId: String,
+    val numeroPoliza: String,
+    val cancelable: Boolean,
+    val bloqueos: List<BloqueoCancelacion>,
+    val saldoEstimado: String,
+    val moneda: String,
+    val motivos: List<MotivoCancelacion>
+)
+
+data class CancelacionRealizada(
+    val cancelacionId: String,
+    val polizaId: String,
+    val saldoEstimado: String,
+    val moneda: String
+)
+
 /** Puerto hacia el backend de la billetera. */
 interface PolizasGateway {
     suspend fun billetera(accessToken: String): ResultadoApi<Billetera>
@@ -94,6 +149,23 @@ interface PolizasGateway {
     ): ResultadoApi<HistorialEndosos>
     suspend fun documento(accessToken: String, polizaId: String): ResultadoApi<DocumentoPoliza>
     suspend fun compartir(accessToken: String, polizaId: String): ResultadoApi<EnlaceCompartido>
+    suspend fun propuestaRenovacion(
+        accessToken: String,
+        polizaId: String
+    ): ResultadoApi<PropuestaRenovacion>
+    suspend fun iniciarRenovacion(
+        accessToken: String,
+        polizaId: String
+    ): ResultadoApi<RenovacionEnCurso>
+    suspend fun propuestaCancelacion(
+        accessToken: String,
+        polizaId: String
+    ): ResultadoApi<PropuestaCancelacion>
+    suspend fun cancelarPoliza(
+        accessToken: String,
+        polizaId: String,
+        motivo: String
+    ): ResultadoApi<CancelacionRealizada>
 }
 
 /**

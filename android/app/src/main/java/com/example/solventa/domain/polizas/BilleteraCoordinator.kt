@@ -27,7 +27,21 @@ data class EstadoBilletera(
     /** Evento: la UI debe abrir el menú de compartir con este enlace y luego consumirlo. */
     val enlaceParaCompartir: EnlaceCompartido? = null,
     /** Aviso pasajero, por ejemplo cuando no se pudo generar el enlace. */
-    val mensaje: String? = null
+    val mensaje: String? = null,
+    val cargandoRenovacion: Boolean = false,
+    val propuestaRenovacion: PropuestaRenovacion? = null,
+    val errorRenovacion: String? = null,
+    val iniciandoRenovacion: Boolean = false,
+    /** Renovación creada que se está pagando; el pago usa su cotización y su monto. */
+    val renovacionEnCurso: RenovacionEnCurso? = null,
+    /** Evento: la UI lleva al pago de esta renovación y luego lo consume. */
+    val renovacionParaPagar: RenovacionEnCurso? = null,
+    val cargandoCancelacion: Boolean = false,
+    val propuestaCancelacion: PropuestaCancelacion? = null,
+    val errorCancelacion: String? = null,
+    val cancelando: Boolean = false,
+    /** La póliza ya quedó cancelada; la UI muestra la confirmación. */
+    val cancelacionRealizada: CancelacionRealizada? = null
 )
 
 object MensajesBilletera {
@@ -41,6 +55,14 @@ object MensajesBilletera {
     const val DOCUMENTO_REQUIERE_CONEXION = "Conéctate a internet para consultar el documento."
     const val COMPARTIR_FALLIDO = "No pudimos generar el enlace para compartir. Inténtalo de nuevo."
     const val SESION_VENCIDA = "Tu sesión expiró. Vuelve a ingresar."
+    const val RENOVACION_NO_DISPONIBLE =
+        "No pudimos consultar la renovación. Inténtalo de nuevo en unos minutos."
+    const val RENOVACION_NO_INICIADA = "No pudimos iniciar la renovación. Inténtalo de nuevo."
+    const val RENOVACION_NO_PERMITIDA = "Esta póliza no se puede renovar en este momento."
+    const val CANCELACION_NO_DISPONIBLE =
+        "No pudimos consultar la cancelación. Inténtalo de nuevo en unos minutos."
+    const val CANCELACION_FALLIDA = "No pudimos cancelar la póliza. Inténtalo de nuevo."
+    const val CANCELACION_NO_PERMITIDA = "Esta póliza no se puede cancelar en este momento."
 }
 
 enum class ResultadoSincronizacion {
@@ -264,6 +286,178 @@ class BilleteraCoordinator(
                 )
             }
         }
+    }
+
+    /** Condiciones de la renovación: nueva vigencia, coberturas y prima recalculada (HU22). */
+    suspend fun verPropuestaRenovacion(polizaId: String) {
+        if (estado.cargandoRenovacion) return
+        val token = tokenOFinalizar() ?: return
+        estado = estado.copy(
+            cargandoRenovacion = true,
+            propuestaRenovacion = estado.propuestaRenovacion?.takeIf { it.polizaId == polizaId },
+            errorRenovacion = null
+        )
+        val inicio = generacion
+        val resultado = gateway.propuestaRenovacion(token, polizaId)
+        if (inicio != generacion) return
+
+        estado = when (resultado) {
+            is ResultadoApi.Exito -> estado.copy(
+                cargandoRenovacion = false,
+                propuestaRenovacion = resultado.valor
+            )
+            is ResultadoApi.Fallo -> when (resultado.http) {
+                401 -> return rechazada()
+                403, 404 -> estado.copy(
+                    cargandoRenovacion = false,
+                    propuestaRenovacion = null,
+                    errorRenovacion = MensajesBilletera.POLIZA_NO_ENCONTRADA
+                )
+                else -> estado.copy(
+                    cargandoRenovacion = false,
+                    errorRenovacion = MensajesBilletera.RENOVACION_NO_DISPONIBLE
+                )
+            }
+            ResultadoApi.SinConexion -> estado.copy(
+                cargandoRenovacion = false,
+                errorRenovacion = MensajesBilletera.SIN_CONEXION
+            )
+        }
+    }
+
+    /** Crea la renovación y deja lista la cotización que el cliente paga con el recaudo normal. */
+    suspend fun iniciarRenovacion(polizaId: String) {
+        if (estado.iniciandoRenovacion) return
+        val token = tokenOFinalizar() ?: return
+        estado = estado.copy(iniciandoRenovacion = true, errorRenovacion = null)
+        val inicio = generacion
+        val resultado = gateway.iniciarRenovacion(token, polizaId)
+        if (inicio != generacion) return
+
+        estado = when (resultado) {
+            is ResultadoApi.Exito -> estado.copy(
+                iniciandoRenovacion = false,
+                renovacionEnCurso = resultado.valor,
+                renovacionParaPagar = resultado.valor
+            )
+            is ResultadoApi.Fallo -> when (resultado.http) {
+                401 -> return rechazada()
+                403, 404 -> estado.copy(
+                    iniciandoRenovacion = false,
+                    errorRenovacion = MensajesBilletera.POLIZA_NO_ENCONTRADA
+                )
+                409 -> estado.copy(
+                    iniciandoRenovacion = false,
+                    errorRenovacion = resultado.mensaje ?: MensajesBilletera.RENOVACION_NO_PERMITIDA
+                )
+                else -> estado.copy(
+                    iniciandoRenovacion = false,
+                    errorRenovacion = MensajesBilletera.RENOVACION_NO_INICIADA
+                )
+            }
+            ResultadoApi.SinConexion -> estado.copy(
+                iniciandoRenovacion = false,
+                errorRenovacion = MensajesBilletera.SIN_CONEXION
+            )
+        }
+    }
+
+    fun renovacionEnPago() {
+        if (estado.renovacionParaPagar != null) estado = estado.copy(renovacionParaPagar = null)
+    }
+
+    fun cerrarRenovacion() {
+        estado = estado.copy(
+            cargandoRenovacion = false,
+            propuestaRenovacion = null,
+            errorRenovacion = null,
+            iniciandoRenovacion = false,
+            renovacionEnCurso = null,
+            renovacionParaPagar = null
+        )
+    }
+
+    /** Condiciones de la cancelación: consecuencias, motivos y saldo a favor estimado (HU22). */
+    suspend fun verPropuestaCancelacion(polizaId: String) {
+        if (estado.cargandoCancelacion) return
+        val token = tokenOFinalizar() ?: return
+        estado = estado.copy(
+            cargandoCancelacion = true,
+            propuestaCancelacion = estado.propuestaCancelacion?.takeIf { it.polizaId == polizaId },
+            errorCancelacion = null
+        )
+        val inicio = generacion
+        val resultado = gateway.propuestaCancelacion(token, polizaId)
+        if (inicio != generacion) return
+
+        estado = when (resultado) {
+            is ResultadoApi.Exito -> estado.copy(
+                cargandoCancelacion = false,
+                propuestaCancelacion = resultado.valor
+            )
+            is ResultadoApi.Fallo -> when (resultado.http) {
+                401 -> return rechazada()
+                403, 404 -> estado.copy(
+                    cargandoCancelacion = false,
+                    propuestaCancelacion = null,
+                    errorCancelacion = MensajesBilletera.POLIZA_NO_ENCONTRADA
+                )
+                else -> estado.copy(
+                    cargandoCancelacion = false,
+                    errorCancelacion = MensajesBilletera.CANCELACION_NO_DISPONIBLE
+                )
+            }
+            ResultadoApi.SinConexion -> estado.copy(
+                cargandoCancelacion = false,
+                errorCancelacion = MensajesBilletera.SIN_CONEXION
+            )
+        }
+    }
+
+    /** Cancela la póliza con el motivo elegido; el cliente ya confirmó de forma explícita. */
+    suspend fun cancelarPoliza(polizaId: String, motivo: String) {
+        if (estado.cancelando) return
+        val token = tokenOFinalizar() ?: return
+        estado = estado.copy(cancelando = true, errorCancelacion = null)
+        val inicio = generacion
+        val resultado = gateway.cancelarPoliza(token, polizaId, motivo)
+        if (inicio != generacion) return
+
+        estado = when (resultado) {
+            is ResultadoApi.Exito -> estado.copy(
+                cancelando = false,
+                cancelacionRealizada = resultado.valor
+            )
+            is ResultadoApi.Fallo -> when (resultado.http) {
+                401 -> return rechazada()
+                403, 404 -> estado.copy(
+                    cancelando = false,
+                    errorCancelacion = MensajesBilletera.POLIZA_NO_ENCONTRADA
+                )
+                409 -> estado.copy(
+                    cancelando = false,
+                    errorCancelacion = resultado.mensaje ?: MensajesBilletera.CANCELACION_NO_PERMITIDA
+                )
+                else -> estado.copy(
+                    cancelando = false,
+                    errorCancelacion = MensajesBilletera.CANCELACION_FALLIDA
+                )
+            }
+            ResultadoApi.SinConexion -> estado.copy(
+                cancelando = false,
+                errorCancelacion = MensajesBilletera.SIN_CONEXION
+            )
+        }
+    }
+
+    fun cerrarCancelacion() {
+        estado = estado.copy(
+            cargandoCancelacion = false,
+            propuestaCancelacion = null,
+            errorCancelacion = null,
+            cancelando = false,
+            cancelacionRealizada = null
+        )
     }
 
     suspend fun descargarDocumento(polizaId: String) {

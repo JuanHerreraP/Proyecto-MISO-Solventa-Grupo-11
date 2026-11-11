@@ -81,6 +81,16 @@ class PolizasGatewayFalso : PolizasGateway {
     val historialesPedidos = mutableListOf<String>()
     val documentosPedidos = mutableListOf<String>()
     val compartidos = mutableListOf<String>()
+    var respuestaPropuestaRenovacion: ResultadoApi<PropuestaRenovacion> =
+        ResultadoApi.Exito(propuestaRenovacion())
+    var respuestaIniciarRenovacion: ResultadoApi<RenovacionEnCurso> =
+        ResultadoApi.Exito(renovacionEnCurso())
+    val renovacionesIniciadas = mutableListOf<String>()
+    var respuestaPropuestaCancelacion: ResultadoApi<PropuestaCancelacion> =
+        ResultadoApi.Exito(propuestaCancelacion())
+    var respuestaCancelar: ResultadoApi<CancelacionRealizada> =
+        ResultadoApi.Exito(cancelacionRealizada())
+    val cancelaciones = mutableListOf<Pair<String, String>>()
 
     override suspend fun billetera(accessToken: String): ResultadoApi<Billetera> {
         tokensUsados += accessToken
@@ -116,7 +126,91 @@ class PolizasGatewayFalso : PolizasGateway {
         compartidos += polizaId
         return respuestaCompartir
     }
+
+    override suspend fun propuestaRenovacion(
+        accessToken: String,
+        polizaId: String
+    ): ResultadoApi<PropuestaRenovacion> {
+        tokensUsados += accessToken
+        return respuestaPropuestaRenovacion
+    }
+
+    override suspend fun iniciarRenovacion(
+        accessToken: String,
+        polizaId: String
+    ): ResultadoApi<RenovacionEnCurso> {
+        tokensUsados += accessToken
+        renovacionesIniciadas += polizaId
+        return respuestaIniciarRenovacion
+    }
+
+    override suspend fun propuestaCancelacion(
+        accessToken: String,
+        polizaId: String
+    ): ResultadoApi<PropuestaCancelacion> {
+        tokensUsados += accessToken
+        return respuestaPropuestaCancelacion
+    }
+
+    override suspend fun cancelarPoliza(
+        accessToken: String,
+        polizaId: String,
+        motivo: String
+    ): ResultadoApi<CancelacionRealizada> {
+        tokensUsados += accessToken
+        cancelaciones += polizaId to motivo
+        return respuestaCancelar
+    }
 }
+
+fun propuestaRenovacion(
+    renovable: Boolean = true,
+    bloqueos: List<BloqueoRenovacion> = emptyList(),
+    renovacion: RenovacionEnCurso? = null
+) = PropuestaRenovacion(
+    polizaId = "POL-1",
+    renovable = renovable,
+    bloqueos = bloqueos,
+    nuevaVigencia = VigenciaRenovacion("2027-01-01", "2027-12-31"),
+    coberturas = listOf(CoberturaRenovacion("Asistencia médica", true)),
+    primaNueva = "164700.00",
+    moneda = "COP",
+    renovacion = renovacion
+)
+
+fun renovacionEnCurso() = RenovacionEnCurso(
+    renovacionId = "REN-POL-1-20270101",
+    polizaId = "POL-1",
+    cotizacionId = "COT-REN-1",
+    estado = "PENDIENTE_PAGO",
+    nuevoInicio = "2027-01-01",
+    nuevoFin = "2027-12-31",
+    primaTotal = "164700.00",
+    moneda = "COP"
+)
+
+fun propuestaCancelacion(
+    cancelable: Boolean = true,
+    bloqueos: List<BloqueoCancelacion> = emptyList()
+) = PropuestaCancelacion(
+    polizaId = "POL-1",
+    numeroPoliza = "SOL-VJ-0001",
+    cancelable = cancelable,
+    bloqueos = bloqueos,
+    saldoEstimado = "24500.00",
+    moneda = "COP",
+    motivos = listOf(
+        MotivoCancelacion("YA_NO_LA_NECESITO", "Ya no la necesito"),
+        MotivoCancelacion("PRECIO_ALTO", "El precio es muy alto")
+    )
+)
+
+fun cancelacionRealizada() = CancelacionRealizada(
+    cancelacionId = "CAN-POL-1",
+    polizaId = "POL-1",
+    saldoEstimado = "24500.00",
+    moneda = "COP"
+)
 
 class SesionFalsa(
     var token: String? = "access-1",

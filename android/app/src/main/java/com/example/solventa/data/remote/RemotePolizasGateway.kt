@@ -2,11 +2,15 @@ package com.example.solventa.data.remote
 
 import com.example.solventa.domain.auth.ResultadoApi
 import com.example.solventa.domain.polizas.Billetera
+import com.example.solventa.domain.polizas.CancelacionRealizada
+import com.example.solventa.domain.polizas.PropuestaCancelacion
 import com.example.solventa.domain.polizas.Certificado
 import com.example.solventa.domain.polizas.DocumentoPoliza
 import com.example.solventa.domain.polizas.EnlaceCompartido
 import com.example.solventa.domain.polizas.HistorialEndosos
 import com.example.solventa.domain.polizas.PolizasGateway
+import com.example.solventa.domain.polizas.PropuestaRenovacion
+import com.example.solventa.domain.polizas.RenovacionEnCurso
 import com.google.gson.JsonParseException
 import com.google.gson.stream.MalformedJsonException
 import java.io.IOException
@@ -73,6 +77,32 @@ class RemotePolizasGateway(private val api: PolizasApi) : PolizasGateway {
 
     override suspend fun compartir(accessToken: String, polizaId: String): ResultadoApi<EnlaceCompartido> =
         llamar({ api.compartir(bearer(accessToken), polizaId) }) { it.aEnlace() }
+
+    override suspend fun propuestaRenovacion(
+        accessToken: String,
+        polizaId: String
+    ): ResultadoApi<PropuestaRenovacion> =
+        llamar({ api.propuestaRenovacion(bearer(accessToken), polizaId) }) { it.aPropuesta() }
+
+    override suspend fun iniciarRenovacion(
+        accessToken: String,
+        polizaId: String
+    ): ResultadoApi<RenovacionEnCurso> =
+        llamar({ api.iniciarRenovacion(bearer(accessToken), polizaId) }) { it.aRenovacion() }
+
+    override suspend fun propuestaCancelacion(
+        accessToken: String,
+        polizaId: String
+    ): ResultadoApi<PropuestaCancelacion> =
+        llamar({ api.propuestaCancelacion(bearer(accessToken), polizaId) }) { it.aPropuesta() }
+
+    override suspend fun cancelarPoliza(
+        accessToken: String,
+        polizaId: String,
+        motivo: String
+    ): ResultadoApi<CancelacionRealizada> = llamar(
+        { api.cancelarPoliza(bearer(accessToken), polizaId, SolicitudCancelacionDto(motivo, true)) }
+    ) { it.aCancelacion() }
 
     private fun bearer(accessToken: String) = "Bearer $accessToken"
 

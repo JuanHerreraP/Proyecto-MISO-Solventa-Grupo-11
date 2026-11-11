@@ -57,14 +57,43 @@ class CertificateScreenTest {
         }
     }
 
+    private fun abrirCertificado() =
+        compose.boton("Ver certificado y QR").performScrollTo().performClick()
+
+    private fun abrirMovimientos() =
+        compose.boton("Consultar movimientos").performScrollTo().performClick()
+
+    @Test
+    fun muestraElResumenYLosBotonesDeGestion() {
+        mostrar(certificado())
+
+        compose.onNodeWithText("Coberturas").assertIsDisplayed()
+        compose.onNodeWithText("Exclusiones principales").performScrollTo().assertIsDisplayed()
+        compose.boton("Ver certificado y QR").performScrollTo().assertIsDisplayed()
+        compose.boton("Consultar movimientos").performScrollTo().assertIsDisplayed()
+        compose.boton("Renovar").performScrollTo().performClick()
+        compose.boton("Cancelar").performScrollTo().assertIsDisplayed()
+    }
+
+    @Test
+    fun unaPolizaInactivaNoOfreceRenovarNiCancelar() {
+        mostrar(certificado(estado = EstadoPoliza.CANCELADA))
+
+        compose.onNodeWithText("Renovar").assertDoesNotExist()
+        compose.onNodeWithText("Cancelar").assertDoesNotExist()
+    }
+
     @Test
     fun muestraElQrElNumeroYLosDatosDelCertificado() {
         mostrar(certificado())
+        abrirCertificado()
 
-        compose.onNodeWithText("SOL-VJ-0001").assertIsDisplayed()
+        compose.onNodeWithText("Número de póliza").performScrollTo().assertIsDisplayed()
         compose.onNodeWithText("Ana Pérez").performScrollTo().assertIsDisplayed()
         compose.onNodeWithText("CC ****5678").performScrollTo().assertIsDisplayed()
-        compose.onNodeWithText("$40.000.000").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("Suma asegurada $40.000.000", substring = true)
+            .performScrollTo()
+            .assertIsDisplayed()
         compose.onNodeWithContentDescription("Código QR de la póliza SOL-VJ-0001")
             .performScrollTo()
             .assertIsDisplayed()
@@ -73,6 +102,7 @@ class CertificateScreenTest {
     @Test
     fun permiteCompartirElCertificado() {
         mostrar(certificado())
+        abrirCertificado()
 
         compose.boton("Compartir certificado").performScrollTo().performClick()
 
@@ -82,6 +112,8 @@ class CertificateScreenTest {
     @Test
     fun muestraExclusionesMovimientosYPermiteAbrirElDocumento() {
         mostrar(certificado())
+        abrirCertificado()
+        abrirMovimientos()
 
         compose.onNodeWithText("Viajes contra recomendación médica", substring = true)
             .performScrollTo()
@@ -96,6 +128,7 @@ class CertificateScreenTest {
     @Test
     fun mientrasGeneraElEnlaceNoSePuedeVolverACompartir() {
         mostrar(certificado(), compartiendo = true)
+        abrirCertificado()
 
         compose.onNodeWithText("Compartir certificado").assertDoesNotExist()
     }
@@ -103,6 +136,7 @@ class CertificateScreenTest {
     @Test
     fun muestraElEstadoVacioDelHistorial() {
         mostrar(certificado(), historial = HistorialEndosos(emptyList()))
+        abrirMovimientos()
 
         compose.onNodeWithText("Esta póliza no tiene movimientos registrados.")
             .performScrollTo()
