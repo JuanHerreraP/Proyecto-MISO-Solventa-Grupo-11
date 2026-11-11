@@ -20,6 +20,7 @@ import com.example.solventa.biometric.AutenticadorBiometrico
 import com.example.solventa.biometric.DisponibilidadBiometrica
 import com.example.solventa.data.remote.ApiClient
 import com.example.solventa.data.remote.RemoteAuthGateway
+import com.example.solventa.data.remote.RemoteAsesorGateway
 import com.example.solventa.data.remote.RemoteCotizacionesGateway
 import com.example.solventa.data.remote.RemotePagosGateway
 import com.example.solventa.data.remote.RemotePolizasGateway
@@ -28,6 +29,7 @@ import com.example.solventa.data.connectivity.MonitorConexionPolizas
 import com.example.solventa.data.remote.RemoteSiniestrosGateway
 import com.example.solventa.data.session.KeystoreBovedaSesion
 import com.example.solventa.domain.auth.AuthCoordinator
+import com.example.solventa.domain.asesor.AsesorCoordinator
 import com.example.solventa.domain.auth.Reloj
 import com.example.solventa.domain.cotizaciones.CotizacionesCoordinator
 import com.example.solventa.domain.pagos.PagosCoordinator
@@ -35,6 +37,7 @@ import com.example.solventa.domain.polizas.BilleteraCoordinator
 import com.example.solventa.domain.polizas.SincronizadorPolizas
 import com.example.solventa.domain.siniestros.SiniestrosCoordinator
 import com.example.solventa.ui.auth.AuthViewModel
+import com.example.solventa.ui.asesor.AsesorViewModel
 import com.example.solventa.ui.billetera.BilleteraViewModel
 import com.example.solventa.ui.cotizaciones.CotizacionesViewModel
 import com.example.solventa.ui.pagos.PagosViewModel
@@ -110,6 +113,16 @@ class MainActivity : FragmentActivity() {
         }
     }
 
+    /** Asesor de ventas (HU20): clientes asociados y registro asistido. */
+    private val asesor: AsesorViewModel by viewModels {
+        AsesorViewModel.Fabrica {
+            AsesorCoordinator(
+                gateway = RemoteAsesorGateway(ApiClient.crearAsesorApi()),
+                sesion = viewModel.sesion
+            )
+        }
+    }
+
     private val solicitarRedLocal =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { }
 
@@ -129,7 +142,8 @@ class MainActivity : FragmentActivity() {
                         billetera = billetera,
                         cotizaciones = cotizaciones,
                         pagos = pagos,
-                        siniestros = siniestros
+                        siniestros = siniestros,
+                        asesor = asesor
                     )
                 }
             }

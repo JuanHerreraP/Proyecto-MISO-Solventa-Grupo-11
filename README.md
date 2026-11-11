@@ -173,6 +173,7 @@ curl -X POST http://localhost:8004/simulate/flight-delay \
 - [Firma electrónica del contrato (HU14)](docs/firma-electronica.md)
 - [Modificación de coberturas, beneficiarios y endosos (HU16)](docs/endosos.md)
 - [Desembolso automatizado e idempotente de indemnizaciones (HU15)](docs/desembolsos.md)
+- [Historial detallado de movimientos de una póliza (HU25)](docs/historial-poliza.md)
 
 ## Integración continua
 

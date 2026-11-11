@@ -203,6 +203,14 @@ export default function PolizasPage() {
                     )}
                     <button
                       type="button"
+                      className="cotizar-boton-secundario"
+                      onClick={() => navigate(`/polizas/${encodeURIComponent(poliza.poliza_id)}/historial`)}
+                    >
+                      <span className="material-symbols-outlined" aria-hidden="true">history</span>
+                      Ver historial
+                    </button>
+                    <button
+                      type="button"
                       className="cotizar-boton-primario"
                       onClick={() => void descargar(poliza.poliza_id)}
                       disabled={descargando === poliza.poliza_id}

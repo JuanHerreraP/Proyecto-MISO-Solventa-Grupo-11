@@ -54,6 +54,14 @@ sealed class ScreenRoute(val route: String) {
             return if (desdeNavbar) "$base?desdeNavbar=true" else base
         }
     }
+    object PolicyHistory : ScreenRoute("policy_history/{polizaId}?desdeNavbar={desdeNavbar}") {
+        const val ARGUMENTO = "polizaId"
+        const val ORIGEN_NAVBAR = "desdeNavbar"
+        fun ruta(polizaId: String, desdeNavbar: Boolean = false): String {
+            val base = "policy_history/${URLEncoder.encode(polizaId, "UTF-8")}"
+            return if (desdeNavbar) "$base?desdeNavbar=true" else base
+        }
+    }
     object Payment : ScreenRoute("payment_screen/{cotizacionId}") {
         const val ARGUMENTO = "cotizacionId"
         fun ruta(cotizacionId: String) =
@@ -73,6 +81,19 @@ sealed class ScreenRoute(val route: String) {
             if (desdeNavbar) "claim_form_screen?desdeNavbar=true" else "claim_form_screen"
     }
 
+    /** Registro asistido de un asesor para un cliente asociado (HU20). */
+    object AssistedClaimForm : ScreenRoute("assisted_claim_form/{clienteId}") {
+        const val ARGUMENTO = "clienteId"
+        fun ruta(clienteId: String) =
+            "assisted_claim_form/${URLEncoder.encode(clienteId, "UTF-8")}"
+    }
+
+    /** Alta de un asesor de ventas por un manager (HU20). */
+    object CreateAdvisor : ScreenRoute("create_advisor_screen")
+
+    /** Alta de un analista de cumplimiento por un manager (HU25). */
+    object CreateAuditor : ScreenRoute("create_auditor_screen")
+
     companion object {
         /** Rutas que solo se pueden ver con una sesión activa. */
         val privadas: Set<String>
@@ -87,12 +108,16 @@ sealed class ScreenRoute(val route: String) {
                 Certificate.route,
                 Renewal.route,
                 Cancel.route,
+                PolicyHistory.route,
                 Payment.route,
                 PsePortal.route,
                 PaymentResult.route,
                 Payments.route,
                 Claims.route,
-                ClaimForm.route
+                ClaimForm.route,
+                AssistedClaimForm.route,
+                CreateAdvisor.route,
+                CreateAuditor.route
             )
     }
 }

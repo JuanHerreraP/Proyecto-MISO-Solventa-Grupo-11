@@ -18,7 +18,7 @@ data class EstadoBilletera(
     val certificado: Certificado? = null,
     val errorCertificado: String? = null,
     val cargandoHistorial: Boolean = false,
-    val historialEndosos: HistorialEndosos? = null,
+    val historial: HistorialPoliza? = null,
     val errorHistorial: String? = null,
     val descargandoDocumento: Boolean = false,
     /** Evento: la UI abre este PDF y luego lo consume. */
@@ -245,31 +245,31 @@ class BilleteraCoordinator(
     }
 
     /** Consulta el historial remoto y conserva la última copia cifrada para uso offline. */
-    suspend fun verHistorialEndosos(polizaId: String) {
+    suspend fun verHistorialPoliza(polizaId: String) {
         if (estado.cargandoHistorial) return
         val usuario = usuarioOFinalizar() ?: return
         activarUsuario(usuario)
         val token = tokenOFinalizar() ?: return
-        val cacheado = leerHistorialEndosos(usuario, polizaId)
+        val cacheado = leerHistorialPoliza(usuario, polizaId)
         estado = estado.copy(
             cargandoHistorial = true,
-            historialEndosos = cacheado?.historial,
+            historial = cacheado?.historial,
             errorHistorial = null
         )
         val inicio = generacion
-        val resultado = gateway.historialEndosos(token, polizaId)
+        val resultado = gateway.historialPoliza(token, polizaId)
         if (inicio != generacion) return
 
         estado = when (resultado) {
             is ResultadoApi.Exito -> {
-                guardarHistorialEndosos(usuario, polizaId, resultado.valor)
-                estado.copy(cargandoHistorial = false, historialEndosos = resultado.valor)
+                guardarHistorialPoliza(usuario, polizaId, resultado.valor)
+                estado.copy(cargandoHistorial = false, historial = resultado.valor)
             }
             is ResultadoApi.Fallo -> when (resultado.http) {
                 401 -> return rechazada()
                 403, 404 -> estado.copy(
                     cargandoHistorial = false,
-                    historialEndosos = null,
+                    historial = null,
                     errorHistorial = MensajesBilletera.POLIZA_NO_ENCONTRADA
                 )
                 else -> estado.copy(
@@ -278,7 +278,7 @@ class BilleteraCoordinator(
                 )
             }
             ResultadoApi.SinConexion -> if (cacheado != null) {
-                estado.copy(cargandoHistorial = false, historialEndosos = cacheado.historial)
+                estado.copy(cargandoHistorial = false, historial = cacheado.historial)
             } else {
                 estado.copy(
                     cargandoHistorial = false,
@@ -520,15 +520,28 @@ class BilleteraCoordinator(
             cargandoCertificado = false,
             certificado = null,
             errorCertificado = null,
-            cargandoHistorial = false,
-            historialEndosos = null,
-            errorHistorial = null,
             descargandoDocumento = false,
             documentoParaAbrir = null,
             compartiendo = false,
             enlaceParaCompartir = null,
             mensaje = null
         )
+    }
+
+    /**
+     * Limpia el historial de movimientos al salir de su pantalla. Es independiente de
+     * cerrarCertificado(): la pantalla de detalle y la de historial tienen ciclos de vida
+     * distintos, y al navegar del detalle al historial no debe borrarse lo que el historial
+     * acaba de cargar.
+     */
+    fun cerrarHistorial() {
+        if (estado.cargandoHistorial || estado.historial != null || estado.errorHistorial != null) {
+            estado = estado.copy(
+                cargandoHistorial = false,
+                historial = null,
+                errorHistorial = null
+            )
+        }
     }
 
     /** Limpia únicamente la memoria; no borra una caché útil al iniciar la app sin conexión. */
@@ -584,11 +597,11 @@ class BilleteraCoordinator(
         null
     }
 
-    private suspend fun leerHistorialEndosos(
+    private suspend fun leerHistorialPoliza(
         usuario: ClaveUsuarioCache,
         polizaId: String
-    ): HistorialEndososCacheado? = try {
-        cache.historialEndosos(usuario, polizaId)
+    ): HistorialPolizaCacheado? = try {
+        cache.historialPoliza(usuario, polizaId)
     } catch (error: Exception) {
         null
     }
@@ -629,13 +642,13 @@ class BilleteraCoordinator(
         }
     }
 
-    private suspend fun guardarHistorialEndosos(
+    private suspend fun guardarHistorialPoliza(
         usuario: ClaveUsuarioCache,
         polizaId: String,
-        historial: HistorialEndosos
+        historial: HistorialPoliza
     ) {
         try {
-            cache.guardarHistorialEndosos(usuario, polizaId, historial)
+            cache.guardarHistorialPoliza(usuario, polizaId, historial)
         } catch (error: Exception) {
             // Mostrar el historial remoto no depende de que el dispositivo pueda persistirlo.
         }

@@ -72,7 +72,9 @@ fun ClaimFormScreen(
     error: String?,
     onRegistrar: (polizaId: String, fecha: String, hora: String, lugar: String, descripcion: String, estimacion: String) -> Unit,
     onVolver: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    clienteNombre: String? = null,
+    cargandoPolizas: Boolean = false
 ) {
     var polizaId by remember { mutableStateOf(polizas.firstOrNull()?.polizaId.orEmpty()) }
     var fecha by remember { mutableStateOf("") }
@@ -100,15 +102,49 @@ fun ClaimFormScreen(
                     Text(text = error, style = MaterialTheme.typography.bodyMedium, color = Atencion)
                 }
 
-                if (polizas.isNotEmpty()) {
-                    SelectorPoliza(
+                if (clienteNombre != null) {
+                    Surface(
+                        shape = RoundedCornerShape(16.dp),
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.04f),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Text(
+                                text = "CLIENTE",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                            )
+                            Text(
+                                text = clienteNombre,
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+                    }
+                }
+
+                when {
+                    cargandoPolizas -> Text(
+                        text = "Cargando las pólizas del cliente…",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                    )
+
+                    polizas.isNotEmpty() -> SelectorPoliza(
                         polizas = polizas,
                         seleccionada = polizaId,
                         onSeleccionar = { polizaId = it },
                         error = if (intentado) errorPolizaSiniestro(polizaId) else null
                     )
-                } else {
-                    SolventaTextField(
+
+                    // Para el asesor sin pólizas vigentes del cliente, se avisa en vez de pedir texto.
+                    clienteNombre != null -> Text(
+                        text = "El cliente no tiene pólizas vigentes para reportar un siniestro.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Atencion
+                    )
+
+                    else -> SolventaTextField(
                         value = polizaId,
                         onValueChange = { polizaId = it },
                         label = "Póliza",

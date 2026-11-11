@@ -32,6 +32,12 @@ class RepositorioDesembolsosEnMemoria:
         propios.sort(key=lambda d: d.creado_en, reverse=True)
         return [d.model_copy() for d in propios]
 
+    def listar_por_poliza(self, poliza_id: str) -> list[Desembolso]:
+        """Desembolsos de una póliza, del más reciente al más antiguo (HU25)."""
+        propios = [d for d in self._por_siniestro.values() if d.poliza_id == poliza_id]
+        propios.sort(key=lambda d: d.creado_en, reverse=True)
+        return [d.model_copy() for d in propios]
+
 
 class RepositorioCuentasEnMemoria:
     def __init__(self):
@@ -78,6 +84,15 @@ class RepositorioDesembolsosPostgres:
         sentencia = (
             select(DesembolsoDB)
             .where(DesembolsoDB.cliente_id == cliente_id)
+            .order_by(DesembolsoDB.creado_en.desc())
+        )
+        return [_a_dominio(r) for r in self._db.scalars(sentencia).all()]
+
+    def listar_por_poliza(self, poliza_id: str) -> list[Desembolso]:
+        """Desembolsos de una póliza, del más reciente al más antiguo (HU25)."""
+        sentencia = (
+            select(DesembolsoDB)
+            .where(DesembolsoDB.poliza_id == poliza_id)
             .order_by(DesembolsoDB.creado_en.desc())
         )
         return [_a_dominio(r) for r in self._db.scalars(sentencia).all()]

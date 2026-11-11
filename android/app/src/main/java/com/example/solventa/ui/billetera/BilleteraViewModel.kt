@@ -34,8 +34,8 @@ class BilleteraViewModel(private val coordinador: BilleteraCoordinator) : ViewMo
         viewModelScope.launch { coordinador.verCertificado(polizaId) }
     }
 
-    fun verHistorialEndosos(polizaId: String) {
-        viewModelScope.launch { coordinador.verHistorialEndosos(polizaId) }
+    fun verHistorialPoliza(polizaId: String) {
+        viewModelScope.launch { coordinador.verHistorialPoliza(polizaId) }
     }
 
     fun verPropuestaRenovacion(polizaId: String) {
@@ -77,6 +77,8 @@ class BilleteraViewModel(private val coordinador: BilleteraCoordinator) : ViewMo
     fun consumirMensaje() = coordinador.consumirMensaje()
 
     fun cerrarCertificado() = coordinador.cerrarCertificado()
+
+    fun cerrarHistorial() = coordinador.cerrarHistorial()
 
     fun limpiar() = coordinador.limpiar()
 

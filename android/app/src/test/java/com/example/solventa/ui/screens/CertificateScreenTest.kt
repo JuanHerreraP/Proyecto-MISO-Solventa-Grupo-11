@@ -8,9 +8,7 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import com.example.solventa.domain.polizas.Certificado
 import com.example.solventa.domain.polizas.EstadoPoliza
-import com.example.solventa.domain.polizas.HistorialEndosos
 import com.example.solventa.domain.polizas.certificado
-import com.example.solventa.domain.polizas.historialEndosos
 import com.example.solventa.ui.theme.SolventaTheme
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -29,9 +27,6 @@ class CertificateScreenTest {
         certificado: Certificado?,
         cargando: Boolean = false,
         error: String? = null,
-        historial: HistorialEndosos? = historialEndosos(),
-        cargandoHistorial: Boolean = false,
-        errorHistorial: String? = null,
         descargandoDocumento: Boolean = false,
         compartiendo: Boolean = false,
         mensaje: String? = null
@@ -42,14 +37,12 @@ class CertificateScreenTest {
                     certificado = certificado,
                     cargando = cargando,
                     error = error,
-                    historial = historial,
-                    cargandoHistorial = cargandoHistorial,
-                    errorHistorial = errorHistorial,
                     descargandoDocumento = descargandoDocumento,
                     compartiendo = compartiendo,
                     mensaje = mensaje,
                     onVerDocumento = { eventos += "documento" },
                     onCompartir = { eventos += "compartir" },
+                    onVerHistorial = { eventos += "historial" },
                     onReintentar = { eventos += "reintentar" },
                     onVolver = { eventos += "volver" }
                 )
@@ -59,9 +52,6 @@ class CertificateScreenTest {
 
     private fun abrirCertificado() =
         compose.boton("Ver certificado y QR").performScrollTo().performClick()
-
-    private fun abrirMovimientos() =
-        compose.boton("Consultar movimientos").performScrollTo().performClick()
 
     @Test
     fun muestraElResumenYLosBotonesDeGestion() {
@@ -110,19 +100,25 @@ class CertificateScreenTest {
     }
 
     @Test
-    fun muestraExclusionesMovimientosYPermiteAbrirElDocumento() {
+    fun muestraExclusionesYPermiteAbrirElDocumento() {
         mostrar(certificado())
         abrirCertificado()
-        abrirMovimientos()
 
         compose.onNodeWithText("Viajes contra recomendación médica", substring = true)
             .performScrollTo()
             .assertIsDisplayed()
-        compose.onNodeWithText("Modificacion cobertura").performScrollTo().assertIsDisplayed()
-        compose.onNodeWithText("Aumenta la suma asegurada").performScrollTo().assertIsDisplayed()
         compose.boton("Ver documento PDF").performScrollTo().performClick()
 
         assertEquals(listOf("documento"), eventos)
+    }
+
+    @Test
+    fun permiteAbrirElHistorialDeLaPoliza() {
+        mostrar(certificado())
+
+        compose.boton("Consultar movimientos").performScrollTo().performClick()
+
+        assertEquals(listOf("historial"), eventos)
     }
 
     @Test
@@ -131,16 +127,6 @@ class CertificateScreenTest {
         abrirCertificado()
 
         compose.onNodeWithText("Compartir certificado").assertDoesNotExist()
-    }
-
-    @Test
-    fun muestraElEstadoVacioDelHistorial() {
-        mostrar(certificado(), historial = HistorialEndosos(emptyList()))
-        abrirMovimientos()
-
-        compose.onNodeWithText("Esta póliza no tiene movimientos registrados.")
-            .performScrollTo()
-            .assertIsDisplayed()
     }
 
     @Test

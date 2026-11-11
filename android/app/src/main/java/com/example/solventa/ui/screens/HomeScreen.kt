@@ -20,8 +20,10 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.automirrored.outlined.Logout
+import androidx.compose.material.icons.automirrored.outlined.ManageSearch
 import androidx.compose.material.icons.outlined.NotificationsNone
 import androidx.compose.material.icons.outlined.Payments
+import androidx.compose.material.icons.outlined.PersonAddAlt
 import androidx.compose.material.icons.outlined.RequestQuote
 import androidx.compose.material.icons.outlined.Shield
 import androidx.compose.material.icons.outlined.VerifiedUser
@@ -75,6 +77,8 @@ fun HomeScreen(
     onNavbarSiniestros: (() -> Unit)? = null,
     onCotizarSeguro: () -> Unit = {},
     cantidadPolizasActivas: Int? = null,
+    onCrearAsesor: (() -> Unit)? = null,
+    onCrearAnalista: (() -> Unit)? = null,
     sinConexion: Boolean = false,
     ultimaSincronizacionMs: Long? = null
 ) {
@@ -160,6 +164,52 @@ fun HomeScreen(
                     onClick = onVerPagos,
                     modifier = Modifier.weight(1f)
                 )
+            }
+
+            if (onCrearAsesor != null) {
+                Surface(
+                    shape = RoundedCornerShape(18.dp),
+                    color = Navegacion.copy(alpha = 0.1f),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable(role = Role.Button, onClick = onCrearAsesor)
+                ) {
+                    Row(
+                        modifier = Modifier.padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(Icons.Outlined.PersonAddAlt, contentDescription = null, tint = Navegacion)
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Text(
+                            text = "Crear un asesor de ventas",
+                            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                }
+            }
+
+            if (onCrearAnalista != null) {
+                Surface(
+                    shape = RoundedCornerShape(18.dp),
+                    color = Navegacion.copy(alpha = 0.1f),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable(role = Role.Button, onClick = onCrearAnalista)
+                ) {
+                    Row(
+                        modifier = Modifier.padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(Icons.AutoMirrored.Outlined.ManageSearch, contentDescription = null, tint = Navegacion)
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Text(
+                            text = "Crear un analista de cumplimiento",
+                            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                }
             }
 
             if (mensaje != null) {

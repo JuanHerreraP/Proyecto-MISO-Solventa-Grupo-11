@@ -100,14 +100,23 @@ class ScreenRouteTest {
                 "certificate_screen/{polizaId}?desdeNavbar={desdeNavbar}",
                 "renewal_screen/{polizaId}?desdeNavbar={desdeNavbar}",
                 "cancel_screen/{polizaId}?desdeNavbar={desdeNavbar}",
+                "policy_history/{polizaId}?desdeNavbar={desdeNavbar}",
                 "payment_screen/{cotizacionId}",
                 "pse_portal_screen",
                 "payment_result_screen",
                 "payments_screen",
                 "claims_screen?desdeNavbar={desdeNavbar}",
-                "claim_form_screen?desdeNavbar={desdeNavbar}"
+                "claim_form_screen?desdeNavbar={desdeNavbar}",
+                "assisted_claim_form/{clienteId}",
+                "create_advisor_screen",
+                "create_auditor_screen"
             ),
             ScreenRoute.privadas
         )
+    }
+
+    @Test
+    fun laRutaDelAltaDeAnalistaEsEstable() {
+        assertEquals("create_auditor_screen", ScreenRoute.CreateAuditor.route)
     }
 }

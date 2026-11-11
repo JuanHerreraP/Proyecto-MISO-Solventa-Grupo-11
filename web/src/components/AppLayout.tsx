@@ -1,7 +1,12 @@
 import { useState, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { cerrarSesion } from "../services/session";
-import { ROLES_ADMINISTRACION_SOCIOS, ROLES_OPERACIONES_SINIESTROS } from "../types/permisos";
+import {
+  ROLES_ADMINISTRACION_SOCIOS,
+  ROLES_CREAR_ASESOR,
+  ROLES_OPERACIONES_SINIESTROS,
+  ROLES_AUDITORIA,
+} from "../types/permisos";
 import logoSolventa from "../assets/solventa-logo.png";
 import "../styles/home.css";
 
@@ -21,7 +26,8 @@ type Props = {
     | "Mis cotizaciones"
     | "Mis pólizas"
     | "Siniestros"
-    | "Bandeja de siniestros";
+    | "Bandeja de siniestros"
+    | "Historial contractual";
   rol: string | null;
   children: ReactNode;
 };
@@ -31,7 +37,9 @@ export default function AppLayout({ activo, rol, children }: Props) {
   const navigate = useNavigate();
   const [errorSesion, setErrorSesion] = useState("");
   const puedeCrearSocios = ROLES_ADMINISTRACION_SOCIOS.some((permitido) => permitido === rol);
+  const puedeCrearAsesor = ROLES_CREAR_ASESOR.some((permitido) => permitido === rol);
   const evaluaSiniestros = ROLES_OPERACIONES_SINIESTROS.some((permitido) => permitido === rol);
+  const esAuditoria = ROLES_AUDITORIA.some((permitido) => permitido === rol);
 
   return (
     <div className="home-layout">
@@ -66,10 +74,33 @@ export default function AppLayout({ activo, rol, children }: Props) {
               Bandeja de siniestros
             </button>
           )}
+          {esAuditoria && (
+            <button
+              type="button"
+              className="home-nav-item"
+              aria-current={activo === "Historial contractual" ? "page" : undefined}
+              onClick={() => navigate("/auditoria/historial")}
+            >
+              <span className="material-symbols-outlined" aria-hidden="true">manage_search</span>
+              Historial contractual
+            </button>
+          )}
           {puedeCrearSocios && (
             <button type="button" className="home-nav-item" onClick={() => navigate("/admin/socios/nuevo")}>
               <span className="material-symbols-outlined" aria-hidden="true">group_add</span>
               Crear un nuevo socio
+            </button>
+          )}
+          {puedeCrearAsesor && (
+            <button type="button" className="home-nav-item" onClick={() => navigate("/admin/asesores/nuevo")}>
+              <span className="material-symbols-outlined" aria-hidden="true">support_agent</span>
+              Crear un asesor de ventas
+            </button>
+          )}
+          {puedeCrearAsesor && (
+            <button type="button" className="home-nav-item" onClick={() => navigate("/admin/auditores/nuevo")}>
+              <span className="material-symbols-outlined" aria-hidden="true">manage_search</span>
+              Crear un analista de cumplimiento
             </button>
           )}
         </nav>

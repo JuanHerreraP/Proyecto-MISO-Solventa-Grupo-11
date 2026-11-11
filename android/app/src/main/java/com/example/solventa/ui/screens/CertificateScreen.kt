@@ -24,7 +24,6 @@ import androidx.compose.material.icons.outlined.Shield
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -50,7 +49,6 @@ import com.example.solventa.domain.polizas.Certificado
 import com.example.solventa.domain.polizas.CondicionParametrica
 import com.example.solventa.domain.polizas.EstadoPoliza
 import com.example.solventa.domain.polizas.Formatos
-import com.example.solventa.domain.polizas.HistorialEndosos
 import com.example.solventa.ui.components.SolventaCodigoQr
 import com.example.solventa.ui.components.SolventaNoticePill
 import com.example.solventa.ui.components.SolventaPrimaryButton
@@ -64,20 +62,18 @@ private val RojoCancelar = Color(0xFFC62828)
 private val FondoCancelar = Color(0xFFFDECEC)
 private val BordeCancelar = Color(0xFFF5C6C6)
 
-/** Detalle contractual de la póliza, certificado e historial de movimientos (HU09). */
+/** Detalle contractual de la póliza, con acceso al certificado, historial, renovación y cancelación. */
 @Composable
 fun CertificateScreen(
     certificado: Certificado?,
     cargando: Boolean,
     error: String?,
-    historial: HistorialEndosos?,
-    cargandoHistorial: Boolean,
-    errorHistorial: String?,
     descargandoDocumento: Boolean,
     compartiendo: Boolean,
     mensaje: String?,
     onVerDocumento: () -> Unit,
     onCompartir: () -> Unit,
+    onVerHistorial: () -> Unit,
     onReintentar: () -> Unit,
     onVolver: () -> Unit,
     modifier: Modifier = Modifier,
@@ -117,14 +113,12 @@ fun CertificateScreen(
 
                 else -> Contenido(
                     certificado = certificado,
-                    historial = historial,
-                    cargandoHistorial = cargandoHistorial,
-                    errorHistorial = errorHistorial,
                     descargandoDocumento = descargandoDocumento,
                     compartiendo = compartiendo,
                     mensaje = mensaje,
                     onVerDocumento = onVerDocumento,
                     onCompartir = onCompartir,
+                    onVerHistorial = onVerHistorial,
                     onRenovar = onRenovar,
                     onCancelar = onCancelar
                 )
@@ -136,20 +130,17 @@ fun CertificateScreen(
 @Composable
 private fun Contenido(
     certificado: Certificado,
-    historial: HistorialEndosos?,
-    cargandoHistorial: Boolean,
-    errorHistorial: String?,
     descargandoDocumento: Boolean,
     compartiendo: Boolean,
     mensaje: String?,
     onVerDocumento: () -> Unit,
     onCompartir: () -> Unit,
+    onVerHistorial: () -> Unit,
     onRenovar: () -> Unit,
     onCancelar: () -> Unit
 ) {
     // Con un aviso pendiente (p. ej. no se pudo compartir) el certificado se abre solo.
     var verCertificado by rememberSaveable { mutableStateOf(mensaje != null) }
-    var verMovimientos by rememberSaveable { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
@@ -225,11 +216,8 @@ private fun Contenido(
         BotonAccion(
             texto = "Consultar movimientos",
             icono = Icons.Outlined.History,
-            onClick = { verMovimientos = !verMovimientos }
+            onClick = onVerHistorial
         )
-        if (verMovimientos) {
-            SeccionMovimientos(historial, cargandoHistorial, errorHistorial)
-        }
 
         if (certificado.activa) {
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -410,56 +398,6 @@ private fun SeccionCertificado(
 }
 
 @Composable
-private fun SeccionMovimientos(
-    historial: HistorialEndosos?,
-    cargandoHistorial: Boolean,
-    errorHistorial: String?
-) {
-    Seccion("Movimientos de la póliza") {
-        when {
-            historial == null && cargandoHistorial -> CircularProgressIndicator(
-                color = Navegacion,
-                modifier = Modifier
-                    .size(24.dp)
-                    .semantics { contentDescription = "Cargando movimientos" }
-            )
-            historial == null && errorHistorial != null -> Text(
-                text = errorHistorial,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.error
-            )
-            historial?.endosos.isNullOrEmpty() -> Text(
-                text = "Esta póliza no tiene movimientos registrados.",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
-            )
-            else -> historial?.endosos.orEmpty().forEachIndexed { indice, endoso ->
-                if (indice > 0) HorizontalDivider()
-                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Text(
-                        text = endoso.tipo.etiquetaMovimiento(),
-                        style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    Text(
-                        text = Formatos.fecha(endoso.fechaEfecto),
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-                    )
-                    endoso.cambios.forEach { cambio ->
-                        Text(
-                            text = cambio.descripcion,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
 private fun Seccion(
     titulo: String,
     contenido: @Composable () -> Unit
@@ -482,9 +420,6 @@ private fun Seccion(
         }
     }
 }
-
-private fun String.etiquetaMovimiento(): String =
-    lowercase().replace('_', ' ').replaceFirstChar { it.titlecase() }
 
 @Composable
 private fun Dato(etiqueta: String, valor: String) {
@@ -524,14 +459,12 @@ fun CertificateScreenPreview() {
             ),
             cargando = false,
             error = null,
-            historial = HistorialEndosos(emptyList()),
-            cargandoHistorial = false,
-            errorHistorial = null,
             descargandoDocumento = false,
             compartiendo = false,
             mensaje = null,
             onVerDocumento = {},
             onCompartir = {},
+            onVerHistorial = {},
             onReintentar = {},
             onVolver = {}
         )
