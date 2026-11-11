@@ -111,11 +111,14 @@ class RenovacionCoordinatorTest {
     }
 
     @Test
-    fun cerrarLaRenovacionOlvidaLaRenovacionEnCurso() {
+    fun cerrarLaPantallaDeRenovarConservaLaRenovacionQueSePaga() {
         ejecutar { billetera.iniciarRenovacion("POL-1") }
 
+        // Al avanzar al pago la pantalla de renovar sale de la composición y se cierra.
         billetera.cerrarRenovacion()
+        assertEquals(renovacionEnCurso(), billetera.estado.renovacionEnCurso)
 
+        billetera.terminarRenovacion()
         assertNull(billetera.estado.renovacionEnCurso)
     }
 

@@ -770,6 +770,7 @@ fun NavGraph(
                     RenewalSuccessScreen(
                         onVerPoliza = {
                             pagos.limpiar()
+                            billetera?.terminarRenovacion()
                             if (!navController.popBackStack(ScreenRoute.Wallet.route, false)) {
                                 navController.popBackStack(ScreenRoute.Home.route, false)
                             }
@@ -777,10 +778,12 @@ fun NavGraph(
                         },
                         onVolver = {
                             pagos.limpiar()
+                            billetera?.terminarRenovacion()
                             navController.popBackStack(ScreenRoute.Home.route, false)
                         },
                         onInicio = {
                             pagos.limpiar()
+                            billetera?.terminarRenovacion()
                             navController.popBackStack(ScreenRoute.Home.route, false)
                         },
                         onVerBilletera = billetera?.let {

@@ -366,15 +366,23 @@ class BilleteraCoordinator(
         if (estado.renovacionParaPagar != null) estado = estado.copy(renovacionParaPagar = null)
     }
 
+    /**
+     * Se llama cuando la pantalla de renovar sale de la composición, también al avanzar al
+     * pago. Por eso conserva [EstadoBilletera.renovacionEnCurso]: el pago la necesita.
+     */
     fun cerrarRenovacion() {
         estado = estado.copy(
             cargandoRenovacion = false,
             propuestaRenovacion = null,
             errorRenovacion = null,
             iniciandoRenovacion = false,
-            renovacionEnCurso = null,
             renovacionParaPagar = null
         )
+    }
+
+    /** La renovación terminó (o se abandonó el pago): ya no hace falta recordarla. */
+    fun terminarRenovacion() {
+        if (estado.renovacionEnCurso != null) estado = estado.copy(renovacionEnCurso = null)
     }
 
     /** Condiciones de la cancelación: consecuencias, motivos y saldo a favor estimado (HU22). */

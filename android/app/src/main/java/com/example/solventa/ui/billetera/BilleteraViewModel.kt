@@ -50,6 +50,8 @@ class BilleteraViewModel(private val coordinador: BilleteraCoordinator) : ViewMo
 
     fun cerrarRenovacion() = coordinador.cerrarRenovacion()
 
+    fun terminarRenovacion() = coordinador.terminarRenovacion()
+
     fun verPropuestaCancelacion(polizaId: String) {
         viewModelScope.launch { coordinador.verPropuestaCancelacion(polizaId) }
     }
