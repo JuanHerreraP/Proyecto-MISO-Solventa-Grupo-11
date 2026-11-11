@@ -52,6 +52,7 @@ se mantienen en la [wiki del proyecto](https://github.com/JuanHerreraP/Proyecto-
 - [Backend y proveedores KYC locales](../README.md#backend-en-local).
 - [Infraestructura](../infra/README.md).
 - [Evidencias de HU02](evidencias/hu02/README.md).
+- [Evidencias de HU04 y EC10](evidencias/hu04/README.md).
 - [Evidencias de HU07](evidencias/hu07/README.md).
 - [Evidencias de HU14](evidencias/hu14/README.md).
 - [Evidencias de HU15](evidencias/hu15/README.md).
