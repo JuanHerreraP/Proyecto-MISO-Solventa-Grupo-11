@@ -51,6 +51,10 @@ class SiniestrosGatewayFalso : SiniestrosGateway {
     val solicitudesAsistidas = mutableListOf<SolicitudSiniestroAsistido>()
     val clientesConsultados = mutableListOf<String>()
 
+    /** HU04: respuesta por id de evidencia; sin entrada, se acepta. */
+    val respuestasEvidencia = mutableMapOf<String, ResultadoApi<EvidenciaRegistrada>>()
+    val evidenciasSubidas = mutableListOf<Pair<String, String>>()
+
     override suspend fun listar(accessToken: String): ResultadoApi<Siniestros> {
         tokensUsados += accessToken
         return respuesta
@@ -81,6 +85,60 @@ class SiniestrosGatewayFalso : SiniestrosGateway {
         tokensUsados += accessToken
         clientesConsultados += clienteId
         return respuesta
+    }
+
+    override suspend fun subirEvidencia(
+        accessToken: String,
+        siniestroId: String,
+        evidencia: EvidenciaLocal
+    ): ResultadoApi<EvidenciaRegistrada> {
+        tokensUsados += accessToken
+        evidenciasSubidas += siniestroId to evidencia.id
+        return respuestasEvidencia[evidencia.id]
+            ?: ResultadoApi.Exito(
+                EvidenciaRegistrada("EVI-${evidencia.id}", evidencia.huellaSha256, evidencia.geoetiquetada)
+            )
+    }
+}
+
+/** HU04: evidencia local de prueba. */
+fun evidencia(
+    id: String = "E1",
+    tipoContenido: String = "image/jpeg",
+    tamano: Long = 2048,
+    ubicacion: Ubicacion? = Ubicacion(4.7016, -74.1469, 12f),
+    subida: Boolean = false
+) = EvidenciaLocal(
+    id = id,
+    rutaArchivo = "/datos/borradores_siniestro/abc/evidencias/$id.jpg",
+    tipoContenido = tipoContenido,
+    tipo = ReglasEvidencia.tipoDe(tipoContenido) ?: TipoEvidencia.FOTO,
+    tamanoBytes = tamano,
+    huellaSha256 = "a".repeat(64),
+    capturadaEn = "2026-11-10T15:00:00Z",
+    ubicacion = ubicacion,
+    subida = subida
+)
+
+/** HU04: borradores en memoria, por usuario. */
+class BorradoresFalsos : BorradoresSiniestro {
+    val porUsuario = mutableMapOf<String, BorradorSiniestro>()
+    val archivosEliminados = mutableListOf<String>()
+    var guardados = 0
+
+    override suspend fun leer(usuarioId: String): BorradorSiniestro? = porUsuario[usuarioId]
+
+    override suspend fun guardar(usuarioId: String, borrador: BorradorSiniestro) {
+        guardados++
+        porUsuario[usuarioId] = borrador
+    }
+
+    override suspend fun eliminar(usuarioId: String) {
+        porUsuario.remove(usuarioId)?.evidencias?.forEach { archivosEliminados += it.id }
+    }
+
+    override suspend fun eliminarArchivo(evidencia: EvidenciaLocal) {
+        archivosEliminados += evidencia.id
     }
 }
 

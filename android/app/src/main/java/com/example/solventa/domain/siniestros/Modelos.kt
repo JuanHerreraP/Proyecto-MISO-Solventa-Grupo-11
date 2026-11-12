@@ -8,6 +8,23 @@ enum class OrigenSiniestro { MANUAL, AUTOMATICO }
 /** Ciclo de vida del siniestro tal como lo calcula el backend (HU20). */
 enum class EstadoSiniestro { REGISTRADO, EN_EVALUACION, APROBADO, RECHAZADO }
 
+/** Qué ocurrió (HU04). Los nombres coinciden con los códigos del backend. */
+enum class TipoSiniestro(val etiqueta: String) {
+    DANO_MATERIAL("Daño material"),
+    ROBO_HURTO("Robo o hurto"),
+    ACCIDENTE("Accidente"),
+    ENFERMEDAD("Enfermedad"),
+    FALLECIMIENTO("Fallecimiento"),
+    INCIDENTE_VIAJE("Incidente de viaje"),
+    EVENTO_CLIMATICO("Evento climático"),
+    OTRO("Otro");
+
+    companion object {
+        fun desdeCodigo(codigo: String?): TipoSiniestro? =
+            entries.firstOrNull { it.name == codigo }
+    }
+}
+
 /**
  * Un siniestro del cliente. Las fechas llegan en ISO (aaaa-mm-dd y aaaa-mm-ddThh:mm:ssZ).
  * [eventoId] solo viene cuando el origen es AUTOMATICO (identificador del evento de telemetría).
@@ -24,7 +41,9 @@ data class Siniestro(
     val descripcion: String,
     val estimacionDanos: String,
     val moneda: String,
-    val registradoEn: String
+    val registradoEn: String,
+    /** Null en los siniestros anteriores a HU04 y en los automáticos. */
+    val tipoSiniestro: TipoSiniestro? = null
 )
 
 /** Lo que la pantalla de siniestros muestra: la lista, del más reciente al más antiguo. */
@@ -59,11 +78,24 @@ interface SiniestrosGateway {
         accessToken: String,
         clienteId: String
     ): ResultadoApi<Siniestros>
+
+    /**
+     * Adjunta una foto o video a un siniestro del cliente (HU04). Enviar otra vez el mismo
+     * archivo devuelve la evidencia ya registrada: el reintento de un borrador no la duplica.
+     */
+    suspend fun subirEvidencia(
+        accessToken: String,
+        siniestroId: String,
+        evidencia: EvidenciaLocal
+    ): ResultadoApi<EvidenciaRegistrada>
 }
 
 /**
- * Datos del registro manual de un siniestro (HU20). El cliente nunca envía su identificador:
- * el backend lo toma de la sesión. Las fechas van en ISO (aaaa-mm-dd y hh:mm:ss).
+ * Datos del registro manual de un siniestro (HU20, HU04). El cliente nunca envía su
+ * identificador: el backend lo toma de la sesión. Las fechas van en ISO (aaaa-mm-dd y hh:mm:ss).
+ *
+ * [claveIdempotencia] viaja como encabezado `Idempotency-Key`, no en el cuerpo: reenviar el mismo
+ * borrador después de perder la conexión devuelve el siniestro ya creado en vez de duplicarlo.
  */
 data class SolicitudSiniestro(
     val polizaId: String,
@@ -71,7 +103,9 @@ data class SolicitudSiniestro(
     val horaEvento: String,
     val lugar: String,
     val descripcion: String,
-    val estimacionDanos: String
+    val estimacionDanos: String,
+    val tipoSiniestro: TipoSiniestro? = null,
+    val claveIdempotencia: String? = null
 )
 
 /**
@@ -85,5 +119,6 @@ data class SolicitudSiniestroAsistido(
     val horaEvento: String,
     val lugar: String,
     val descripcion: String,
-    val estimacionDanos: String
+    val estimacionDanos: String,
+    val tipoSiniestro: TipoSiniestro? = null
 )

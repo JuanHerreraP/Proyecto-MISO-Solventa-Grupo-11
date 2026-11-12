@@ -1,17 +1,26 @@
-"""Persistencia de siniestros (HU20)."""
+"""Persistencia de siniestros (HU20, HU04)."""
 
 from datetime import UTC, datetime
 from typing import Protocol
 
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.siniestros.modelos import EstadoSiniestro, Siniestro
 from app.siniestros.modelos_db import SiniestroDB
 
 
+class ClaveIdempotenciaDuplicada(Exception):
+    """Otro registro concurrente del mismo cliente ya usó la Idempotency-Key."""
+
+
 class RepositorioSiniestros(Protocol):
     def guardar(self, siniestro: Siniestro) -> None: ...
+
+    def obtener_por_clave(self, cliente_id: str, clave: str) -> Siniestro | None:
+        """Siniestro registrado por el cliente con esa Idempotency-Key (HU04)."""
+        ...
 
     def obtener(self, siniestro_id: str) -> Siniestro | None: ...
 
@@ -33,7 +42,17 @@ class RepositorioSiniestrosEnMemoria:
         self._por_id: dict[str, Siniestro] = {}
 
     def guardar(self, siniestro: Siniestro) -> None:
+        if siniestro.clave_idempotencia is not None:
+            previo = self.obtener_por_clave(siniestro.cliente_id, siniestro.clave_idempotencia)
+            if previo is not None and previo.siniestro_id != siniestro.siniestro_id:
+                raise ClaveIdempotenciaDuplicada(siniestro.clave_idempotencia)
         self._por_id[siniestro.siniestro_id] = siniestro.model_copy(deep=True)
+
+    def obtener_por_clave(self, cliente_id: str, clave: str) -> Siniestro | None:
+        for siniestro in self._por_id.values():
+            if siniestro.cliente_id == cliente_id and siniestro.clave_idempotencia == clave:
+                return siniestro.model_copy(deep=True)
+        return None
 
     def obtener(self, siniestro_id: str) -> Siniestro | None:
         siniestro = self._por_id.get(siniestro_id)
@@ -73,7 +92,20 @@ class RepositorioSiniestrosPostgres:
         else:
             for campo, valor in datos.items():
                 setattr(persistido, campo, valor)
-        self._db.commit()
+        try:
+            self._db.commit()
+        except IntegrityError:
+            self._db.rollback()
+            if siniestro.clave_idempotencia is not None:
+                raise ClaveIdempotenciaDuplicada(siniestro.clave_idempotencia) from None
+            raise
+
+    def obtener_por_clave(self, cliente_id: str, clave: str) -> Siniestro | None:
+        sentencia = select(SiniestroDB).where(
+            SiniestroDB.cliente_id == cliente_id, SiniestroDB.clave_idempotencia == clave
+        )
+        registro = self._db.scalars(sentencia).first()
+        return _a_dominio(registro) if registro is not None else None
 
     def obtener(self, siniestro_id: str) -> Siniestro | None:
         registro = self._db.get(SiniestroDB, siniestro_id)
@@ -109,7 +141,13 @@ class RepositorioSiniestrosPostgres:
 
 def _a_persistencia(siniestro: Siniestro) -> dict[str, object]:
     datos = siniestro.model_dump()
-    datos.update(origen=siniestro.origen.value, estado=siniestro.estado.value)
+    datos.update(
+        origen=siniestro.origen.value,
+        estado=siniestro.estado.value,
+        tipo_siniestro=siniestro.tipo_siniestro.value if siniestro.tipo_siniestro else None,
+        # Excluida de la respuesta pública, pero sí se persiste.
+        clave_idempotencia=siniestro.clave_idempotencia,
+    )
     return datos
 
 
@@ -122,6 +160,7 @@ def _a_dominio(registro: SiniestroDB) -> Siniestro:
             "origen": registro.origen,
             "estado": registro.estado,
             "evento_id": registro.evento_id,
+            "tipo_siniestro": registro.tipo_siniestro,
             "fecha_evento": registro.fecha_evento,
             "hora_evento": registro.hora_evento,
             "lugar": registro.lugar,
@@ -134,6 +173,7 @@ def _a_dominio(registro: SiniestroDB) -> Siniestro:
             "evaluado_por": registro.evaluado_por,
             "evaluado_en": _con_zona(registro.evaluado_en),
             "motivo_rechazo": registro.motivo_rechazo,
+            "clave_idempotencia": registro.clave_idempotencia,
         }
     )
 

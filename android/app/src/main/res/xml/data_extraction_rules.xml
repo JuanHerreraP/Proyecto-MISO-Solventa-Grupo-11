@@ -3,8 +3,10 @@
 <data-extraction-rules>
     <cloud-backup>
         <exclude domain="sharedpref" path="solventa_sesion.xml" />
+        <exclude domain="file" path="borradores_siniestro/" />
     </cloud-backup>
     <device-transfer>
         <exclude domain="sharedpref" path="solventa_sesion.xml" />
+        <exclude domain="file" path="borradores_siniestro/" />
     </device-transfer>
 </data-extraction-rules>

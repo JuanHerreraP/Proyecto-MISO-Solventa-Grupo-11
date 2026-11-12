@@ -104,13 +104,24 @@ def preparar_esquema_registro() -> None:
             if columna not in columnas_sin:
                 with engine.begin() as conexion:
                     conexion.execute(text(f"ALTER TABLE siniestros ADD COLUMN {columna} {tipo}"))
+        # Columnas aditivas del reporte con evidencias desde la app (HU04).
+        for columna, tipo in (
+            ("tipo_siniestro", "VARCHAR(40)"),
+            ("clave_idempotencia", "VARCHAR(80)"),
+        ):
+            if columna not in columnas_sin:
+                with engine.begin() as conexion:
+                    conexion.execute(text(f"ALTER TABLE siniestros ADD COLUMN {columna} {tipo}"))
         indices_sin = {i["name"] for i in inspector.get_indexes("siniestros")}
-        if "uq_siniestros_evento" not in indices_sin:
-            from app.siniestros.modelos_db import SiniestroDB
+        from app.siniestros.modelos_db import SiniestroDB
 
-            for indice in SiniestroDB.__table__.indexes:
-                if indice.name == "uq_siniestros_evento":
-                    indice.create(bind=engine, checkfirst=True)
+        columnas_sin = {c["name"] for c in inspect(engine).get_columns("siniestros")}
+        for indice in SiniestroDB.__table__.indexes:
+            pendiente = indice.name in ("uq_siniestros_evento", "uq_siniestros_cliente_clave")
+            columnas_indice = {columna.name for columna in indice.columns}
+            # Solo si la tabla ya tiene todas las columnas del índice.
+            if pendiente and indice.name not in indices_sin and columnas_indice <= columnas_sin:
+                indice.create(bind=engine, checkfirst=True)
 
 
 def _agregar_columnas_endosos(inspector) -> None:

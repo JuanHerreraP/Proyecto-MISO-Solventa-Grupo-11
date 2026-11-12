@@ -210,7 +210,7 @@ def test_tras_un_fallo_omite_s3_durante_la_pausa_y_luego_reintenta(s3, disco) ->
 
 def test_si_fallan_ambos_almacenes_el_error_sube() -> None:
     class Caido:
-        def guardar(self, clave, contenido):
+        def guardar(self, clave, contenido, tipo_contenido="application/pdf"):
             raise AlmacenNoDisponible("caído")
 
         def leer(self, clave):

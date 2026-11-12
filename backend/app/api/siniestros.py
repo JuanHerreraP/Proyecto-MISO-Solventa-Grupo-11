@@ -1,4 +1,4 @@
-"""API del registro manual de siniestros (HU20).
+"""API del registro manual de siniestros (HU20, HU04).
 
 El router autentica, valida el rol, delega en el servicio y traduce las excepciones de
 dominio a códigos HTTP.
@@ -9,7 +9,7 @@ dominio a códigos HTTP.
   Debe indicar `cliente_id` y estar asociado a ese cliente (tabla asesor_cliente).
 """
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, Header, HTTPException, Query, Response, status
 from sqlalchemy.orm import Session
 
 from app.api.seguridad import get_current_user
@@ -20,6 +20,7 @@ from app.polizas.repositorio import RepositorioPolizasPostgres
 from app.siniestros.modelos import Siniestro, SolicitudSiniestro, SolicitudSiniestroAsesor
 from app.siniestros.repositorio import RepositorioSiniestrosPostgres
 from app.siniestros.servicio import (
+    ClaveIdempotenciaReutilizada,
     FechaEventoInvalida,
     PolizaAjena,
     PolizaNoEncontrada,
@@ -70,6 +71,14 @@ def _traducir_errores_registro(accion):
             status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail={"codigo": error.codigo, "mensaje": error.mensaje},
         ) from None
+    except ClaveIdempotenciaReutilizada:
+        raise HTTPException(
+            status.HTTP_409_CONFLICT,
+            detail={
+                "codigo": "IDEMPOTENCY_KEY_REUTILIZADA",
+                "mensaje": "La Idempotency-Key ya se usó con un siniestro distinto.",
+            },
+        ) from None
 
 
 @router.post(
@@ -77,17 +86,30 @@ def _traducir_errores_registro(accion):
     response_model=Siniestro,
     status_code=status.HTTP_201_CREATED,
     summary="Registra manualmente un siniestro sobre una póliza vigente del cliente",
+    description=(
+        "Con el encabezado Idempotency-Key, repetir la misma solicitud devuelve el siniestro ya "
+        "registrado (200) en lugar de crear otro: la app lo usa al reenviar un borrador (HU04)."
+    ),
     responses={
+        200: {"description": "Repetición con la misma Idempotency-Key: el siniestro ya existía."},
         403: {"description": "La póliza no pertenece al cliente autenticado."},
         404: {"description": "La póliza no existe."},
-        409: {"description": "La póliza no está vigente."},
+        409: {
+            "description": (
+                "La póliza no está vigente, o la Idempotency-Key ya se usó con otros datos."
+            )
+        },
         422: {"description": "La fecha del evento es futura o está fuera de la vigencia."},
     },
 )
 def registrar_siniestro(
     solicitud: SolicitudSiniestro,
+    respuesta: Response,
     usuario=Depends(get_current_user),
     servicio: ServicioSiniestros = Depends(obtener_servicio),
+    idempotency_key: str | None = Header(
+        default=None, alias="Idempotency-Key", min_length=8, max_length=80
+    ),
 ) -> Siniestro:
     # El cliente asegurado registra sobre sus propias pólizas.
     if usuario.rol != Rol.CLIENTE.value:
@@ -100,13 +122,17 @@ def registrar_siniestro(
         )
 
     cliente_id = str(usuario.id)
-    return _traducir_errores_registro(
-        lambda: servicio.registrar_manual(
+    registro = _traducir_errores_registro(
+        lambda: servicio.registrar(
             cliente_id=cliente_id,
             registrado_por=cliente_id,
             solicitud=solicitud,
+            clave_idempotencia=idempotency_key,
         )
     )
+    if not registro.creado:
+        respuesta.status_code = status.HTTP_200_OK
+    return registro.siniestro
 
 
 @router.post(
@@ -142,6 +168,7 @@ def registrar_siniestro_asistido(
 
     datos = SolicitudSiniestro(
         poliza_id=solicitud.poliza_id,
+        tipo_siniestro=solicitud.tipo_siniestro,
         fecha_evento=solicitud.fecha_evento,
         hora_evento=solicitud.hora_evento,
         lugar=solicitud.lugar,

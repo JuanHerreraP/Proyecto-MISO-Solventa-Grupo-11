@@ -1,4 +1,4 @@
-"""Modelo de dominio del siniestro, su registro (HU20) y su evaluación (HU15)."""
+"""Modelo de dominio del siniestro, su registro (HU20, HU04) y su evaluación (HU15)."""
 
 from datetime import date, time
 from decimal import Decimal
@@ -27,6 +27,19 @@ class OrigenSiniestro(str, Enum):
     AUTOMATICO = "AUTOMATICO"
 
 
+class TipoSiniestro(str, Enum):
+    """Qué ocurrió (HU04). Opcional para no romper los registros anteriores ni el portal web."""
+
+    DANO_MATERIAL = "DANO_MATERIAL"
+    ROBO_HURTO = "ROBO_HURTO"
+    ACCIDENTE = "ACCIDENTE"
+    ENFERMEDAD = "ENFERMEDAD"
+    FALLECIMIENTO = "FALLECIMIENTO"
+    INCIDENTE_VIAJE = "INCIDENTE_VIAJE"
+    EVENTO_CLIMATICO = "EVENTO_CLIMATICO"
+    OTRO = "OTRO"
+
+
 class Siniestro(BaseModel):
     """Reclamación asociada a una póliza de un cliente.
 
@@ -44,6 +57,7 @@ class Siniestro(BaseModel):
     # Identificador del evento externo que originó el siniestro (solo origen AUTOMATICO / HU20).
     # Es la clave de idempotencia: un mismo evento_id no debe generar siniestros duplicados.
     evento_id: str | None = Field(default=None, max_length=120)
+    tipo_siniestro: TipoSiniestro | None = None
     fecha_evento: date
     hora_evento: time
     lugar: str = Field(min_length=1, max_length=200)
@@ -57,6 +71,8 @@ class Siniestro(BaseModel):
     evaluado_por: str | None = Field(default=None, max_length=50)
     evaluado_en: AwareDatetime | None = None
     motivo_rechazo: str | None = Field(default=None, max_length=500)
+    # Idempotency-Key del registro desde la app (HU04). Es interna: nunca sale en la respuesta.
+    clave_idempotencia: str | None = Field(default=None, max_length=80, exclude=True)
 
     @property
     def evaluado(self) -> bool:
@@ -83,6 +99,7 @@ class SolicitudSiniestro(BaseModel):
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
 
     poliza_id: str = Field(min_length=1, max_length=50)
+    tipo_siniestro: TipoSiniestro | None = None
     fecha_evento: date
     hora_evento: time
     lugar: str = Field(min_length=1, max_length=200)
@@ -100,6 +117,7 @@ class SolicitudSiniestroAsesor(BaseModel):
 
     cliente_id: str = Field(min_length=1, max_length=50)
     poliza_id: str = Field(min_length=1, max_length=50)
+    tipo_siniestro: TipoSiniestro | None = None
     fecha_evento: date
     hora_evento: time
     lugar: str = Field(min_length=1, max_length=200)

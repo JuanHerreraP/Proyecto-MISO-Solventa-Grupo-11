@@ -17,7 +17,12 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.CloudDone
+import androidx.compose.material.icons.filled.Image
+import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material.icons.filled.Videocam
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
@@ -25,7 +30,9 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.SelectableDates
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -43,8 +50,14 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.solventa.domain.polizas.Formatos
+import com.example.solventa.domain.siniestros.BorradorSiniestro
+import com.example.solventa.domain.siniestros.EvidenciaLocal
+import com.example.solventa.domain.siniestros.ReglasEvidencia
+import com.example.solventa.domain.siniestros.TipoEvidencia
+import com.example.solventa.domain.siniestros.TipoSiniestro
 import com.example.solventa.ui.components.SolventaPrimaryButton
 import com.example.solventa.ui.components.SolventaTextField
+import com.example.solventa.ui.siniestros.AccionesEvidencia
 import com.example.solventa.ui.theme.Atencion
 import com.example.solventa.ui.theme.SolventaTheme
 import com.example.solventa.ui.validation.errorDescripcionSiniestro
@@ -53,6 +66,7 @@ import com.example.solventa.ui.validation.errorFechaSiniestro
 import com.example.solventa.ui.validation.errorHoraSiniestro
 import com.example.solventa.ui.validation.errorLugarSiniestro
 import com.example.solventa.ui.validation.errorPolizaSiniestro
+import com.example.solventa.ui.validation.errorTipoSiniestro
 import com.example.solventa.ui.validation.esFormularioSiniestroValido
 import com.example.solventa.ui.validation.normalizarEstimacion
 import java.util.Calendar
@@ -60,33 +74,74 @@ import java.util.Calendar
 /** Una póliza elegible para reportar un siniestro: id y una etiqueta legible. */
 data class PolizaElegible(val polizaId: String, val etiqueta: String)
 
+/** Lo que el formulario entrega al registrar. */
+typealias RegistrarSiniestro = (
+    polizaId: String,
+    tipo: TipoSiniestro?,
+    fecha: String,
+    hora: String,
+    lugar: String,
+    descripcion: String,
+    estimacion: String
+) -> Unit
+
 /**
- * Formulario de registro manual de siniestros (HU20). El cliente elige una de sus pólizas
- * vigentes (o ingresa el número si no hay lista) y describe el evento. El backend valida la
- * vigencia y la titularidad de forma autoritativa.
+ * Formulario de registro manual de siniestros (HU20, HU04). El cliente elige una de sus pólizas
+ * vigentes (o ingresa el número si no hay lista), el tipo de siniestro, describe el evento y
+ * adjunta fotos o videos. El backend valida la vigencia y la titularidad de forma autoritativa.
+ *
+ * Con [acciones] (cliente en Android) se muestra la sección de evidencias. Si hay un [borrador]
+ * con datos, el formulario arranca con ellos; si el siniestro ya quedó registrado, solo faltan
+ * evidencias por enviar.
  */
 @Composable
 fun ClaimFormScreen(
     polizas: List<PolizaElegible>,
     registrando: Boolean,
     error: String?,
-    onRegistrar: (polizaId: String, fecha: String, hora: String, lugar: String, descripcion: String, estimacion: String) -> Unit,
+    onRegistrar: RegistrarSiniestro,
     onVolver: () -> Unit,
     modifier: Modifier = Modifier,
     clienteNombre: String? = null,
-    cargandoPolizas: Boolean = false
+    cargandoPolizas: Boolean = false,
+    borrador: BorradorSiniestro? = null,
+    acciones: AccionesEvidencia? = null,
+    avisoEvidencia: String? = null,
+    onQuitarEvidencia: (String) -> Unit = {},
+    onDescartarBorrador: (() -> Unit)? = null
 ) {
-    var polizaId by remember { mutableStateOf(polizas.firstOrNull()?.polizaId.orEmpty()) }
-    var fecha by remember { mutableStateOf("") }
-    var hora by remember { mutableStateOf("") }
-    var lugar by remember { mutableStateOf("") }
-    var descripcion by remember { mutableStateOf("") }
-    var estimacion by remember { mutableStateOf("") }
+    // Solo un borrador con datos del formulario los precarga; uno que solo tiene evidencias no
+    // debe borrar lo que el cliente está escribiendo.
+    val claveBorrador = borrador?.takeIf { it.descripcion.isNotBlank() || it.registrado }?.id
+    var polizaId by remember(claveBorrador) {
+        mutableStateOf(
+            borrador?.polizaId?.takeIf { claveBorrador != null && it.isNotBlank() }
+                ?: polizas.firstOrNull()?.polizaId.orEmpty()
+        )
+    }
+    var tipo by remember(claveBorrador) {
+        mutableStateOf(borrador?.tipoSiniestro?.takeIf { claveBorrador != null })
+    }
+    var fecha by remember(claveBorrador) { mutableStateOf(campoBorrador(claveBorrador, borrador?.fechaEvento)) }
+    var hora by remember(claveBorrador) {
+        mutableStateOf(campoBorrador(claveBorrador, borrador?.horaEvento).take(5))
+    }
+    var lugar by remember(claveBorrador) { mutableStateOf(campoBorrador(claveBorrador, borrador?.lugar)) }
+    var descripcion by remember(claveBorrador) {
+        mutableStateOf(campoBorrador(claveBorrador, borrador?.descripcion))
+    }
+    var estimacion by remember(claveBorrador) {
+        mutableStateOf(campoBorrador(claveBorrador, borrador?.estimacionDanos))
+    }
     var intentado by remember { mutableStateOf(false) }
     var mostrarFecha by remember { mutableStateOf(false) }
     var mostrarHora by remember { mutableStateOf(false) }
 
-    val puedeEnviar = esFormularioSiniestroValido(polizaId, fecha, hora, lugar, descripcion, estimacion)
+    val registrado = borrador?.registrado == true
+    val puedeEnviar = registrado || (
+        esFormularioSiniestroValido(polizaId, fecha, hora, lugar, descripcion, estimacion) &&
+            errorTipoSiniestro(tipo) == null
+        )
 
     Surface(modifier = modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surface) {
         Column(modifier = Modifier.fillMaxSize()) {
@@ -100,6 +155,31 @@ fun ClaimFormScreen(
             ) {
                 if (error != null) {
                     Text(text = error, style = MaterialTheme.typography.bodyMedium, color = Atencion)
+                }
+
+                if (registrado) {
+                    Text(
+                        text = "Tu siniestro ya quedó registrado. Solo falta enviar " +
+                            "${borrador?.pendientes?.size ?: 0} evidencia(s).",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                } else if (borrador != null && claveBorrador != null && onDescartarBorrador != null) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Retomaste un reporte guardado como borrador.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            modifier = Modifier.weight(1f)
+                        )
+                        TextButton(onClick = onDescartarBorrador, enabled = !registrando) {
+                            Text("Descartar")
+                        }
+                    }
                 }
 
                 if (clienteNombre != null) {
@@ -153,6 +233,12 @@ fun ClaimFormScreen(
                     )
                 }
 
+                SelectorTipoSiniestro(
+                    seleccionado = tipo,
+                    onSeleccionar = { tipo = it },
+                    error = if (intentado) errorTipoSiniestro(tipo) else null
+                )
+
                 CampoSeleccionable(
                     label = "Fecha del evento",
                     valor = if (fecha.isBlank()) "Selecciona la fecha" else Formatos.fecha(fecha),
@@ -194,14 +280,25 @@ fun ClaimFormScreen(
                     error = if (intentado) errorEstimacionSiniestro(estimacion) else null
                 )
 
+                if (acciones != null) {
+                    SeccionEvidencias(
+                        evidencias = borrador?.evidencias.orEmpty(),
+                        acciones = acciones,
+                        aviso = avisoEvidencia,
+                        habilitada = !registrando,
+                        onQuitar = onQuitarEvidencia
+                    )
+                }
+
                 Spacer(modifier = Modifier.size(4.dp))
                 SolventaPrimaryButton(
-                    text = "Registrar siniestro",
+                    text = if (registrado) "Enviar evidencias pendientes" else "Registrar siniestro",
                     onClick = {
                         intentado = true
                         if (puedeEnviar) {
                             onRegistrar(
                                 polizaId.trim(),
+                                tipo,
                                 fecha.trim(),
                                 hora.trim(),
                                 lugar.trim(),
@@ -235,6 +332,208 @@ fun ClaimFormScreen(
             },
             onCancelar = { mostrarHora = false }
         )
+    }
+}
+
+/** Valor inicial de un campo: el del borrador si se está retomando uno con datos. */
+private fun campoBorrador(claveBorrador: String?, valor: String?): String =
+    if (claveBorrador != null) valor.orEmpty() else ""
+
+/** Selector del tipo de siniestro (HU04). */
+@Composable
+private fun SelectorTipoSiniestro(
+    seleccionado: TipoSiniestro?,
+    onSeleccionar: (TipoSiniestro) -> Unit,
+    error: String?
+) {
+    var abierto by remember { mutableStateOf(false) }
+    Column {
+        Surface(
+            shape = RoundedCornerShape(16.dp),
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.04f),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(56.dp)
+                .clickable { abierto = true }
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 16.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+            ) {
+                Column {
+                    Text(
+                        text = "TIPO DE SINIESTRO",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                    )
+                    Text(
+                        text = seleccionado?.etiqueta ?: "Selecciona qué ocurrió",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = if (seleccionado != null) {
+                            MaterialTheme.colorScheme.onSurface
+                        } else {
+                            MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
+                        }
+                    )
+                }
+                Icon(Icons.Filled.ArrowDropDown, contentDescription = "Elegir tipo de siniestro")
+            }
+        }
+        DropdownMenu(expanded = abierto, onDismissRequest = { abierto = false }) {
+            TipoSiniestro.entries.forEach { opcion ->
+                DropdownMenuItem(
+                    text = { Text(opcion.etiqueta) },
+                    onClick = {
+                        onSeleccionar(opcion)
+                        abierto = false
+                    }
+                )
+            }
+        }
+        if (error != null) {
+            Text(
+                text = error,
+                style = MaterialTheme.typography.labelMedium,
+                color = Atencion,
+                modifier = Modifier.padding(start = 16.dp, top = 4.dp)
+            )
+        }
+    }
+}
+
+/** Fotos y videos del reporte (HU04): capturar, elegir de la galería y quitar. */
+@Composable
+private fun SeccionEvidencias(
+    evidencias: List<EvidenciaLocal>,
+    acciones: AccionesEvidencia,
+    aviso: String?,
+    habilitada: Boolean,
+    onQuitar: (String) -> Unit
+) {
+    val lleno = evidencias.size >= ReglasEvidencia.MAXIMO_POR_SINIESTRO
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Text(
+            text = "EVIDENCIAS (${evidencias.size}/${ReglasEvidencia.MAXIMO_POR_SINIESTRO})",
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+        )
+        Text(
+            text = "Adjunta fotos o videos del evento. Si autorizas la ubicación, cada captura " +
+                "queda con el lugar, la fecha y la hora.",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            BotonEvidencia(
+                texto = "Foto",
+                icono = Icons.Filled.PhotoCamera,
+                habilitado = habilitada && !lleno,
+                onClick = acciones.tomarFoto,
+                modifier = Modifier.weight(1f)
+            )
+            BotonEvidencia(
+                texto = "Video",
+                icono = Icons.Filled.Videocam,
+                habilitado = habilitada && !lleno,
+                onClick = acciones.grabarVideo,
+                modifier = Modifier.weight(1f)
+            )
+            BotonEvidencia(
+                texto = "Galería",
+                icono = Icons.Filled.Image,
+                habilitado = habilitada && !lleno,
+                onClick = acciones.elegirArchivo,
+                modifier = Modifier.weight(1f)
+            )
+        }
+        if (aviso != null) {
+            Text(text = aviso, style = MaterialTheme.typography.bodySmall, color = Atencion)
+        }
+        evidencias.forEachIndexed { indice, evidencia ->
+            FilaEvidencia(
+                numero = indice + 1,
+                evidencia = evidencia,
+                habilitada = habilitada,
+                onQuitar = { onQuitar(evidencia.id) }
+            )
+        }
+    }
+}
+
+@Composable
+private fun BotonEvidencia(
+    texto: String,
+    icono: androidx.compose.ui.graphics.vector.ImageVector,
+    habilitado: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    OutlinedButton(onClick = onClick, enabled = habilitado, modifier = modifier) {
+        Icon(icono, contentDescription = null, modifier = Modifier.size(18.dp))
+        Spacer(modifier = Modifier.size(6.dp))
+        Text(texto, style = MaterialTheme.typography.labelMedium)
+    }
+}
+
+@Composable
+private fun FilaEvidencia(
+    numero: Int,
+    evidencia: EvidenciaLocal,
+    habilitada: Boolean,
+    onQuitar: () -> Unit
+) {
+    val tipo = if (evidencia.tipo == TipoEvidencia.FOTO) "Foto" else "Video"
+    val ubicacion = if (evidencia.geoetiquetada) "con ubicación" else "sin ubicación"
+    Surface(
+        shape = RoundedCornerShape(12.dp),
+        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.04f),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+            verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+        ) {
+            Icon(
+                if (evidencia.tipo == TipoEvidencia.FOTO) Icons.Filled.PhotoCamera else Icons.Filled.Videocam,
+                contentDescription = null
+            )
+            Spacer(modifier = Modifier.size(10.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = "$tipo $numero · ${tamanoLegible(evidencia.tamanoBytes)}",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Text(
+                    text = if (evidencia.subida) "Enviada · $ubicacion" else "Pendiente · $ubicacion",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                )
+            }
+            if (evidencia.subida) {
+                Icon(Icons.Filled.CloudDone, contentDescription = "Enviada")
+            } else {
+                IconButton(onClick = onQuitar, enabled = habilitada) {
+                    Icon(Icons.Filled.Close, contentDescription = "Quitar evidencia $numero")
+                }
+            }
+        }
+    }
+}
+
+/** 1536 → "1,5 KB"; 3_500_000 → "3,3 MB". */
+internal fun tamanoLegible(bytes: Long): String {
+    val kb = bytes / 1024.0
+    return if (kb < 1024) {
+        String.format(java.util.Locale("es", "CO"), "%.1f KB", kb)
+    } else {
+        String.format(java.util.Locale("es", "CO"), "%.1f MB", kb / 1024.0)
     }
 }
 
@@ -425,8 +724,9 @@ fun ClaimFormScreenPreview() {
             ),
             registrando = false,
             error = null,
-            onRegistrar = { _, _, _, _, _, _ -> },
-            onVolver = {}
+            onRegistrar = { _, _, _, _, _, _, _ -> },
+            onVolver = {},
+            acciones = AccionesEvidencia(tomarFoto = {}, grabarVideo = {}, elegirArchivo = {})
         )
     }
 }

@@ -1,6 +1,7 @@
-"""Almacenamiento del PDF de la póliza (HU12).
+"""Almacenamiento del PDF de la póliza (HU12) y de las evidencias de siniestro (HU04).
 
-El PDF se escribe una sola vez y no se modifica. Hay tres adaptadores de `AlmacenDocumentos`:
+Cada documento se escribe una sola vez y no se modifica. Hay tres adaptadores de
+`AlmacenDocumentos`:
 
 - `AlmacenEnDisco`: carpeta local. Sirve para desarrollo y es el respaldo.
 - `AlmacenS3`: bucket de S3, el destino previsto en AWS.
@@ -26,6 +27,7 @@ SEGUNDOS_CONEXION_S3 = 1
 SEGUNDOS_LECTURA_S3 = 5
 INTENTOS_S3 = 2
 PAUSA_TRAS_FALLO_SEGUNDOS = 30
+TIPO_PDF = "application/pdf"
 
 
 class AlmacenNoDisponible(Exception):
@@ -37,7 +39,7 @@ class DocumentoInmutable(Exception):
 
 
 class AlmacenDocumentos(Protocol):
-    def guardar(self, clave: str, contenido: bytes) -> None:
+    def guardar(self, clave: str, contenido: bytes, tipo_contenido: str = TIPO_PDF) -> None:
         """Escribe el documento. Repetir con el mismo contenido es inocuo."""
         ...
 
@@ -50,7 +52,7 @@ class AlmacenEnMemoria:
     def __init__(self):
         self._por_clave: dict[str, bytes] = {}
 
-    def guardar(self, clave: str, contenido: bytes) -> None:
+    def guardar(self, clave: str, contenido: bytes, tipo_contenido: str = TIPO_PDF) -> None:
         existente = self._por_clave.get(clave)
         if existente is not None and not hmac.compare_digest(existente, contenido):
             raise DocumentoInmutable(clave)
@@ -65,7 +67,7 @@ class AlmacenEnDisco:
         base = directorio or os.getenv("POLIZAS_DOCUMENTOS_DIR") or DIRECTORIO_POR_DEFECTO
         self._base = Path(base).resolve()
 
-    def guardar(self, clave: str, contenido: bytes) -> None:
+    def guardar(self, clave: str, contenido: bytes, tipo_contenido: str = TIPO_PDF) -> None:
         ruta = self._ruta(clave)
         try:
             ruta.parent.mkdir(parents=True, exist_ok=True)
@@ -128,7 +130,7 @@ class AlmacenS3:
         )
         return boto3.client("s3", endpoint_url=endpoint_url, config=configuracion)
 
-    def guardar(self, clave: str, contenido: bytes) -> None:
+    def guardar(self, clave: str, contenido: bytes, tipo_contenido: str = TIPO_PDF) -> None:
         objeto = self._objeto(clave)
         existente = self._obtener(objeto)
         if existente is not None:
@@ -140,7 +142,7 @@ class AlmacenS3:
             Bucket=self._bucket,
             Key=objeto,
             Body=contenido,
-            ContentType="application/pdf",
+            ContentType=tipo_contenido,
             ServerSideEncryption="AES256",
         )
 
@@ -209,14 +211,14 @@ class AlmacenConRespaldo:
         self._reloj = reloj
         self._omitir_hasta = 0.0
 
-    def guardar(self, clave: str, contenido: bytes) -> None:
+    def guardar(self, clave: str, contenido: bytes, tipo_contenido: str = TIPO_PDF) -> None:
         if self._principal_disponible():
             try:
-                self._principal.guardar(clave, contenido)
+                self._principal.guardar(clave, contenido, tipo_contenido)
                 return
             except AlmacenNoDisponible as error:
                 self._registrar_fallo(error, "se guarda en el respaldo")
-        self._respaldo.guardar(clave, contenido)
+        self._respaldo.guardar(clave, contenido, tipo_contenido)
 
     def leer(self, clave: str) -> bytes | None:
         if self._principal_disponible():
