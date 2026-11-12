@@ -19,7 +19,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
-import androidx.compose.material.icons.automirrored.outlined.Logout
 import androidx.compose.material.icons.automirrored.outlined.ManageSearch
 import androidx.compose.material.icons.outlined.NotificationsNone
 import androidx.compose.material.icons.outlined.Payments
@@ -75,6 +74,7 @@ fun HomeScreen(
     onVerSiniestros: (() -> Unit)? = null,
     onNavbarPolizas: (() -> Unit)? = null,
     onNavbarSiniestros: (() -> Unit)? = null,
+    onNavbarPerfil: (() -> Unit)? = null,
     onCotizarSeguro: () -> Unit = {},
     cantidadPolizasActivas: Int? = null,
     onCrearAsesor: (() -> Unit)? = null,
@@ -104,7 +104,8 @@ fun HomeScreen(
         bottomBar = {
             SolventaBottomNavigation(
                 onPolizas = onNavbarPolizas ?: onVerBilletera,
-                onSiniestros = onNavbarSiniestros ?: onVerSiniestros
+                onSiniestros = onNavbarSiniestros ?: onVerSiniestros,
+                onPerfil = onNavbarPerfil
             )
         }
     ) { paddingValues ->
@@ -225,15 +226,6 @@ fun HomeScreen(
                 }
             }
 
-            TextButton(
-                onClick = onCerrarSesion,
-                enabled = !cerrandoSesion,
-                modifier = Modifier.align(Alignment.CenterHorizontally)
-            ) {
-                Icon(Icons.AutoMirrored.Outlined.Logout, contentDescription = null, tint = Navegacion)
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(if (cerrandoSesion) "Cerrando sesión…" else "Cerrar sesión", color = Navegacion)
-            }
         }
     }
 }

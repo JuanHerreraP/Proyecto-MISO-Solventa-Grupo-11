@@ -16,6 +16,9 @@ export interface Perfil {
   rol: string;
   nombre?: string;
   apellido?: string;
+  tipo_documento?: string;
+  numero_documento?: string;
+  celular?: string;
 }
 
 export async function obtenerPerfil(): Promise<Perfil> {

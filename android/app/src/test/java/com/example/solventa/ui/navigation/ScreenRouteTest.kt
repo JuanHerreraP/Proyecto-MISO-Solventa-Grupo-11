@@ -13,6 +13,7 @@ class ScreenRouteTest {
             ScreenRoute.Register.route,
             ScreenRoute.CredentialsLogin.route,
             ScreenRoute.Home.route,
+            ScreenRoute.Profile.route,
             ScreenRoute.NewQuote.route,
             ScreenRoute.QuoteForm.route,
             ScreenRoute.QuoteResult.route,
@@ -29,6 +30,7 @@ class ScreenRouteTest {
                 "register_screen",
                 "credentials_login_screen",
                 "home_screen",
+                "profile_screen",
                 "new_quote_screen",
                 "quote_form/{ramo}",
                 "quote_result/{ramo}",
@@ -91,6 +93,7 @@ class ScreenRouteTest {
         assertEquals(
             setOf(
                 "home_screen",
+                "profile_screen",
                 "new_quote_screen",
                 "quote_form/{ramo}",
                 "quote_result/{ramo}",

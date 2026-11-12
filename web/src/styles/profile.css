@@ -1,0 +1,67 @@
+.profile-page { width: min(900px, 100%); margin: 0 auto; }
+
+.profile-identity {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 18px;
+  padding: 20px;
+  border-radius: 16px;
+  background: var(--solventa-night);
+  color: var(--solventa-white);
+}
+
+.profile-avatar {
+  width: 56px;
+  height: 56px;
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--solventa-lime);
+  color: var(--solventa-night);
+  font-weight: 800;
+}
+
+.profile-identity div { display: grid; gap: 2px; }
+.profile-identity strong { font-family: var(--font-heading); font-size: 18px; }
+.profile-identity span { font-weight: 700; }
+.profile-identity small { color: #c8d1e2; }
+
+.profile-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.profile-card {
+  padding: 20px;
+  border-radius: 14px;
+  background: var(--solventa-white);
+  box-shadow: 0 1px 0 var(--solventa-border);
+}
+
+.profile-card-title { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+.profile-card h2 { margin: 0; font-size: 15px; }
+.profile-card-title .material-symbols-outlined {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  background: #eaf0fe;
+  color: var(--solventa-blue);
+  font-size: 20px;
+}
+
+.profile-data-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin: 0; }
+.profile-data-grid div { min-width: 0; }
+.profile-data-grid dt { margin-bottom: 4px; color: var(--solventa-muted); font-size: 12px; font-weight: 700; }
+.profile-data-grid dd { margin: 0; overflow-wrap: anywhere; color: var(--solventa-night); font-size: 14px; font-weight: 700; }
+.profile-card-disabled { opacity: 0.5; }
+.profile-card-disabled p { margin: 0; color: var(--solventa-muted); font-size: 13px; }
+.profile-link { border: 0; background: transparent; color: var(--solventa-blue); font-weight: 700; cursor: pointer; }
+
+@media (max-width: 720px) {
+  .profile-grid, .profile-data-grid { grid-template-columns: 1fr; }
+}

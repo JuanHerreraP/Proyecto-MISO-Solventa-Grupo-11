@@ -56,7 +56,7 @@ class HomeScreenTest {
     }
 
     @Test
-    fun muestraLosDatosDelClienteYPermiteCerrarSesion() {
+    fun muestraLosDatosDelClienteSinDuplicarElCierreDeSesion() {
         mostrar(mensaje = "Bienvenida")
 
         compose.onNodeWithText("Hola, Ana").assertIsDisplayed()
@@ -64,9 +64,7 @@ class HomeScreenTest {
         compose.onNodeWithText("Cotizar un nuevo seguro").assertIsDisplayed()
         compose.onNodeWithText("Bienvenida").assertIsDisplayed()
 
-        compose.boton("Cerrar sesión").performScrollTo().performClick()
-
-        assertEquals(listOf("cerrar"), eventos)
+        compose.onNodeWithText("Cerrar sesión").assertDoesNotExist()
     }
 
     @Test
@@ -112,11 +110,11 @@ class HomeScreenTest {
     }
 
     @Test
-    fun mientrasCierraSesionElBotonMuestraElProgreso() {
+    fun elEstadoDeCierreNoSeMuestraEnHome() {
         mostrar(cerrandoSesion = true)
 
         compose.onNodeWithText("Cerrar sesión").assertDoesNotExist()
-        compose.onNodeWithText("Cerrando sesión…").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("Cerrando sesión…").assertDoesNotExist()
     }
 
     @Test

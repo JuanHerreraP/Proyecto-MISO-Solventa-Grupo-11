@@ -13,7 +13,10 @@ data class Perfil(
     val nombre: String,
     val apellido: String,
     val email: String,
-    val rol: String
+    val rol: String,
+    val tipoDocumento: String? = null,
+    val numeroDocumento: String? = null,
+    val celular: String? = null
 )
 
 /** Datos transitorios del formulario de alta; la selfie solo se envía al KYC. */

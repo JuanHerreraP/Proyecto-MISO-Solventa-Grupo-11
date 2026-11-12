@@ -195,7 +195,7 @@ private fun ListaPolizas(billetera: Billetera, error: String?, onVerPoliza: (Str
 private fun TarjetaPoliza(poliza: PolizaResumen, onClick: () -> Unit) {
     Surface(
         shape = RoundedCornerShape(16.dp),
-        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.04f),
+        color = MaterialTheme.colorScheme.surfaceContainer,
         modifier = Modifier
             .fillMaxWidth()
             .alpha(if (poliza.activa) 1f else 0.6f)

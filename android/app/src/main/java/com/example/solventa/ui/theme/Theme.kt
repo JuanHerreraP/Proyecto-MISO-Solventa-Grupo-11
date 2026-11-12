@@ -22,7 +22,8 @@ private val DarkColorScheme = darkColorScheme(
     background = Noche,
     onBackground = Color.White,
     surface = Noche,
-    onSurface = Color.White
+    onSurface = Color.White,
+    surfaceContainer = SuperficieContenedorOscura
 )
 
 // Light Mode Palette Mapping
@@ -36,7 +37,8 @@ private val LightColorScheme = lightColorScheme(
     background = Color(0xFFF8F9FA), // Clean light off-white background
     onBackground = Noche,            // Dark text using Noche
     surface = Color.White,
-    onSurface = Noche
+    onSurface = Noche,
+    surfaceContainer = SuperficieContenedor
 )
 
 @Composable

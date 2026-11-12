@@ -10,6 +10,7 @@ sealed class ScreenRoute(val route: String) {
     object Register : ScreenRoute("register_screen")
     object CredentialsLogin : ScreenRoute("credentials_login_screen")
     object Home : ScreenRoute("home_screen")
+    object Profile : ScreenRoute("profile_screen")
     object NewQuote : ScreenRoute("new_quote_screen")
     object QuoteForm : ScreenRoute("quote_form/{ramo}") {
         const val ARGUMENTO = "ramo"
@@ -83,6 +84,7 @@ sealed class ScreenRoute(val route: String) {
         val privadas: Set<String>
             get() = setOf(
                 Home.route,
+                Profile.route,
                 NewQuote.route,
                 QuoteForm.route,
                 QuoteResult.route,
