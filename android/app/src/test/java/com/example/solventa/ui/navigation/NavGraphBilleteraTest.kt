@@ -83,9 +83,10 @@ class NavGraphBilleteraTest {
 
         compose.boton("Seguro de viaje", substring = true).performClick()
         compose.waitForIdle()
-        compose.onNodeWithText("Detalle de póliza").assertIsDisplayed()
+        compose.boton("Ver certificado y QR").assertIsDisplayed()
         assertEquals(listOf("POL-1"), gatewayPolizas.certificadosPedidos)
 
+        compose.boton("Ver certificado y QR").performClick()
         compose.boton("Compartir certificado").performScrollTo().performClick()
         compose.waitForIdle()
         assertEquals(listOf("POL-1"), gatewayPolizas.compartidos)
@@ -97,6 +98,52 @@ class NavGraphBilleteraTest {
         compose.waitForIdle()
         compose.onNodeWithText("Pólizas").assertIsDisplayed()
         assertNull(billetera.estado.value.certificado)
+    }
+
+    @Test
+    fun desdeElDetalleSeAbreLaRenovacionYAhoraNoVuelve() {
+        mostrar()
+        compose.boton("Ver mi billetera").performClick()
+        compose.waitForIdle()
+        compose.boton("Seguro de viaje", substring = true).performClick()
+        compose.waitForIdle()
+
+        compose.boton("Renovar").performScrollTo().performClick()
+        compose.waitForIdle()
+
+        compose.onNodeWithText("Continúa protegido").assertIsDisplayed()
+        compose.onNodeWithText("$164.700 COP").assertIsDisplayed()
+
+        compose.boton("Confirmar y pagar").performClick()
+        compose.waitForIdle()
+        assertEquals(listOf("POL-1"), gatewayPolizas.renovacionesIniciadas)
+
+        compose.boton("Ahora no").performClick()
+        compose.waitForIdle()
+        compose.boton("Ver certificado y QR").assertIsDisplayed()
+    }
+
+    @Test
+    fun desdeElDetalleSeCancelaLaPolizaYSeVuelveALasPolizas() {
+        mostrar()
+        compose.boton("Ver mi billetera").performClick()
+        compose.waitForIdle()
+        compose.boton("Seguro de viaje", substring = true).performClick()
+        compose.waitForIdle()
+
+        compose.boton("Cancelar").performScrollTo().performClick()
+        compose.waitForIdle()
+        compose.onNodeWithText("Confirma tu decisión").assertIsDisplayed()
+
+        compose.boton("Confirmar cancelación").performClick()
+        compose.waitForIdle()
+        assertEquals(listOf("POL-1" to "YA_NO_LA_NECESITO"), gatewayPolizas.cancelaciones)
+        compose.onNodeWithText("Póliza cancelada").assertIsDisplayed()
+
+        compose.boton("Volver a mis pólizas").performClick()
+        compose.waitForIdle()
+        compose.onNodeWithText("Pólizas").assertIsDisplayed()
+        assertNull(billetera.estado.value.cancelacionRealizada)
     }
 
     @Test

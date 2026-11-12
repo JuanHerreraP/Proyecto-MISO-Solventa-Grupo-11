@@ -101,6 +101,8 @@ class ScreenRouteTest {
                 "quote_history/{cotizacionId}",
                 "wallet_screen?desdeNavbar={desdeNavbar}",
                 "certificate_screen/{polizaId}?desdeNavbar={desdeNavbar}",
+                "renewal_screen/{polizaId}?desdeNavbar={desdeNavbar}",
+                "cancel_screen/{polizaId}?desdeNavbar={desdeNavbar}",
                 "policy_history/{polizaId}?desdeNavbar={desdeNavbar}",
                 "payment_screen/{cotizacionId}",
                 "pse_portal_screen",

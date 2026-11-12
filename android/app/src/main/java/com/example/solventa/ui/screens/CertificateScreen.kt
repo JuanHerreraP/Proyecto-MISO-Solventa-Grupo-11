@@ -1,23 +1,43 @@
 package com.example.solventa.ui.screens
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Autorenew
+import androidx.compose.material.icons.outlined.Cancel
+import androidx.compose.material.icons.outlined.Description
+import androidx.compose.material.icons.outlined.History
+import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.outlined.Shield
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -36,7 +56,13 @@ import com.example.solventa.ui.components.SolventaSecondaryButton
 import com.example.solventa.ui.theme.Navegacion
 import com.example.solventa.ui.theme.SolventaTheme
 
-/** Detalle contractual de la póliza, certificado e historial de movimientos (HU09). */
+private val FondoEncabezado = Color(0xFF0F1B2D)
+private val BordeTarjeta = Color(0xFFE2E8F0)
+private val RojoCancelar = Color(0xFFC62828)
+private val FondoCancelar = Color(0xFFFDECEC)
+private val BordeCancelar = Color(0xFFF5C6C6)
+
+/** Detalle contractual de la póliza, con acceso al certificado, historial, renovación y cancelación. */
 @Composable
 fun CertificateScreen(
     certificado: Certificado?,
@@ -50,11 +76,13 @@ fun CertificateScreen(
     onVerHistorial: () -> Unit,
     onReintentar: () -> Unit,
     onVolver: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onRenovar: () -> Unit = {},
+    onCancelar: () -> Unit = {}
 ) {
     Surface(modifier = modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surface) {
         Column(modifier = Modifier.fillMaxSize()) {
-            Encabezado(titulo = "Detalle de póliza", onVolver = onVolver)
+            Encabezado(titulo = "Pólizas", onVolver = onVolver)
 
             when {
                 certificado == null && cargando -> Box(
@@ -90,7 +118,9 @@ fun CertificateScreen(
                     mensaje = mensaje,
                     onVerDocumento = onVerDocumento,
                     onCompartir = onCompartir,
-                    onVerHistorial = onVerHistorial
+                    onVerHistorial = onVerHistorial,
+                    onRenovar = onRenovar,
+                    onCancelar = onCancelar
                 )
             }
         }
@@ -105,8 +135,13 @@ private fun Contenido(
     mensaje: String?,
     onVerDocumento: () -> Unit,
     onCompartir: () -> Unit,
-    onVerHistorial: () -> Unit
+    onVerHistorial: () -> Unit,
+    onRenovar: () -> Unit,
+    onCancelar: () -> Unit
 ) {
+    // Con un aviso pendiente (p. ej. no se pudo compartir) el certificado se abre solo.
+    var verCertificado by rememberSaveable { mutableStateOf(mensaje != null) }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -115,76 +150,34 @@ private fun Contenido(
             .padding(bottom = 32.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        TarjetaPrincipal(certificado)
+
+        val condicion = CondicionParametrica.campos(certificado.descripcionCobertura)
+        TarjetaInformativa(titulo = "Coberturas", icono = Icons.Outlined.Shield) {
+            val suma = Formatos.dinero(certificado.sumaAsegurada, certificado.moneda)
             Text(
-                text = certificado.nombreRamo,
-                style = MaterialTheme.typography.headlineSmall,
-                color = MaterialTheme.colorScheme.onBackground
+                text = "${certificado.coberturaPrincipal} · Suma asegurada $suma",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
             )
-            EtiquetaEstado(estado = certificado.estado)
-            if (!certificado.activa) {
+            certificado.descripcionCobertura?.takeIf { it.isNotBlank() && condicion.isEmpty() }?.let {
                 Text(
-                    text = "Esta póliza ya no está vigente. El certificado se conserva como constancia.",
+                    text = it,
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                 )
             }
-        }
-
-        Seccion("Información de la póliza") {
-            Dato("Número de póliza", certificado.numeroPoliza)
-            Dato("Titular", certificado.titular)
-            Dato("Documento", certificado.documentoTitular)
-            Dato("Vigencia", Formatos.vigencia(certificado.fechaInicio, certificado.fechaFin))
-            certificado.emitidaEn.takeIf { it.isNotBlank() }?.let {
-                Dato("Fecha de emisión", Formatos.fechaHora(it))
-            }
-            certificado.primaTotal.takeIf { it.isNotBlank() }?.let {
-                Dato("Prima total", Formatos.dinero(it, certificado.moneda))
-            }
-        }
-
-        Seccion("Cobertura contratada", destacada = true) {
-            Dato("Cobertura principal", certificado.coberturaPrincipal)
-            certificado.descripcionCobertura?.takeIf { it.isNotBlank() }?.let {
-                Text(
-                    text = it,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.75f)
-                )
-            }
-            Dato("Suma asegurada", Formatos.dinero(certificado.sumaAsegurada, certificado.moneda))
-        }
-
-        val condicion = CondicionParametrica.campos(certificado.descripcionCobertura)
-        if (condicion.isNotEmpty()) {
-            Surface(
-                shape = RoundedCornerShape(16.dp),
-                color = Navegacion.copy(alpha = 0.06f),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Text(
-                        text = "Condición paramétrica",
-                        style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
-                        color = Navegacion
-                    )
-                    condicion.forEach { campo ->
-                        val valor = if (campo.esMoneda) {
-                            Formatos.dinero(campo.valor, certificado.moneda)
-                        } else {
-                            campo.valor
-                        }
-                        Dato(campo.etiqueta, valor)
-                    }
+            condicion.forEach { campo ->
+                val valor = if (campo.esMoneda) {
+                    Formatos.dinero(campo.valor, certificado.moneda)
+                } else {
+                    campo.valor
                 }
+                Dato(campo.etiqueta, valor)
             }
         }
 
-        Seccion("Exclusiones principales") {
+        TarjetaInformativa(titulo = "Exclusiones principales", icono = Icons.Outlined.Info) {
             if (certificado.exclusionesPrincipales.isEmpty()) {
                 Text(
                     text = "No se informan exclusiones principales para esta cobertura.",
@@ -192,77 +185,226 @@ private fun Contenido(
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                 )
             } else {
-                certificado.exclusionesPrincipales.forEach { exclusion ->
-                    Text(
-                        text = "• $exclusion",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                }
+                Text(
+                    text = certificado.exclusionesPrincipales.joinToString(separator = "\n") { "• $it" },
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                )
             }
-        }
-
-        Seccion("Historial de movimientos") {
-            Text(
-                text = "Consulta los endosos y cambios registrados sobre esta póliza.",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.75f)
-            )
-            SolventaSecondaryButton(
-                text = "Ver historial de la póliza",
-                onClick = onVerHistorial
-            )
         }
 
         if (mensaje != null) {
             SolventaNoticePill(text = mensaje, icon = painterResource(id = R.drawable.ic_main_page))
         }
 
-        SolventaPrimaryButton(
-            text = "Ver documento PDF",
-            onClick = onVerDocumento,
-            isLoading = descargandoDocumento
+        BotonAccion(
+            texto = "Ver certificado y QR",
+            icono = Icons.Outlined.Description,
+            primario = true,
+            onClick = { verCertificado = !verCertificado }
         )
-
-        SolventaSecondaryButton(
-            text = "Compartir certificado",
-            onClick = onCompartir,
-            isLoading = compartiendo
-        )
-        Text(
-            text = "Se genera un enlace temporal: quien lo reciba verá el certificado hasta que venza.",
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-        )
-
-        Column(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Text(
-                text = "Certificado digital",
-                style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
-                color = MaterialTheme.colorScheme.onSurface
-            )
-            SolventaCodigoQr(
-                contenido = certificado.contenidoQr,
-                descripcion = "Código QR de la póliza ${certificado.numeroPoliza}"
+        if (verCertificado) {
+            SeccionCertificado(
+                certificado = certificado,
+                descargandoDocumento = descargandoDocumento,
+                compartiendo = compartiendo,
+                onVerDocumento = onVerDocumento,
+                onCompartir = onCompartir
             )
         }
+
+        BotonAccion(
+            texto = "Consultar movimientos",
+            icono = Icons.Outlined.History,
+            onClick = onVerHistorial
+        )
+
+        if (certificado.activa) {
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                BotonAccion(
+                    texto = "Renovar",
+                    icono = Icons.Outlined.Autorenew,
+                    onClick = onRenovar,
+                    modifier = Modifier.weight(1f)
+                )
+                BotonAccion(
+                    texto = "Cancelar",
+                    icono = Icons.Outlined.Cancel,
+                    cancelar = true,
+                    onClick = onCancelar,
+                    modifier = Modifier.weight(1f)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun TarjetaPrincipal(certificado: Certificado) {
+    Surface(
+        shape = RoundedCornerShape(20.dp),
+        color = FondoEncabezado,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            EtiquetaEstado(estado = certificado.estado)
+            Text(
+                text = certificado.nombreRamo,
+                style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
+                color = Color.White
+            )
+            Text(
+                text = "Póliza ${certificado.numeroPoliza} · " +
+                    Formatos.vigencia(certificado.fechaInicio, certificado.fechaFin),
+                style = MaterialTheme.typography.bodyMedium,
+                color = Color.White.copy(alpha = 0.85f)
+            )
+            if (!certificado.activa) {
+                Text(
+                    text = "Esta póliza ya no está vigente. El certificado se conserva como constancia.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color.White.copy(alpha = 0.7f)
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun TarjetaInformativa(
+    titulo: String,
+    icono: ImageVector,
+    contenido: @Composable () -> Unit
+) {
+    Surface(
+        shape = RoundedCornerShape(16.dp),
+        color = MaterialTheme.colorScheme.surface,
+        border = BorderStroke(1.dp, BordeTarjeta),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Row(modifier = Modifier.padding(16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Icon(
+                imageVector = icono,
+                contentDescription = null,
+                tint = Navegacion,
+                modifier = Modifier.size(24.dp)
+            )
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Text(
+                    text = titulo,
+                    style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                contenido()
+            }
+        }
+    }
+}
+
+@Composable
+private fun BotonAccion(
+    texto: String,
+    icono: ImageVector,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    primario: Boolean = false,
+    cancelar: Boolean = false
+) {
+    val forma = RoundedCornerShape(14.dp)
+    val tamano = modifier
+        .fillMaxWidth()
+        .height(52.dp)
+    if (primario) {
+        Button(
+            onClick = onClick,
+            shape = forma,
+            colors = ButtonDefaults.buttonColors(containerColor = Navegacion, contentColor = Color.White),
+            modifier = tamano
+        ) { ContenidoBoton(texto, icono) }
+    } else {
+        OutlinedButton(
+            onClick = onClick,
+            shape = forma,
+            border = BorderStroke(1.dp, if (cancelar) BordeCancelar else BordeTarjeta),
+            colors = ButtonDefaults.outlinedButtonColors(
+                containerColor = if (cancelar) FondoCancelar else Color.Transparent,
+                contentColor = if (cancelar) RojoCancelar else MaterialTheme.colorScheme.onSurface
+            ),
+            modifier = tamano
+        ) { ContenidoBoton(texto, icono) }
+    }
+}
+
+@Composable
+private fun ContenidoBoton(texto: String, icono: ImageVector) {
+    Icon(imageVector = icono, contentDescription = null, modifier = Modifier.size(20.dp))
+    Spacer(modifier = Modifier.size(10.dp))
+    Text(text = texto, style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold))
+}
+
+@Composable
+private fun SeccionCertificado(
+    certificado: Certificado,
+    descargandoDocumento: Boolean,
+    compartiendo: Boolean,
+    onVerDocumento: () -> Unit,
+    onCompartir: () -> Unit
+) {
+    Seccion("Información de la póliza") {
+        Dato("Número de póliza", certificado.numeroPoliza)
+        Dato("Titular", certificado.titular)
+        Dato("Documento", certificado.documentoTitular)
+        Dato("Vigencia", Formatos.vigencia(certificado.fechaInicio, certificado.fechaFin))
+        certificado.emitidaEn.takeIf { it.isNotBlank() }?.let {
+            Dato("Fecha de emisión", Formatos.fechaHora(it))
+        }
+        certificado.primaTotal.takeIf { it.isNotBlank() }?.let {
+            Dato("Prima total", Formatos.dinero(it, certificado.moneda))
+        }
+    }
+
+    SolventaPrimaryButton(
+        text = "Ver documento PDF",
+        onClick = onVerDocumento,
+        isLoading = descargandoDocumento
+    )
+
+    SolventaSecondaryButton(
+        text = "Compartir certificado",
+        onClick = onCompartir,
+        isLoading = compartiendo
+    )
+    Text(
+        text = "Se genera un enlace temporal: quien lo reciba verá el certificado hasta que venza.",
+        style = MaterialTheme.typography.labelMedium,
+        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+    )
+
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Text(
+            text = "Certificado digital",
+            style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
+            color = MaterialTheme.colorScheme.onSurface
+        )
+        SolventaCodigoQr(
+            contenido = certificado.contenidoQr,
+            descripcion = "Código QR de la póliza ${certificado.numeroPoliza}"
+        )
     }
 }
 
 @Composable
 private fun Seccion(
     titulo: String,
-    destacada: Boolean = false,
     contenido: @Composable () -> Unit
 ) {
     Surface(
         shape = RoundedCornerShape(16.dp),
-        color = if (destacada) Navegacion.copy(alpha = 0.06f)
-        else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.04f),
+        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.04f),
         modifier = Modifier.fillMaxWidth()
     ) {
         Column(
@@ -272,7 +414,7 @@ private fun Seccion(
             Text(
                 text = titulo,
                 style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                color = if (destacada) Navegacion else MaterialTheme.colorScheme.onSurface
+                color = MaterialTheme.colorScheme.onSurface
             )
             contenido()
         }

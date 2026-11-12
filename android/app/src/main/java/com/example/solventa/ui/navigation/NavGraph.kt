@@ -31,6 +31,7 @@ import com.example.solventa.domain.asesor.DatosNuevoAnalista
 import com.example.solventa.domain.cotizaciones.CatalogoCotizaciones
 import com.example.solventa.domain.cotizaciones.EstadoCotizaciones
 import com.example.solventa.domain.cotizaciones.RamoCotizacion
+import com.example.solventa.domain.pagos.EstadoPago
 import com.example.solventa.domain.pagos.EstadoPagos
 import com.example.solventa.domain.siniestros.SolicitudSiniestro
 import com.example.solventa.domain.siniestros.SolicitudSiniestroAsistido
@@ -49,6 +50,8 @@ import com.example.solventa.ui.siniestros.SiniestrosViewModel
 import com.example.solventa.ui.siniestros.rememberCapturaEvidencias
 import com.example.solventa.ui.screens.AdvisorHomeScreen
 import com.example.solventa.ui.screens.BiometricalLoginScreen
+import com.example.solventa.ui.screens.CancelScreen
+import com.example.solventa.ui.screens.CancelSuccessScreen
 import com.example.solventa.ui.screens.CertificateScreen
 import com.example.solventa.ui.screens.ClaimFormScreen
 import com.example.solventa.ui.screens.ClaimsScreen
@@ -67,6 +70,8 @@ import com.example.solventa.ui.screens.QuoteFormScreen
 import com.example.solventa.ui.screens.QuoteResultScreen
 import com.example.solventa.ui.screens.QuotesScreen
 import com.example.solventa.ui.screens.RegisterScreen
+import com.example.solventa.ui.screens.RenewalScreen
+import com.example.solventa.ui.screens.RenewalSuccessScreen
 import com.example.solventa.ui.screens.WalletScreen
 import com.example.solventa.ui.screens.WelcomeScreen
 import kotlinx.coroutines.delay
@@ -677,6 +682,67 @@ fun NavGraph(
                                 billetera.verCertificado(polizaId)
                             },
                             onVolver = { navController.popBackStack() },
+                            modifier = pantallaModifier,
+                            onRenovar = {
+                                navController.navigate(ScreenRoute.Renewal.ruta(polizaId, desdeNavbar))
+                            },
+                            onCancelar = {
+                                navController.navigate(ScreenRoute.Cancel.ruta(polizaId, desdeNavbar))
+                            }
+                        )
+                    }
+                }
+            }
+
+            composable(
+                route = ScreenRoute.Renewal.route,
+                arguments = listOf(
+                    navArgument(ScreenRoute.Renewal.ARGUMENTO) { type = NavType.StringType },
+                    navArgument(ScreenRoute.Renewal.ORIGEN_NAVBAR) {
+                        type = NavType.BoolType
+                        defaultValue = false
+                    }
+                )
+            ) { entrada ->
+                val polizaId = entrada.arguments?.getString(ScreenRoute.Renewal.ARGUMENTO).orEmpty()
+                val desdeNavbar =
+                    entrada.arguments?.getBoolean(ScreenRoute.Renewal.ORIGEN_NAVBAR) == true
+                val estadoBilletera by billetera.estado.collectAsState()
+
+                if (estado.sesion == null) {
+                    Box(modifier = Modifier.fillMaxSize())
+                } else {
+                    LaunchedEffect(polizaId) { billetera.verPropuestaRenovacion(polizaId) }
+                    DisposableEffect(polizaId) { onDispose { billetera.cerrarRenovacion() } }
+
+                    // Con la renovación creada se paga su cotización con el recaudo de siempre.
+                    LaunchedEffect(estadoBilletera.renovacionParaPagar) {
+                        val renovacion = estadoBilletera.renovacionParaPagar ?: return@LaunchedEffect
+                        billetera.renovacionEnPago()
+                        // Sin recaudo disponible no hay ruta de pago a la que ir.
+                        if (pagos != null) {
+                            pagos.limpiar()
+                            navController.navigate(ScreenRoute.Payment.ruta(renovacion.cotizacionId))
+                        }
+                    }
+
+                    PantallaConNavegacion(
+                        visible = desdeNavbar,
+                        seleccionada = SeccionNavegacion.POLIZAS,
+                        navController = navController,
+                        polizasDisponibles = true,
+                        siniestrosDisponibles = siniestros != null
+                    ) { pantallaModifier ->
+                        RenewalScreen(
+                            propuesta = estadoBilletera.propuestaRenovacion
+                                ?.takeIf { it.polizaId == polizaId },
+                            cargando = estadoBilletera.cargandoRenovacion,
+                            error = estadoBilletera.errorRenovacion,
+                            iniciando = estadoBilletera.iniciandoRenovacion,
+                            onConfirmar = { billetera.iniciarRenovacion(polizaId) },
+                            onReintentar = { billetera.verPropuestaRenovacion(polizaId) },
+                            onAhoraNo = { navController.popBackStack() },
+                            onVolver = { navController.popBackStack() },
                             modifier = pantallaModifier
                         )
                     }
@@ -740,6 +806,67 @@ fun NavGraph(
             }
         }
 
+        if (billetera != null) {
+            composable(
+                route = ScreenRoute.Cancel.route,
+                arguments = listOf(
+                    navArgument(ScreenRoute.Cancel.ARGUMENTO) { type = NavType.StringType },
+                    navArgument(ScreenRoute.Cancel.ORIGEN_NAVBAR) {
+                        type = NavType.BoolType
+                        defaultValue = false
+                    }
+                )
+            ) { entrada ->
+                val polizaId = entrada.arguments?.getString(ScreenRoute.Cancel.ARGUMENTO).orEmpty()
+                val desdeNavbar =
+                    entrada.arguments?.getBoolean(ScreenRoute.Cancel.ORIGEN_NAVBAR) == true
+                val estadoBilletera by billetera.estado.collectAsState()
+
+                if (estado.sesion == null) {
+                    Box(modifier = Modifier.fillMaxSize())
+                } else {
+                    LaunchedEffect(polizaId) { billetera.verPropuestaCancelacion(polizaId) }
+                    DisposableEffect(polizaId) { onDispose { billetera.cerrarCancelacion() } }
+
+                    val volverALasPolizas = {
+                        if (!navController.popBackStack(ScreenRoute.Wallet.route, false)) {
+                            navController.popBackStack(ScreenRoute.Home.route, false)
+                        }
+                        Unit
+                    }
+
+                    PantallaConNavegacion(
+                        visible = desdeNavbar,
+                        seleccionada = SeccionNavegacion.POLIZAS,
+                        navController = navController,
+                        polizasDisponibles = true,
+                        siniestrosDisponibles = siniestros != null
+                    ) { pantallaModifier ->
+                        if (estadoBilletera.cancelacionRealizada?.polizaId == polizaId) {
+                            CancelSuccessScreen(
+                                onVolverALasPolizas = volverALasPolizas,
+                                onVolver = volverALasPolizas,
+                                modifier = pantallaModifier
+                            )
+                        } else {
+                            CancelScreen(
+                                propuesta = estadoBilletera.propuestaCancelacion
+                                    ?.takeIf { it.polizaId == polizaId },
+                                cargando = estadoBilletera.cargandoCancelacion,
+                                error = estadoBilletera.errorCancelacion,
+                                cancelando = estadoBilletera.cancelando,
+                                onConfirmar = { motivo -> billetera.cancelarPoliza(polizaId, motivo) },
+                                onReintentar = { billetera.verPropuestaCancelacion(polizaId) },
+                                onConservar = { navController.popBackStack() },
+                                onVolver = { navController.popBackStack() },
+                                modifier = pantallaModifier
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
         if (pagos != null) {
             composable(
                 route = ScreenRoute.Payment.route,
@@ -748,9 +875,14 @@ fun NavGraph(
                 )
             ) { entrada ->
                 val cotizacionId = entrada.arguments?.getString(ScreenRoute.Payment.ARGUMENTO)
+                // Una renovación en curso se paga con su propia cotización y su monto.
+                val renovacion = billetera?.estado?.collectAsState()?.value?.renovacionEnCurso
+                    ?.takeIf { it.cotizacionId == cotizacionId }
                 val resultado = estadoCotizaciones.resultado
                     ?: estadoCotizaciones.listado.firstOrNull { it.cotizacionId == cotizacionId }
-                if (estado.sesion == null || cotizacionId == null || resultado == null) {
+                val monto = renovacion?.primaTotal?.toBigDecimalOrNull() ?: resultado?.primaTotal
+                val moneda = renovacion?.moneda ?: resultado?.moneda
+                if (estado.sesion == null || cotizacionId == null || monto == null || moneda == null) {
                     Box(modifier = Modifier.fillMaxSize())
                 } else {
                     // El pago lleva al portal PSE (pendiente con URL) o a la pantalla de resultado.
@@ -767,8 +899,8 @@ fun NavGraph(
                     }
                     PaymentScreen(
                         cotizacionId = cotizacionId,
-                        monto = resultado.primaTotal,
-                        moneda = resultado.moneda,
+                        monto = monto,
+                        moneda = moneda,
                         procesando = estadoPagos.procesando,
                         error = estadoPagos.error,
                         onVolver = { navController.popBackStack() },
@@ -781,8 +913,35 @@ fun NavGraph(
 
             composable(route = ScreenRoute.PaymentResult.route) {
                 val pago = estadoPagos.pago
+                val renovacionPagada = billetera?.estado?.collectAsState()?.value?.renovacionEnCurso
+                    ?.takeIf { pago != null && it.cotizacionId == pago.cotizacionId }
                 if (estado.sesion == null || pago == null) {
                     Box(modifier = Modifier.fillMaxSize())
+                } else if (renovacionPagada != null && pago.estado == EstadoPago.APROBADO) {
+                    // El pago aprobado de una renovación termina en su propia confirmación.
+                    RenewalSuccessScreen(
+                        onVerPoliza = {
+                            pagos.limpiar()
+                            billetera?.terminarRenovacion()
+                            if (!navController.popBackStack(ScreenRoute.Wallet.route, false)) {
+                                navController.popBackStack(ScreenRoute.Home.route, false)
+                            }
+                            navController.navigate(ScreenRoute.Certificate.ruta(renovacionPagada.polizaId))
+                        },
+                        onVolver = {
+                            pagos.limpiar()
+                            billetera?.terminarRenovacion()
+                            navController.popBackStack(ScreenRoute.Home.route, false)
+                        },
+                        onInicio = {
+                            pagos.limpiar()
+                            billetera?.terminarRenovacion()
+                            navController.popBackStack(ScreenRoute.Home.route, false)
+                        },
+                        onVerBilletera = billetera?.let {
+                            { navController.navigate(ScreenRoute.Wallet.ruta()) { launchSingleTop = true } }
+                        }
+                    )
                 } else {
                     PaymentResultScreen(
                         pago = pago,
