@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 
 from app.pagos.modelos import EstadoPago, Pago
 from app.pagos.modelos_db import PagoDB
+from app.pagos.puertos import PagoAprobadoDuplicado
 
 
 class RepositorioPagosEnMemoria:
@@ -22,6 +23,10 @@ class RepositorioPagosEnMemoria:
         return True
 
     def guardar(self, pago: Pago) -> None:
+        if pago.estado is EstadoPago.APROBADO:
+            otro = self.obtener_aprobado_de_cotizacion(pago.cotizacion_id)
+            if otro is not None and otro.pago_id != pago.pago_id:
+                raise PagoAprobadoDuplicado(otro.pago_id)
         self._por_id[pago.pago_id] = pago.model_copy(deep=True)
 
     def obtener(self, pago_id: str) -> Pago | None:
@@ -80,7 +85,15 @@ class RepositorioPagosPostgres:
         else:
             for campo, valor in datos.items():
                 setattr(persistido, campo, valor)
-        self._db.commit()
+        try:
+            self._db.commit()
+        except IntegrityError:
+            self._db.rollback()
+            if pago.estado is EstadoPago.APROBADO:
+                otro = self.obtener_aprobado_de_cotizacion(pago.cotizacion_id)
+                if otro is not None and otro.pago_id != pago.pago_id:
+                    raise PagoAprobadoDuplicado(otro.pago_id) from None
+            raise
 
     def obtener(self, pago_id: str) -> Pago | None:
         return self._a_dominio(self._db.get(PagoDB, pago_id))
