@@ -12,6 +12,7 @@ from app.cotizaciones.dominio.modelos import EstadoCotizacion
 from app.cotizaciones.repositorio import RepositorioCotizaciones
 from app.pagos.modelos import EstadoPago, MetodoPago, Pago, SolicitudPago
 from app.pagos.puertos import (
+    PagoAprobadoDuplicado,
     PasarelaNoDisponible,
     PasarelaPagos,
     RepositorioPagos,
@@ -20,6 +21,21 @@ from app.pagos.puertos import (
 )
 
 logger = logging.getLogger(__name__)
+
+MOTIVO_COBRO_DUPLICADO = "COBRO_DUPLICADO"
+
+
+def en_cadena(*acciones: Callable[[Pago], object]) -> Callable[[Pago], None]:
+    """Avisa un pago aprobado a varios interesados sin que el fallo de uno frene a los demás."""
+
+    def avisar(pago: Pago) -> None:
+        for accion in acciones:
+            try:
+                accion(pago)
+            except Exception:
+                logger.exception("Falló un aviso del pago aprobado %s", pago.pago_id)
+
+    return avisar
 
 
 class CotizacionNoPagable(Exception):
@@ -203,7 +219,24 @@ class ServicioPagos:
                 "actualizado_en": self._reloj(),
             }
         )
-        self._pagos.guardar(actualizado)
+        try:
+            self._pagos.guardar(actualizado)
+        except PagoAprobadoDuplicado as duplicado:
+            # Otra solicitud ya dejó la cotización pagada: este cobro no puede quedar aprobado.
+            # La pasarela sí lo aprobó, así que se deja constancia para devolverlo.
+            logger.error(
+                "Cobro duplicado: el pago %s fue aprobado por la pasarela (%s) pero la "
+                "cotización %s ya está pagada con %s. Requiere devolución.",
+                pago.pago_id,
+                resultado.referencia_pasarela,
+                pago.cotizacion_id,
+                duplicado.pago_id,
+            )
+            actualizado = actualizado.model_copy(
+                update={"estado": EstadoPago.RECHAZADO, "motivo_rechazo": MOTIVO_COBRO_DUPLICADO}
+            )
+            self._pagos.guardar(actualizado)
+            return actualizado
         if resultado.estado is EstadoPago.APROBADO:
             cotizacion = self._cotizaciones.obtener(pago.cotizacion_id)
             if cotizacion is not None and cotizacion.estado is EstadoCotizacion.VIGENTE:
