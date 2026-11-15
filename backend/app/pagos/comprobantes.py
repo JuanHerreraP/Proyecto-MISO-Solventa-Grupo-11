@@ -45,6 +45,12 @@ class ServicioComprobantes:
         self._polizas = polizas
         self._reloj = reloj
 
+    def concepto_de(self, cotizacion_id: str) -> ConceptoComprobante:
+        """Renovación si la cotización la creó una renovación; compra en cualquier otro caso."""
+        if self._renovaciones.por_cotizacion(cotizacion_id) is not None:
+            return ConceptoComprobante.RENOVACION
+        return ConceptoComprobante.COMPRA
+
     def emitir(self, pago: Pago) -> Comprobante | None:
         """Genera el comprobante del pago aprobado. Repetirlo devuelve el mismo."""
         if pago.estado is not EstadoPago.APROBADO:

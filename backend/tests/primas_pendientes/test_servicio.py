@@ -211,10 +211,10 @@ def test_las_mas_urgentes_van_primero_y_las_firmas_al_final() -> None:
     assert primas[2].fecha_limite is None
 
 
-def test_el_fin_de_vigencia_es_la_medianoche_de_bogota_del_dia_siguiente() -> None:
+def test_el_fin_de_vigencia_es_el_ultimo_segundo_del_ultimo_dia_en_bogota() -> None:
     limite = fin_de_vigencia(date(2026, 12, 31))
 
-    assert limite.isoformat() == "2027-01-01T00:00:00-05:00"
+    assert limite.isoformat() == "2026-12-31T23:59:59-05:00"
 
 
 def test_una_renovacion_sin_su_cotizacion_no_se_lista() -> None:

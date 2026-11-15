@@ -21,7 +21,7 @@ La pasarela incluida es **simulada** (`app/pagos/pasarela_simulada.py`). El rest
 | Método y ruta | Quién | Devuelve |
 |---|---|---|
 | `POST /api/v1/pagos` | Cliente | `201` con el pago; `200` si es un reintento idempotente |
-| `GET /api/v1/pagos/{pago_id}` | Cliente, solo sus pagos | Estado del pago |
+| `GET /api/v1/pagos/{pago_id}` | Cliente, solo sus pagos | Estado del pago, con su `concepto` (`COMPRA` o `RENOVACION`, HU21) |
 | `GET /api/v1/pagos/{pago_id}/comprobante` | Cliente, solo sus pagos | Comprobante del pago aprobado (HU21, ver [Pago de primas pendientes](pago-prima.md)) |
 | `POST /api/v1/pagos/confirmaciones` | Pasarela (sin sesión, con firma) | `{pago_id, estado}` |
 

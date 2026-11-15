@@ -15,7 +15,7 @@ from app.cotizaciones.servicio_personalizacion import ServicioPersonalizacionCot
 from app.identidad.modelos import Rol
 from app.infraestructura.database import get_db
 from app.pagos.comprobantes import PagoSinComprobante, ServicioComprobantes
-from app.pagos.modelos import Comprobante, EstadoPago, Pago, SolicitudPago
+from app.pagos.modelos import Comprobante, EstadoPago, PagoConConcepto, SolicitudPago
 from app.pagos.pasarela_simulada import PasarelaSimulada
 from app.pagos.puertos import PasarelaNoDisponible, PasarelaPagos
 from app.pagos.repositorio import RepositorioPagosPostgres
@@ -69,6 +69,7 @@ def obtener_servicio(
         pasarela=pasarela,
         # Un pago aprobado actualiza la renovación (si lo es) y genera su comprobante (HU21).
         al_aprobar=en_cadena(renovaciones.aplicar_pago, comprobantes.emitir),
+        concepto_de=comprobantes.concepto_de,
     )
 
 
@@ -113,7 +114,7 @@ _ERRORES_NEGOCIO = {
 
 @router.post(
     "",
-    response_model=Pago,
+    response_model=PagoConConcepto,
     response_model_exclude={"huella_solicitud"},
     status_code=status.HTTP_201_CREATED,
     summary="Procesa el recaudo inicial de una cotización",
@@ -135,7 +136,7 @@ def pagar(
     idempotency_key: str = Header(min_length=8, max_length=64),
     cliente_id: str = Depends(cliente_pagador),
     servicio: ServicioPagos = Depends(obtener_servicio),
-) -> Pago:
+) -> PagoConConcepto:
     try:
         pago, repetido = servicio.pagar(cliente_id, idempotency_key, solicitud)
     except CotizacionNoPagable as error:
@@ -161,20 +162,20 @@ def pagar(
         ) from None
     if repetido:
         respuesta.status_code = status.HTTP_200_OK
-    return pago
+    return servicio.con_concepto(pago)
 
 
 @router.get(
     "",
-    response_model=list[Pago],
+    response_model=list[PagoConConcepto],
     response_model_exclude={"__all__": {"huella_solicitud"}},
     summary="Lista los pagos del cliente, del más reciente al más antiguo",
 )
 def listar_pagos(
     cliente_id: str = Depends(cliente_pagador),
     servicio: ServicioPagos = Depends(obtener_servicio),
-) -> list[Pago]:
-    return servicio.listar(cliente_id)
+) -> list[PagoConConcepto]:
+    return [servicio.con_concepto(pago) for pago in servicio.listar(cliente_id)]
 
 
 @router.get(
@@ -218,7 +219,7 @@ def comprobante_del_pago(
 
 @router.get(
     "/{pago_id}",
-    response_model=Pago,
+    response_model=PagoConConcepto,
     response_model_exclude={"huella_solicitud"},
     summary="Consulta el estado de un pago",
 )
@@ -226,9 +227,9 @@ def consultar_pago(
     pago_id: str,
     cliente_id: str = Depends(cliente_pagador),
     servicio: ServicioPagos = Depends(obtener_servicio),
-) -> Pago:
+) -> PagoConConcepto:
     try:
-        return servicio.consultar(pago_id, cliente_id)
+        return servicio.con_concepto(servicio.consultar(pago_id, cliente_id))
     except PagoNoEncontrado:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "El pago no existe.") from None
 
