@@ -57,6 +57,7 @@ function montar() {
     <MemoryRouter initialEntries={["/polizas"]}>
       <Routes>
         <Route path="/polizas" element={<PolizasPage />} />
+        <Route path="/polizas/:polizaId/cancelar" element={<h1>Cancelar póliza</h1>} />
         <Route path="/login" element={<h1>Inicia sesión</h1>} />
       </Routes>
     </MemoryRouter>,
@@ -162,4 +163,18 @@ it("no ofrece modificar una póliza inactiva", async () => {
   await userEvent.click(await screen.findByRole("button", { name: /Seguro de viaje/ }));
 
   expect(screen.queryByRole("button", { name: "Modificar coberturas y beneficiarios" })).not.toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "Cancelar póliza" })).not.toBeInTheDocument();
+});
+
+it("lleva a cancelar desde una póliza vigente", async () => {
+  vi.mocked(obtenerBilletera).mockResolvedValue({
+    polizas: [POLIZA], total_vigentes: 1, total_inactivas: 0,
+  });
+  vi.mocked(obtenerCertificado).mockResolvedValue(CERTIFICADO);
+  montar();
+
+  await userEvent.click(await screen.findByRole("button", { name: /Seguro de viaje/ }));
+  await userEvent.click(screen.getByRole("button", { name: "Cancelar póliza" }));
+
+  expect(await screen.findByRole("heading", { name: "Cancelar póliza" })).toBeInTheDocument();
 });
