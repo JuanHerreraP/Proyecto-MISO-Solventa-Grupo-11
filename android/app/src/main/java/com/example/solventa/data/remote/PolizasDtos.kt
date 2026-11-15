@@ -1,6 +1,15 @@
 package com.example.solventa.data.remote
 
 import com.example.solventa.domain.polizas.Billetera
+import com.example.solventa.domain.polizas.BloqueoCancelacion
+import com.example.solventa.domain.polizas.CancelacionRealizada
+import com.example.solventa.domain.polizas.MotivoCancelacion
+import com.example.solventa.domain.polizas.PropuestaCancelacion
+import com.example.solventa.domain.polizas.BloqueoRenovacion
+import com.example.solventa.domain.polizas.CoberturaRenovacion
+import com.example.solventa.domain.polizas.PropuestaRenovacion
+import com.example.solventa.domain.polizas.RenovacionEnCurso
+import com.example.solventa.domain.polizas.VigenciaRenovacion
 import com.example.solventa.domain.polizas.CambioEndoso
 import com.example.solventa.domain.polizas.CambioMovimiento
 import com.example.solventa.domain.polizas.CategoriaMovimiento
@@ -234,6 +243,136 @@ data class EnlaceCompartidoDto(
 
 private fun String?.aEstado(): EstadoPoliza? =
     this?.let { valor -> EstadoPoliza.entries.firstOrNull { it.name == valor } }
+
+data class VigenciaDto(
+    @SerializedName("inicio") val inicio: String?,
+    @SerializedName("fin") val fin: String?
+) {
+    fun aVigencia(): VigenciaRenovacion? {
+        val desde = inicio ?: return null
+        val hasta = fin ?: return null
+        return VigenciaRenovacion(desde, hasta)
+    }
+}
+
+data class CoberturaRenovadaDto(
+    @SerializedName("nombre") val nombre: String?,
+    @SerializedName("principal") val principal: Boolean?
+)
+
+data class BloqueoRenovacionDto(
+    @SerializedName("codigo") val codigo: String?,
+    @SerializedName("mensaje") val mensaje: String?
+)
+
+data class RenovacionDto(
+    @SerializedName("renovacion_id") val renovacionId: String?,
+    @SerializedName("poliza_id") val polizaId: String?,
+    @SerializedName("cotizacion_id") val cotizacionId: String?,
+    @SerializedName("estado") val estado: String?,
+    @SerializedName("nuevo_inicio") val nuevoInicio: String?,
+    @SerializedName("nuevo_fin") val nuevoFin: String?,
+    @SerializedName("prima_total") val primaTotal: String?,
+    @SerializedName("moneda") val moneda: String?
+) {
+    fun aRenovacion(): RenovacionEnCurso? {
+        return RenovacionEnCurso(
+            renovacionId = renovacionId ?: return null,
+            polizaId = polizaId ?: return null,
+            cotizacionId = cotizacionId ?: return null,
+            estado = estado.orEmpty(),
+            nuevoInicio = nuevoInicio ?: return null,
+            nuevoFin = nuevoFin ?: return null,
+            primaTotal = primaTotal ?: return null,
+            moneda = moneda ?: "COP"
+        )
+    }
+}
+
+data class PropuestaRenovacionDto(
+    @SerializedName("poliza_id") val polizaId: String?,
+    @SerializedName("renovable") val renovable: Boolean?,
+    @SerializedName("bloqueos") val bloqueos: List<BloqueoRenovacionDto>?,
+    @SerializedName("nueva_vigencia") val nuevaVigencia: VigenciaDto?,
+    @SerializedName("coberturas") val coberturas: List<CoberturaRenovadaDto>?,
+    @SerializedName("prima_nueva") val primaNueva: String?,
+    @SerializedName("moneda") val moneda: String?,
+    @SerializedName("renovacion") val renovacion: RenovacionDto?
+) {
+    fun aPropuesta(): PropuestaRenovacion? {
+        return PropuestaRenovacion(
+            polizaId = polizaId ?: return null,
+            renovable = renovable ?: return null,
+            bloqueos = bloqueos.orEmpty().mapNotNull {
+                BloqueoRenovacion(it.codigo ?: return@mapNotNull null, it.mensaje.orEmpty())
+            },
+            nuevaVigencia = nuevaVigencia?.aVigencia(),
+            coberturas = coberturas.orEmpty().mapNotNull {
+                CoberturaRenovacion(it.nombre ?: return@mapNotNull null, it.principal == true)
+            },
+            primaNueva = primaNueva,
+            moneda = moneda ?: "COP",
+            renovacion = renovacion?.aRenovacion()
+        )
+    }
+}
+
+data class MotivoCancelacionDto(
+    @SerializedName("codigo") val codigo: String?,
+    @SerializedName("etiqueta") val etiqueta: String?
+)
+
+data class BloqueoCancelacionDto(
+    @SerializedName("codigo") val codigo: String?,
+    @SerializedName("mensaje") val mensaje: String?
+)
+
+data class PropuestaCancelacionDto(
+    @SerializedName("poliza_id") val polizaId: String?,
+    @SerializedName("numero_poliza") val numeroPoliza: String?,
+    @SerializedName("cancelable") val cancelable: Boolean?,
+    @SerializedName("bloqueos") val bloqueos: List<BloqueoCancelacionDto>?,
+    @SerializedName("saldo_estimado") val saldoEstimado: String?,
+    @SerializedName("moneda") val moneda: String?,
+    @SerializedName("motivos") val motivos: List<MotivoCancelacionDto>?
+) {
+    fun aPropuesta(): PropuestaCancelacion? {
+        return PropuestaCancelacion(
+            polizaId = polizaId ?: return null,
+            numeroPoliza = numeroPoliza ?: return null,
+            cancelable = cancelable ?: return null,
+            bloqueos = bloqueos.orEmpty().mapNotNull {
+                BloqueoCancelacion(it.codigo ?: return@mapNotNull null, it.mensaje.orEmpty())
+            },
+            saldoEstimado = saldoEstimado ?: "0",
+            moneda = moneda ?: "COP",
+            motivos = motivos.orEmpty().mapNotNull {
+                MotivoCancelacion(it.codigo ?: return@mapNotNull null, it.etiqueta ?: it.codigo)
+            }
+        )
+    }
+}
+
+data class SolicitudCancelacionDto(
+    @SerializedName("motivo") val motivo: String,
+    @SerializedName("confirmo") val confirmo: Boolean
+)
+
+data class CancelacionDto(
+    @SerializedName("cancelacion_id") val cancelacionId: String?,
+    @SerializedName("poliza_id") val polizaId: String?,
+    @SerializedName("saldo_estimado") val saldoEstimado: String?,
+    @SerializedName("moneda") val moneda: String?
+) {
+    fun aCancelacion(): CancelacionRealizada? {
+        return CancelacionRealizada(
+            cancelacionId = cancelacionId ?: return null,
+            polizaId = polizaId ?: return null,
+            saldoEstimado = saldoEstimado ?: "0",
+            moneda = moneda ?: "COP"
+        )
+    }
+}
 
 private fun String?.aCategoriaMovimiento(): CategoriaMovimiento? =
     this?.let { valor -> CategoriaMovimiento.entries.firstOrNull { it.name == valor } }

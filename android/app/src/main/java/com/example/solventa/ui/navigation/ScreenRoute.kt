@@ -39,6 +39,22 @@ sealed class ScreenRoute(val route: String) {
             return if (desdeNavbar) "$base?desdeNavbar=true" else base
         }
     }
+    object Renewal : ScreenRoute("renewal_screen/{polizaId}?desdeNavbar={desdeNavbar}") {
+        const val ARGUMENTO = "polizaId"
+        const val ORIGEN_NAVBAR = "desdeNavbar"
+        fun ruta(polizaId: String, desdeNavbar: Boolean = false): String {
+            val base = "renewal_screen/${URLEncoder.encode(polizaId, "UTF-8")}"
+            return if (desdeNavbar) "$base?desdeNavbar=true" else base
+        }
+    }
+    object Cancel : ScreenRoute("cancel_screen/{polizaId}?desdeNavbar={desdeNavbar}") {
+        const val ARGUMENTO = "polizaId"
+        const val ORIGEN_NAVBAR = "desdeNavbar"
+        fun ruta(polizaId: String, desdeNavbar: Boolean = false): String {
+            val base = "cancel_screen/${URLEncoder.encode(polizaId, "UTF-8")}"
+            return if (desdeNavbar) "$base?desdeNavbar=true" else base
+        }
+    }
     object PolicyHistory : ScreenRoute("policy_history/{polizaId}?desdeNavbar={desdeNavbar}") {
         const val ARGUMENTO = "polizaId"
         const val ORIGEN_NAVBAR = "desdeNavbar"
@@ -92,6 +108,8 @@ sealed class ScreenRoute(val route: String) {
                 QuoteHistoryDetail.route,
                 Wallet.route,
                 Certificate.route,
+                Renewal.route,
+                Cancel.route,
                 PolicyHistory.route,
                 Payment.route,
                 PsePortal.route,

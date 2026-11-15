@@ -2,6 +2,7 @@ package com.example.solventa.data.remote
 
 import okhttp3.ResponseBody
 import retrofit2.Response
+import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.POST
@@ -34,6 +35,31 @@ interface PolizasApi {
         @Header("Authorization") autorizacion: String,
         @Path("polizaId") polizaId: String
     ): Response<ResponseBody>
+
+    @GET("api/v1/polizas/{polizaId}/renovacion")
+    suspend fun propuestaRenovacion(
+        @Header("Authorization") autorizacion: String,
+        @Path("polizaId") polizaId: String
+    ): Response<PropuestaRenovacionDto>
+
+    @POST("api/v1/polizas/{polizaId}/renovacion")
+    suspend fun iniciarRenovacion(
+        @Header("Authorization") autorizacion: String,
+        @Path("polizaId") polizaId: String
+    ): Response<RenovacionDto>
+
+    @GET("api/v1/polizas/{polizaId}/cancelacion")
+    suspend fun propuestaCancelacion(
+        @Header("Authorization") autorizacion: String,
+        @Path("polizaId") polizaId: String
+    ): Response<PropuestaCancelacionDto>
+
+    @POST("api/v1/polizas/{polizaId}/cancelacion")
+    suspend fun cancelarPoliza(
+        @Header("Authorization") autorizacion: String,
+        @Path("polizaId") polizaId: String,
+        @Body solicitud: SolicitudCancelacionDto
+    ): Response<CancelacionDto>
 
     @POST("api/v1/billetera/polizas/{polizaId}/enlaces")
     suspend fun compartir(
