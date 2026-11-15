@@ -10,7 +10,16 @@ data class EstadoPagos(
     val error: String? = null,
     val cargandoListado: Boolean = false,
     val listado: List<Pago> = emptyList(),
-    val errorListado: String? = null
+    val errorListado: String? = null,
+    val cargandoPendientes: Boolean = false,
+    val pendientes: List<PrimaPendiente> = emptyList(),
+    val errorPendientes: String? = null,
+    val cargandoComprobante: Boolean = false,
+    /** El último comprobante consultado; el de un pago aprobado se carga solo. */
+    val comprobante: ComprobantePago? = null,
+    /** True cuando el cliente pidió verlo (se muestra en un diálogo). */
+    val comprobanteVisible: Boolean = false,
+    val errorComprobante: String? = null
 )
 
 object MensajesPagos {
@@ -20,6 +29,9 @@ object MensajesPagos {
     const val SIN_CONEXION = "No pudimos conectarnos con Solventa. Revisa tu conexión e inténtalo de nuevo."
     const val ERROR_GENERICO = "No pudimos procesar el pago. Inténtalo de nuevo."
     const val SESION_VENCIDA = "Tu sesión expiró. Vuelve a ingresar."
+    const val PENDIENTES_NO_DISPONIBLES =
+        "No pudimos consultar tus pagos pendientes. Inténtalo de nuevo."
+    const val COMPROBANTE_NO_DISPONIBLE = "No pudimos consultar el comprobante. Inténtalo de nuevo."
 }
 
 /** Puerto hacia el backend de recaudo (HU13). */
@@ -33,6 +45,10 @@ interface PagosGateway {
     suspend fun consultar(accessToken: String, pagoId: String): ResultadoApi<Pago>
 
     suspend fun listar(accessToken: String): ResultadoApi<List<Pago>>
+
+    suspend fun pendientes(accessToken: String): ResultadoApi<List<PrimaPendiente>>
+
+    suspend fun comprobante(accessToken: String, pagoId: String): ResultadoApi<ComprobantePago>
 }
 
 /**
@@ -82,6 +98,7 @@ class PagosCoordinator(
             }
             ResultadoApi.SinConexion -> estado.copy(procesando = false, error = MensajesPagos.SIN_CONEXION)
         }
+        cargarComprobanteDelPagoAprobado(inicio)
     }
 
     suspend fun consultar(pagoId: String) {
@@ -100,6 +117,7 @@ class PagosCoordinator(
             }
             ResultadoApi.SinConexion -> estado.copy(procesando = false, error = MensajesPagos.SIN_CONEXION)
         }
+        cargarComprobanteDelPagoAprobado(inicio)
     }
 
     /** Prepara un nuevo intento tras un rechazo: llave nueva y estado limpio. */
@@ -130,6 +148,83 @@ class PagosCoordinator(
                 cargandoListado = false,
                 errorListado = MensajesPagos.SIN_CONEXION
             )
+        }
+    }
+
+    /** Prima pendiente de pago: renovaciones, cotizaciones sin pagar y contratos por firmar. */
+    suspend fun cargarPendientes() {
+        if (estado.cargandoPendientes) return
+        val token = sesion.accessTokenVigente() ?: return rechazada()
+        estado = estado.copy(cargandoPendientes = true, errorPendientes = null)
+        val inicio = generacion
+        val respuesta = gateway.pendientes(token)
+        if (inicio != generacion) return
+
+        estado = when (respuesta) {
+            is ResultadoApi.Exito -> estado.copy(
+                cargandoPendientes = false,
+                pendientes = respuesta.valor,
+                errorPendientes = null
+            )
+            is ResultadoApi.Fallo -> when (respuesta.http) {
+                401 -> return rechazada()
+                else -> estado.copy(
+                    cargandoPendientes = false,
+                    errorPendientes = MensajesPagos.PENDIENTES_NO_DISPONIBLES
+                )
+            }
+            ResultadoApi.SinConexion -> estado.copy(
+                cargandoPendientes = false,
+                errorPendientes = MensajesPagos.SIN_CONEXION
+            )
+        }
+    }
+
+    /** El cliente pide ver el comprobante de un pago aprobado. */
+    suspend fun verComprobante(pagoId: String) {
+        if (estado.cargandoComprobante) return
+        val token = sesion.accessTokenVigente() ?: return rechazada()
+        estado = estado.copy(
+            cargandoComprobante = true,
+            comprobanteVisible = true,
+            comprobante = estado.comprobante?.takeIf { it.pagoId == pagoId },
+            errorComprobante = null
+        )
+        val inicio = generacion
+        val respuesta = gateway.comprobante(token, pagoId)
+        if (inicio != generacion) return
+
+        estado = when (respuesta) {
+            is ResultadoApi.Exito -> estado.copy(cargandoComprobante = false, comprobante = respuesta.valor)
+            is ResultadoApi.Fallo -> when (respuesta.http) {
+                401 -> return rechazada()
+                else -> estado.copy(
+                    cargandoComprobante = false,
+                    errorComprobante = MensajesPagos.COMPROBANTE_NO_DISPONIBLE
+                )
+            }
+            ResultadoApi.SinConexion -> estado.copy(
+                cargandoComprobante = false,
+                errorComprobante = MensajesPagos.SIN_CONEXION
+            )
+        }
+    }
+
+    fun cerrarComprobante() {
+        estado = estado.copy(comprobanteVisible = false, errorComprobante = null)
+    }
+
+    /**
+     * Con el pago aprobado se trae su comprobante para mostrarlo en la confirmación. Es un extra:
+     * si no se puede consultar, la confirmación sigue siendo válida y no se muestra error.
+     */
+    private suspend fun cargarComprobanteDelPagoAprobado(generacionInicial: Int) {
+        val pago = estado.pago?.takeIf { it.estado == EstadoPago.APROBADO } ?: return
+        val token = sesion.accessTokenVigente() ?: return
+        val respuesta = gateway.comprobante(token, pago.pagoId)
+        if (generacionInicial != generacion) return
+        if (respuesta is ResultadoApi.Exito) {
+            estado = estado.copy(comprobante = respuesta.valor)
         }
     }
 

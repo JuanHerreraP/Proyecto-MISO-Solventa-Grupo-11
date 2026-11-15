@@ -1,8 +1,10 @@
 package com.example.solventa.data.remote
 
 import com.example.solventa.domain.auth.ResultadoApi
+import com.example.solventa.domain.pagos.ComprobantePago
 import com.example.solventa.domain.pagos.Pago
 import com.example.solventa.domain.pagos.PagosGateway
+import com.example.solventa.domain.pagos.PrimaPendiente
 import com.example.solventa.domain.pagos.SolicitudPago
 import com.google.gson.JsonParseException
 import com.google.gson.stream.MalformedJsonException
@@ -51,6 +53,30 @@ class RemotePagosGateway(private val api: PagosApi) : PagosGateway {
         val pagos = respuesta.body()?.mapNotNull(PagoDto::aDominio)
         when {
             respuesta.isSuccessful && pagos != null -> ResultadoApi.Exito(pagos)
+            respuesta.isSuccessful -> ResultadoApi.Fallo(respuesta.code(), null, null)
+            else -> respuesta.aFallo()
+        }
+    }
+
+    override suspend fun pendientes(accessToken: String): ResultadoApi<List<PrimaPendiente>> =
+        ejecutar {
+            val respuesta = api.primasPendientes("Bearer $accessToken")
+            val primas = respuesta.body()?.primas?.mapNotNull(PrimaPendienteDto::aDominio)
+            when {
+                respuesta.isSuccessful && primas != null -> ResultadoApi.Exito(primas)
+                respuesta.isSuccessful -> ResultadoApi.Fallo(respuesta.code(), null, null)
+                else -> respuesta.aFallo()
+            }
+        }
+
+    override suspend fun comprobante(
+        accessToken: String,
+        pagoId: String
+    ): ResultadoApi<ComprobantePago> = ejecutar {
+        val respuesta = api.comprobante("Bearer $accessToken", pagoId)
+        val comprobante = respuesta.body()?.aDominio()
+        when {
+            respuesta.isSuccessful && comprobante != null -> ResultadoApi.Exito(comprobante)
             respuesta.isSuccessful -> ResultadoApi.Fallo(respuesta.code(), null, null)
             else -> respuesta.aFallo()
         }
