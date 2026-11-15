@@ -543,7 +543,12 @@ fun NavGraph(
                         cotizacion = cotizacion,
                         onVolver = { navController.popBackStack() },
                         onAceptar = {
-                            // La aceptación pertenece al siguiente paso del flujo de compra.
+                            if (pagos != null) {
+                                pagos.limpiar()
+                                navController.navigate(
+                                    ScreenRoute.Payment.ruta(cotizacion.cotizacionId)
+                                ) { launchSingleTop = true }
+                            }
                         },
                         onCrearOtra = {
                             cotizaciones.limpiarResultado()
@@ -748,9 +753,13 @@ fun NavGraph(
                 )
             ) { entrada ->
                 val cotizacionId = entrada.arguments?.getString(ScreenRoute.Payment.ARGUMENTO)
-                val resultado = estadoCotizaciones.resultado
+                val resultado = estadoCotizaciones.resultado?.takeIf { it.cotizacionId == cotizacionId }
                     ?: estadoCotizaciones.listado.firstOrNull { it.cotizacionId == cotizacionId }
-                if (estado.sesion == null || cotizacionId == null || resultado == null) {
+                // Una prima pendiente (HU21) trae su propio monto, sin depender de otras pantallas.
+                val pendiente = estadoPagos.pendientes.firstOrNull { it.cotizacionId == cotizacionId }
+                val monto = resultado?.primaTotal ?: pendiente?.monto
+                val moneda = resultado?.moneda ?: pendiente?.moneda
+                if (estado.sesion == null || cotizacionId == null || monto == null || moneda == null) {
                     Box(modifier = Modifier.fillMaxSize())
                 } else {
                     // El pago lleva al portal PSE (pendiente con URL) o a la pantalla de resultado.
@@ -767,8 +776,8 @@ fun NavGraph(
                     }
                     PaymentScreen(
                         cotizacionId = cotizacionId,
-                        monto = resultado.primaTotal,
-                        moneda = resultado.moneda,
+                        monto = monto,
+                        moneda = moneda,
                         procesando = estadoPagos.procesando,
                         error = estadoPagos.error,
                         onVolver = { navController.popBackStack() },
@@ -786,6 +795,7 @@ fun NavGraph(
                 } else {
                     PaymentResultScreen(
                         pago = pago,
+                        comprobante = estadoPagos.comprobante?.takeIf { it.pagoId == pago.pagoId },
                         onReintentar = {
                             pagos.prepararReintento()
                             navController.popBackStack()
@@ -831,12 +841,32 @@ fun NavGraph(
                 if (estado.sesion == null) {
                     Box(modifier = Modifier.fillMaxSize())
                 } else {
-                    LaunchedEffect(Unit) { pagos.listar() }
+                    LaunchedEffect(Unit) {
+                        pagos.listar()
+                        pagos.cargarPendientes()
+                    }
                     PaymentsScreen(
                         pagos = estadoPagos.listado,
-                        cargando = estadoPagos.cargandoListado,
+                        cargando = estadoPagos.cargandoListado || estadoPagos.cargandoPendientes,
                         error = estadoPagos.errorListado,
-                        onReintentar = { pagos.listar() },
+                        onReintentar = {
+                            pagos.listar()
+                            pagos.cargarPendientes()
+                        },
+                        pendientes = estadoPagos.pendientes,
+                        errorPendientes = estadoPagos.errorPendientes,
+                        onPagar = { prima ->
+                            // Nuevo intento: llave nueva y sin el resultado de un pago anterior.
+                            pagos.prepararReintento()
+                            navController.navigate(ScreenRoute.Payment.ruta(prima.cotizacionId)) {
+                                launchSingleTop = true
+                            }
+                        },
+                        onVerComprobante = { pago -> pagos.verComprobante(pago.pagoId) },
+                        comprobanteVisible = estadoPagos.comprobanteVisible,
+                        comprobante = estadoPagos.comprobante,
+                        errorComprobante = estadoPagos.errorComprobante,
+                        onCerrarComprobante = { pagos.cerrarComprobante() },
                         onVolver = { navController.popBackStack() },
                         onInicio = { navController.popBackStack(ScreenRoute.Home.route, false) },
                         onVerBilletera = billetera?.let {
