@@ -7,7 +7,13 @@ import {
   obtenerCotizacion,
   obtenerRamos,
 } from "../services/cotizaciones.service";
-import { crearPago, obtenerPago, type Pago } from "../services/pagos.service";
+import {
+  crearPago,
+  obtenerComprobante,
+  obtenerPago,
+  type Comprobante,
+  type Pago,
+} from "../services/pagos.service";
 import type {
   CampoRiesgo,
   Cotizacion,
@@ -123,6 +129,7 @@ export default function CotizarPage() {
   // Una llave por intento de pago: se mantiene mientras no cambie la cotización,
   // para que un reintento por red no genere un segundo cobro (HU13).
   const [idempotencyKey, setIdempotencyKey] = useState("");
+  const [comprobante, setComprobante] = useState<Comprobante | null>(null);
 
   useEffect(() => {
     let activo = true;
@@ -158,6 +165,43 @@ export default function CotizarPage() {
       () => setErrorCarga("No fue posible consultar el resultado del pago."),
     );
   }, [searchParams, setSearchParams]);
+
+  // Pagar una cotización que ya existe y quedó pendiente: /cotizar?cotizacion=ID (HU21).
+  const cotizacionPendienteProcesada = useRef<string | null>(null);
+  useEffect(() => {
+    const cotizacionId = searchParams.get("cotizacion");
+    if (!cotizacionId || cotizacionPendienteProcesada.current === cotizacionId) return;
+    cotizacionPendienteProcesada.current = cotizacionId;
+    setSearchParams({}, { replace: true });
+    obtenerCotizacion(cotizacionId).then(
+      (cot) => {
+        const vigente =
+          cot.estado === "VIGENTE" &&
+          (!cot.vigente_hasta || new Date(cot.vigente_hasta) > new Date());
+        if (!vigente) {
+          setErrorCarga("Esta cotización ya no está disponible para pago.");
+          return;
+        }
+        setCotizacion(cot);
+        setPago(null);
+        setErrorPago("");
+        setIdempotencyKey(crypto.randomUUID());
+        setPaso("pago");
+      },
+      () => setErrorCarga("No fue posible consultar la cotización."),
+    );
+  }, [searchParams, setSearchParams]);
+
+  // Con el pago aprobado se muestra su comprobante (HU21). Si no se puede consultar, se omite.
+  useEffect(() => {
+    if (pago?.estado !== "APROBADO") return;
+    let activo = true;
+    obtenerComprobante(pago.pago_id).then(
+      (datos) => { if (activo) setComprobante(datos); },
+      () => undefined,
+    );
+    return () => { activo = false; };
+  }, [pago]);
 
   const rol = perfil?.rol ?? null;
 
@@ -294,7 +338,7 @@ export default function CotizarPage() {
             {paso === "ramo" && "Elige el tipo de seguro que quieres cotizar."}
             {paso === "formulario" && "Completa los datos para calcular tu prima."}
             {paso === "resultado" && "Revisa tu cotización antes de continuar."}
-            {paso === "pago" && "Elige cómo quieres pagar la prima inicial."}
+            {paso === "pago" && "Elige cómo quieres pagar la prima."}
             {paso === "confirmacion" && "Resultado de tu pago."}
           </p>
         </div>
@@ -620,9 +664,21 @@ export default function CotizarPage() {
 
           {pago.estado === "APROBADO" && (
             <p className="cotizar-mensaje-ok">
-              Tu pago de {formatearMonto(pago.monto, pago.moneda)} fue aprobado. En un único flujo de
-              compra, el siguiente paso es firmar el contrato para emitir tu póliza.
+              Tu pago de {formatearMonto(pago.monto, pago.moneda)} fue aprobado.{" "}
+              {pago.concepto === "RENOVACION"
+                ? "Tu póliza fue renovada."
+                : "En un único flujo de compra, el siguiente paso es firmar el contrato para emitir tu póliza."}
             </p>
+          )}
+          {pago.estado === "APROBADO" && comprobante?.pago_id === pago.pago_id && (
+            <dl className="cotizar-resumen" aria-label="Comprobante de pago">
+              <div><dt>Comprobante</dt><dd>{comprobante.numero}</dd></div>
+              <div><dt>Concepto</dt><dd>{comprobante.descripcion}</dd></div>
+              <div>
+                <dt>Valor pagado</dt>
+                <dd>{formatearMonto(comprobante.monto, comprobante.moneda)}</dd>
+              </div>
+            </dl>
           )}
           {pago.estado === "PENDIENTE" && (
             <p className="cotizar-mensaje-pendiente">
@@ -660,6 +716,14 @@ export default function CotizarPage() {
                   Reintentar pago
                 </button>
               </>
+            ) : pago.estado === "APROBADO" && pago.concepto === "RENOVACION" ? (
+              <button
+                type="button"
+                className="cotizar-boton-primario"
+                onClick={() => navigate("/polizas")}
+              >
+                Ver mis pólizas
+              </button>
             ) : pago.estado === "APROBADO" ? (
               <button
                 type="button"
