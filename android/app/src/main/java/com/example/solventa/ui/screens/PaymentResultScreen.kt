@@ -24,6 +24,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.example.solventa.domain.pagos.ComprobantePago
 import com.example.solventa.domain.pagos.EstadoPago
 import com.example.solventa.domain.pagos.Pago
 import com.example.solventa.ui.components.SolventaBottomNavigation
@@ -41,7 +42,8 @@ fun PaymentResultScreen(
     onCerrar: () -> Unit,
     modifier: Modifier = Modifier,
     onInicio: () -> Unit = {},
-    onVerBilletera: (() -> Unit)? = null
+    onVerBilletera: (() -> Unit)? = null,
+    comprobante: ComprobantePago? = null
 ) {
     val verde = Color(0xFF1B8A4A)
     val naranja = Color(0xFFB36B00)
@@ -81,6 +83,9 @@ fun PaymentResultScreen(
                 textAlign = TextAlign.Center,
                 modifier = Modifier.padding(top = 10.dp, bottom = 28.dp)
             )
+            if (pago.estado == EstadoPago.APROBADO && comprobante != null) {
+                ResumenComprobante(comprobante)
+            }
 
             if (pago.estado == EstadoPago.RECHAZADO) {
                 SolventaPrimaryButton(text = "Reintentar pago", onClick = onReintentar)
@@ -106,10 +111,40 @@ private fun IconoEstado(icono: ImageVector, color: Color) {
     }
 }
 
+/** El comprobante del pago aprobado (HU21): número, concepto y valor. */
+@Composable
+private fun ResumenComprobante(comprobante: ComprobantePago) {
+    Surface(
+        shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp),
+        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.04f),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(bottom = 24.dp)
+    ) {
+        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text(
+                text = "Comprobante ${comprobante.numero}",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Text(
+                text = comprobante.descripcion,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+            )
+            Text(
+                text = formatearMonto(comprobante.monto, comprobante.moneda),
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+        }
+    }
+}
+
 private fun mensajeResultado(pago: Pago): String = when (pago.estado) {
     EstadoPago.APROBADO ->
         "El pago de ${formatearMonto(pago.monto, pago.moneda)} se realizó de forma satisfactoria. " +
-            "El siguiente paso es la firma del contrato y la emisión de tu póliza."
+            "Para emitir tu póliza, firma tu contrato en el portal web."
     EstadoPago.PENDIENTE ->
         "Tu pago está pendiente de confirmación con tu banco."
     EstadoPago.RECHAZADO ->

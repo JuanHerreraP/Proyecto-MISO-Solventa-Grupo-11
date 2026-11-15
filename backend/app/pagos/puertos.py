@@ -11,6 +11,14 @@ class PasarelaNoDisponible(Exception):
     """La pasarela no respondió o respondió con un contenido inválido."""
 
 
+class PagoAprobadoDuplicado(Exception):
+    """La cotización ya tiene otro pago aprobado: no puede haber dos (HU21)."""
+
+    def __init__(self, pago_id: str):
+        super().__init__(pago_id)
+        self.pago_id = pago_id
+
+
 @dataclass(frozen=True)
 class SolicitudCobro:
     referencia_interna: str

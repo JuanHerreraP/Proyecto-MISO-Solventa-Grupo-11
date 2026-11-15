@@ -75,6 +75,7 @@ def preparar_esquema_registro() -> None:
                     text("UPDATE sesiones_refresh SET ultima_actividad = fecha_emision")
                 )
     _agregar_columnas_endosos(inspector)
+    _crear_indice_pago_aprobado(inspector)
     if not inspector.has_table("usuarios"):
         return
 
@@ -122,6 +123,29 @@ def preparar_esquema_registro() -> None:
             # Solo si la tabla ya tiene todas las columnas del índice.
             if pendiente and indice.name not in indices_sin and columnas_indice <= columnas_sin:
                 indice.create(bind=engine, checkfirst=True)
+
+
+def _crear_indice_pago_aprobado(inspector) -> None:
+    """Un solo pago aprobado por cotización (HU21), en bases que ya tenían la tabla de pagos.
+
+    Si la base ya tiene cotizaciones con dos pagos aprobados el índice no se puede crear:
+    se registra y el servicio sigue arrancando, para que esos casos se revisen a mano.
+    """
+    if not inspector.has_table("pagos"):
+        return
+    if "uq_pagos_cotizacion_aprobado" in {i["name"] for i in inspector.get_indexes("pagos")}:
+        return
+    from app.pagos.modelos_db import PagoDB
+
+    for indice in PagoDB.__table__.indexes:
+        if indice.name == "uq_pagos_cotizacion_aprobado":
+            try:
+                indice.create(bind=engine, checkfirst=True)
+            except Exception:
+                logger.exception(
+                    "No se pudo crear uq_pagos_cotizacion_aprobado: hay cotizaciones con más de "
+                    "un pago aprobado. Revisarlas y reiniciar."
+                )
 
 
 def _agregar_columnas_endosos(inspector) -> None:
