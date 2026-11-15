@@ -304,3 +304,53 @@ def test_el_cableado_real_genera_el_comprobante_al_aprobarse_el_pago() -> None:
         assert guardado is not None and guardado.descripcion == "Prima de Microseguro de vida"
         assert armar_comprobantes(sesion).obtener(pago) == guardado
     engine.dispose()
+
+
+# --- Concepto del pago (compra o renovación) -----------------------------------------------
+
+
+def test_el_concepto_distingue_una_compra_de_una_renovacion() -> None:
+    e = crear_entorno()
+    comprobantes = servicio_de(e)
+    renovacion, _ = e.servicio.iniciar(TITULAR, "POL-VIDA-1", "k-1")
+
+    assert comprobantes.concepto_de(renovacion.cotizacion_id) is ConceptoComprobante.RENOVACION
+    assert comprobantes.concepto_de("COT-NUEVA") is ConceptoComprobante.COMPRA
+
+
+def test_sin_saber_de_renovaciones_el_pago_se_considera_una_compra() -> None:
+    e = crear_entorno()
+    pago = comprar(e)
+
+    assert e.pagos_servicio.con_concepto(pago).concepto is ConceptoComprobante.COMPRA
+
+
+def test_la_api_de_pagos_informa_el_concepto_de_cada_pago(api) -> None:
+    cliente, e = api
+    comprobantes = servicio_de(e)
+    app.dependency_overrides[obtener_servicio] = lambda: ServicioPagos(
+        e.pagos,
+        e.cotizaciones,
+        PasarelaSimulada(url_base="http://pruebas"),
+        reloj=e.reloj,
+        concepto_de=comprobantes.concepto_de,
+    )
+    compra = comprar(e)
+    renovacion, _ = e.servicio.iniciar(TITULAR, "POL-VIDA-1", "k-1")
+    renovada = e.pagar(renovacion.cotizacion_id, llave="llave-0002")
+
+    lista = {p["pago_id"]: p for p in cliente.get(RUTA).json()}
+    uno = cliente.get(f"{RUTA}/{renovada.pago_id}").json()
+    nuevo = cliente.post(
+        RUTA,
+        json={"cotizacion_id": "COT-VIDA-1", "metodo": "TARJETA", "token_tarjeta": "tok_visa_ok"},
+        headers={"Idempotency-Key": "llave-0003"},
+    )
+
+    assert lista[compra.pago_id]["concepto"] == "COMPRA"
+    assert lista[renovada.pago_id]["concepto"] == "RENOVACION"
+    assert uno["concepto"] == "RENOVACION"
+    assert "huella_solicitud" not in uno
+    assert nuevo.status_code in (201, 409) and (
+        nuevo.status_code == 409 or nuevo.json()["concepto"] == "COMPRA"
+    )

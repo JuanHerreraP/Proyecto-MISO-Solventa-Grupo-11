@@ -94,3 +94,9 @@ class Comprobante(BaseModel):
     referencia_pasarela: str | None = Field(default=None, max_length=100)
     pagado_en: AwareDatetime
     emitido_en: AwareDatetime
+
+
+class PagoConConcepto(Pago):
+    """El pago tal como lo ve el cliente: además dice si fue una compra o una renovación."""
+
+    concepto: ConceptoComprobante

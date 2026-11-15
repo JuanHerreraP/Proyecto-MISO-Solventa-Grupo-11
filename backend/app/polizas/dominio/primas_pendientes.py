@@ -10,7 +10,7 @@ su póliza exista:
   al firmar. No hay nada que pagar: solo se avisa.
 """
 
-from datetime import date, datetime, time, timedelta
+from datetime import date, datetime, time
 from decimal import Decimal
 from enum import Enum
 
@@ -63,8 +63,8 @@ class PrimasPendientes(BaseModel):
 
 
 def fin_de_vigencia(fecha_fin: date) -> datetime:
-    """El instante en que termina la póliza: la medianoche posterior a su último día (Bogotá)."""
-    return datetime.combine(fecha_fin + timedelta(days=1), time.min, tzinfo=ZONA_COLOMBIA)
+    """El último instante de la póliza: las 23:59:59 de su último día (Bogotá)."""
+    return datetime.combine(fecha_fin, time(23, 59, 59), tzinfo=ZONA_COLOMBIA)
 
 
 def ordenar_por_fecha_limite(primas: list[PrimaPendiente]) -> list[PrimaPendiente]:

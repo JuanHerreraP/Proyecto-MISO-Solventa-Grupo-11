@@ -10,7 +10,14 @@ from datetime import UTC, datetime
 
 from app.cotizaciones.dominio.modelos import EstadoCotizacion
 from app.cotizaciones.repositorio import RepositorioCotizaciones
-from app.pagos.modelos import EstadoPago, MetodoPago, Pago, SolicitudPago
+from app.pagos.modelos import (
+    ConceptoComprobante,
+    EstadoPago,
+    MetodoPago,
+    Pago,
+    PagoConConcepto,
+    SolicitudPago,
+)
 from app.pagos.puertos import (
     PagoAprobadoDuplicado,
     PasarelaNoDisponible,
@@ -83,6 +90,7 @@ class ServicioPagos:
         reloj: Callable[[], datetime] = lambda: datetime.now(UTC),
         generar_id: Callable[[], str] = lambda: f"PAG-{uuid.uuid4()}",
         al_aprobar: Callable[[Pago], None] | None = None,
+        concepto_de: Callable[[str], ConceptoComprobante] | None = None,
     ):
         self._pagos = pagos
         self._cotizaciones = cotizaciones
@@ -90,6 +98,7 @@ class ServicioPagos:
         self._reloj = reloj
         self._generar_id = generar_id
         self._al_aprobar = al_aprobar
+        self._concepto_de = concepto_de
 
     def pagar(
         self, cliente_id: str, idempotency_key: str, solicitud: SolicitudPago
@@ -148,6 +157,15 @@ class ServicioPagos:
             raise
 
         return self._aplicar(pago, resultado), False
+
+    def con_concepto(self, pago: Pago) -> PagoConConcepto:
+        """El pago con su concepto: compra por defecto, renovación si la cotización lo es."""
+        concepto = (
+            self._concepto_de(pago.cotizacion_id)
+            if self._concepto_de is not None
+            else ConceptoComprobante.COMPRA
+        )
+        return PagoConConcepto(**pago.model_dump(), concepto=concepto)
 
     def consultar(self, pago_id: str, cliente_id: str) -> Pago:
         pago = self._pagos.obtener(pago_id)

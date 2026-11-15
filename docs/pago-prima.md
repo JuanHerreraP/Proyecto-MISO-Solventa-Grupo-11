@@ -32,6 +32,8 @@ El tercer tipo es un aviso: hoy la firma solo existe en el portal web. Cuando la
 
 Ambos responden `Cache-Control: no-store`. Un actor que no es el cliente recibe 403.
 
+Además, el pago que devuelven `POST /api/v1/pagos`, `GET /api/v1/pagos` y `GET /api/v1/pagos/{pago_id}` incluye el campo **`concepto`** (`COMPRA` o `RENOVACION`), según la cotización la haya creado una renovación o no. Sirve para que los clientes distingan una renovación de una compra, por ejemplo para no ofrecer firmar el contrato de una póliza que ya existe.
+
 ### Ítem de `primas-pendientes`
 
 | Campo | Significado |
@@ -47,7 +49,7 @@ Ambos responden `Cache-Control: no-store`. Un actor que no es el cliente recibe 
 
 ### Reglas del listado
 
-- **Fecha límite de una renovación:** lo que ocurra primero entre el vencimiento de su cotización (7 días) y el fin de la póliza que renueva (la medianoche posterior a su último día, hora de Bogotá). Una renovación con la cotización vencida no se lista; se puede iniciar otra.
+- **Fecha límite de una renovación:** lo que ocurra primero entre el vencimiento de su cotización (7 días) y el fin de la póliza que renueva (las 23:59:59 de su último día, hora de Bogotá). Una renovación con la cotización vencida no se lista; se puede iniciar otra.
 - **Fecha límite de una cotización:** su vencimiento. Si vence, deja de aparecer y hay que cotizar de nuevo.
 - **Orden:** por fecha límite, la más próxima primero. Los ítems sin fecha límite van al final.
 - **No aparecen:** renovaciones ya pagadas o de una póliza cancelada; cotizaciones vencidas, en borrador, ya pagadas o de otro cliente; contratos ya firmados. La cotización de una renovación no se repite como `COTIZACION`.
@@ -116,7 +118,7 @@ SELECT cotizacion_id, COUNT(*) FROM pagos WHERE estado = 'APROBADO' GROUP BY cot
 `pytest tests/primas_pendientes tests/pagos` desde `backend`:
 
 - `tests/primas_pendientes/` (24): los tres tipos, fecha límite, orden, exclusiones, pago sin aplicar y acceso.
-- `tests/pagos/test_comprobantes.py` (15): compra y renovación, idempotencia, recuperación, cableado real con base de datos y API.
+- `tests/pagos/test_comprobantes.py` (18): compra y renovación, idempotencia, recuperación, cableado real con base de datos, API y el campo `concepto`.
 - `tests/pagos/test_cobro_duplicado.py` (9): el índice en memoria y en base de datos, el cobro que llega tarde, y la creación del índice en bases existentes.
 - `tests/pagos/test_reintentos_renovacion.py` (8): criterios 4 y 5 con una renovación — rechazo y nuevo intento, reintento sin doble cobro, pasarela caída y aviso perdido.
 
@@ -126,4 +128,21 @@ SELECT cotizacion_id, COUNT(*) FROM pagos WHERE estado = 'APROBADO' GROUP BY cot
 - Una cotización pagada no tiene número de póliza hasta firmar el contrato, y la firma solo está en el portal web.
 - Un cobro duplicado queda registrado, pero la devolución es manual: no hay historia que la gestione.
 - Un pago PSE que el cliente abandonó (queda `PENDIENTE`) no aparece como pendiente: la prima sigue en el listado y se puede pagar de nuevo.
-- Aún no hay pantalla de Android para esta historia.
+- La firma del contrato no está en Android: el ítem `FIRMA_PENDIENTE` solo avisa que hay que firmar en el portal web.
+- En Android, la confirmación de un pago de renovación sigue siendo la genérica hasta que se integre con la pantalla "Póliza renovada" de HU22 Android.
+
+## Clientes
+
+No hay pantallas nuevas: la historia se resuelve con las que ya existían.
+
+**Web**
+- **Pagos:** sección "Pendientes de pago" (con "Pagar" o "Firmar contrato" según el ítem) y, en el historial, "Comprobante" en cada pago aprobado. El botón "Contrato" solo aparece mientras falta firmarlo.
+- **Mis cotizaciones:** botón "Pagar" en las cotizaciones vigentes y con la oferta sin vencer.
+- **Cotizar:** acepta `/cotizar?cotizacion=ID` y va directo al pago de esa cotización. La confirmación muestra el comprobante y, según el `concepto`, pide firmar el contrato (compra) o avisa que la póliza se renovó.
+
+**Android**
+- **Pagos:** sección "Pendientes de pago" con su botón "Pagar" (la pantalla de pago existente muestra el monto antes de confirmar), la tarjeta de aviso para el contrato por firmar y "Ver comprobante" en los pagos aprobados, que se abre como diálogo.
+- **Confirmación del pago:** muestra el comprobante y pide firmar el contrato en el portal web.
+- **Detalle de una cotización del historial:** "Aceptar y continuar" lleva al pago.
+
+La fecha límite de una renovación es las 23:59:59 del último día de la póliza (hora de Bogotá), o antes si su cotización vence antes.
