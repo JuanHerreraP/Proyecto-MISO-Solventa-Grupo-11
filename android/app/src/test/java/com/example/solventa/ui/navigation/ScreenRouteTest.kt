@@ -112,7 +112,8 @@ class ScreenRouteTest {
                 "claim_form_screen?desdeNavbar={desdeNavbar}",
                 "assisted_claim_form/{clienteId}",
                 "create_advisor_screen",
-                "create_auditor_screen"
+                "create_auditor_screen",
+                "assistance_screen"
             ),
             ScreenRoute.privadas
         )

@@ -29,6 +29,10 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Solventa"
         android:usesCleartextTraffic="true">
+        <!-- HU06: clave de Google Maps inyectada por manifestPlaceholders; nunca se versiona. -->
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="${mapsApiKey}" />
         <activity
             android:name=".MainActivity"
             android:exported="true"

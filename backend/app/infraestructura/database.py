@@ -76,6 +76,7 @@ def preparar_esquema_registro() -> None:
                 )
     _agregar_columnas_endosos(inspector)
     _crear_indice_pago_aprobado(inspector)
+    _agregar_columnas_asistencias(inspector)
     if not inspector.has_table("usuarios"):
         return
 
@@ -157,6 +158,24 @@ def _agregar_columnas_endosos(inspector) -> None:
         if columna not in columnas:
             with engine.begin() as conexion:
                 conexion.execute(text(f"ALTER TABLE polizas ADD COLUMN {columna} JSON"))
+
+
+def _agregar_columnas_asistencias(inspector) -> None:
+    """Seguimiento de la asistencia (HU06 ampliación): columnas aditivas y nulas.
+
+    `aceptada_en` y `tiempo_estimado_llegada_minutos` quedan en NULL en las asistencias
+    anteriores a esta ampliación; no se pierde ningún dato.
+    """
+    if not inspector.has_table("asistencias"):
+        return
+    columnas = {c["name"] for c in inspector.get_columns("asistencias")}
+    for columna, tipo in (
+        ("aceptada_en", "TIMESTAMP WITH TIME ZONE"),
+        ("tiempo_estimado_llegada_minutos", "INTEGER"),
+    ):
+        if columna not in columnas:
+            with engine.begin() as conexion:
+                conexion.execute(text(f"ALTER TABLE asistencias ADD COLUMN {columna} {tipo}"))
 
 
 def get_db():

@@ -56,6 +56,7 @@ La navegación utiliza **Jetpack Navigation Compose** mediante rutas selladas en
 | `certificate_screen/{polizaId}` | `CertificateScreen` | Certificado con QR y opción de compartir (BPM-31) |
 | `claims_screen` | `ClaimsScreen` | Lista de siniestros del cliente: manuales y automáticos de telemetría (HU20) |
 | `claim_form_screen` | `ClaimFormScreen` | Formulario de registro manual de un siniestro (HU20) |
+| `assistance_screen` | `AssistanceScreen` | Prestadores cercanos y solicitud de asistencia en sitio (HU06) |
 
 ---
 
@@ -109,6 +110,44 @@ Se entra desde el inicio con la acción **«Mis siniestros»**. Para la demo, si
 paramétrica con `backend/sembrar_polizas.py` y dispara un evento con el proveedor de telemetría
 (`uvicorn mocks.telemetry.main:app --port 8004`); el siniestro automático aparecerá en esta
 pantalla. Reutiliza la `SesionAutenticada` del módulo de autenticación, igual que la billetera.
+
+## 📍 Prestadores cercanos y asistencia — HU06
+
+Flujo por pasos para encontrar prestadores de asistencia cercanos a una póliza vigente y
+solicitar asistencia en sitio: seleccionar póliza → servicio → permiso de ubicación → mapa +
+lista → confirmar → éxito → mis asistencias / cancelar. El backend valida siempre la titularidad
+y la vigencia de la póliza y el prestador; la app nunca envía el `cliente_id`.
+
+| Paquete | Contenido |
+|---|---|
+| `domain/asistencias` | `AsistenciasCoordinator` (reglas del flujo, sin Android) y `Modelos` (`TipoServicio`, `EstadoAsistencia`, `Asistencia`, `PrestadorCercano`, `EstadoAsistencias`, puerto `AsistenciasGateway`, `MensajesAsistencias`). |
+| `data/remote` | `AsistenciasApi` (Retrofit), `AsistenciasDtos` (Gson) y `RemoteAsistenciasGateway`. |
+| `data/local/FuenteUbicacionActual.kt` | Ubicación actual con `FusedLocationProviderClient`; cae a la última conocida de `ProveedorUbicacion` (HU04). Abstracción testeable. |
+| `ui/asistencias` | `AsistenciasViewModel` (obtiene la ubicación y se la pasa al coordinador). |
+| `ui/screens/AssistanceScreen.kt` | Pantalla del flujo completo (póliza, servicio, permiso, lista, confirmación, éxito, mis asistencias). |
+| `ui/screens/MapaPrestadores.kt` | El `GoogleMap` con los marcadores, aislado para poder probar la pantalla sin un mapa real. |
+
+**Rutas:** `assistance_screen` (en `ScreenRoute.privadas`). Se entra desde el inicio con la acción
+**«Asistencia en sitio»**.
+
+**Permisos:** reutiliza `ACCESS_FINE_LOCATION` / `ACCESS_COARSE_LOCATION` (ya en el manifiesto) y
+el `ProveedorUbicacion` de HU04. La ubicación solo se pide al buscar asistencia; no hay rastreo
+continuo. Si el cliente niega el permiso, la app ofrece **Reintentar** y nunca envía coordenadas
+ficticias.
+
+**Configuración de Maps:** la clave **no se versiona**. Se pasa por la propiedad de Gradle
+`solventa.mapsApiKey`, que alimenta `manifestPlaceholders["mapsApiKey"]` y la `meta-data`
+`com.google.android.geo.API_KEY`. Sin clave el build compila (útil para CI) y el mapa no muestra
+mosaicos, pero la lista sigue funcionando:
+
+```bash
+./gradlew assembleDebug -Psolventa.mapsApiKey=MI_CLAVE
+```
+
+Para la demo, siembra prestadores con `backend/sembrar_prestadores.py` y fija la ubicación del
+emulador cerca de Bogotá (`4.7110, -74.0721`), Mosquera (`4.7059, -74.2302`) o Madrid
+(`4.7328, -74.2635`). Detalle completo
+en [docs/asistencia-prestadores.md](../docs/asistencia-prestadores.md).
 
 ## 🪪 Registro desde Android (BPM-16)
 

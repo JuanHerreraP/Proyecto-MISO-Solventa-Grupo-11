@@ -174,6 +174,7 @@ curl -X POST http://localhost:8004/simulate/flight-delay \
 - [Modificación de coberturas, beneficiarios y endosos (HU16)](docs/endosos.md)
 - [Desembolso automatizado e idempotente de indemnizaciones (HU15)](docs/desembolsos.md)
 - [Historial detallado de movimientos de una póliza (HU25)](docs/historial-poliza.md)
+- [Ubicar prestadores cercanos y solicitar asistencia en sitio (HU06)](docs/asistencia-prestadores.md)
 
 ## Integración continua
 
