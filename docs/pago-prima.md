@@ -129,7 +129,6 @@ SELECT cotizacion_id, COUNT(*) FROM pagos WHERE estado = 'APROBADO' GROUP BY cot
 - Un cobro duplicado queda registrado, pero la devolución es manual: no hay historia que la gestione.
 - Un pago PSE que el cliente abandonó (queda `PENDIENTE`) no aparece como pendiente: la prima sigue en el listado y se puede pagar de nuevo.
 - La firma del contrato no está en Android: el ítem `FIRMA_PENDIENTE` solo avisa que hay que firmar en el portal web.
-- En Android, la confirmación de un pago de renovación sigue siendo la genérica hasta que se integre con la pantalla "Póliza renovada" de HU22 Android.
 
 ## Clientes
 
@@ -142,7 +141,7 @@ No hay pantallas nuevas: la historia se resuelve con las que ya existían.
 
 **Android**
 - **Pagos:** sección "Pendientes de pago" con su botón "Pagar" (la pantalla de pago existente muestra el monto antes de confirmar), la tarjeta de aviso para el contrato por firmar y "Ver comprobante" en los pagos aprobados, que se abre como diálogo.
-- **Confirmación del pago:** muestra el comprobante y pide firmar el contrato en el portal web.
+- **Confirmación del pago:** muestra el comprobante y pide firmar el contrato en el portal web. Si el pago fue de una renovación (HU22), también cuando se paga desde "Pagos pendientes", termina en "Póliza renovada" con el número del comprobante y "Ver póliza renovada" lleva a esa póliza.
 - **Detalle de una cotización del historial:** "Aceptar y continuar" lleva al pago.
 
 La fecha límite de una renovación es las 23:59:59 del último día de la póliza (hora de Bogotá), o antes si su cotización vence antes.

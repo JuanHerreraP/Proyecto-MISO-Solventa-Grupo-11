@@ -35,4 +35,28 @@ class RenewalSuccessScreenTest {
 
         assertEquals(listOf("ver"), eventos)
     }
+
+    @Test
+    fun muestraElNumeroDelComprobanteSiLoTiene() {
+        compose.setContent {
+            SolventaTheme {
+                RenewalSuccessScreen(
+                    onVerPoliza = {},
+                    onVolver = {},
+                    comprobanteNumero = "CP-20261210-ABCD1234"
+                )
+            }
+        }
+
+        compose.onNodeWithText("Comprobante CP-20261210-ABCD1234").assertIsDisplayed()
+    }
+
+    @Test
+    fun sinComprobanteNoMuestraNingunNumero() {
+        compose.setContent {
+            SolventaTheme { RenewalSuccessScreen(onVerPoliza = {}, onVolver = {}) }
+        }
+
+        compose.onNodeWithText("Comprobante", substring = true).assertDoesNotExist()
+    }
 }

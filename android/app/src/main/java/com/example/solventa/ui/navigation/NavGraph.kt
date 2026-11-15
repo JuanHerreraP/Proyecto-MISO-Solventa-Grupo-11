@@ -31,6 +31,7 @@ import com.example.solventa.domain.asesor.DatosNuevoAnalista
 import com.example.solventa.domain.cotizaciones.CatalogoCotizaciones
 import com.example.solventa.domain.cotizaciones.EstadoCotizaciones
 import com.example.solventa.domain.cotizaciones.RamoCotizacion
+import com.example.solventa.domain.pagos.ConceptoPago
 import com.example.solventa.domain.pagos.EstadoPago
 import com.example.solventa.domain.pagos.EstadoPagos
 import com.example.solventa.domain.siniestros.SolicitudSiniestro
@@ -924,18 +925,29 @@ fun NavGraph(
                 val pago = estadoPagos.pago
                 val renovacionPagada = billetera?.estado?.collectAsState()?.value?.renovacionEnCurso
                     ?.takeIf { pago != null && it.cotizacionId == pago.cotizacionId }
+                val comprobante = estadoPagos.comprobante?.takeIf { pago != null && it.pagoId == pago.pagoId }
+                // Una renovación se reconoce por su estado en curso (HU22) o, si el pago se hizo
+                // desde "Pagos pendientes" (HU21), por el concepto que informa el backend.
+                val esRenovacion = renovacionPagada != null || pago?.concepto == ConceptoPago.RENOVACION
                 if (estado.sesion == null || pago == null) {
                     Box(modifier = Modifier.fillMaxSize())
-                } else if (renovacionPagada != null && pago.estado == EstadoPago.APROBADO) {
+                } else if (esRenovacion && pago.estado == EstadoPago.APROBADO) {
+                    val polizaId = renovacionPagada?.polizaId
+                        ?: comprobante?.polizaId
+                        ?: estadoPagos.pendientes.firstOrNull { it.cotizacionId == pago.cotizacionId }?.polizaId
                     // El pago aprobado de una renovación termina en su propia confirmación.
                     RenewalSuccessScreen(
+                        comprobanteNumero = comprobante?.numero,
                         onVerPoliza = {
                             pagos.limpiar()
                             billetera?.terminarRenovacion()
-                            if (!navController.popBackStack(ScreenRoute.Wallet.route, false)) {
-                                navController.popBackStack(ScreenRoute.Home.route, false)
+                            val enBilletera = navController.popBackStack(ScreenRoute.Wallet.route, false)
+                            if (!enBilletera) navController.popBackStack(ScreenRoute.Home.route, false)
+                            if (polizaId != null) {
+                                navController.navigate(ScreenRoute.Certificate.ruta(polizaId))
+                            } else if (!enBilletera && billetera != null) {
+                                navController.navigate(ScreenRoute.Wallet.ruta()) { launchSingleTop = true }
                             }
-                            navController.navigate(ScreenRoute.Certificate.ruta(renovacionPagada.polizaId))
                         },
                         onVolver = {
                             pagos.limpiar()
@@ -954,7 +966,7 @@ fun NavGraph(
                 } else {
                     PaymentResultScreen(
                         pago = pago,
-                        comprobante = estadoPagos.comprobante?.takeIf { it.pagoId == pago.pagoId },
+                        comprobante = comprobante,
                         onReintentar = {
                             pagos.prepararReintento()
                             navController.popBackStack()
