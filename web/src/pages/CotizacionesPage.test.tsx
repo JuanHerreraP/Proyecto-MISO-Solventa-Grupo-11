@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter, Route, Routes } from "react-router-dom";
+import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 import { beforeEach, expect, it, vi } from "vitest";
 import { obtenerPerfil } from "../services/auth.service";
 import { listarCotizaciones, obtenerRamos } from "../services/cotizaciones.service";
@@ -45,13 +45,17 @@ beforeEach(() => {
   vi.mocked(obtenerRamos).mockResolvedValue([RAMO_VIAJE]);
 });
 
+function Destino() {
+  return <p>Cotizar {useLocation().search}</p>;
+}
+
 function montar() {
   render(
     <MemoryRouter initialEntries={["/cotizaciones"]}>
       <Routes>
         <Route path="/cotizaciones" element={<CotizacionesPage />} />
         <Route path="/login" element={<h1>Inicia sesión</h1>} />
-        <Route path="/cotizar" element={<h1>Cotizar</h1>} />
+        <Route path="/cotizar" element={<Destino />} />
       </Routes>
     </MemoryRouter>,
   );
@@ -90,4 +94,35 @@ it("informa el error si no puede consultar", async () => {
   expect(await screen.findByRole("alert")).toHaveTextContent(
     "No fue posible consultar tus cotizaciones.",
   );
+});
+
+it("permite pagar una cotización vigente que quedó pendiente", async () => {
+  vi.mocked(listarCotizaciones).mockResolvedValue([
+    { ...COTIZACION, vigente_hasta: "2099-01-01T00:00:00Z" },
+  ]);
+  montar();
+  await userEvent.click(await screen.findByRole("button", { name: /Seguro de viaje/ }));
+
+  await userEvent.click(await screen.findByRole("button", { name: "Pagar" }));
+  expect(await screen.findByText("Cotizar ?cotizacion=COT-001")).toBeInTheDocument();
+});
+
+it.each([
+  ["ya aceptada", { estado: "ACEPTADA" as const, vigente_hasta: "2099-01-01T00:00:00Z" }],
+  ["con la oferta vencida", { vigente_hasta: "2020-01-01T00:00:00Z" }],
+])("no ofrece pagar una cotización %s", async (_caso, cambios) => {
+  vi.mocked(listarCotizaciones).mockResolvedValue([{ ...COTIZACION, ...cambios }]);
+  montar();
+  await userEvent.click(await screen.findByRole("button", { name: /Seguro de viaje/ }));
+
+  expect(await screen.findByText("Cobertura principal")).toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "Pagar" })).not.toBeInTheDocument();
+});
+
+it("permite pagar una cotización vigente sin fecha de vencimiento", async () => {
+  vi.mocked(listarCotizaciones).mockResolvedValue([{ ...COTIZACION, vigente_hasta: null }]);
+  montar();
+  await userEvent.click(await screen.findByRole("button", { name: /Seguro de viaje/ }));
+
+  expect(await screen.findByRole("button", { name: "Pagar" })).toBeInTheDocument();
 });

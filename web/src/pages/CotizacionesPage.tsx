@@ -43,6 +43,14 @@ function formatearValor(valor: unknown): string {
   return String(valor);
 }
 
+/** La cotización sigue vigente: ni aceptada, ni cancelada, ni con la oferta vencida. */
+function puedePagarse(cotizacion: Cotizacion): boolean {
+  return (
+    cotizacion.estado === "VIGENTE" &&
+    (!cotizacion.vigente_hasta || new Date(cotizacion.vigente_hasta) > new Date())
+  );
+}
+
 export default function CotizacionesPage() {
   const navigate = useNavigate();
   const [perfil, setPerfil] = useState<Perfil | null>(null);
@@ -179,6 +187,18 @@ export default function CotizacionesPage() {
                       <p className="home-card-vacio">Sin datos registrados.</p>
                     )}
                   </dl>
+
+                  {puedePagarse(cotizacion) && (
+                    <button
+                      type="button"
+                      className="cotizar-boton-primario"
+                      onClick={() =>
+                        navigate(`/cotizar?cotizacion=${encodeURIComponent(cotizacion.cotizacion_id)}`)
+                      }
+                    >
+                      Pagar
+                    </button>
+                  )}
 
                   <dl className="cotizacion-datos">
                     {cotizacion.vigente_hasta && (

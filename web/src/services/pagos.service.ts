@@ -11,6 +11,8 @@ export interface PagoResumen {
   estado: "PENDIENTE" | "APROBADO" | "RECHAZADO";
   motivo_rechazo: string | null;
   creado_en: string;
+  /** Si el pago fue una compra o la renovación de una póliza (HU21). */
+  concepto: "COMPRA" | "RENOVACION";
 }
 
 export interface SolicitudPago {
@@ -28,6 +30,41 @@ export interface Pago extends PagoResumen {
   actualizado_en: string;
 }
 
+/** Lo que el cliente debe pagar o firmar para mantener su cobertura (HU21). */
+export interface PrimaPendiente {
+  tipo: "RENOVACION" | "COTIZACION" | "FIRMA_PENDIENTE";
+  accion: "PAGAR" | "FIRMAR";
+  referencia_id: string;
+  cotizacion_id: string;
+  poliza_id: string | null;
+  numero_poliza: string | null;
+  ramo: string;
+  nombre_ramo: string;
+  monto: string;
+  moneda: string;
+  fecha_limite: string | null;
+  mensaje: string | null;
+}
+
+/** Comprobante de un pago aprobado (HU21). */
+export interface Comprobante {
+  comprobante_id: string;
+  numero: string;
+  pago_id: string;
+  cotizacion_id: string;
+  concepto: "COMPRA" | "RENOVACION";
+  descripcion: string;
+  poliza_id: string | null;
+  numero_poliza: string | null;
+  nombre_ramo: string;
+  monto: string;
+  moneda: string;
+  metodo: "TARJETA" | "PSE";
+  referencia_pasarela: string | null;
+  pagado_en: string;
+  emitido_en: string;
+}
+
 async function mensajeError(response: Response, porDefecto: string): Promise<string> {
   try {
     const body = await response.json();
@@ -42,6 +79,23 @@ async function mensajeError(response: Response, porDefecto: string): Promise<str
 export async function listarPagos(): Promise<PagoResumen[]> {
   const response = await fetchAutenticado(`${API_URL}/api/v1/pagos`);
   if (!response.ok) throw new Error("No fue posible consultar tus pagos.");
+  return response.json();
+}
+
+/** Primas pendientes del cliente: renovaciones, cotizaciones sin pagar y contratos por firmar. */
+export async function listarPrimasPendientes(): Promise<PrimaPendiente[]> {
+  const response = await fetchAutenticado(`${API_URL}/api/v1/primas-pendientes`);
+  if (!response.ok) throw new Error("No fue posible consultar tus pagos pendientes.");
+  const cuerpo: { primas: PrimaPendiente[] } = await response.json();
+  return cuerpo.primas;
+}
+
+/** Comprobante de un pago aprobado. */
+export async function obtenerComprobante(pagoId: string): Promise<Comprobante> {
+  const response = await fetchAutenticado(
+    `${API_URL}/api/v1/pagos/${encodeURIComponent(pagoId)}/comprobante`,
+  );
+  if (!response.ok) throw new Error("No fue posible consultar el comprobante.");
   return response.json();
 }
 
