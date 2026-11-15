@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import AppLayout from "../components/AppLayout";
 import { obtenerPerfil, type Perfil } from "../services/auth.service";
 import {
@@ -37,6 +37,7 @@ function nuevaClave(): string {
 export default function CancelarPolizaPage() {
   const { polizaId = "" } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const [perfil, setPerfil] = useState<Perfil | null>(null);
   const [condiciones, setCondiciones] = useState<CondicionesCancelacion | null>(null);
   const [motivo, setMotivo] = useState<MotivoCancelacion | "">("");
@@ -90,6 +91,8 @@ export default function CancelarPolizaPage() {
   }
 
   const detalleRequerido = motivo === "OTRO" && !detalle.trim();
+  const clienteNombre = (location.state as { clienteNombre?: string } | null)?.clienteNombre;
+  const esAsesor = perfil?.rol === "ASESOR_VENTAS";
   const puedeConfirmar = Boolean(
     condiciones?.cancelable && motivo && confirmado && !detalleRequerido && !procesando,
   );
@@ -112,6 +115,14 @@ export default function CancelarPolizaPage() {
 
       {cargando && <p role="status" className="home-card-vacio">Calculando condiciones…</p>}
       {error && <p role="alert" className="home-aviso">{error}</p>}
+
+      {esAsesor && (
+        <p className="cancelacion-asistida">
+          <span className="material-symbols-outlined" aria-hidden="true">support_agent</span>
+          Estás gestionando esta cancelación como asesor
+          {clienteNombre ? ` para ${clienteNombre}` : " en nombre del cliente"}.
+        </p>
+      )}
 
       {cancelacion && (
         <section className="home-panel cancelacion-resultado" aria-label="Póliza cancelada">

@@ -109,3 +109,21 @@ it("explica por qué una póliza no se puede cancelar", async () => {
   expect(await screen.findByText("Esta póliza no se puede cancelar")).toBeInTheDocument();
   expect(screen.queryByRole("button", { name: "Confirmar cancelación" })).not.toBeInTheDocument();
 });
+
+it("identifica cuando el asesor actúa en nombre de un cliente", async () => {
+  vi.mocked(obtenerPerfil).mockResolvedValue({ id: "ASE-1", rol: "ASESOR_VENTAS" });
+  render(
+    <MemoryRouter
+      initialEntries={[{
+        pathname: "/polizas/POL-1/cancelar",
+        state: { clienteNombre: "Ana Solano" },
+      }]}
+    >
+      <Routes>
+        <Route path="/polizas/:polizaId/cancelar" element={<CancelarPolizaPage />} />
+      </Routes>
+    </MemoryRouter>,
+  );
+
+  expect(await screen.findByText(/como asesor para Ana Solano/)).toBeInTheDocument();
+});

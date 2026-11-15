@@ -6,6 +6,7 @@ import { obtenerPerfil } from "../services/auth.service";
 import { obtenerBilletera, obtenerCertificado } from "../services/billetera.service";
 import type { Certificado, PolizaResumen } from "../services/billetera.service";
 import { descargarDocumentoPoliza } from "../services/poliza-documento.service";
+import { listarClientesDeAsesor, obtenerPolizasDeCliente } from "../services/asesor.service";
 import PolizasPage from "./PolizasPage";
 
 vi.mock("../services/auth.service", () => ({ obtenerPerfil: vi.fn() }));
@@ -14,6 +15,10 @@ vi.mock("../services/billetera.service", () => ({
   obtenerCertificado: vi.fn(),
 }));
 vi.mock("../services/poliza-documento.service", () => ({ descargarDocumentoPoliza: vi.fn() }));
+vi.mock("../services/asesor.service", () => ({
+  listarClientesDeAsesor: vi.fn(),
+  obtenerPolizasDeCliente: vi.fn(),
+}));
 vi.mock("../services/session", () => ({ cerrarSesion: vi.fn() }));
 
 const POLIZA: PolizaResumen = {
@@ -176,5 +181,25 @@ it("lleva a cancelar desde una póliza vigente", async () => {
   await userEvent.click(await screen.findByRole("button", { name: /Seguro de viaje/ }));
   await userEvent.click(screen.getByRole("button", { name: "Cancelar póliza" }));
 
+  expect(await screen.findByRole("heading", { name: "Cancelar póliza" })).toBeInTheDocument();
+});
+
+it("permite al asesor seleccionar un cliente y cancelar una venta asistida", async () => {
+  vi.mocked(obtenerPerfil).mockResolvedValue({ id: "ASE-1", rol: "ASESOR_VENTAS" });
+  vi.mocked(listarClientesDeAsesor).mockResolvedValue([
+    { cliente_id: "CLI-1", nombre: "Ana", apellido: "Solano", email: "ana@correo.com" },
+  ]);
+  vi.mocked(obtenerPolizasDeCliente).mockResolvedValue({
+    polizas: [POLIZA], total_vigentes: 1, total_inactivas: 0,
+  });
+  montar();
+
+  await userEvent.selectOptions(await screen.findByLabelText("Selecciona un cliente"), "CLI-1");
+  expect(await screen.findByText("Seguro de viaje")).toBeInTheDocument();
+  expect(obtenerPolizasDeCliente).toHaveBeenCalledWith("CLI-1");
+
+  await userEvent.click(screen.getByRole("button", { name: /Seguro de viaje/ }));
+  expect(obtenerCertificado).not.toHaveBeenCalled();
+  await userEvent.click(screen.getByRole("button", { name: "Cancelar póliza" }));
   expect(await screen.findByRole("heading", { name: "Cancelar póliza" })).toBeInTheDocument();
 });

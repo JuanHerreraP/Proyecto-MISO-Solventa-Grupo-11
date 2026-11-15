@@ -3,6 +3,7 @@ import {
   ROLES_ADMINISTRACION_SOCIOS,
   ROLES_CREAR_ASESOR,
   ROLES_CLIENTE,
+  ROLES_GESTION_POLIZA,
   ROLES_OPERACIONES_SINIESTROS,
   ROLES_AUDITORIA,
 } from "./types/permisos";
@@ -107,7 +108,7 @@ function App() {
 
       <Route
         path="/polizas/:polizaId/cancelar"
-        element={<RutaProtegida roles={ROLES_CLIENTE}><CancelarPolizaPage /></RutaProtegida>}
+        element={<RutaProtegida roles={ROLES_GESTION_POLIZA}><CancelarPolizaPage /></RutaProtegida>}
       />
 
       <Route

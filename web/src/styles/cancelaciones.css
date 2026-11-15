@@ -53,6 +53,32 @@
 .cancelacion-bloqueada { max-width: 720px; border-left: 4px solid var(--solventa-orange); }
 .cancelacion-bloqueada ul { margin: 0; padding-left: 20px; color: var(--solventa-muted); }
 
+.asesor-polizas-selector {
+  display: grid;
+  grid-template-columns: minmax(240px, 1fr) minmax(280px, 1fr);
+  gap: 20px;
+  align-items: end;
+  margin-bottom: 20px;
+}
+
+.asesor-polizas-selector h2 { margin: 0 0 4px; font-size: 16px; }
+.asesor-polizas-selector p { margin: 0; color: var(--solventa-muted); font-size: 13px; }
+
+.cancelacion-asistida {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 920px;
+  margin: 0 0 20px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: #eef3ff;
+  color: #294fae;
+  font-size: 14px;
+  font-weight: 700;
+}
+
 @media (max-width: 760px) {
-  .cancelacion-pagina { grid-template-columns: 1fr; }
+  .cancelacion-pagina,
+  .asesor-polizas-selector { grid-template-columns: 1fr; }
 }
