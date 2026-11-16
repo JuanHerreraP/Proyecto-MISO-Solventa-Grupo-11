@@ -8,7 +8,7 @@ import {
   obtenerCotizacion,
   obtenerRamos,
 } from "../services/cotizaciones.service";
-import { crearPago, obtenerPago } from "../services/pagos.service";
+import { crearPago, obtenerComprobante, obtenerPago } from "../services/pagos.service";
 import type { Cotizacion, DefinicionRamo } from "../types/cotizaciones";
 import CotizarPage from "./CotizarPage";
 
@@ -20,6 +20,7 @@ vi.mock("../services/cotizaciones.service", () => ({
 }));
 vi.mock("../services/pagos.service", () => ({
   crearPago: vi.fn(),
+  obtenerComprobante: vi.fn(),
   obtenerPago: vi.fn(),
 }));
 vi.mock("../services/session", () => ({ cerrarSesion: vi.fn() }));
@@ -99,6 +100,8 @@ beforeEach(() => {
   vi.mocked(obtenerPerfil).mockResolvedValue({ id: "CLI-1", rol: "CLIENTE" });
   vi.mocked(obtenerRamos).mockResolvedValue([RAMO_VIAJE]);
   vi.mocked(crearCotizacion).mockResolvedValue(COTIZACION);
+  // El comprobante es un extra: por defecto no está disponible.
+  vi.mocked(obtenerComprobante).mockRejectedValue(new Error("sin comprobante"));
 });
 
 function montar(ruta = "/cotizar") {
@@ -107,6 +110,7 @@ function montar(ruta = "/cotizar") {
       <Routes>
         <Route path="/cotizar" element={<CotizarPage />} />
         <Route path="/home" element={<h1>Inicio</h1>} />
+        <Route path="/polizas" element={<h1>Pólizas</h1>} />
         <Route path="/firma/:cotizacionId" element={<h1>Firma del contrato</h1>} />
         <Route path="/login" element={<h1>Inicia sesión</h1>} />
       </Routes>
@@ -143,6 +147,7 @@ it("paga con tarjeta aprobada y muestra la confirmación", async () => {
     pago_id: "PAG-1", cotizacion_id: "COT-001", metodo: "TARJETA", monto: "45000.00",
     moneda: "COP", estado: "APROBADO", motivo_rechazo: null, creado_en: "2026-10-24T12:00:00Z",
     referencia_pasarela: "PSP-1", url_redireccion: null, actualizado_en: "2026-10-24T12:00:00Z",
+    concepto: "COMPRA",
   });
   await avanzarHastaPago();
 
@@ -161,7 +166,7 @@ it("muestra el rechazo y permite reintentar volviendo a pagar la prima", async (
     pago_id: "PAG-2", cotizacion_id: "COT-001", metodo: "TARJETA", monto: "45000.00",
     moneda: "COP", estado: "RECHAZADO", motivo_rechazo: "FONDOS_INSUFICIENTES",
     creado_en: "2026-10-24T12:00:00Z", referencia_pasarela: "PSP-2", url_redireccion: null,
-    actualizado_en: "2026-10-24T12:00:00Z",
+    actualizado_en: "2026-10-24T12:00:00Z", concepto: "COMPRA",
   });
   await avanzarHastaPago();
 
@@ -180,6 +185,7 @@ it("al volver del portal PSE consulta el pago y muestra el resultado", async () 
     pago_id: "PAG-3", cotizacion_id: "COT-001", metodo: "PSE", monto: "45000.00",
     moneda: "COP", estado: "APROBADO", motivo_rechazo: null, creado_en: "2026-10-24T12:00:00Z",
     referencia_pasarela: "PSP-3", url_redireccion: null, actualizado_en: "2026-10-24T12:00:00Z",
+    concepto: "COMPRA",
   });
   vi.mocked(obtenerCotizacion).mockResolvedValue(COTIZACION);
   montar("/cotizar?pago=PAG-3&estado=APROBADO");
@@ -225,7 +231,7 @@ it("redirige al portal PSE cuando el pago devuelve una URL de redirección", asy
     moneda: "COP", estado: "PENDIENTE", motivo_rechazo: null, creado_en: "2026-10-24T12:00:00Z",
     referencia_pasarela: "PSP-4",
     url_redireccion: "http://localhost:8000/api/v1/pagos/pse-simulado/PSP-4",
-    actualizado_en: "2026-10-24T12:00:00Z",
+    actualizado_en: "2026-10-24T12:00:00Z", concepto: "COMPRA",
   });
   const asignarHref = vi.fn();
   Object.defineProperty(window, "location", {
@@ -253,4 +259,84 @@ it("renderiza los campos de un ramo con fecha, opción y booleano", async () => 
   expect(await screen.findByLabelText("Fecha de nacimiento")).toBeInTheDocument();
   expect(screen.getByLabelText("Plan")).toBeInTheDocument();
   expect(screen.getByLabelText(/¿Es fumador\?/)).toBeInTheDocument();
+});
+
+const VIGENTE = { ...COTIZACION, vigente_hasta: "2099-01-01T00:00:00Z" };
+
+it("paga una cotización pendiente yendo directo al paso de pago", async () => {
+  vi.mocked(obtenerCotizacion).mockResolvedValue(VIGENTE);
+  montar("/cotizar?cotizacion=COT-001");
+
+  expect(await screen.findByText("Pagar la prima")).toBeInTheDocument();
+  expect(screen.getByText("Cotización COT-001")).toBeInTheDocument();
+  expect(screen.getByText("Elige cómo quieres pagar la prima.")).toBeInTheDocument();
+  expect(obtenerCotizacion).toHaveBeenCalledWith("COT-001");
+});
+
+it.each([
+  ["ya aceptada", { ...VIGENTE, estado: "ACEPTADA" as const }],
+  ["con la oferta vencida", { ...COTIZACION, vigente_hasta: "2020-01-01T00:00:00Z" }],
+])("no deja pagar una cotización pendiente %s", async (_caso, cotizacion) => {
+  vi.mocked(obtenerCotizacion).mockResolvedValue(cotizacion);
+  montar("/cotizar?cotizacion=COT-001");
+
+  expect(await screen.findByRole("alert")).toHaveTextContent(
+    "Esta cotización ya no está disponible para pago.",
+  );
+  expect(screen.queryByText("Pagar la prima")).not.toBeInTheDocument();
+});
+
+it("informa si no puede consultar la cotización pendiente", async () => {
+  vi.mocked(obtenerCotizacion).mockRejectedValue(new Error("No existe."));
+  montar("/cotizar?cotizacion=COT-404");
+
+  expect(await screen.findByRole("alert")).toHaveTextContent(
+    "No fue posible consultar la cotización.",
+  );
+});
+
+it("muestra el comprobante tras un pago aprobado", async () => {
+  vi.mocked(obtenerCotizacion).mockResolvedValue(VIGENTE);
+  vi.mocked(crearPago).mockResolvedValue({
+    pago_id: "PAG-7", cotizacion_id: "COT-001", metodo: "TARJETA", monto: "45000.00",
+    moneda: "COP", estado: "APROBADO", motivo_rechazo: null, creado_en: "2026-10-24T12:00:00Z",
+    referencia_pasarela: "PSP-7", url_redireccion: null, actualizado_en: "2026-10-24T12:00:00Z",
+    concepto: "COMPRA",
+  });
+  vi.mocked(obtenerComprobante).mockResolvedValue({
+    comprobante_id: "CMP-PAG-7", numero: "CP-20261024-PAG-7", pago_id: "PAG-7",
+    cotizacion_id: "COT-001", concepto: "COMPRA", descripcion: "Prima de Seguro de viaje",
+    poliza_id: null, numero_poliza: null, nombre_ramo: "Seguro de viaje", monto: "45000.00",
+    moneda: "COP", metodo: "TARJETA", referencia_pasarela: "PSP-7",
+    pagado_en: "2026-10-24T12:00:00Z", emitido_en: "2026-10-24T12:00:01Z",
+  });
+  montar("/cotizar?cotizacion=COT-001");
+
+  await userEvent.type(await screen.findByLabelText("Número de tarjeta"), "4111111111111111");
+  await userEvent.type(screen.getByLabelText("Vencimiento (MM/AA)"), "0829");
+  await userEvent.type(screen.getByLabelText("CVV"), "123");
+  await userEvent.click(screen.getByRole("button", { name: "Pagar prima" }));
+
+  expect(await screen.findByText("Pago aprobado")).toBeInTheDocument();
+  expect(await screen.findByText("CP-20261024-PAG-7")).toBeInTheDocument();
+  expect(screen.getByText("Prima de Seguro de viaje")).toBeInTheDocument();
+  expect(screen.getByText(/el siguiente paso es firmar el contrato/)).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Firmar contrato" })).toBeInTheDocument();
+});
+
+it("tras pagar una renovación avisa que la póliza se renovó y no pide firmar", async () => {
+  vi.mocked(obtenerPago).mockResolvedValue({
+    pago_id: "PAG-8", cotizacion_id: "COT-REN", metodo: "PSE", monto: "420000.00",
+    moneda: "COP", estado: "APROBADO", motivo_rechazo: null, creado_en: "2026-12-10T12:00:00Z",
+    referencia_pasarela: "PSP-8", url_redireccion: null, actualizado_en: "2026-12-10T12:00:00Z",
+    concepto: "RENOVACION",
+  });
+  vi.mocked(obtenerComprobante).mockRejectedValue(new Error("sin comprobante"));
+  vi.mocked(obtenerCotizacion).mockResolvedValue(COTIZACION);
+  montar("/cotizar?pago=PAG-8");
+
+  expect(await screen.findByText(/Tu póliza fue renovada/)).toBeInTheDocument();
+  expect(screen.queryByText(/el siguiente paso es firmar/)).not.toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "Firmar contrato" })).not.toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Ver mis pólizas" })).toBeInTheDocument();
 });

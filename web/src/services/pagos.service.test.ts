@@ -1,6 +1,12 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { guardarAccessToken } from "./session";
-import { crearPago, listarPagos, obtenerPago } from "./pagos.service";
+import {
+  crearPago,
+  listarPagos,
+  listarPrimasPendientes,
+  obtenerComprobante,
+  obtenerPago,
+} from "./pagos.service";
 
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status });
@@ -77,5 +83,43 @@ describe("pagos.service", () => {
     guardarAccessToken("token-pago");
     simular(json({}, 404));
     await expect(obtenerPago("PAG-9")).rejects.toThrow("No fue posible consultar tu pago.");
+  });
+
+  it("lista las primas pendientes del cliente", async () => {
+    guardarAccessToken("token-pendientes");
+    const fetch = simular(json({ primas: [{ tipo: "COTIZACION", cotizacion_id: "COT-1" }], total: 1 }));
+    const primas = await listarPrimasPendientes();
+    expect(primas).toEqual([{ tipo: "COTIZACION", cotizacion_id: "COT-1" }]);
+    expect(fetch).toHaveBeenCalledWith(
+      expect.stringContaining("/api/v1/primas-pendientes"),
+      expect.anything(),
+    );
+  });
+
+  it("falla al listar las primas pendientes si la respuesta no es correcta", async () => {
+    guardarAccessToken("token-pendientes");
+    simular(json({}, 500));
+    await expect(listarPrimasPendientes()).rejects.toThrow(
+      "No fue posible consultar tus pagos pendientes.",
+    );
+  });
+
+  it("consulta el comprobante de un pago", async () => {
+    guardarAccessToken("token-comprobante");
+    const fetch = simular(json({ numero: "CP-20261210-ABCD1234", pago_id: "PAG-9" }));
+    const comprobante = await obtenerComprobante("PAG-9");
+    expect(comprobante.numero).toBe("CP-20261210-ABCD1234");
+    expect(fetch).toHaveBeenCalledWith(
+      expect.stringContaining("/api/v1/pagos/PAG-9/comprobante"),
+      expect.anything(),
+    );
+  });
+
+  it("falla al consultar un comprobante que no existe", async () => {
+    guardarAccessToken("token-comprobante");
+    simular(json({}, 409));
+    await expect(obtenerComprobante("PAG-9")).rejects.toThrow(
+      "No fue posible consultar el comprobante.",
+    );
   });
 });

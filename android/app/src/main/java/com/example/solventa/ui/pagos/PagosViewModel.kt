@@ -31,6 +31,16 @@ class PagosViewModel(private val coordinador: PagosCoordinator) : ViewModel() {
         viewModelScope.launch { coordinador.listar() }
     }
 
+    fun cargarPendientes() {
+        viewModelScope.launch { coordinador.cargarPendientes() }
+    }
+
+    fun verComprobante(pagoId: String) {
+        viewModelScope.launch { coordinador.verComprobante(pagoId) }
+    }
+
+    fun cerrarComprobante() = coordinador.cerrarComprobante()
+
     fun prepararReintento() = coordinador.prepararReintento()
 
     fun limpiar() = coordinador.limpiar()

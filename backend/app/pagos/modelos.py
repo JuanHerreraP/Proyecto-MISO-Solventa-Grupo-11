@@ -67,3 +67,36 @@ class SolicitudPago(BaseModel):
     url_retorno: str | None = Field(default=None, max_length=500)
 
     _sin_pan = field_validator("token_tarjeta")(validar_token_pago)
+
+
+class ConceptoComprobante(str, Enum):
+    COMPRA = "COMPRA"
+    RENOVACION = "RENOVACION"
+
+
+class Comprobante(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    comprobante_id: str = Field(min_length=1, max_length=60)
+    numero: str = Field(min_length=1, max_length=40)
+    pago_id: str = Field(min_length=1, max_length=50)
+    cliente_id: str = Field(min_length=1, max_length=50)
+    cotizacion_id: str = Field(min_length=1, max_length=50)
+    concepto: ConceptoComprobante
+    descripcion: str = Field(min_length=1, max_length=200)
+    # Una compra aún no tiene póliza: se emite al firmar el contrato.
+    poliza_id: str | None = Field(default=None, max_length=50)
+    numero_poliza: str | None = Field(default=None, max_length=40)
+    nombre_ramo: str = Field(min_length=1, max_length=120)
+    monto: Decimal = Field(gt=0, max_digits=18, decimal_places=2)
+    moneda: str = Field(min_length=3, max_length=3)
+    metodo: MetodoPago
+    referencia_pasarela: str | None = Field(default=None, max_length=100)
+    pagado_en: AwareDatetime
+    emitido_en: AwareDatetime
+
+
+class PagoConConcepto(Pago):
+    """El pago tal como lo ve el cliente: además dice si fue una compra o una renovación."""
+
+    concepto: ConceptoComprobante

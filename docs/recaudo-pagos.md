@@ -21,7 +21,8 @@ La pasarela incluida es **simulada** (`app/pagos/pasarela_simulada.py`). El rest
 | Método y ruta | Quién | Devuelve |
 |---|---|---|
 | `POST /api/v1/pagos` | Cliente | `201` con el pago; `200` si es un reintento idempotente |
-| `GET /api/v1/pagos/{pago_id}` | Cliente, solo sus pagos | Estado del pago |
+| `GET /api/v1/pagos/{pago_id}` | Cliente, solo sus pagos | Estado del pago, con su `concepto` (`COMPRA` o `RENOVACION`, HU21) |
+| `GET /api/v1/pagos/{pago_id}/comprobante` | Cliente, solo sus pagos | Comprobante del pago aprobado (HU21, ver [Pago de primas pendientes](pago-prima.md)) |
 | `POST /api/v1/pagos/confirmaciones` | Pasarela (sin sesión, con firma) | `{pago_id, estado}` |
 
 **Cuerpo de `POST /api/v1/pagos`:** `cotizacion_id`, `metodo` (`TARJETA` o `PSE`), `token_tarjeta` (tarjeta), `codigo_banco` (PSE) y `url_retorno` opcional.
@@ -55,7 +56,7 @@ La pasarela incluida es **simulada** (`app/pagos/pasarela_simulada.py`). El rest
 - **Firma del webhook:** HMAC-SHA256 comparado en tiempo constante. Sin firma o con firma distinta responde 401.
 - **Sin datos de tarjeta:** solo se recibe el token de la pasarela. Si el valor parece un PAN (13 a 19 dígitos), se rechaza con 422.
 - **Errores 422 sin eco:** en las rutas de pagos se omite el valor recibido (`input`, `ctx`) para no devolver un posible número de tarjeta.
-- **Un pago aprobado por cotización:** no se puede pagar dos veces.
+- **Un pago aprobado por cotización:** no se puede pagar dos veces. Además de la verificación del servicio, un índice único parcial en la base (`uq_pagos_cotizacion_aprobado`) lo impide aunque dos solicitudes simultáneas pasen esa verificación. Un cobro aprobado que llega cuando la cotización ya está pagada queda `RECHAZADO` con `COBRO_DUPLICADO` y se registra para su devolución (ver [Pago de primas pendientes](pago-prima.md)).
 
 ## Configuración
 
@@ -90,7 +91,7 @@ Para simular la confirmación, firma el cuerpo JSON con el mismo secreto y enví
 
 ## Pruebas
 
-`pytest tests/pagos` desde `backend` (`tests/pagos/test_pagos.py`, 16 casos): pago aprobado y rechazado, idempotencia y conflicto de llave, doble pago, número de tarjeta en claro, cotización ajena o vencida, rol no cliente, pasarela caída, flujo PSE, confirmaciones repetidas o contradictorias, firma inválida y pago desconocido.
+`pytest tests/pagos` desde `backend` (`tests/pagos/test_pagos.py`, 18 casos; las pruebas de HU21 están en [Pago de primas pendientes](pago-prima.md)): pago aprobado y rechazado, idempotencia y conflicto de llave, doble pago, número de tarjeta en claro, cotización ajena o vencida, rol no cliente, pasarela caída, flujo PSE, confirmaciones repetidas o contradictorias, firma inválida y pago desconocido.
 
 ## Pendientes conocidos
 

@@ -29,6 +29,7 @@ from app.api import (
     oauth_socios,
     pagos,
     perfilamiento,
+    primas_pendientes,
     pse_simulado,
     renovaciones,
     salud,
@@ -166,6 +167,7 @@ def crear_app() -> FastAPI:
     app.include_router(api_auditoria.router)
     app.include_router(cancelaciones.router)
     app.include_router(renovaciones.router)
+    app.include_router(primas_pendientes.router)
     app.include_router(perfilamiento.router)
     app.include_router(enriquecimiento.router)
     app.include_router(socios.router)

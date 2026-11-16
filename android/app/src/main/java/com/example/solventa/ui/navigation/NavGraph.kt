@@ -31,6 +31,7 @@ import com.example.solventa.domain.asesor.DatosNuevoAnalista
 import com.example.solventa.domain.cotizaciones.CatalogoCotizaciones
 import com.example.solventa.domain.cotizaciones.EstadoCotizaciones
 import com.example.solventa.domain.cotizaciones.RamoCotizacion
+import com.example.solventa.domain.pagos.ConceptoPago
 import com.example.solventa.domain.pagos.EstadoPago
 import com.example.solventa.domain.pagos.EstadoPagos
 import com.example.solventa.domain.siniestros.SolicitudSiniestro
@@ -548,7 +549,12 @@ fun NavGraph(
                         cotizacion = cotizacion,
                         onVolver = { navController.popBackStack() },
                         onAceptar = {
-                            // La aceptación pertenece al siguiente paso del flujo de compra.
+                            if (pagos != null) {
+                                pagos.limpiar()
+                                navController.navigate(
+                                    ScreenRoute.Payment.ruta(cotizacion.cotizacionId)
+                                ) { launchSingleTop = true }
+                            }
                         },
                         onCrearOtra = {
                             cotizaciones.limpiarResultado()
@@ -878,10 +884,14 @@ fun NavGraph(
                 // Una renovación en curso se paga con su propia cotización y su monto.
                 val renovacion = billetera?.estado?.collectAsState()?.value?.renovacionEnCurso
                     ?.takeIf { it.cotizacionId == cotizacionId }
-                val resultado = estadoCotizaciones.resultado
+                val resultado = estadoCotizaciones.resultado?.takeIf { it.cotizacionId == cotizacionId }
                     ?: estadoCotizaciones.listado.firstOrNull { it.cotizacionId == cotizacionId }
-                val monto = renovacion?.primaTotal?.toBigDecimalOrNull() ?: resultado?.primaTotal
-                val moneda = renovacion?.moneda ?: resultado?.moneda
+                // Una prima pendiente (HU21) trae su propio monto, sin depender de otras pantallas.
+                val pendiente = estadoPagos.pendientes.firstOrNull { it.cotizacionId == cotizacionId }
+                val monto = renovacion?.primaTotal?.toBigDecimalOrNull()
+                    ?: resultado?.primaTotal
+                    ?: pendiente?.monto
+                val moneda = renovacion?.moneda ?: resultado?.moneda ?: pendiente?.moneda
                 if (estado.sesion == null || cotizacionId == null || monto == null || moneda == null) {
                     Box(modifier = Modifier.fillMaxSize())
                 } else {
@@ -915,18 +925,29 @@ fun NavGraph(
                 val pago = estadoPagos.pago
                 val renovacionPagada = billetera?.estado?.collectAsState()?.value?.renovacionEnCurso
                     ?.takeIf { pago != null && it.cotizacionId == pago.cotizacionId }
+                val comprobante = estadoPagos.comprobante?.takeIf { pago != null && it.pagoId == pago.pagoId }
+                // Una renovación se reconoce por su estado en curso (HU22) o, si el pago se hizo
+                // desde "Pagos pendientes" (HU21), por el concepto que informa el backend.
+                val esRenovacion = renovacionPagada != null || pago?.concepto == ConceptoPago.RENOVACION
                 if (estado.sesion == null || pago == null) {
                     Box(modifier = Modifier.fillMaxSize())
-                } else if (renovacionPagada != null && pago.estado == EstadoPago.APROBADO) {
+                } else if (esRenovacion && pago.estado == EstadoPago.APROBADO) {
+                    val polizaId = renovacionPagada?.polizaId
+                        ?: comprobante?.polizaId
+                        ?: estadoPagos.pendientes.firstOrNull { it.cotizacionId == pago.cotizacionId }?.polizaId
                     // El pago aprobado de una renovación termina en su propia confirmación.
                     RenewalSuccessScreen(
+                        comprobanteNumero = comprobante?.numero,
                         onVerPoliza = {
                             pagos.limpiar()
                             billetera?.terminarRenovacion()
-                            if (!navController.popBackStack(ScreenRoute.Wallet.route, false)) {
-                                navController.popBackStack(ScreenRoute.Home.route, false)
+                            val enBilletera = navController.popBackStack(ScreenRoute.Wallet.route, false)
+                            if (!enBilletera) navController.popBackStack(ScreenRoute.Home.route, false)
+                            if (polizaId != null) {
+                                navController.navigate(ScreenRoute.Certificate.ruta(polizaId))
+                            } else if (!enBilletera && billetera != null) {
+                                navController.navigate(ScreenRoute.Wallet.ruta()) { launchSingleTop = true }
                             }
-                            navController.navigate(ScreenRoute.Certificate.ruta(renovacionPagada.polizaId))
                         },
                         onVolver = {
                             pagos.limpiar()
@@ -945,6 +966,7 @@ fun NavGraph(
                 } else {
                     PaymentResultScreen(
                         pago = pago,
+                        comprobante = comprobante,
                         onReintentar = {
                             pagos.prepararReintento()
                             navController.popBackStack()
@@ -990,12 +1012,32 @@ fun NavGraph(
                 if (estado.sesion == null) {
                     Box(modifier = Modifier.fillMaxSize())
                 } else {
-                    LaunchedEffect(Unit) { pagos.listar() }
+                    LaunchedEffect(Unit) {
+                        pagos.listar()
+                        pagos.cargarPendientes()
+                    }
                     PaymentsScreen(
                         pagos = estadoPagos.listado,
-                        cargando = estadoPagos.cargandoListado,
+                        cargando = estadoPagos.cargandoListado || estadoPagos.cargandoPendientes,
                         error = estadoPagos.errorListado,
-                        onReintentar = { pagos.listar() },
+                        onReintentar = {
+                            pagos.listar()
+                            pagos.cargarPendientes()
+                        },
+                        pendientes = estadoPagos.pendientes,
+                        errorPendientes = estadoPagos.errorPendientes,
+                        onPagar = { prima ->
+                            // Nuevo intento: llave nueva y sin el resultado de un pago anterior.
+                            pagos.prepararReintento()
+                            navController.navigate(ScreenRoute.Payment.ruta(prima.cotizacionId)) {
+                                launchSingleTop = true
+                            }
+                        },
+                        onVerComprobante = { pago -> pagos.verComprobante(pago.pagoId) },
+                        comprobanteVisible = estadoPagos.comprobanteVisible,
+                        comprobante = estadoPagos.comprobante,
+                        errorComprobante = estadoPagos.errorComprobante,
+                        onCerrarComprobante = { pagos.cerrarComprobante() },
                         onVolver = { navController.popBackStack() },
                         onInicio = { navController.popBackStack(ScreenRoute.Home.route, false) },
                         onVerBilletera = billetera?.let {

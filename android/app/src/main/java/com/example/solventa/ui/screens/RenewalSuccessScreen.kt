@@ -38,7 +38,8 @@ fun RenewalSuccessScreen(
     onVolver: () -> Unit,
     modifier: Modifier = Modifier,
     onInicio: () -> Unit = {},
-    onVerBilletera: (() -> Unit)? = null
+    onVerBilletera: (() -> Unit)? = null,
+    comprobanteNumero: String? = null
 ) {
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -81,6 +82,14 @@ fun RenewalSuccessScreen(
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
                     textAlign = TextAlign.Center
                 )
+                comprobanteNumero?.let {
+                    Text(
+                        text = "Comprobante $it",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                        textAlign = TextAlign.Center
+                    )
+                }
                 Spacer(modifier = Modifier.size(4.dp))
                 SolventaPrimaryButton(
                     text = "Ver póliza renovada",

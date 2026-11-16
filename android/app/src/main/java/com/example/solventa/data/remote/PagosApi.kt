@@ -26,4 +26,15 @@ interface PagosApi {
     suspend fun listar(
         @Header("Authorization") autorizacion: String
     ): Response<List<PagoDto>>
+
+    @GET("api/v1/primas-pendientes")
+    suspend fun primasPendientes(
+        @Header("Authorization") autorizacion: String
+    ): Response<PrimasPendientesDto>
+
+    @GET("api/v1/pagos/{pagoId}/comprobante")
+    suspend fun comprobante(
+        @Header("Authorization") autorizacion: String,
+        @Path("pagoId") pagoId: String
+    ): Response<ComprobanteDto>
 }
