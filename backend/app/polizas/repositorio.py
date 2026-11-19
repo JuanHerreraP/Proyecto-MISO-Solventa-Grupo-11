@@ -4,13 +4,18 @@ El repositorio nunca devuelve una póliza sin filtrar por titular cuando la cons
 cliente: `obtener_del_cliente` es la única forma de leer una póliza desde la billetera.
 """
 
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from typing import Protocol
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.polizas.dominio.modelos import EnlaceCertificado, Poliza, RamoPoliza
+from app.polizas.dominio.modelos import (
+    EnlaceCertificado,
+    EstadoRegistroPoliza,
+    Poliza,
+    RamoPoliza,
+)
 from app.polizas.modelos_db import EnlaceCertificadoDB, PolizaDB
 
 
@@ -26,6 +31,10 @@ class RepositorioPolizas(Protocol):
     def buscar_por_numero(self, numero_poliza: str) -> Poliza | None: ...
 
     def listar_parametricas(self) -> list[Poliza]: ...
+
+    def listar_por_vencer(self, desde: date, hasta: date) -> list[Poliza]:
+        """Pólizas no canceladas cuyo fin de vigencia está entre ambas fechas (HU17)."""
+        ...
 
 
 class RepositorioEnlaces(Protocol):
@@ -70,6 +79,17 @@ class RepositorioPolizasEnMemoria:
             for poliza in self._por_id.values()
             if poliza.ramo is RamoPoliza.PARAMETRICO
         ]
+
+    def listar_por_vencer(self, desde: date, hasta: date) -> list[Poliza]:
+        return sorted(
+            (
+                poliza.model_copy(deep=True)
+                for poliza in self._por_id.values()
+                if poliza.estado is EstadoRegistroPoliza.VIGENTE
+                and desde <= poliza.fecha_fin <= hasta
+            ),
+            key=lambda poliza: (poliza.fecha_fin, poliza.poliza_id),
+        )
 
 
 class RepositorioEnlacesEnMemoria:
@@ -121,6 +141,18 @@ class RepositorioPolizasPostgres:
 
     def listar_parametricas(self) -> list[Poliza]:
         sentencia = select(PolizaDB).where(PolizaDB.ramo == RamoPoliza.PARAMETRICO.value)
+        return [_poliza_a_dominio(registro) for registro in self._db.scalars(sentencia).all()]
+
+    def listar_por_vencer(self, desde: date, hasta: date) -> list[Poliza]:
+        sentencia = (
+            select(PolizaDB)
+            .where(
+                PolizaDB.estado == EstadoRegistroPoliza.VIGENTE.value,
+                PolizaDB.fecha_fin >= desde,
+                PolizaDB.fecha_fin <= hasta,
+            )
+            .order_by(PolizaDB.fecha_fin, PolizaDB.poliza_id)
+        )
         return [_poliza_a_dominio(registro) for registro in self._db.scalars(sentencia).all()]
 
 

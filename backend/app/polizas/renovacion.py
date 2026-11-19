@@ -12,6 +12,9 @@ como estaba y el cliente puede reintentar.
   pago aprobado nunca deja la póliza sin renovar.
 - Gestionan la renovación el cliente titular y el asesor de la venta asistida; el pago lo hace el
   cliente.
+- La renovación automática (HU17) usa este mismo flujo: consulta la propuesta para el preaviso e
+  inicia la renovación sin solicitante (`iniciar_automatica`) para cobrarla con la tarjeta
+  registrada del cliente.
 """
 
 import logging
@@ -51,11 +54,16 @@ from app.polizas.dominio.renovacion import (
     renovacion_id_de,
     sin_precio,
 )
+from app.polizas.dominio.renovacion_automatica import ACTOR_SISTEMA
 from app.polizas.endosos import Solicitante
 from app.polizas.repositorio import RepositorioPolizas
 from app.polizas.repositorio_renovaciones import RenovacionConcurrente, RepositorioRenovaciones
+from app.polizas.servicio import PolizaNoEncontrada
 
 logger = logging.getLogger(__name__)
+
+# Quién figura como solicitante de una renovación iniciada por la renovación automática.
+SOLICITANTE_AUTOMATICO = Solicitante(ACTOR_SISTEMA, Rol.SERVICIO_INTERNO)
 
 
 def _recortar(valor: str | None, largo: int) -> str | None:
@@ -180,6 +188,14 @@ class ServicioRenovaciones:
         """Estado a hoy: una renovación sin pagar cuya cotización venció está vencida."""
         return renovacion.estado_en(self._reloj())
 
+    def propuesta_para(self, poliza: Poliza, ahora: datetime) -> PropuestaRenovacion:
+        """Propuesta sin control de acceso, para el preaviso de la renovación automática."""
+        return self._evaluar(poliza, hoy_en_colombia(ahora)).propuesta
+
+    def reconciliar(self, poliza_id: str) -> bool:
+        """Aplica los pagos aprobados de renovaciones de la póliza que quedaron sin aplicar."""
+        return self._reconciliar(poliza_id, self._reloj())
+
     # --- Inicio -------------------------------------------------------------------------
 
     def iniciar(
@@ -191,6 +207,25 @@ class ServicioRenovaciones:
         """Crea la cotización de renovación. Devuelve la renovación y si se creó ahora."""
 
         poliza = poliza_del_solicitante(self._polizas, self._cotizaciones, solicitante, poliza_id)
+        return self._iniciar(poliza, solicitante, clave_idempotencia)
+
+    def iniciar_automatica(self, poliza_id: str) -> tuple[Renovacion, bool]:
+        """Inicia la renovación desde la renovación automática (HU17), sin un solicitante.
+
+        Aplica las mismas reglas y la misma idempotencia: si ya hay una renovación del periodo
+        esperando el pago (p. ej. la inició el cliente), devuelve esa.
+        """
+        poliza = self._polizas.obtener(poliza_id)
+        if poliza is None:
+            raise PolizaNoEncontrada(poliza_id)
+        return self._iniciar(poliza, SOLICITANTE_AUTOMATICO, None)
+
+    def _iniciar(
+        self,
+        poliza: Poliza,
+        solicitante: Solicitante,
+        clave_idempotencia: str | None,
+    ) -> tuple[Renovacion, bool]:
         ahora = self._reloj()
 
         if clave_idempotencia:
@@ -199,9 +234,7 @@ class ServicioRenovaciones:
                 return previa, False
 
         if self._reconciliar(poliza.poliza_id, ahora):
-            poliza = poliza_del_solicitante(
-                self._polizas, self._cotizaciones, solicitante, poliza_id
-            )
+            poliza = self._polizas.obtener(poliza.poliza_id) or poliza
         evaluacion = self._evaluar(poliza, hoy_en_colombia(ahora))
         propuesta = evaluacion.propuesta
         if not propuesta.renovable:

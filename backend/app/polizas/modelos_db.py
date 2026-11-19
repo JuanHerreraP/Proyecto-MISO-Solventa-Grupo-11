@@ -1,10 +1,12 @@
-"""Modelos persistentes de pólizas, certificados, documentos y endosos (HU07, HU12, HU16)."""
+"""Modelos persistentes de pólizas, certificados, documentos, endosos, renovaciones y
+renovación automática (HU07, HU12, HU16, HU22, HU17)."""
 
 from datetime import date, datetime
 from decimal import Decimal
 
 from sqlalchemy import (
     JSON,
+    Boolean,
     Date,
     DateTime,
     ForeignKey,
@@ -194,3 +196,64 @@ class RenovacionDB(Base):
     creado_en: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     aplicada_en: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     motivo_no_aplicada: Mapped[str | None] = mapped_column(String(200), nullable=True)
+
+
+class PreferenciaRenovacionAutomaticaDB(Base):
+    """Preferencia del cliente sobre la renovación automática de una póliza (HU17).
+
+    Sin registro, la renovación automática está activa y sin tarjeta registrada. Se guarda el
+    token que entrega la pasarela y los últimos cuatro dígitos, nunca el número de la tarjeta.
+    """
+
+    __tablename__ = "preferencias_renovacion_automatica"
+
+    poliza_id: Mapped[str] = mapped_column(
+        String(50), ForeignKey("polizas.poliza_id", ondelete="CASCADE"), primary_key=True
+    )
+    activa: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    token_tarjeta: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    ultimos_digitos: Mapped[str | None] = mapped_column(String(4), nullable=True)
+    actualizado_por: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    actualizado_en: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+
+class CicloRenovacionAutomaticaDB(Base):
+    """Lo que hizo la renovación automática con un periodo de la póliza (HU17).
+
+    Uno por periodo: la clave sale de la póliza y del fin del periodo que se renueva. Registra
+    el preaviso, el cobro con la tarjeta registrada, el documento emitido y su envío.
+    """
+
+    __tablename__ = "ciclos_renovacion_automatica"
+    __table_args__ = (
+        UniqueConstraint("poliza_id", "vence_el", name="uq_ciclos_renovacion_poliza_periodo"),
+        Index("ix_ciclos_renovacion_estado", "estado"),
+    )
+
+    ciclo_id: Mapped[str] = mapped_column(String(80), primary_key=True)
+    poliza_id: Mapped[str] = mapped_column(
+        String(50), ForeignKey("polizas.poliza_id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    vence_el: Mapped[date] = mapped_column(Date, nullable=False)
+    estado: Mapped[str] = mapped_column(String(30), nullable=False)
+    preaviso_enviado_en: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    prima_avisada: Mapped[Decimal | None] = mapped_column(Numeric(18, 2), nullable=True)
+    moneda: Mapped[str | None] = mapped_column(String(3), nullable=True)
+    renovacion_id: Mapped[str | None] = mapped_column(String(70), nullable=True)
+    pago_id: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    huella_medio_cobrado: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    intentos_cobro: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    motivo: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    clave_documento: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    huella_documento: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    tamano_documento: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    contrato_enviado_en: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    aviso_enviado_en: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    creado_en: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    actualizado_en: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
