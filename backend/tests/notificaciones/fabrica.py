@@ -134,7 +134,7 @@ def repositorios_sqlite():
     )
 
 
-def crear_servicio(repos: Repositorios | None = None, reloj: Reloj | None = None):
+def crear_servicio(repos: Repositorios | None = None, reloj: Reloj | None = None, enviador=None):
     repos = repos or repositorios_en_memoria()
     reloj = reloj or Reloj()
     contador = iter(range(1, 10_000))
@@ -144,5 +144,6 @@ def crear_servicio(repos: Repositorios | None = None, reloj: Reloj | None = None
         repos.preferencias,
         reloj=reloj,
         generar_id=lambda: f"NOT-{next(contador)}",
+        enviador=enviador,
     )
     return servicio, repos, reloj

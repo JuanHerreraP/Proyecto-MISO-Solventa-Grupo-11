@@ -7,15 +7,18 @@
   un push normal y los siguientes un resumen con la misma `etiqueta`, que en el teléfono
   reemplaza al anterior en vez de apilar avisos repetitivos.
 
-El servicio solo **decide** qué push corresponde (`PushPendiente`); enviarlo es trabajo del canal
-de envío, que se conecta aparte.
+`registrar` solo **decide** qué push corresponde (`PushPendiente`). `notificar` además lo envía
+por el canal configurado y da de baja los tokens que el proveedor marca como inválidos; un fallo del
+push nunca rompe el flujo de negocio que lo originó (el evento ya quedó en la bandeja).
 """
 
+import logging
 import uuid
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import UTC, datetime
 
+from app.notificaciones.canal import EnviadorPush, ResultadoEnvio
 from app.notificaciones.modelos import (
     MotivoSinPush,
     Notificacion,
@@ -31,6 +34,8 @@ from app.notificaciones.repositorio import (
 )
 from app.polizas.dominio.modelos import hoy_en_colombia
 
+logger = logging.getLogger(__name__)
+
 
 @dataclass(frozen=True)
 class ResultadoRegistro:
@@ -39,6 +44,8 @@ class ResultadoRegistro:
     nueva: bool
     push: PushPendiente | None = None
     motivo_sin_push: MotivoSinPush | None = None
+    # Lo que pasó al enviar el push; None si no había nada que enviar o no hay canal conectado.
+    envio: ResultadoEnvio | None = None
 
 
 class ServicioNotificaciones:
@@ -49,12 +56,47 @@ class ServicioNotificaciones:
         preferencias: RepositorioPreferencias,
         reloj: Callable[[], datetime] = lambda: datetime.now(UTC),
         generar_id: Callable[[], str] = lambda: f"NOT-{uuid.uuid4()}",
+        enviador: EnviadorPush | None = None,
     ):
+        self._enviador = enviador
         self._notificaciones = notificaciones
         self._dispositivos = dispositivos
         self._preferencias = preferencias
         self._reloj = reloj
         self._generar_id = generar_id
+
+    def notificar(
+        self,
+        cliente_id: str,
+        tipo: TipoNotificacion,
+        clave: str,
+        titulo: str,
+        cuerpo: str,
+        datos: dict[str, str] | None = None,
+    ) -> ResultadoRegistro:
+        """Registra el evento y, si corresponde, manda el push. Lo llaman los disparadores."""
+        resultado = self.registrar(cliente_id, tipo, clave, titulo, cuerpo, datos)
+        if resultado.push is None or self._enviador is None:
+            return resultado
+        return replace(resultado, envio=self._enviar(resultado.push))
+
+    def _enviar(self, push: PushPendiente) -> ResultadoEnvio | None:
+        try:
+            envio = self._enviador.enviar(push)
+        except Exception:
+            # El evento ya está en la bandeja: el cliente lo verá aunque el push falle.
+            logger.exception("No se pudo enviar el push a %s", push.cliente_id)
+            return None
+        ahora = self._reloj()
+        for token in envio.tokens_invalidos:
+            self._dispositivos.desactivar(push.cliente_id, token, ahora)
+        if envio.fallidos:
+            logger.warning(
+                "Push a %s: %d dispositivo(s) fallaron por un error pasajero",
+                push.cliente_id,
+                len(envio.fallidos),
+            )
+        return envio
 
     def registrar(
         self,
