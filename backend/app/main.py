@@ -56,6 +56,7 @@ from app.infraestructura.database import (
     esperar_base_disponible,
     preparar_esquema_registro,
 )
+from app.notificaciones import modelos_db as modelos_db_notificaciones  # noqa: F401
 from app.pagos import modelos_db as modelos_db_pagos  # noqa: F401
 from app.polizas import modelos_db as modelos_db_polizas  # noqa: F401
 from app.siniestros import modelos_db as modelos_db_siniestros  # noqa: F401
