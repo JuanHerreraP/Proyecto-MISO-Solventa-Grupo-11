@@ -26,6 +26,7 @@ from app.api import (
     firmas,
     historial_poliza,
     identidad,
+    notificaciones,
     oauth_socios,
     pagos,
     perfilamiento,
@@ -96,8 +97,11 @@ def crear_app() -> FastAPI:
     @app.exception_handler(RequestValidationError)
     async def errores_de_validacion(request: Request, error: RequestValidationError):
         detalle = jsonable_encoder(error.errors())
-        if request.url.path.startswith(("/api/v1/pagos", "/api/v1/firmas")):
-            # Los errores de FastAPI devuelven el valor recibido: un PAN o un código OTP.
+        if request.url.path.startswith(
+            ("/api/v1/pagos", "/api/v1/firmas", "/api/v1/notificaciones/dispositivos")
+        ):
+            # Los errores de FastAPI devuelven el valor recibido: un PAN, un código OTP o el
+            # token de FCM de un teléfono.
             detalle = [
                 {campo: valor for campo, valor in e.items() if campo not in {"input", "ctx"}}
                 for e in detalle
@@ -169,6 +173,7 @@ def crear_app() -> FastAPI:
     app.include_router(cancelaciones.router)
     app.include_router(renovaciones.router)
     app.include_router(primas_pendientes.router)
+    app.include_router(notificaciones.router)
     app.include_router(perfilamiento.router)
     app.include_router(enriquecimiento.router)
     app.include_router(socios.router)
