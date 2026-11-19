@@ -58,6 +58,7 @@ from app.infraestructura.database import (
     preparar_esquema_registro,
 )
 from app.notificaciones import modelos_db as modelos_db_notificaciones  # noqa: F401
+from app.notificaciones.composicion import enviador_push
 from app.pagos import modelos_db as modelos_db_pagos  # noqa: F401
 from app.polizas import modelos_db as modelos_db_polizas  # noqa: F401
 from app.siniestros import modelos_db as modelos_db_siniestros  # noqa: F401
@@ -70,6 +71,9 @@ def crear_app() -> FastAPI:
     Base.metadata.create_all(bind=engine)
     preparar_esquema_registro()
     asegurar_manager_bootstrap()
+    # Arma el canal de push al arrancar: si su configuración está mal, se ve en el log desde el
+    # inicio y no en el primer evento que intente notificar.
+    enviador_push()
 
     app = FastAPI(
         title="Solventa API",
@@ -174,6 +178,7 @@ def crear_app() -> FastAPI:
     app.include_router(renovaciones.router)
     app.include_router(primas_pendientes.router)
     app.include_router(notificaciones.router)
+    app.include_router(notificaciones.router_interno)
     app.include_router(perfilamiento.router)
     app.include_router(enriquecimiento.router)
     app.include_router(socios.router)

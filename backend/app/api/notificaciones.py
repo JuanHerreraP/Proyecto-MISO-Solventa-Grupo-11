@@ -5,9 +5,11 @@ registra el token de FCM de su teléfono al iniciar sesión, lo da de baja al ce
 quiere recibir push. Solo opera sobre lo del cliente autenticado.
 """
 
-from datetime import datetime
+import os
+import secrets
+from datetime import date, datetime
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
+from fastapi import APIRouter, Depends, Header, HTTPException, Query, Response, status
 from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy.orm import Session
 
@@ -15,12 +17,15 @@ from app.api.cotizaciones import ActorCotizacion, TipoActorCotizacion, actor_act
 from app.identidad.modelos import Rol
 from app.infraestructura.database import get_db
 from app.notificaciones.bandeja import NotificacionNoEncontrada, ServicioBandeja
+from app.notificaciones.composicion import crear_servicio_notificaciones
 from app.notificaciones.modelos import Notificacion, TipoNotificacion
 from app.notificaciones.repositorio import (
     RepositorioDispositivosPostgres,
     RepositorioNotificacionesPostgres,
     RepositorioPreferenciasPostgres,
 )
+from app.notificaciones.vencimientos import ResumenVencimientos, ServicioVencimientos
+from app.polizas.repositorio import RepositorioPolizasPostgres
 
 router = APIRouter(prefix="/api/v1/notificaciones", tags=["notificaciones"])
 
@@ -252,3 +257,65 @@ def marcar_leida(
             },
         ) from None
     return LecturaNotificacion(notificacion_id=notificacion_id, leida=True, no_leidas=no_leidas)
+
+
+# --- Job interno de vencimientos -----------------------------------------------------------
+
+router_interno = APIRouter(
+    prefix="/api/v1/internos/notificaciones", tags=["notificaciones-internas"]
+)
+
+
+def verificar_clave_interna(x_clave_interna: str | None = Header(default=None)) -> None:
+    """El job lo llama un proceso programado, no un usuario: se autentica con una clave.
+
+    Sin `NOTIFICACIONES_CLAVE_INTERNA` configurada el endpoint está apagado: no hay una clave
+    por defecto que pueda quedar activa por olvido en un despliegue.
+    """
+    esperada = os.getenv("NOTIFICACIONES_CLAVE_INTERNA")
+    if not esperada:
+        raise HTTPException(
+            status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail={
+                "codigo": "JOB_NO_CONFIGURADO",
+                "mensaje": "El job de notificaciones no está configurado.",
+            },
+        )
+    if not x_clave_interna or not secrets.compare_digest(
+        x_clave_interna.encode(), esperada.encode()
+    ):
+        raise HTTPException(
+            status.HTTP_401_UNAUTHORIZED,
+            detail={"codigo": "CLAVE_INVALIDA", "mensaje": "Clave interna ausente o inválida."},
+        )
+
+
+def obtener_vencimientos(db: Session = Depends(get_db)) -> ServicioVencimientos:
+    return ServicioVencimientos(
+        polizas=RepositorioPolizasPostgres(db),
+        notificaciones=crear_servicio_notificaciones(db),
+    )
+
+
+@router_interno.post(
+    "/vencimientos",
+    response_model=ResumenVencimientos,
+    dependencies=[Depends(verificar_clave_interna)],
+    summary="Avisa las pólizas que vencen en 15 y en 3 días",
+    description=(
+        "Lo llama un proceso programado una vez al día (header `X-Clave-Interna`). Es idempotente: "
+        "repetirlo el mismo día no duplica avisos. `fecha` (opcional) corre el job como si fuera "
+        "ese día, para recuperar una ejecución perdida o para probar."
+    ),
+    responses={
+        401: {"description": "Clave interna inválida."},
+        503: {"description": "El job no está configurado."},
+    },
+)
+def ejecutar_vencimientos(
+    respuesta: Response,
+    fecha: date | None = None,
+    servicio: ServicioVencimientos = Depends(obtener_vencimientos),
+) -> ResumenVencimientos:
+    _sin_cache(respuesta)
+    return servicio.ejecutar(fecha)

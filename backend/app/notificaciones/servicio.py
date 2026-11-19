@@ -19,6 +19,7 @@ from dataclasses import dataclass, replace
 from datetime import UTC, datetime
 
 from app.notificaciones.canal import EnviadorPush, ResultadoEnvio
+from app.notificaciones.eventos import EventoNotificacion
 from app.notificaciones.modelos import (
     MotivoSinPush,
     Notificacion,
@@ -64,6 +65,12 @@ class ServicioNotificaciones:
         self._preferencias = preferencias
         self._reloj = reloj
         self._generar_id = generar_id
+
+    def notificar_evento(self, cliente_id: str, evento: EventoNotificacion) -> ResultadoRegistro:
+        """`notificar` para un evento ya armado (ver `eventos.py`)."""
+        return self.notificar(
+            cliente_id, evento.tipo, evento.clave, evento.titulo, evento.cuerpo, evento.datos
+        )
 
     def notificar(
         self,
