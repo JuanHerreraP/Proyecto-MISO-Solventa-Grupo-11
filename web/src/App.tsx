@@ -3,6 +3,7 @@ import {
   ROLES_ADMINISTRACION_SOCIOS,
   ROLES_CREAR_ASESOR,
   ROLES_CLIENTE,
+  ROLES_GESTION_POLIZA,
   ROLES_OPERACIONES_SINIESTROS,
   ROLES_AUDITORIA,
 } from "./types/permisos";
@@ -22,6 +23,7 @@ import PagosPage from "./pages/PagosPage";
 import CotizarPage from "./pages/CotizarPage";
 import CotizacionesPage from "./pages/CotizacionesPage";
 import PolizasPage from "./pages/PolizasPage";
+import CancelarPolizaPage from "./pages/CancelarPolizaPage";
 import ModificarPolizaPage from "./pages/ModificarPolizaPage";
 import HistorialPolizaPage from "./pages/HistorialPolizaPage";
 import ConsultaHistorialContractualPage from "./pages/ConsultaHistorialContractualPage";
@@ -102,6 +104,11 @@ function App() {
       <Route
         path="/polizas/:polizaId/modificar"
         element={<RutaProtegida roles={ROLES_CLIENTE}><ModificarPolizaPage /></RutaProtegida>}
+      />
+
+      <Route
+        path="/polizas/:polizaId/cancelar"
+        element={<RutaProtegida roles={ROLES_GESTION_POLIZA}><CancelarPolizaPage /></RutaProtegida>}
       />
 
       <Route

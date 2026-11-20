@@ -677,6 +677,13 @@
   cursor: pointer;
 }
 
+/* Varias acciones en la misma celda (Comprobante, Contrato): separadas y sin romper en móvil. */
+.pagos-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+}
+
 /* Historial de movimientos de la póliza (HU25). */
 .historial-consentimiento {
   display: flex;

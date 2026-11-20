@@ -107,6 +107,9 @@ it("ofrece el contrato solo si falta firmarlo", async () => {
   const contratos = await screen.findAllByRole("button", { name: "Contrato" });
   expect(contratos).toHaveLength(1);
   expect(screen.getAllByRole("button", { name: "Comprobante" })).toHaveLength(2);
+  // Las dos acciones van en un contenedor que las separa (no pegadas: "ComprobanteContrato").
+  expect(contratos[0].parentElement).toHaveClass("pagos-acciones");
+  expect(contratos[0].previousElementSibling).toHaveTextContent("Comprobante");
   await userEvent.click(contratos[0]);
   expect(await screen.findByRole("heading", { name: "Firma" })).toBeInTheDocument();
 });

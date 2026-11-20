@@ -1,0 +1,84 @@
+.cancelacion-pagina {
+  display: grid;
+  grid-template-columns: minmax(260px, 0.8fr) minmax(360px, 1.2fr);
+  gap: 20px;
+  max-width: 920px;
+  align-items: start;
+}
+
+.cancelacion-pagina h2,
+.cancelacion-pagina h3,
+.cancelacion-resultado h2,
+.cancelacion-bloqueada h2 { margin: 0 0 12px; }
+
+.cancelacion-resumen small { color: var(--solventa-muted); line-height: 1.4; }
+.cancelacion-saldo dd { color: #a1362b; font-size: 16px; }
+
+.cancelacion-formulario { display: flex; flex-direction: column; gap: 16px; }
+.cancelacion-formulario .cotizar-campo { margin: 0; }
+.cancelacion-formulario .cotizar-acciones { margin-top: 0; }
+
+.cancelacion-consecuencias {
+  margin: -6px 0 0;
+  padding-left: 20px;
+  color: var(--solventa-muted);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.poliza-boton-cancelar {
+  padding: 13px 20px;
+  border: 1px solid #c94a3c;
+  border-radius: 10px;
+  background: var(--solventa-white);
+  color: #a1362b;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.poliza-boton-cancelar-solido { background: #b63d31; color: #fff; }
+.poliza-boton-cancelar:disabled { opacity: 0.55; cursor: default; }
+.poliza-boton-cancelar:not(:disabled):hover { background: #fff1ef; }
+.poliza-boton-cancelar-solido:not(:disabled):hover { background: #963127; }
+
+.cancelacion-resultado {
+  display: flex;
+  gap: 14px;
+  max-width: 720px;
+  border-left: 4px solid #2b8a57;
+}
+
+.cancelacion-resultado > .material-symbols-outlined { color: #2b8a57; font-size: 30px; }
+.cancelacion-resultado p { margin: 0 0 8px; color: var(--solventa-muted); }
+.cancelacion-bloqueada { max-width: 720px; border-left: 4px solid var(--solventa-orange); }
+.cancelacion-bloqueada ul { margin: 0; padding-left: 20px; color: var(--solventa-muted); }
+
+.asesor-polizas-selector {
+  display: grid;
+  grid-template-columns: minmax(240px, 1fr) minmax(280px, 1fr);
+  gap: 20px;
+  align-items: end;
+  margin-bottom: 20px;
+}
+
+.asesor-polizas-selector h2 { margin: 0 0 4px; font-size: 16px; }
+.asesor-polizas-selector p { margin: 0; color: var(--solventa-muted); font-size: 13px; }
+
+.cancelacion-asistida {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 920px;
+  margin: 0 0 20px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: #eef3ff;
+  color: #294fae;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+@media (max-width: 760px) {
+  .cancelacion-pagina,
+  .asesor-polizas-selector { grid-template-columns: 1fr; }
+}

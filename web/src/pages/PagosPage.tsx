@@ -164,7 +164,7 @@ export default function PagosPage() {
                   <td className={`pagos-estado pagos-estado-${pago.estado.toLowerCase()}`}>{ESTADOS[pago.estado]}</td>
                   <td>
                     {pago.estado === "APROBADO" ? (
-                      <>
+                      <div className="pagos-acciones">
                         <button
                           type="button"
                           className="pagos-enlace"
@@ -182,7 +182,7 @@ export default function PagosPage() {
                             Contrato
                           </button>
                         )}
-                      </>
+                      </div>
                     ) : (
                       <span className="home-card-vacio">—</span>
                     )}
