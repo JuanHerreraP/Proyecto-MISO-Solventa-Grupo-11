@@ -31,9 +31,12 @@ import com.example.solventa.data.local.BorradoresSiniestroArchivo
 import com.example.solventa.data.local.CachePolizasCifrada
 import com.example.solventa.data.connectivity.MonitorConexionPolizas
 import com.example.solventa.data.remote.RemoteSiniestrosGateway
+import com.example.solventa.data.remote.RemoteAsistenciasGateway
+import com.example.solventa.data.local.FuenteUbicacionFused
 import com.example.solventa.data.session.KeystoreBovedaSesion
 import com.example.solventa.domain.auth.AuthCoordinator
 import com.example.solventa.domain.asesor.AsesorCoordinator
+import com.example.solventa.domain.asistencias.AsistenciasCoordinator
 import com.example.solventa.domain.auth.Reloj
 import com.example.solventa.domain.cotizaciones.CotizacionesCoordinator
 import com.example.solventa.domain.pagos.PagosCoordinator
@@ -42,6 +45,7 @@ import com.example.solventa.domain.polizas.SincronizadorPolizas
 import com.example.solventa.domain.siniestros.SiniestrosCoordinator
 import com.example.solventa.ui.auth.AuthViewModel
 import com.example.solventa.ui.asesor.AsesorViewModel
+import com.example.solventa.ui.asistencias.AsistenciasViewModel
 import com.example.solventa.ui.billetera.BilleteraViewModel
 import com.example.solventa.ui.cotizaciones.CotizacionesViewModel
 import com.example.solventa.ui.pagos.PagosViewModel
@@ -132,6 +136,19 @@ class MainActivity : FragmentActivity() {
         }
     }
 
+    /** Asistencia en sitio (HU06): prestadores cercanos y solicitudes. */
+    private val asistencias: AsistenciasViewModel by viewModels {
+        AsistenciasViewModel.Fabrica(
+            crearCoordinador = {
+                AsistenciasCoordinator(
+                    gateway = RemoteAsistenciasGateway(ApiClient.crearAsistenciasApi()),
+                    sesion = viewModel.sesion
+                )
+            },
+            crearUbicacion = { FuenteUbicacionFused(applicationContext) }
+        )
+    }
+
     private val solicitarRedLocal =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { }
 
@@ -139,13 +156,13 @@ class MainActivity : FragmentActivity() {
         super.onCreate(savedInstanceState)
         pedirPermisoRedLocalSiAplica()
         // Evita capturas de pantalla y que la vista previa de recientes muestre datos del cliente.
-        window.setFlags(WindowManager.LayoutParams.FLAG_SECURE, WindowManager.LayoutParams.FLAG_SECURE)
+        /*window.setFlags(WindowManager.LayoutParams.FLAG_SECURE, WindowManager.LayoutParams.FLAG_SECURE)
         enableEdgeToEdge(
             navigationBarStyle = SystemBarStyle.auto(
                 lightScrim = SuperficieContenedor.toArgb(),
                 darkScrim = SuperficieContenedorOscura.toArgb()
             )
-        )
+        )*/
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             window.isNavigationBarContrastEnforced = false
         }
@@ -163,7 +180,8 @@ class MainActivity : FragmentActivity() {
                         cotizaciones = cotizaciones,
                         pagos = pagos,
                         siniestros = siniestros,
-                        asesor = asesor
+                        asesor = asesor,
+                        asistencias = asistencias
                     )
                 }
             }

@@ -1,5 +1,7 @@
 package com.example.solventa.ui.navigation
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -48,8 +50,11 @@ import com.example.solventa.ui.components.SeccionNavegacion
 import com.example.solventa.ui.components.SolventaBottomNavigation
 import com.example.solventa.ui.pagos.PagosViewModel
 import com.example.solventa.ui.siniestros.SiniestrosViewModel
+import com.example.solventa.ui.asistencias.AsistenciasViewModel
 import com.example.solventa.ui.siniestros.rememberCapturaEvidencias
 import com.example.solventa.ui.screens.AdvisorHomeScreen
+import com.example.solventa.ui.screens.AssistanceScreen
+import com.example.solventa.ui.screens.PolizaAsistenciaElegible
 import com.example.solventa.ui.screens.BiometricalLoginScreen
 import com.example.solventa.ui.screens.CancelScreen
 import com.example.solventa.ui.screens.CancelSuccessScreen
@@ -88,7 +93,8 @@ fun NavGraph(
     cotizaciones: CotizacionesViewModel? = null,
     pagos: PagosViewModel? = null,
     siniestros: SiniestrosViewModel? = null,
-    asesor: AsesorViewModel? = null
+    asesor: AsesorViewModel? = null,
+    asistencias: AsistenciasViewModel? = null
 ) {
     val estado by viewModel.estado.collectAsState()
     val estadoCotizaciones = cotizaciones?.estado?.collectAsState()?.value ?: EstadoCotizaciones()
@@ -123,6 +129,7 @@ fun NavGraph(
             pagos?.limpiar()
             siniestros?.limpiar()
             asesor?.limpiar()
+            asistencias?.limpiar()
         }
         if (autenticado && actual !in ScreenRoute.privadas) {
             navController.navigate(ScreenRoute.Home.route) {
@@ -336,6 +343,14 @@ fun NavGraph(
                     },
                     onVerSiniestros = siniestros?.let {
                         { navController.navigate(ScreenRoute.Claims.ruta()) { launchSingleTop = true } }
+                    },
+                    onVerAsistencia = asistencias?.let {
+                        {
+                            asistencias.reiniciarFlujo()
+                            navController.navigate(ScreenRoute.Assistance.route) {
+                                launchSingleTop = true
+                            }
+                        }
                     },
                     onNavbarPolizas = billetera?.let {
                         {
@@ -1290,6 +1305,69 @@ fun NavGraph(
                         },
                         onHecho = {
                             asesor.consumirAnalistaCreado()
+                            navController.popBackStack()
+                        }
+                    )
+                }
+            }
+        }
+
+        if (asistencias != null) {
+            composable(route = ScreenRoute.Assistance.route) {
+                val sesion = estado.sesion
+                if (sesion == null) {
+                    Box(modifier = Modifier.fillMaxSize())
+                } else {
+                    val estadoAsistencias by asistencias.estado.collectAsState()
+                    // Las pólizas elegibles son las vigentes de la billetera; el backend revalida.
+                    val estadoBilletera = billetera?.estado?.collectAsState()?.value
+                    LaunchedEffect(billetera) { billetera?.cargar() }
+                    val elegibles = estadoBilletera?.billetera?.vigentes.orEmpty()
+                        .filter { it.ramo == "VIAJE" || it.ramo == "PROTECCION_DISPOSITIVOS" }
+                        .map {
+                            PolizaAsistenciaElegible(
+                                polizaId = it.polizaId,
+                                etiqueta = "${it.nombreRamo} · ${it.numeroPoliza}"
+                            )
+                        }
+
+                    // Pide los permisos de ubicación con las APIs modernas (HU06). Si el cliente
+                    // concede alguno, se buscan prestadores; si no, se ofrece "Reintentar".
+                    val lanzadorPermiso = rememberLauncherForActivityResult(
+                        ActivityResultContracts.RequestMultiplePermissions()
+                    ) { concedidos ->
+                        if (concedidos.values.any { it }) {
+                            asistencias.buscarPrestadores()
+                        } else {
+                            asistencias.permisoDenegado()
+                        }
+                    }
+
+                    AssistanceScreen(
+                        estado = estadoAsistencias,
+                        polizasElegibles = elegibles,
+                        tienePermisoUbicacion = asistencias.tienePermisoUbicacion(),
+                        onSeleccionarPoliza = { poliza ->
+                            asistencias.seleccionarPoliza(poliza.polizaId, poliza.etiqueta)
+                        },
+                        onSeleccionarServicio = { asistencias.seleccionarServicio(it) },
+                        onSolicitarPermiso = {
+                            if (asistencias.tienePermisoUbicacion()) {
+                                asistencias.buscarPrestadores()
+                            } else {
+                                lanzadorPermiso.launch(
+                                    com.example.solventa.data.local.ProveedorUbicacion.PERMISOS
+                                )
+                            }
+                        },
+                        onBuscarPrestadores = { radio -> asistencias.buscarPrestadores(radio) },
+                        onSeleccionarPrestador = { asistencias.seleccionarPrestador(it) },
+                        onConfirmarSolicitud = { asistencias.solicitar(it) },
+                        onVerMisAsistencias = { asistencias.cargarAsistencias() },
+                        onCancelarAsistencia = { asistencias.cancelar(it) },
+                        onNuevaSolicitud = { asistencias.reiniciarFlujo() },
+                        onVolver = {
+                            asistencias.consumirError()
                             navController.popBackStack()
                         }
                     )
