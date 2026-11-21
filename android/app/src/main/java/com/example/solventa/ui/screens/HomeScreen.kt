@@ -25,6 +25,7 @@ import androidx.compose.material.icons.outlined.Payments
 import androidx.compose.material.icons.outlined.PersonAddAlt
 import androidx.compose.material.icons.outlined.RequestQuote
 import androidx.compose.material.icons.outlined.Shield
+import androidx.compose.material.icons.outlined.SupportAgent
 import androidx.compose.material.icons.outlined.VerifiedUser
 import androidx.compose.material.icons.outlined.WarningAmber
 import androidx.compose.material3.AlertDialog
@@ -74,6 +75,7 @@ fun HomeScreen(
     onVerCotizaciones: (() -> Unit)? = null,
     onVerPagos: (() -> Unit)? = null,
     onVerSiniestros: (() -> Unit)? = null,
+    onVerAsistencia: (() -> Unit)? = null,
     onNavbarPolizas: (() -> Unit)? = null,
     onNavbarSiniestros: (() -> Unit)? = null,
     onNavbarPerfil: (() -> Unit)? = null,
@@ -169,6 +171,18 @@ fun HomeScreen(
                     onClick = onVerPagos,
                     modifier = Modifier.weight(1f)
                 )
+            }
+
+            if (onVerAsistencia != null) {
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    AccionInicio(
+                        titulo = "Asistencia en sitio",
+                        icono = Icons.Outlined.SupportAgent,
+                        onClick = onVerAsistencia,
+                        modifier = Modifier.weight(1f)
+                    )
+                    Spacer(modifier = Modifier.weight(1f))
+                }
             }
 
             if (onCrearAsesor != null) {

@@ -114,7 +114,8 @@ class ScreenRouteTest {
                 "claim_detail/{siniestroId}",
                 "assisted_claim_form/{clienteId}",
                 "create_advisor_screen",
-                "create_auditor_screen"
+                "create_auditor_screen",
+                "assistance_screen"
             ),
             ScreenRoute.privadas
         )

@@ -105,6 +105,9 @@ sealed class ScreenRoute(val route: String) {
     /** Alta de un analista de cumplimiento por un manager (HU25). */
     object CreateAuditor : ScreenRoute("create_auditor_screen")
 
+    /** Asistencia en sitio: prestadores cercanos y solicitudes (HU06). */
+    object Assistance : ScreenRoute("assistance_screen")
+
     companion object {
         /** Rutas que solo se pueden ver con una sesión activa. */
         val privadas: Set<String>
@@ -131,7 +134,8 @@ sealed class ScreenRoute(val route: String) {
                 ClaimDetail.route,
                 AssistedClaimForm.route,
                 CreateAdvisor.route,
-                CreateAuditor.route
+                CreateAuditor.route,
+                Assistance.route
             )
     }
 }

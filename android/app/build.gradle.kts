@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
@@ -26,6 +28,19 @@ android {
         val apiBaseUrl = providers.gradleProperty("solventa.apiBaseUrl")
             .getOrElse("http://10.0.2.2:8000/")
         buildConfigField("String", "API_BASE_URL", "\"$apiBaseUrl\"")
+
+        // HU06: clave de Google Maps. NUNCA se versiona una clave real.
+        // Orden de lectura:
+        //   1) local.properties -> solventa.mapsApiKey   (archivo NO versionado; recomendado en local)
+        //   2) propiedad de Gradle -Psolventa.mapsApiKey  (línea de comandos / CI)
+        // Sin clave queda vacía: la app compila y el mapa simplemente no carga mosaicos.
+        val localProperties = Properties().apply {
+            val archivo = rootProject.file("local.properties")
+            if (archivo.exists()) archivo.inputStream().use { entrada -> load(entrada) }
+        }
+        val mapsApiKey = localProperties.getProperty("solventa.mapsApiKey")
+            ?: providers.gradleProperty("solventa.mapsApiKey").getOrElse("")
+        manifestPlaceholders["mapsApiKey"] = mapsApiKey
     }
 
     buildTypes {
@@ -94,6 +109,10 @@ dependencies {
     implementation(libs.firebase.messaging)
     // HU07: código QR del certificado, generado en el dispositivo
     implementation(libs.zxing.core)
+    // HU06: mapa de prestadores cercanos y ubicación actual
+    implementation(libs.maps.compose)
+    implementation(libs.play.services.maps)
+    implementation(libs.play.services.location)
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.okhttp.mockwebserver)

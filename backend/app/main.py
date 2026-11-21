@@ -12,6 +12,7 @@ from starlette.concurrency import run_in_threadpool
 from app import __version__
 from app.api import (
     asesor,
+    asistencias,
     autenticacion,
     autorizacion_socios,
     billetera,
@@ -28,8 +29,10 @@ from app.api import (
     identidad,
     notificaciones,
     oauth_socios,
+    operaciones_asistencias,
     pagos,
     perfilamiento,
+    prestadores,
     primas_pendientes,
     pse_simulado,
     renovaciones,
@@ -42,6 +45,7 @@ from app.api import (
 from app.api import (
     auditoria as api_auditoria,
 )
+from app.asistencias import modelos_db as modelos_db_asistencias  # noqa: F401
 from app.desembolsos import modelos_db as modelos_db_desembolsos  # noqa: F401
 from app.firmas import modelos_db as modelos_db_firmas  # noqa: F401
 from app.identidad import (
@@ -165,6 +169,9 @@ def crear_app() -> FastAPI:
     app.include_router(pse_simulado.router)
     app.include_router(siniestros.router)
     app.include_router(evidencias_siniestro.router)
+    app.include_router(asistencias.router)
+    app.include_router(prestadores.router)
+    app.include_router(operaciones_asistencias.router)
     app.include_router(asesor.router)
     app.include_router(desembolsos.router_cliente)
     app.include_router(desembolsos.router_operaciones)

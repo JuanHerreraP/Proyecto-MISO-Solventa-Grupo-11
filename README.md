@@ -175,6 +175,7 @@ curl -X POST http://localhost:8004/simulate/flight-delay \
 - [Desembolso automatizado e idempotente de indemnizaciones (HU15)](docs/desembolsos.md)
 - [Notificaciones push de pagos, siniestros y vencimientos (HU05)](docs/notificaciones.md)
 - [Historial detallado de movimientos de una póliza (HU25)](docs/historial-poliza.md)
+- [Ubicar prestadores cercanos y solicitar asistencia en sitio (HU06)](docs/asistencia-prestadores.md)
 
 ## Integración continua
 
