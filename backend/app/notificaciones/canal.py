@@ -2,7 +2,8 @@
 
 El servicio de notificaciones decide **qué** push mandar (`PushPendiente`); el canal lo **envía**.
 Hay dos adaptadores: el simulado, que solo escribe en el log (desarrollo y pruebas), y el de FCM
-(`app/notificaciones/fcm.py`), que llega al teléfono de verdad. Se elige con `PUSH_PROVEEDOR`.
+(`app/notificaciones/fcm.py`), que llega al teléfono de verdad. Se elige con `PUSH_PROVEEDOR` o,
+si no se indica, según haya o no una credencial de Firebase configurada.
 """
 
 import logging
@@ -81,12 +82,21 @@ class EnviadorPushSimulado:
 def crear_enviador_push() -> EnviadorPush:
     """Elige el adaptador según la configuración.
 
-    - `PUSH_PROVEEDOR=simulado` (por defecto): solo log.
-    - `PUSH_PROVEEDOR=fcm`: Firebase Cloud Messaging. Las credenciales de la cuenta de servicio
-      salen de `FCM_CREDENCIALES_JSON` (el contenido, pensado para un secreto de AWS) o de
-      `FCM_CREDENCIALES_PATH` (la ruta del archivo, para desarrollo local).
+    - Sin `PUSH_PROVEEDOR`: FCM si hay una credencial configurada y, si no, el simulado (solo
+      log). Así desarrollo y pruebas no necesitan nada y un ambiente con credencial envía de verdad.
+    - `PUSH_PROVEEDOR=simulado`: solo log, aunque haya credencial.
+    - `PUSH_PROVEEDOR=fcm`: Firebase Cloud Messaging; sin credencial válida lanza
+      `ConfiguracionPushInvalida`, que al arrancar queda en el log como error (ver
+      `composicion.enviador_push`) en vez de degradarse en silencio al simulado.
+
+    Las credenciales de la cuenta de servicio salen de `FCM_CREDENCIALES_JSON` (el contenido,
+    pensado para un secreto de AWS) o de `FCM_CREDENCIALES_PATH` (la ruta del archivo, para
+    desarrollo local).
     """
-    proveedor = (os.getenv("PUSH_PROVEEDOR") or "simulado").strip().lower()
+    proveedor = (os.getenv("PUSH_PROVEEDOR") or "").strip().lower()
+    if not proveedor:
+        hay_credencial = bool(os.getenv("FCM_CREDENCIALES_JSON") or os.getenv("FCM_CREDENCIALES_PATH"))
+        proveedor = "fcm" if hay_credencial else "simulado"
     if proveedor == "simulado":
         return EnviadorPushSimulado()
     if proveedor == "fcm":

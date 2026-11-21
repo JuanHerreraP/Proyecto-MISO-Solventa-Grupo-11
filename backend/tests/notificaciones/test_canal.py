@@ -99,6 +99,41 @@ def test_por_defecto_el_canal_es_el_simulado() -> None:
     assert isinstance(crear_enviador_push(), EnviadorPushSimulado)
 
 
+def test_sin_proveedor_pero_con_credencial_en_archivo_usa_fcm(monkeypatch, tmp_path) -> None:
+    archivo = tmp_path / "fcm.json"
+    archivo.write_text(CREDENCIALES, encoding="utf-8")
+    monkeypatch.setenv("FCM_CREDENCIALES_PATH", str(archivo))
+
+    assert isinstance(crear_enviador_push(), EnviadorPushFCM)
+
+
+def test_sin_proveedor_pero_con_credencial_en_contenido_usa_fcm(monkeypatch) -> None:
+    monkeypatch.setenv("FCM_CREDENCIALES_JSON", CREDENCIALES)
+
+    assert isinstance(crear_enviador_push(), EnviadorPushFCM)
+
+
+def test_el_proveedor_vacio_cuenta_como_no_indicado(monkeypatch) -> None:
+    monkeypatch.setenv("PUSH_PROVEEDOR", "  ")
+    monkeypatch.setenv("FCM_CREDENCIALES_JSON", CREDENCIALES)
+
+    assert isinstance(crear_enviador_push(), EnviadorPushFCM)
+
+
+def test_pedir_el_simulado_gana_sobre_la_credencial(monkeypatch) -> None:
+    monkeypatch.setenv("PUSH_PROVEEDOR", "simulado")
+    monkeypatch.setenv("FCM_CREDENCIALES_JSON", CREDENCIALES)
+
+    assert isinstance(crear_enviador_push(), EnviadorPushSimulado)
+
+
+def test_sin_proveedor_y_con_credencial_invalida_falla_en_vez_de_degradar(monkeypatch) -> None:
+    monkeypatch.setenv("FCM_CREDENCIALES_JSON", "no es json")
+
+    with pytest.raises(ConfiguracionPushInvalida):
+        crear_enviador_push()
+
+
 def test_se_puede_pedir_el_simulado_explicitamente(monkeypatch) -> None:
     monkeypatch.setenv("PUSH_PROVEEDOR", " Simulado ")
 
