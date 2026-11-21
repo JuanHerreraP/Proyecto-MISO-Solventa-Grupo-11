@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import AppLayout from "../components/AppLayout";
+import RenovacionAutomatica from "../components/poliza/RenovacionAutomatica";
 import { obtenerPerfil, type Perfil } from "../services/auth.service";
 import {
   obtenerBilletera,
@@ -21,6 +22,9 @@ const ICONO_RAMO: Record<string, string> = {
   VIDA: "favorite",
   PARAMETRICO: "thunderstorm",
 };
+
+// Ramos que se renuevan (HU22); los demás se contratan de nuevo cuando se necesitan.
+const RAMOS_RENOVABLES = new Set(["VIDA", "PROTECCION_DISPOSITIVOS", "PARAMETRICO"]);
 
 const ESTADOS: Record<string, string> = {
   VIGENTE: "Vigente",
@@ -262,6 +266,13 @@ export default function PolizasPage() {
                       <dd>{poliza.numero_poliza}</dd>
                     </div>
                   </dl>
+
+                  {poliza.activa && RAMOS_RENOVABLES.has(poliza.ramo) && (
+                    <RenovacionAutomatica
+                      polizaId={poliza.poliza_id}
+                      puedeRegistrarTarjeta={!esAsesor}
+                    />
+                  )}
 
                   <div className="poliza-acciones">
                     {poliza.activa && (
