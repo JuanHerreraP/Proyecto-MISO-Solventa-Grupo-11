@@ -81,9 +81,16 @@ def estado_siniestro(siniestro: Siniestro, poliza: Poliza | None) -> EventoNotif
             f"Revisamos tu siniestro de la póliza {numero} y no pudimos aprobarlo. "
             "Consulta el detalle para ver el motivo."
         )
+    elif siniestro.estado is EstadoSiniestro.EN_EVALUACION:
+        titulo = "Tu siniestro está en evaluación"
+        cuerpo = f"Estamos evaluando tu siniestro de la póliza {numero}."
+    elif siniestro.estado is EstadoSiniestro.REGISTRADO:
+        titulo = "Recibimos tu siniestro"
+        cuerpo = f"Registramos tu siniestro de la póliza {numero}."
     else:
+        # Un estado nuevo sin frase propia: nunca se le muestra al cliente el código interno.
         titulo = "Tu siniestro cambió de estado"
-        cuerpo = f"Tu siniestro de la póliza {numero} ahora está en {siniestro.estado.value}."
+        cuerpo = f"Hay novedades en tu siniestro de la póliza {numero}. Consulta el detalle."
     return EventoNotificacion(
         tipo=TipoNotificacion.ESTADO_SINIESTRO,
         clave=f"ESTADO_SINIESTRO:{siniestro.siniestro_id}:{siniestro.estado.value}",

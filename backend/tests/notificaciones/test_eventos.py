@@ -92,14 +92,32 @@ def test_un_siniestro_rechazado_manda_al_detalle_para_ver_el_motivo() -> None:
     assert "Fuera de cobertura" not in evento.cuerpo
 
 
-def test_otro_cambio_de_estado_tiene_un_mensaje_generico() -> None:
+def test_un_siniestro_en_evaluacion_lo_dice_en_lenguaje_del_cliente() -> None:
     s = siniestro(estado=EstadoSiniestro.EN_EVALUACION)
 
-    evento = estado_siniestro(s, None)
+    evento = estado_siniestro(s, poliza(numero_poliza="SOL-VI-000001"))
 
-    assert evento.titulo == "Tu siniestro cambió de estado"
-    assert "EN_EVALUACION" in evento.cuerpo
+    assert evento.titulo == "Tu siniestro está en evaluación"
+    assert evento.cuerpo == "Estamos evaluando tu siniestro de la póliza SOL-VI-000001."
     assert evento.clave == "ESTADO_SINIESTRO:SIN-1:EN_EVALUACION"
+    assert evento.datos["estado"] == "EN_EVALUACION"
+
+
+def test_un_siniestro_registrado_confirma_la_recepcion() -> None:
+    s = siniestro(estado=EstadoSiniestro.REGISTRADO)
+
+    evento = estado_siniestro(s, poliza(numero_poliza="SOL-VI-000001"))
+
+    assert evento.titulo == "Recibimos tu siniestro"
+    assert evento.cuerpo == "Registramos tu siniestro de la póliza SOL-VI-000001."
+
+
+def test_ningun_mensaje_de_estado_muestra_el_codigo_interno() -> None:
+    for estado in EstadoSiniestro:
+        evento = estado_siniestro(siniestro(estado=estado), None)
+
+        assert estado.value not in evento.titulo
+        assert estado.value not in evento.cuerpo
 
 
 def test_un_aprobado_sin_monto_no_inventa_uno() -> None:
