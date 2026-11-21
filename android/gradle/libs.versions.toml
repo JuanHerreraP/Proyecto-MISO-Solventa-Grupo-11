@@ -17,6 +17,8 @@ okhttp = "4.12.0"
 robolectric = "4.16"
 zxing = "3.5.3"
 gson = "2.11.0"
+firebaseBom = "34.0.0"
+googleServices = "4.4.3"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -46,8 +48,11 @@ kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-cor
 robolectric = { group = "org.robolectric", name = "robolectric", version.ref = "robolectric" }
 zxing-core = { group = "com.google.zxing", name = "core", version.ref = "zxing" }
 gson = { group = "com.google.code.gson", name = "gson", version.ref = "gson" }
+firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.ref = "firebaseBom" }
+firebase-messaging = { group = "com.google.firebase", name = "firebase-messaging" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+google-services = { id = "com.google.gms.google-services", version.ref = "googleServices" }
 

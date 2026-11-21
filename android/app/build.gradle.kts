@@ -1,6 +1,8 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
+    // HU05: lee google-services.json para conectar la app con el proyecto de Firebase.
+    alias(libs.plugins.google.services)
     jacoco
 }
 
@@ -87,6 +89,9 @@ dependencies {
     implementation(libs.retrofit.converter.gson)
     implementation(libs.gson)
     implementation(libs.okhttp)
+    // HU05: notificaciones push con Firebase Cloud Messaging
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.messaging)
     // HU07: código QR del certificado, generado en el dispositivo
     implementation(libs.zxing.core)
     testImplementation(libs.junit)
