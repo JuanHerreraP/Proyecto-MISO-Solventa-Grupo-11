@@ -1166,18 +1166,27 @@ fun NavGraph(
                 } else {
                     // Se pide siempre: al llegar desde una notificación el estado puede haber cambiado.
                     LaunchedEffect(siniestroId) { siniestros.cargar() }
-                    ClaimDetailScreen(
-                        siniestro = estadoSiniestros.siniestros?.siniestros
-                            ?.firstOrNull { it.siniestroId == siniestroId },
-                        cargando = estadoSiniestros.cargando,
-                        error = estadoSiniestros.error,
-                        onReintentar = { siniestros.cargar() },
-                        onVolver = {
-                            if (!navController.popBackStack()) {
-                                navController.navigate(ScreenRoute.Home.route) { launchSingleTop = true }
-                            }
-                        }
-                    )
+                    PantallaConNavegacion(
+                        visible = true,
+                        seleccionada = SeccionNavegacion.SINIESTROS,
+                        navController = navController,
+                        polizasDisponibles = billetera != null,
+                        siniestrosDisponibles = true
+                    ) { pantallaModifier ->
+                        ClaimDetailScreen(
+                            siniestro = estadoSiniestros.siniestros?.siniestros
+                                ?.firstOrNull { it.siniestroId == siniestroId },
+                            cargando = estadoSiniestros.cargando,
+                            error = estadoSiniestros.error,
+                            onReintentar = { siniestros.cargar() },
+                            onVolver = {
+                                if (!navController.popBackStack()) {
+                                    navController.navigate(ScreenRoute.Home.route) { launchSingleTop = true }
+                                }
+                            },
+                            modifier = pantallaModifier
+                        )
+                    }
                 }
             }
 

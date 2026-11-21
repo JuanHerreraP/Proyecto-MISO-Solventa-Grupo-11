@@ -152,10 +152,31 @@ class ClaimDetailScreenTest {
     fun unSiniestroAprobadoMuestraElMontoAprobado() {
         mostrar(siniestro(EstadoSiniestro.APROBADO, monto = "500000.00"))
 
+        compose.onNodeWithText("Siniestro SIN-1").assertIsDisplayed()
         compose.onNodeWithText("Póliza SOL-PM-000001").assertIsDisplayed()
-        compose.onNodeWithText("Aprobamos automáticamente el pago de tu seguro paramétrico.")
-            .assertIsDisplayed()
-        compose.onNodeWithText("Monto aprobado").assertIsDisplayed()
+        compose.onNodeWithText("Siniestro paramétrico").assertIsDisplayed()
+        compose.onNodeWithText("100%").assertIsDisplayed()
+        compose.onNodeWithText("Pago aprobado").assertIsDisplayed()
+        compose.onNodeWithText("Monto aprobado", substring = true).assertIsDisplayed()
+    }
+
+    @Test
+    fun unSiniestroEnEvaluacionMuestraElAvanceDelCaso() {
+        mostrar(siniestro(EstadoSiniestro.EN_EVALUACION, OrigenSiniestro.MANUAL))
+
+        compose.onNodeWithText("60%").assertIsDisplayed()
+        compose.onNodeWithText("Reporte recibido").assertIsDisplayed()
+        compose.onNodeWithText("Evidencias validadas").assertIsDisplayed()
+        compose.onNodeWithText("Evaluación en curso").assertIsDisplayed()
+        compose.onNodeWithText("Recibirás una notificación").assertIsDisplayed()
+    }
+
+    @Test
+    fun unSiniestroRegistradoApenasEmpieza() {
+        mostrar(siniestro(EstadoSiniestro.REGISTRADO, OrigenSiniestro.MANUAL))
+
+        compose.onNodeWithText("20%").assertIsDisplayed()
+        compose.onNodeWithText("Pendiente de revisión").assertIsDisplayed()
     }
 
     @Test
@@ -164,8 +185,8 @@ class ClaimDetailScreenTest {
             siniestro(EstadoSiniestro.RECHAZADO, OrigenSiniestro.MANUAL, motivo = "Fuera de cobertura")
         )
 
-        compose.onNodeWithText("No pudimos aprobar tu siniestro.").assertIsDisplayed()
-        compose.onNodeWithText("Fuera de cobertura").assertIsDisplayed()
+        compose.onNodeWithText("Siniestro rechazado").assertIsDisplayed()
+        compose.onNodeWithText("Fuera de cobertura", substring = true).assertIsDisplayed()
     }
 
     @Test
@@ -188,7 +209,7 @@ class ClaimDetailScreenTest {
         mostrar(siniestro(EstadoSiniestro.EN_EVALUACION, OrigenSiniestro.MANUAL), error = "Sin conexión")
 
         compose.onNodeWithText("Sin conexión").assertIsDisplayed()
-        compose.onNodeWithText("Estamos evaluando tu siniestro.").assertIsDisplayed()
+        compose.onNodeWithText("Evaluación en curso").assertIsDisplayed()
     }
 }
 
