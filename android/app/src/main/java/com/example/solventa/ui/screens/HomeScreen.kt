@@ -28,6 +28,8 @@ import androidx.compose.material.icons.outlined.Shield
 import androidx.compose.material.icons.outlined.VerifiedUser
 import androidx.compose.material.icons.outlined.WarningAmber
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Badge
+import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -80,7 +82,9 @@ fun HomeScreen(
     onCrearAsesor: (() -> Unit)? = null,
     onCrearAnalista: (() -> Unit)? = null,
     sinConexion: Boolean = false,
-    ultimaSincronizacionMs: Long? = null
+    ultimaSincronizacionMs: Long? = null,
+    notificacionesSinLeer: Int = 0,
+    onVerNotificaciones: (() -> Unit)? = null
 ) {
     if (ofrecerActivarBiometria) {
         AlertDialog(
@@ -117,7 +121,7 @@ fun HomeScreen(
                 .padding(horizontal = 20.dp, vertical = 16.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
-            EncabezadoInicio()
+            EncabezadoInicio(notificacionesSinLeer, onVerNotificaciones)
 
             Text(
                 text = "Hola, ${perfil.nombre}",
@@ -231,7 +235,7 @@ fun HomeScreen(
 }
 
 @Composable
-private fun EncabezadoInicio() {
+private fun EncabezadoInicio(sinLeer: Int, onVerNotificaciones: (() -> Unit)?) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -250,12 +254,24 @@ private fun EncabezadoInicio() {
                 color = MaterialTheme.colorScheme.onSurface
             )
         }
-        IconButton(onClick = {}) {
-            Icon(
-                imageVector = Icons.Outlined.NotificationsNone,
-                contentDescription = "Notificaciones",
-                tint = MaterialTheme.colorScheme.onSurface
-            )
+        IconButton(onClick = { onVerNotificaciones?.invoke() }, enabled = onVerNotificaciones != null) {
+            BadgedBox(
+                badge = {
+                    if (sinLeer > 0) {
+                        Badge { Text(if (sinLeer > 99) "99+" else sinLeer.toString()) }
+                    }
+                }
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.NotificationsNone,
+                    contentDescription = if (sinLeer > 0) {
+                        "Notificaciones, $sinLeer sin leer"
+                    } else {
+                        "Notificaciones"
+                    },
+                    tint = MaterialTheme.colorScheme.onSurface
+                )
+            }
         }
     }
 }
