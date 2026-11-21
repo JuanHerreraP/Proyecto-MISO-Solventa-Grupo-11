@@ -136,6 +136,9 @@ jobs:
       - name: Guardar los secretos de la aplicación en Secrets Manager
         env:
           PAGOS_WEBHOOK_SECRET: ${{ secrets.PAGOS_WEBHOOK_SECRET }}
+          # HU05, opcionales: sin ellos el push queda simulado y el job de avisos apagado.
+          FCM_CREDENCIALES_JSON: ${{ secrets.FCM_CREDENCIALES_JSON }}
+          NOTIFICACIONES_CLAVE_INTERNA: ${{ secrets.NOTIFICACIONES_CLAVE_INTERNA }}
         run: |
           if [ -z "$PAGOS_WEBHOOK_SECRET" ]; then
             echo "::error::Falta el secret de GitHub PAGOS_WEBHOOK_SECRET (Settings > Secrets and variables > Actions)."
@@ -145,13 +148,27 @@ jobs:
             echo "::error::PAGOS_WEBHOOK_SECRET debe tener al menos 32 caracteres."
             exit 1
           fi
+          if [ -n "$FCM_CREDENCIALES_JSON" ] && \
+              ! printf '%s' "$FCM_CREDENCIALES_JSON" | python3 -c 'import json,sys; json.load(sys.stdin)' 2>/dev/null; then
+            echo "::error::FCM_CREDENCIALES_JSON debe ser el JSON de la cuenta de servicio de Firebase."
+            exit 1
+          fi
+          if [ -n "$NOTIFICACIONES_CLAVE_INTERNA" ] && [ "${#NOTIFICACIONES_CLAVE_INTERNA}" -lt 32 ]; then
+            echo "::error::NOTIFICACIONES_CLAVE_INTERNA debe tener al menos 32 caracteres."
+            exit 1
+          fi
           mkdir -p infra/secrets
           chmod 700 infra/secrets
           python3 - <<'PY'
           import json, os
           from pathlib import Path
           p = Path('infra/secrets/app.json')
-          p.write_text(json.dumps({'pagos_webhook_secret': os.environ['PAGOS_WEBHOOK_SECRET']}))
+          p.write_text(json.dumps({
+              'pagos_webhook_secret': os.environ['PAGOS_WEBHOOK_SECRET'],
+              # Siempre presentes: ECS falla al iniciar si el secreto no trae la clave. Vacío = apagado.
+              'fcm_credenciales_json': os.environ.get('FCM_CREDENCIALES_JSON', ''),
+              'notificaciones_clave_interna': os.environ.get('NOTIFICACIONES_CLAVE_INTERNA', ''),
+          }))
           p.chmod(0o600)
           PY
           SECRETO_CAMBIO=false
@@ -180,6 +197,7 @@ jobs:
         env:
           POSTGRES_ENGINE_VERSION: ${{ inputs.postgres_engine_version || '16.9' }}
           PUBLIC_URL: ${{ vars.SOLVENTA_URL_PUBLICA }}
+          NOTIFICACIONES_CLAVE_INTERNA: ${{ secrets.NOTIFICACIONES_CLAVE_INTERNA }}
         run: |
           PUBLIC_URL="$(printf '%s' "$PUBLIC_URL" | tr -d '[:space:]')"
           export PUBLIC_URL
@@ -203,6 +221,9 @@ jobs:
           # Opcional: sin variable, el stack usa el dominio de CloudFront.
           if os.environ.get('PUBLIC_URL'):
               values['PublicUrl'] = os.environ['PUBLIC_URL'].rstrip('/')
+          # HU05: el job diario de avisos solo se programa si hay clave interna con la que llamarlo.
+          if os.environ.get('NOTIFICACIONES_CLAVE_INTERNA'):
+              values['AvisosVencimientoActivos'] = 'true'
           p = Path('infra/secrets/parameters.json')
           p.write_text(json.dumps([{'ParameterKey': k, 'ParameterValue': v} for k, v in values.items()]))
           p.chmod(0o600)

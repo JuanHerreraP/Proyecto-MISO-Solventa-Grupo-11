@@ -15,8 +15,10 @@ from decimal import Decimal
 
 from app.desembolsos.modelos import Desembolso
 from app.desembolsos.servicio import ServicioDesembolsos
+from app.notificaciones.eventos import estado_siniestro, pago_parametrico
+from app.notificaciones.servicio import ServicioNotificaciones
 from app.polizas.repositorio import RepositorioPolizas
-from app.siniestros.modelos import EstadoSiniestro, Siniestro
+from app.siniestros.modelos import EstadoSiniestro, OrigenSiniestro, Siniestro
 from app.siniestros.repositorio import RepositorioSiniestros
 
 logger = logging.getLogger(__name__)
@@ -49,7 +51,9 @@ class ServicioEvaluacion:
         polizas: RepositorioPolizas,
         desembolsos: ServicioDesembolsos,
         reloj: Callable[[], datetime] = lambda: datetime.now(UTC),
+        notificaciones: ServicioNotificaciones | None = None,
     ):
+        self._notificaciones = notificaciones
         self._siniestros = siniestros
         self._polizas = polizas
         self._desembolsos = desembolsos
@@ -90,6 +94,7 @@ class ServicioEvaluacion:
             }
         )
         self._siniestros.guardar(aprobado)
+        self._notificar_decision(aprobado)
         return aprobado, self._desembolsos.desembolsar(aprobado)
 
     def aprobar_automatico(self, siniestro: Siniestro) -> Desembolso | None:
@@ -123,7 +128,32 @@ class ServicioEvaluacion:
             }
         )
         self._siniestros.guardar(rechazado)
+        self._notificar_decision(rechazado)
         return rechazado
+
+    def _notificar_decision(self, siniestro: Siniestro) -> None:
+        """Avisa al cliente la decisión (HU05).
+
+        Un siniestro paramétrico aprobado se avisa como pago (con el monto y la póliza); el resto
+        como cambio de estado. Un fallo aquí nunca deshace ni frena la decisión ya tomada: el
+        cliente igual verá el estado en la app.
+        """
+        if self._notificaciones is None:
+            return
+        try:
+            poliza = self._polizas.obtener(siniestro.poliza_id)
+            es_pago_parametrico = (
+                siniestro.estado is EstadoSiniestro.APROBADO
+                and siniestro.origen is OrigenSiniestro.AUTOMATICO
+            )
+            evento = (pago_parametrico if es_pago_parametrico else estado_siniestro)(
+                siniestro, poliza
+            )
+            self._notificaciones.notificar_evento(siniestro.cliente_id, evento)
+        except Exception:
+            logger.exception(
+                "No se pudo notificar la decisión del siniestro %s", siniestro.siniestro_id
+            )
 
     def reintentar_desembolso(self, siniestro_id: str) -> Desembolso:
         siniestro = self._obtener(siniestro_id)

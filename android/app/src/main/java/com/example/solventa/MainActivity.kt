@@ -1,5 +1,6 @@
 package com.example.solventa
 
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
@@ -14,6 +15,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.toArgb
 import androidx.core.content.ContextCompat
@@ -21,10 +25,13 @@ import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.lifecycleScope
 import com.example.solventa.biometric.AutenticadorBiometrico
 import com.example.solventa.biometric.DisponibilidadBiometrica
+import com.example.solventa.data.push.NuevoTokenPush
+import com.example.solventa.data.push.ProveedorTokenFcm
 import com.example.solventa.data.remote.ApiClient
 import com.example.solventa.data.remote.RemoteAuthGateway
 import com.example.solventa.data.remote.RemoteAsesorGateway
 import com.example.solventa.data.remote.RemoteCotizacionesGateway
+import com.example.solventa.data.remote.RemoteNotificacionesGateway
 import com.example.solventa.data.remote.RemotePagosGateway
 import com.example.solventa.data.remote.RemotePolizasGateway
 import com.example.solventa.data.local.BorradoresSiniestroArchivo
@@ -39,6 +46,7 @@ import com.example.solventa.domain.asesor.AsesorCoordinator
 import com.example.solventa.domain.asistencias.AsistenciasCoordinator
 import com.example.solventa.domain.auth.Reloj
 import com.example.solventa.domain.cotizaciones.CotizacionesCoordinator
+import com.example.solventa.domain.notificaciones.NotificacionesCoordinator
 import com.example.solventa.domain.pagos.PagosCoordinator
 import com.example.solventa.domain.polizas.BilleteraCoordinator
 import com.example.solventa.domain.polizas.SincronizadorPolizas
@@ -48,6 +56,9 @@ import com.example.solventa.ui.asesor.AsesorViewModel
 import com.example.solventa.ui.asistencias.AsistenciasViewModel
 import com.example.solventa.ui.billetera.BilleteraViewModel
 import com.example.solventa.ui.cotizaciones.CotizacionesViewModel
+import com.example.solventa.ui.notificaciones.AperturaNotificacion
+import com.example.solventa.ui.notificaciones.IntentsNotificacion
+import com.example.solventa.ui.notificaciones.NotificacionesViewModel
 import com.example.solventa.ui.pagos.PagosViewModel
 import com.example.solventa.ui.siniestros.SiniestrosViewModel
 import com.example.solventa.ui.navigation.NavGraph
@@ -136,6 +147,20 @@ class MainActivity : FragmentActivity() {
         }
     }
 
+    /** Notificaciones (HU05): bandeja, preferencia de push y registro del teléfono. */
+    private val notificaciones: NotificacionesViewModel by viewModels {
+        NotificacionesViewModel.Fabrica {
+            NotificacionesCoordinator(
+                gateway = RemoteNotificacionesGateway(ApiClient.crearNotificacionesApi()),
+                sesion = viewModel.sesion,
+                proveedorToken = ProveedorTokenFcm()
+            )
+        }
+    }
+
+    /** Lo que se pidió abrir al tocar una notificación; se descarta al abrirlo. */
+    private var apertura by mutableStateOf<AperturaNotificacion?>(null)
+
     /** Asistencia en sitio (HU06): prestadores cercanos y solicitudes. */
     private val asistencias: AsistenciasViewModel by viewModels {
         AsistenciasViewModel.Fabrica(
@@ -155,6 +180,9 @@ class MainActivity : FragmentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         pedirPermisoRedLocalSiAplica()
+        apertura = IntentsNotificacion.apertura(intent)
+        // Si Firebase renueva el token con la sesión abierta, se registra el nuevo.
+        NuevoTokenPush.alRecibir = { token -> notificaciones.registrarToken(token) }
         // Evita capturas de pantalla y que la vista previa de recientes muestre datos del cliente.
         /*window.setFlags(WindowManager.LayoutParams.FLAG_SECURE, WindowManager.LayoutParams.FLAG_SECURE)
         enableEdgeToEdge(
@@ -181,6 +209,9 @@ class MainActivity : FragmentActivity() {
                         pagos = pagos,
                         siniestros = siniestros,
                         asesor = asesor,
+                        notificaciones = notificaciones,
+                        aperturaPendiente = apertura,
+                        onAperturaConsumida = { apertura = null },
                         asistencias = asistencias
                     )
                 }
@@ -189,7 +220,15 @@ class MainActivity : FragmentActivity() {
         monitorPolizas.iniciar()
     }
 
+    /** La app ya estaba abierta (singleTop) y se tocó una notificación. */
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        IntentsNotificacion.apertura(intent)?.let { apertura = it }
+    }
+
     override fun onDestroy() {
+        NuevoTokenPush.alRecibir = null
         monitorPolizas.detener()
         super.onDestroy()
     }

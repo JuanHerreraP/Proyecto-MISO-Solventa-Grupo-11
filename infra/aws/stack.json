@@ -32,6 +32,15 @@
       "Type": "Number",
       "Default": 200,
       "MinValue": 1
+    },
+    "AvisosVencimientoActivos": {
+      "Type": "String",
+      "Default": "false",
+      "AllowedValues": [
+        "true",
+        "false"
+      ],
+      "Description": "HU05: programa el job diario que avisa las pólizas por vencer. Solo con 'true' y con la clave interna (key notificaciones_clave_interna de AppSecretsArn) ya guardada."
     }
   },
   "Conditions": {
@@ -45,6 +54,14 @@
             ""
           ]
         }
+      ]
+    },
+    "ProgramarAvisos": {
+      "Fn::Equals": [
+        {
+          "Ref": "AvisosVencimientoActivos"
+        },
+        "true"
       ]
     }
   },
@@ -988,6 +1005,18 @@
                 "ValueFrom": {
                   "Fn::Sub": "${AppSecretsArn}:pagos_webhook_secret::"
                 }
+              },
+              {
+                "Name": "FCM_CREDENCIALES_JSON",
+                "ValueFrom": {
+                  "Fn::Sub": "${AppSecretsArn}:fcm_credenciales_json::"
+                }
+              },
+              {
+                "Name": "NOTIFICACIONES_CLAVE_INTERNA",
+                "ValueFrom": {
+                  "Fn::Sub": "${AppSecretsArn}:notificaciones_clave_interna::"
+                }
               }
             ],
             "DependsOn": [
@@ -1481,6 +1510,114 @@
             }
           ]
         }
+      }
+    },
+    "AvisosConexion": {
+      "Type": "AWS::Events::Connection",
+      "Condition": "ProgramarAvisos",
+      "Properties": {
+        "Name": {
+          "Fn::Sub": "${AWS::StackName}-avisos"
+        },
+        "Description": "Clave interna con la que el job diario llama a la API (HU05)",
+        "AuthorizationType": "API_KEY",
+        "AuthParameters": {
+          "ApiKeyAuthParameters": {
+            "ApiKeyName": "X-Clave-Interna",
+            "ApiKeyValue": {
+              "Fn::Sub": "{{resolve:secretsmanager:${AppSecretsArn}:SecretString:notificaciones_clave_interna}}"
+            }
+          }
+        }
+      }
+    },
+    "AvisosDestino": {
+      "Type": "AWS::Events::ApiDestination",
+      "Condition": "ProgramarAvisos",
+      "Properties": {
+        "Name": {
+          "Fn::Sub": "${AWS::StackName}-avisos-vencimientos"
+        },
+        "ConnectionArn": {
+          "Fn::GetAtt": [
+            "AvisosConexion",
+            "Arn"
+          ]
+        },
+        "InvocationEndpoint": {
+          "Fn::Sub": "${HttpApi.ApiEndpoint}/api/v1/internos/notificaciones/vencimientos"
+        },
+        "HttpMethod": "POST",
+        "InvocationRateLimitPerSecond": 1
+      }
+    },
+    "AvisosRol": {
+      "Type": "AWS::IAM::Role",
+      "Condition": "ProgramarAvisos",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "events.amazonaws.com"
+              },
+              "Action": "sts:AssumeRole"
+            }
+          ]
+        },
+        "Policies": [
+          {
+            "PolicyName": "InvocarDestinoDeAvisos",
+            "PolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Action": "events:InvokeApiDestination",
+                  "Resource": {
+                    "Fn::GetAtt": [
+                      "AvisosDestino",
+                      "Arn"
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "AvisosRegla": {
+      "Type": "AWS::Events::Rule",
+      "Condition": "ProgramarAvisos",
+      "Properties": {
+        "Description": "HU05: una vez al día avisa las pólizas que vencen en 15 y en 3 días",
+        "ScheduleExpression": "cron(0 13 * * ? *)",
+        "State": "ENABLED",
+        "Targets": [
+          {
+            "Id": "vencimientos",
+            "Arn": {
+              "Fn::GetAtt": [
+                "AvisosDestino",
+                "Arn"
+              ]
+            },
+            "RoleArn": {
+              "Fn::GetAtt": [
+                "AvisosRol",
+                "Arn"
+              ]
+            },
+            "Input": "{}",
+            "RetryPolicy": {
+              "MaximumRetryAttempts": 2,
+              "MaximumEventAgeInSeconds": 3600
+            }
+          }
+        ]
       }
     }
   },

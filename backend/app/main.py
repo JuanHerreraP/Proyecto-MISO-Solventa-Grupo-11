@@ -27,6 +27,7 @@ from app.api import (
     firmas,
     historial_poliza,
     identidad,
+    notificaciones,
     oauth_socios,
     operaciones_asistencias,
     pagos,
@@ -60,6 +61,8 @@ from app.infraestructura.database import (
     esperar_base_disponible,
     preparar_esquema_registro,
 )
+from app.notificaciones import modelos_db as modelos_db_notificaciones  # noqa: F401
+from app.notificaciones.composicion import enviador_push
 from app.pagos import modelos_db as modelos_db_pagos  # noqa: F401
 from app.polizas import modelos_db as modelos_db_polizas  # noqa: F401
 from app.siniestros import modelos_db as modelos_db_siniestros  # noqa: F401
@@ -72,6 +75,9 @@ def crear_app() -> FastAPI:
     Base.metadata.create_all(bind=engine)
     preparar_esquema_registro()
     asegurar_manager_bootstrap()
+    # Arma el canal de push al arrancar: si su configuración está mal, se ve en el log desde el
+    # inicio y no en el primer evento que intente notificar.
+    enviador_push()
 
     app = FastAPI(
         title="Solventa API",
@@ -99,8 +105,11 @@ def crear_app() -> FastAPI:
     @app.exception_handler(RequestValidationError)
     async def errores_de_validacion(request: Request, error: RequestValidationError):
         detalle = jsonable_encoder(error.errors())
-        if request.url.path.startswith(("/api/v1/pagos", "/api/v1/firmas")):
-            # Los errores de FastAPI devuelven el valor recibido: un PAN o un código OTP.
+        if request.url.path.startswith(
+            ("/api/v1/pagos", "/api/v1/firmas", "/api/v1/notificaciones/dispositivos")
+        ):
+            # Los errores de FastAPI devuelven el valor recibido: un PAN, un código OTP o el
+            # token de FCM de un teléfono.
             detalle = [
                 {campo: valor for campo, valor in e.items() if campo not in {"input", "ctx"}}
                 for e in detalle
@@ -175,6 +184,8 @@ def crear_app() -> FastAPI:
     app.include_router(cancelaciones.router)
     app.include_router(renovaciones.router)
     app.include_router(primas_pendientes.router)
+    app.include_router(notificaciones.router)
+    app.include_router(notificaciones.router_interno)
     app.include_router(perfilamiento.router)
     app.include_router(enriquecimiento.router)
     app.include_router(socios.router)

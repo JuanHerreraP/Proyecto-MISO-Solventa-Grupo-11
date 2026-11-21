@@ -4,13 +4,18 @@ El repositorio nunca devuelve una póliza sin filtrar por titular cuando la cons
 cliente: `obtener_del_cliente` es la única forma de leer una póliza desde la billetera.
 """
 
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from typing import Protocol
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.polizas.dominio.modelos import EnlaceCertificado, Poliza, RamoPoliza
+from app.polizas.dominio.modelos import (
+    EnlaceCertificado,
+    EstadoRegistroPoliza,
+    Poliza,
+    RamoPoliza,
+)
 from app.polizas.modelos_db import EnlaceCertificadoDB, PolizaDB
 
 
@@ -26,6 +31,10 @@ class RepositorioPolizas(Protocol):
     def buscar_por_numero(self, numero_poliza: str) -> Poliza | None: ...
 
     def listar_parametricas(self) -> list[Poliza]: ...
+
+    def listar_que_vencen_el(self, fecha_fin: date) -> list[Poliza]:
+        """Pólizas no canceladas cuya vigencia termina ese día (HU05: avisos de vencimiento)."""
+        ...
 
 
 class RepositorioEnlaces(Protocol):
@@ -69,6 +78,13 @@ class RepositorioPolizasEnMemoria:
             poliza.model_copy(deep=True)
             for poliza in self._por_id.values()
             if poliza.ramo is RamoPoliza.PARAMETRICO
+        ]
+
+    def listar_que_vencen_el(self, fecha_fin: date) -> list[Poliza]:
+        return [
+            poliza.model_copy(deep=True)
+            for poliza in self._por_id.values()
+            if poliza.fecha_fin == fecha_fin and poliza.estado is EstadoRegistroPoliza.VIGENTE
         ]
 
 
@@ -121,6 +137,13 @@ class RepositorioPolizasPostgres:
 
     def listar_parametricas(self) -> list[Poliza]:
         sentencia = select(PolizaDB).where(PolizaDB.ramo == RamoPoliza.PARAMETRICO.value)
+        return [_poliza_a_dominio(registro) for registro in self._db.scalars(sentencia).all()]
+
+    def listar_que_vencen_el(self, fecha_fin: date) -> list[Poliza]:
+        sentencia = select(PolizaDB).where(
+            PolizaDB.fecha_fin == fecha_fin,
+            PolizaDB.estado == EstadoRegistroPoliza.VIGENTE.value,
+        )
         return [_poliza_a_dominio(registro) for registro in self._db.scalars(sentencia).all()]
 
 

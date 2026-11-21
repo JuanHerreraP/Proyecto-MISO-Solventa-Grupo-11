@@ -29,6 +29,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -41,6 +42,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.disabled
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -63,7 +65,11 @@ fun ProfileScreen(
     onInicio: () -> Unit,
     onPolizas: (() -> Unit)?,
     onSiniestros: (() -> Unit)?,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    notificaciones: PreferenciasNotificacionesUi? = null,
+    onCambiarPush: (Boolean) -> Unit = {},
+    onSolicitarPermisoNotificaciones: () -> Unit = {},
+    onAbrirAjustesNotificaciones: () -> Unit = {}
 ) {
     var seccion by rememberSaveable { mutableStateOf<SeccionPerfil?>(null) }
 
@@ -91,7 +97,17 @@ fun ProfileScreen(
         ) {
             val detalle = seccion
             if (detalle != null) {
-                DetallePerfil(detalle, perfil, biometriaActivada, sinConexion) { seccion = null }
+                DetallePerfil(
+                    seccion = detalle,
+                    perfil = perfil,
+                    biometriaActivada = biometriaActivada,
+                    sinConexion = sinConexion,
+                    notificaciones = notificaciones,
+                    onCambiarPush = onCambiarPush,
+                    onSolicitarPermisoNotificaciones = onSolicitarPermisoNotificaciones,
+                    onAbrirAjustesNotificaciones = onAbrirAjustesNotificaciones,
+                    onVolver = { seccion = null }
+                )
                 return@Column
             }
 
@@ -120,10 +136,10 @@ fun ProfileScreen(
             ) { seccion = SeccionPerfil.IDIOMA }
             OpcionPerfil(
                 "Notificaciones",
-                "Disponible próximamente",
+                textoNotificaciones(notificaciones),
                 Icons.Outlined.NotificationsNone,
-                habilitada = false
-            )
+                habilitada = notificaciones != null
+            ) { seccion = SeccionPerfil.NOTIFICACIONES }
 
             TextButton(
                 onClick = onCerrarSesion,
@@ -222,7 +238,18 @@ private fun OpcionPerfil(
     }
 }
 
-private enum class SeccionPerfil { CUENTA, SEGURIDAD, IDIOMA }
+private enum class SeccionPerfil { CUENTA, SEGURIDAD, IDIOMA, NOTIFICACIONES }
+
+/**
+ * Lo que la sección de notificaciones necesita mostrar (HU05). [pushHabilitado] es null mientras se
+ * consulta; [permisoConcedido] es el permiso del sistema para mostrar avisos (Android 13 o más).
+ */
+data class PreferenciasNotificacionesUi(
+    val pushHabilitado: Boolean?,
+    val guardando: Boolean = false,
+    val error: String? = null,
+    val permisoConcedido: Boolean = true
+)
 
 @Composable
 private fun DetallePerfil(
@@ -230,6 +257,10 @@ private fun DetallePerfil(
     perfil: Perfil,
     biometriaActivada: Boolean,
     sinConexion: Boolean,
+    notificaciones: PreferenciasNotificacionesUi?,
+    onCambiarPush: (Boolean) -> Unit,
+    onSolicitarPermisoNotificaciones: () -> Unit,
+    onAbrirAjustesNotificaciones: () -> Unit,
     onVolver: () -> Unit
 ) {
     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -241,6 +272,7 @@ private fun DetallePerfil(
                 SeccionPerfil.CUENTA -> "Datos personales"
                 SeccionPerfil.SEGURIDAD -> "Seguridad y privacidad"
                 SeccionPerfil.IDIOMA -> "Idioma y moneda"
+                SeccionPerfil.NOTIFICACIONES -> "Notificaciones"
             },
             style = MaterialTheme.typography.titleLarge
         )
@@ -261,7 +293,83 @@ private fun DetallePerfil(
             CampoPerfil("Idioma", "Español (Colombia)")
             CampoPerfil("Moneda", "Peso colombiano (COP)")
         }
+        SeccionPerfil.NOTIFICACIONES -> SeccionNotificaciones(
+            notificaciones = notificaciones,
+            onCambiarPush = onCambiarPush,
+            onSolicitarPermiso = onSolicitarPermisoNotificaciones,
+            onAbrirAjustes = onAbrirAjustesNotificaciones
+        )
     }
+}
+
+@Composable
+private fun SeccionNotificaciones(
+    notificaciones: PreferenciasNotificacionesUi?,
+    onCambiarPush: (Boolean) -> Unit,
+    onSolicitarPermiso: () -> Unit,
+    onAbrirAjustes: () -> Unit
+) {
+    val preferencia = notificaciones ?: return
+    val habilitado = preferencia.pushHabilitado == true
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        color = MaterialTheme.colorScheme.surfaceContainer
+    ) {
+        Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f)) {
+                Text("Recibir notificaciones push", fontWeight = FontWeight.Bold)
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    "Avisos de pagos de tu seguro paramétrico, vencimientos de pólizas y cambios " +
+                        "en tus siniestros. Siempre los verás también dentro de la app.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                )
+            }
+            Spacer(Modifier.width(12.dp))
+            Switch(
+                checked = habilitado,
+                enabled = preferencia.pushHabilitado != null && !preferencia.guardando,
+                onCheckedChange = { activar ->
+                    onCambiarPush(activar)
+                    // El permiso se pide en el momento en que el cliente quiere los avisos.
+                    if (activar && !preferencia.permisoConcedido) onSolicitarPermiso()
+                },
+                modifier = Modifier.semantics { contentDescription = "Recibir notificaciones push" }
+            )
+        }
+    }
+    preferencia.error?.let {
+        Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium)
+    }
+    if (habilitado && !preferencia.permisoConcedido) {
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(16.dp),
+            color = MaterialTheme.colorScheme.errorContainer
+        ) {
+            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(
+                    "Las notificaciones están bloqueadas en tu teléfono. Permítelas para recibir " +
+                        "los avisos como notificación.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onErrorContainer
+                )
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    TextButton(onClick = onSolicitarPermiso) { Text("Permitir") }
+                    TextButton(onClick = onAbrirAjustes) { Text("Abrir ajustes") }
+                }
+            }
+        }
+    }
+}
+
+private fun textoNotificaciones(notificaciones: PreferenciasNotificacionesUi?): String = when {
+    notificaciones == null -> "Disponible próximamente"
+    notificaciones.pushHabilitado == null -> "Avisos de pagos, siniestros y vencimientos"
+    notificaciones.pushHabilitado -> "Notificaciones push activadas"
+    else -> "Push desactivado · los avisos se ven en la app"
 }
 
 @Composable
