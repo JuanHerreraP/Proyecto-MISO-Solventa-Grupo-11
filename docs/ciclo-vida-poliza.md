@@ -49,7 +49,7 @@ Tabla nueva `renovaciones` (se crea sola con `create_all`; no cambia `polizas`),
 
 ### Límites conocidos
 
-- El certificado PDF original no se regenera con la nueva vigencia (los documentos emitidos son inmutables); la póliza sí expone las fechas nuevas.
+- El certificado PDF original no se regenera con la nueva vigencia (los documentos emitidos son inmutables); la póliza sí expone las fechas nuevas. La renovación automática (HU17) sí emite un documento del nuevo periodo: ver [renovación automática](renovacion-automatica.md).
 - Una renovación pagada pero no aplicable no devuelve el dinero: solo queda registrada.
 
 

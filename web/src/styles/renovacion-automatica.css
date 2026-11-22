@@ -1,0 +1,87 @@
+.renovacion-auto {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 18px;
+  padding: 16px 18px;
+  border: 1px solid #dbe4ef;
+  border-radius: 12px;
+  background: #f7fafd;
+}
+
+.renovacion-auto h3 { margin: 0 0 4px; font-size: 16px; }
+.renovacion-auto p { margin: 0; color: var(--solventa-muted); line-height: 1.5; }
+
+.renovacion-auto-cabecera {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 12px;
+  align-items: start;
+}
+
+.renovacion-auto-icono { color: var(--solventa-orange); font-size: 28px; }
+
+.renovacion-auto-interruptor { position: relative; display: inline-flex; cursor: pointer; }
+.renovacion-auto-interruptor input { position: absolute; opacity: 0; width: 100%; height: 100%; margin: 0; cursor: pointer; }
+.renovacion-auto-interruptor span {
+  width: 46px;
+  height: 26px;
+  border-radius: 13px;
+  background: #c3ccd8;
+  transition: background 0.2s;
+  position: relative;
+}
+.renovacion-auto-interruptor span::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #fff;
+  transition: transform 0.2s;
+}
+.renovacion-auto-interruptor input:checked + span { background: #2b8a57; }
+.renovacion-auto-interruptor input:checked + span::after { transform: translateX(20px); }
+.renovacion-auto-interruptor input:focus-visible + span { outline: 2px solid var(--solventa-orange); outline-offset: 2px; }
+.renovacion-auto-interruptor input:disabled + span { opacity: 0.6; }
+
+.renovacion-auto-alerta {
+  padding: 10px 12px;
+  border-left: 4px solid var(--solventa-orange);
+  border-radius: 6px;
+  background: #fff7ef;
+}
+
+.renovacion-auto-tarjeta {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(140px, 1fr));
+  gap: 12px;
+}
+.renovacion-auto-tarjeta .cotizar-campo { margin: 0; }
+.renovacion-auto-tarjeta .cotizar-campo-ancho,
+.renovacion-auto-tarjeta .poliza-acciones { grid-column: 1 / -1; }
+
+.renovacion-auto-ciclo {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: #fff;
+  border-left: 4px solid #5b7ea6;
+}
+.renovacion-auto-ciclo-renovada { border-left-color: #2b8a57; }
+.renovacion-auto-ciclo-cobro_rechazado,
+.renovacion-auto-ciclo-sin_medio_de_pago,
+.renovacion-auto-ciclo-no_pagada,
+.renovacion-auto-ciclo-no_aplicada { border-left-color: #c94a3c; }
+
+.renovacion-auto-mensaje { color: #2b8a57 !important; font-weight: 600; }
+
+@media (max-width: 640px) {
+  .renovacion-auto-tarjeta { grid-template-columns: 1fr; }
+}

@@ -20,6 +20,11 @@ vi.mock("../services/asesor.service", () => ({
   obtenerPolizasDeCliente: vi.fn(),
 }));
 vi.mock("../services/session", () => ({ cerrarSesion: vi.fn() }));
+vi.mock("../components/poliza/RenovacionAutomatica", () => ({
+  default: ({ polizaId, puedeRegistrarTarjeta }: { polizaId: string; puedeRegistrarTarjeta: boolean }) => (
+    <p>{`Renovación automática de ${polizaId}${puedeRegistrarTarjeta ? " con tarjeta" : ""}`}</p>
+  ),
+}));
 
 const POLIZA: PolizaResumen = {
   poliza_id: "POL-1",
@@ -202,4 +207,34 @@ it("permite al asesor seleccionar un cliente y cancelar una venta asistida", asy
   expect(obtenerCertificado).not.toHaveBeenCalled();
   await userEvent.click(screen.getByRole("button", { name: "Cancelar póliza" }));
   expect(await screen.findByRole("heading", { name: "Cancelar póliza" })).toBeInTheDocument();
+});
+
+it("muestra la renovación automática en una póliza vigente que se renueva", async () => {
+  const vida: PolizaResumen = {
+    ...POLIZA, poliza_id: "POL-VIDA", ramo: "VIDA", nombre_ramo: "Seguro de vida",
+  };
+  vi.mocked(obtenerBilletera).mockResolvedValue({
+    polizas: [vida], total_vigentes: 1, total_inactivas: 0,
+  });
+  vi.mocked(obtenerCertificado).mockResolvedValue(CERTIFICADO);
+  montar();
+
+  await userEvent.click(await screen.findByRole("button", { name: /Seguro de vida/ }));
+
+  expect(
+    await screen.findByText("Renovación automática de POL-VIDA con tarjeta"),
+  ).toBeInTheDocument();
+});
+
+it("no muestra la renovación automática en seguros que no se renuevan", async () => {
+  vi.mocked(obtenerBilletera).mockResolvedValue({
+    polizas: [POLIZA], total_vigentes: 1, total_inactivas: 0,
+  });
+  vi.mocked(obtenerCertificado).mockResolvedValue(CERTIFICADO);
+  montar();
+
+  await userEvent.click(await screen.findByRole("button", { name: /Seguro de viaje/ }));
+
+  expect(await screen.findByText("Ana Solano")).toBeInTheDocument();
+  expect(screen.queryByText(/Renovación automática de/)).not.toBeInTheDocument();
 });
