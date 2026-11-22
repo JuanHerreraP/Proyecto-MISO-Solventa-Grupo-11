@@ -95,7 +95,9 @@ def crear_enviador_push() -> EnviadorPush:
     """
     proveedor = (os.getenv("PUSH_PROVEEDOR") or "").strip().lower()
     if not proveedor:
-        hay_credencial = bool(os.getenv("FCM_CREDENCIALES_JSON") or os.getenv("FCM_CREDENCIALES_PATH"))
+        hay_credencial = bool(
+            os.getenv("FCM_CREDENCIALES_JSON") or os.getenv("FCM_CREDENCIALES_PATH")
+        )
         proveedor = "fcm" if hay_credencial else "simulado"
     if proveedor == "simulado":
         return EnviadorPushSimulado()
