@@ -30,9 +30,9 @@ on:
           - provisionar
           - eliminar
       postgres_engine_version:
-        description: "Versión de PostgreSQL (solo provisionar)"
+        description: "Versión de PostgreSQL (solo provisionar). Vacío: la 16.x más reciente disponible"
         type: string
-        default: "16.9"
+        default: ""
       crear_admin:
         description: "Crear usuario administrador (solo provisionar; requiere secret ADMIN_PASSWORD)"
         type: boolean
@@ -195,7 +195,7 @@ jobs:
       # Paso 3
       - name: Generar parámetros de CloudFormation
         env:
-          POSTGRES_ENGINE_VERSION: ${{ inputs.postgres_engine_version || '16.9' }}
+          POSTGRES_ENGINE_VERSION: ${{ inputs.postgres_engine_version }}
           PUBLIC_URL: ${{ vars.SOLVENTA_URL_PUBLICA }}
           NOTIFICACIONES_CLAVE_INTERNA: ${{ secrets.NOTIFICACIONES_CLAVE_INTERNA }}
         run: |
@@ -205,9 +205,22 @@ jobs:
             echo "::error::La variable SOLVENTA_URL_PUBLICA debe ser una URL https sin ruta (por ejemplo https://app.ejemplo.com)."
             exit 1
           fi
-          aws rds describe-orderable-db-instance-options --engine postgres \
+          # RDS retira versiones menores con el tiempo (la 16.9 ya no existe): se consulta qué hay y,
+          # sin versión indicada, se usa la 16.x más reciente. Falla aquí y no 40 minutos después.
+          DISPONIBLES=$(aws rds describe-orderable-db-instance-options --engine postgres \
             --db-instance-class db.t3.micro \
-            --query 'OrderableDBInstanceOptions[].EngineVersion' --output text
+            --query 'OrderableDBInstanceOptions[].EngineVersion' --output text \
+            | tr '\t' '\n' | sort -uV)
+          echo "Versiones de PostgreSQL disponibles para db.t3.micro:" $DISPONIBLES
+          if [ -z "$POSTGRES_ENGINE_VERSION" ]; then
+            POSTGRES_ENGINE_VERSION=$(printf '%s\n' "$DISPONIBLES" | grep -E '^16\.' | tail -1)
+            echo "Sin versión indicada: se usa la 16.x más reciente ($POSTGRES_ENGINE_VERSION)."
+          fi
+          if ! printf '%s\n' "$DISPONIBLES" | grep -Fxq "$POSTGRES_ENGINE_VERSION"; then
+            echo "::error::La versión de PostgreSQL '$POSTGRES_ENGINE_VERSION' no está disponible para db.t3.micro en esta región."
+            exit 1
+          fi
+          export POSTGRES_ENGINE_VERSION
           mkdir -p infra/secrets
           python3 - <<'PY'
           import json, os
