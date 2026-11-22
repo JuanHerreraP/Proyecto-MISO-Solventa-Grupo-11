@@ -249,6 +249,15 @@ jobs:
           aws cloudformation describe-stacks --stack-name "$STACK" \
             --query "Stacks[0].Outputs" --output table
 
+      # Si el despliegue falla, el log solo dice "Failed to create/update the stack". Esto imprime qué
+      # recurso falló y por qué, para no tener que ir a la consola de CloudFormation.
+      - name: Mostrar por qué falló el stack
+        if: ${{ failure() }}
+        run: |
+          aws cloudformation describe-stack-events --stack-name "$STACK" \
+            --query "StackEvents[?contains(ResourceStatus,'FAILED')].[LogicalResourceId,ResourceType,ResourceStatusReason]" \
+            --output table || true
+
       # ECS lee los secretos solo al iniciar cada tarea: si el valor cambió y el stack no, las
       # tareas en ejecución seguirían con el valor anterior hasta reiniciarse.
       - name: Reiniciar el servicio para tomar el secreto nuevo
