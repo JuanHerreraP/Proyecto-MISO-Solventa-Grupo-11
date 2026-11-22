@@ -33,6 +33,7 @@ from app.desembolsos.servicio import (
 )
 from app.identidad.modelos import Rol
 from app.infraestructura.database import get_db
+from app.notificaciones.composicion import crear_servicio_notificaciones
 from app.polizas.repositorio import RepositorioPolizasPostgres
 from app.siniestros.evaluacion import (
     MontoInvalido,
@@ -72,6 +73,8 @@ def construir_evaluacion(db: Session, red=None) -> ServicioEvaluacion:
         siniestros=RepositorioSiniestrosPostgres(db),
         polizas=RepositorioPolizasPostgres(db),
         desembolsos=construir_desembolsos(db, red),
+        # Avisa al cliente la decisión y los pagos paramétricos (HU05).
+        notificaciones=crear_servicio_notificaciones(db),
     )
 
 

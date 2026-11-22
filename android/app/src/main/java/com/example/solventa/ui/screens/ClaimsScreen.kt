@@ -1,5 +1,6 @@
 package com.example.solventa.ui.screens
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -22,6 +23,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -47,7 +49,8 @@ fun ClaimsScreen(
     onReintentar: () -> Unit,
     onVolver: () -> Unit,
     onReportar: () -> Unit = {},
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onVerDetalle: (Siniestro) -> Unit = {}
 ) {
     Surface(modifier = modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surface) {
         Column(modifier = Modifier.fillMaxSize()) {
@@ -87,14 +90,24 @@ fun ClaimsScreen(
                     SolventaPrimaryButton(text = "Reportar siniestro", onClick = onReportar)
                 }
 
-                else -> ListaSiniestros(siniestros = siniestros, error = error, onReportar = onReportar)
+                else -> ListaSiniestros(
+                    siniestros = siniestros,
+                    error = error,
+                    onReportar = onReportar,
+                    onVerDetalle = onVerDetalle
+                )
             }
         }
     }
 }
 
 @Composable
-private fun ListaSiniestros(siniestros: Siniestros, error: String?, onReportar: () -> Unit) {
+private fun ListaSiniestros(
+    siniestros: Siniestros,
+    error: String?,
+    onReportar: () -> Unit,
+    onVerDetalle: (Siniestro) -> Unit
+) {
     LazyColumn(
         contentPadding = PaddingValues(start = 24.dp, end = 24.dp, top = 8.dp, bottom = 32.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -112,7 +125,7 @@ private fun ListaSiniestros(siniestros: Siniestros, error: String?, onReportar: 
             )
         }
         items(siniestros.siniestros, key = { it.siniestroId }) { siniestro ->
-            TarjetaSiniestro(siniestro)
+            TarjetaSiniestro(siniestro, onClick = { onVerDetalle(siniestro) })
         }
         item {
             Spacer(modifier = Modifier.size(4.dp))
@@ -122,11 +135,13 @@ private fun ListaSiniestros(siniestros: Siniestros, error: String?, onReportar: 
 }
 
 @Composable
-private fun TarjetaSiniestro(siniestro: Siniestro) {
+private fun TarjetaSiniestro(siniestro: Siniestro, onClick: () -> Unit) {
     Surface(
         shape = RoundedCornerShape(16.dp),
         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.04f),
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(role = Role.Button, onClickLabel = "Ver detalle", onClick = onClick)
     ) {
         Column(
             modifier = Modifier.padding(16.dp),
@@ -170,7 +185,7 @@ private fun TarjetaSiniestro(siniestro: Siniestro) {
 
 /** El texto distingue el origen: el color nunca es la única señal. */
 @Composable
-private fun EtiquetaOrigen(origen: OrigenSiniestro) {
+internal fun EtiquetaOrigen(origen: OrigenSiniestro) {
     val (fondo, texto, etiqueta) = when (origen) {
         OrigenSiniestro.AUTOMATICO -> Triple(Navegacion.copy(alpha = 0.15f), Navegacion, "Automático")
         OrigenSiniestro.MANUAL -> Triple(
@@ -188,7 +203,7 @@ private fun EtiquetaOrigen(origen: OrigenSiniestro) {
 }
 
 @Composable
-private fun EtiquetaEstadoSiniestro(estado: EstadoSiniestro) {
+internal fun EtiquetaEstadoSiniestro(estado: EstadoSiniestro) {
     val (fondo, texto, etiqueta) = when (estado) {
         EstadoSiniestro.REGISTRADO -> Triple(Avance.copy(alpha = 0.25f), Color(0xFF2F5A0B), "Registrado")
         EstadoSiniestro.EN_EVALUACION ->

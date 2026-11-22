@@ -38,6 +38,10 @@ object ApiClient {
     fun crearAsesorApi(urlBase: String = BuildConfig.API_BASE_URL): AsesorApi =
         retrofit(urlBase).create(AsesorApi::class.java)
 
+    /** Notificaciones del cliente: bandeja, dispositivos de push y preferencia (HU05). */
+    fun crearNotificacionesApi(urlBase: String = BuildConfig.API_BASE_URL): NotificacionesApi =
+        retrofit(urlBase).create(NotificacionesApi::class.java)
+
     private val cliente: OkHttpClient by lazy {
         OkHttpClient.Builder()
             .connectTimeout(10, TimeUnit.SECONDS)

@@ -28,7 +28,10 @@ data class SiniestroDto(
     @SerializedName("estimacion_danos") val estimacionDanos: String?,
     @SerializedName("moneda") val moneda: String?,
     @SerializedName("registrado_en") val registradoEn: String?,
-    @SerializedName("tipo_siniestro") val tipoSiniestro: String? = null
+    @SerializedName("tipo_siniestro") val tipoSiniestro: String? = null,
+    @SerializedName("monto_aprobado") val montoAprobado: String? = null,
+    @SerializedName("evaluado_en") val evaluadoEn: String? = null,
+    @SerializedName("motivo_rechazo") val motivoRechazo: String? = null
 ) {
     fun aSiniestro(): Siniestro? {
         val origenSiniestro = origen.aOrigen() ?: return null
@@ -46,7 +49,10 @@ data class SiniestroDto(
             estimacionDanos = estimacionDanos.orEmpty(),
             moneda = moneda ?: "COP",
             registradoEn = registradoEn ?: return null,
-            tipoSiniestro = TipoSiniestro.desdeCodigo(tipoSiniestro)
+            tipoSiniestro = TipoSiniestro.desdeCodigo(tipoSiniestro),
+            montoAprobado = montoAprobado,
+            evaluadoEn = evaluadoEn,
+            motivoRechazo = motivoRechazo
         )
     }
 }

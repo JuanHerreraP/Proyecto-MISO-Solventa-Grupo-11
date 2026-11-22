@@ -43,7 +43,11 @@ data class Siniestro(
     val moneda: String,
     val registradoEn: String,
     /** Null en los siniestros anteriores a HU04 y en los automáticos. */
-    val tipoSiniestro: TipoSiniestro? = null
+    val tipoSiniestro: TipoSiniestro? = null,
+    /** La decisión (HU15): solo cuando el siniestro ya fue aprobado o rechazado. */
+    val montoAprobado: String? = null,
+    val evaluadoEn: String? = null,
+    val motivoRechazo: String? = null
 )
 
 /** Lo que la pantalla de siniestros muestra: la lista, del más reciente al más antiguo. */
