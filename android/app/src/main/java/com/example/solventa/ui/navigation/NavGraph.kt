@@ -1,5 +1,7 @@
 package com.example.solventa.ui.navigation
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -31,6 +33,8 @@ import com.example.solventa.domain.asesor.DatosNuevoAnalista
 import com.example.solventa.domain.cotizaciones.CatalogoCotizaciones
 import com.example.solventa.domain.cotizaciones.EstadoCotizaciones
 import com.example.solventa.domain.cotizaciones.RamoCotizacion
+import com.example.solventa.domain.notificaciones.DestinoNotificacion
+import com.example.solventa.domain.notificaciones.EstadoNotificaciones
 import com.example.solventa.domain.pagos.ConceptoPago
 import com.example.solventa.domain.pagos.EstadoPago
 import com.example.solventa.domain.pagos.EstadoPagos
@@ -46,14 +50,21 @@ import com.example.solventa.ui.billetera.textoParaCompartir
 import com.example.solventa.ui.cotizaciones.CotizacionesViewModel
 import com.example.solventa.ui.components.SeccionNavegacion
 import com.example.solventa.ui.components.SolventaBottomNavigation
+import com.example.solventa.ui.notificaciones.AperturaNotificacion
+import com.example.solventa.ui.notificaciones.NotificacionesViewModel
+import com.example.solventa.ui.notificaciones.rememberSolicitudPermisoNotificaciones
 import com.example.solventa.ui.pagos.PagosViewModel
 import com.example.solventa.ui.siniestros.SiniestrosViewModel
+import com.example.solventa.ui.asistencias.AsistenciasViewModel
 import com.example.solventa.ui.siniestros.rememberCapturaEvidencias
 import com.example.solventa.ui.screens.AdvisorHomeScreen
+import com.example.solventa.ui.screens.AssistanceScreen
+import com.example.solventa.ui.screens.PolizaAsistenciaElegible
 import com.example.solventa.ui.screens.BiometricalLoginScreen
 import com.example.solventa.ui.screens.CancelScreen
 import com.example.solventa.ui.screens.CancelSuccessScreen
 import com.example.solventa.ui.screens.CertificateScreen
+import com.example.solventa.ui.screens.ClaimDetailScreen
 import com.example.solventa.ui.screens.ClaimFormScreen
 import com.example.solventa.ui.screens.ClaimsScreen
 import com.example.solventa.ui.screens.CreateAdvisorScreen
@@ -61,10 +72,12 @@ import com.example.solventa.ui.screens.CreateAuditorScreen
 import com.example.solventa.ui.screens.CredentialsLoginScreen
 import com.example.solventa.ui.screens.HomeScreen
 import com.example.solventa.ui.screens.NewQuoteScreen
+import com.example.solventa.ui.screens.NotificationsScreen
 import com.example.solventa.ui.screens.PaymentResultScreen
 import com.example.solventa.ui.screens.PaymentScreen
 import com.example.solventa.ui.screens.PaymentsScreen
 import com.example.solventa.ui.screens.PolicyHistoryScreen
+import com.example.solventa.ui.screens.PreferenciasNotificacionesUi
 import com.example.solventa.ui.screens.ProfileScreen
 import com.example.solventa.ui.screens.PsePortalScreen
 import com.example.solventa.ui.screens.QuoteFormScreen
@@ -76,6 +89,7 @@ import com.example.solventa.ui.screens.RenewalSuccessScreen
 import com.example.solventa.ui.screens.WalletScreen
 import com.example.solventa.ui.screens.WelcomeScreen
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
 
 @Composable
 fun NavGraph(
@@ -88,12 +102,20 @@ fun NavGraph(
     cotizaciones: CotizacionesViewModel? = null,
     pagos: PagosViewModel? = null,
     siniestros: SiniestrosViewModel? = null,
-    asesor: AsesorViewModel? = null
+    asesor: AsesorViewModel? = null,
+    notificaciones: NotificacionesViewModel? = null,
+    aperturaPendiente: AperturaNotificacion? = null,
+    onAperturaConsumida: () -> Unit = {},
+    asistencias: AsistenciasViewModel? = null
 ) {
     val estado by viewModel.estado.collectAsState()
     val estadoCotizaciones = cotizaciones?.estado?.collectAsState()?.value ?: EstadoCotizaciones()
     val estadoPagos = pagos?.estado?.collectAsState()?.value ?: EstadoPagos()
+    val estadoNotificaciones = notificaciones?.estado?.collectAsState()?.value ?: EstadoNotificaciones()
     val autenticado = estado.sesion != null
+    // Las notificaciones son del cliente: asesores y servicio interno no tienen bandeja.
+    val esCliente = estado.sesion?.perfil?.rol == "CLIENTE"
+    val notificacionesDelCliente = notificaciones.takeIf { esCliente }
     val usuarioId = estado.sesion?.perfil?.id
     val contextoAplicacion = LocalContext.current.applicationContext
     var ultimoUsuarioAutenticado by remember { mutableStateOf<String?>(null) }
@@ -123,6 +145,8 @@ fun NavGraph(
             pagos?.limpiar()
             siniestros?.limpiar()
             asesor?.limpiar()
+            notificaciones?.limpiar()
+            asistencias?.limpiar()
         }
         if (autenticado && actual !in ScreenRoute.privadas) {
             navController.navigate(ScreenRoute.Home.route) {
@@ -145,6 +169,49 @@ fun NavGraph(
                 launchSingleTop = true
             }
         }
+    }
+
+    // Al iniciar sesión el cliente registra el token de push de este teléfono y consulta su insignia.
+    LaunchedEffect(usuarioId, esCliente) {
+        if (esCliente) {
+            notificaciones?.registrarDispositivo()
+            notificaciones?.actualizarInsignia()
+        }
+    }
+
+    // A dónde lleva cada destino de notificación; null si esa parte de la app no está disponible.
+    val rutaDelDestino: (DestinoNotificacion) -> String? = { destino ->
+        when (destino) {
+            is DestinoNotificacion.Renovacion ->
+                if (billetera != null) ScreenRoute.Renewal.ruta(destino.polizaId) else null
+            is DestinoNotificacion.DetalleSiniestro ->
+                if (siniestros != null) ScreenRoute.ClaimDetail.ruta(destino.siniestroId) else null
+            DestinoNotificacion.Bandeja ->
+                if (notificaciones != null) ScreenRoute.Notifications.route else null
+        }
+    }
+
+    // Se tocó una notificación del sistema: con sesión se abre su destino; sin sesión espera al
+    // ingreso. Se espera a estar en una pantalla privada para no pisar la guardia de arriba.
+    LaunchedEffect(aperturaPendiente, esCliente) {
+        val apertura = aperturaPendiente ?: return@LaunchedEffect
+        if (!esCliente) return@LaunchedEffect
+        navController.currentBackStackEntryFlow.first { it.destination.route in ScreenRoute.privadas }
+        val ruta = rutaDelDestino(apertura.destino)
+        if (ruta != null) {
+            navController.navigate(ruta) { launchSingleTop = true }
+        }
+        apertura.notificacionId?.let { notificaciones?.marcarLeida(it) }
+        onAperturaConsumida()
+    }
+
+    // Da de baja el teléfono antes de cerrar la sesión, que es lo que autoriza la baja.
+    val cerrarSesionCliente: () -> Unit = {
+        val cerrar = {
+            billetera?.eliminarDatosLocales()
+            viewModel.cerrarSesion()
+        }
+        if (notificacionesDelCliente != null) notificacionesDelCliente.cerrarSesionConBaja(cerrar) else cerrar()
     }
 
     NavHost(
@@ -290,9 +357,19 @@ fun NavGraph(
 
                 val biometriaDisponible = remember { autenticador.disponibilidad() } ==
                     DisponibilidadBiometrica.DISPONIBLE
+                // La insignia de la campana se refresca cada vez que se vuelve al inicio.
+                LaunchedEffect(notificacionesDelCliente) { notificacionesDelCliente?.actualizarInsignia() }
 
                 HomeScreen(
                     perfil = sesion.perfil,
+                    notificacionesSinLeer = estadoNotificaciones.noLeidas,
+                    onVerNotificaciones = notificacionesDelCliente?.let {
+                        {
+                            navController.navigate(ScreenRoute.Notifications.route) {
+                                launchSingleTop = true
+                            }
+                        }
+                    },
                     biometriaActivada = estado.biometriaActivada,
                     biometriaDisponible = biometriaDisponible,
                     ofrecerActivarBiometria = estado.ofrecerActivarBiometria && biometriaDisponible,
@@ -316,12 +393,9 @@ fun NavGraph(
                     },
                     onSolicitarActivacion = viewModel::solicitarActivacion,
                     onDescartarActivacion = { viewModel.descartarActivacion() },
-                    onCerrarSesion = {
-                        // Inicia el borrado inmediatamente; la guardia también lo confirma
-                        // cuando observe que la sesión quedó cerrada.
-                        billetera?.eliminarDatosLocales()
-                        viewModel.cerrarSesion()
-                    },
+                    // Inicia el borrado inmediatamente; la guardia también lo confirma cuando
+                    // observe que la sesión quedó cerrada.
+                    onCerrarSesion = cerrarSesionCliente,
                     onCotizarSeguro = {
                         navController.navigate(ScreenRoute.NewQuote.route) { launchSingleTop = true }
                     },
@@ -336,6 +410,14 @@ fun NavGraph(
                     },
                     onVerSiniestros = siniestros?.let {
                         { navController.navigate(ScreenRoute.Claims.ruta()) { launchSingleTop = true } }
+                    },
+                    onVerAsistencia = asistencias?.let {
+                        {
+                            asistencias.reiniciarFlujo()
+                            navController.navigate(ScreenRoute.Assistance.route) {
+                                launchSingleTop = true
+                            }
+                        }
                     },
                     onNavbarPolizas = billetera?.let {
                         {
@@ -373,21 +455,57 @@ fun NavGraph(
             }
         }
 
+        if (notificaciones != null) {
+            composable(route = ScreenRoute.Notifications.route) {
+                if (estado.sesion == null) {
+                    Box(modifier = Modifier.fillMaxSize())
+                } else {
+                    // Se vuelve a pedir cada vez que se entra: el backend es la fuente de verdad.
+                    LaunchedEffect(Unit) { notificaciones.cargar() }
+                    NotificationsScreen(
+                        bandeja = estadoNotificaciones.bandeja,
+                        cargando = estadoNotificaciones.cargando,
+                        error = estadoNotificaciones.error,
+                        onReintentar = { notificaciones.cargar() },
+                        onVolver = { navController.popBackStack() },
+                        onAbrir = { notificacion ->
+                            notificaciones.marcarLeida(notificacion.notificacionId)
+                            rutaDelDestino(notificacion.destino)
+                                ?.takeIf { it != ScreenRoute.Notifications.route }
+                                ?.let { ruta ->
+                                    navController.navigate(ruta) { launchSingleTop = true }
+                                }
+                        }
+                    )
+                }
+            }
+        }
+
         composable(route = ScreenRoute.Profile.route) {
             val sesion = estado.sesion
             if (sesion == null) {
                 Box(modifier = Modifier.fillMaxSize())
             } else {
                 val estadoBilletera = billetera?.estado?.collectAsState()?.value
+                val permisoNotificaciones = rememberSolicitudPermisoNotificaciones()
+                LaunchedEffect(notificacionesDelCliente) { notificacionesDelCliente?.cargarPreferencia() }
                 ProfileScreen(
                     perfil = sesion.perfil,
+                    notificaciones = notificacionesDelCliente?.let {
+                        PreferenciasNotificacionesUi(
+                            pushHabilitado = estadoNotificaciones.pushHabilitado,
+                            guardando = estadoNotificaciones.cambiandoPreferencia,
+                            error = estadoNotificaciones.errorPreferencia,
+                            permisoConcedido = permisoNotificaciones.concedido
+                        )
+                    },
+                    onCambiarPush = { notificacionesDelCliente?.cambiarPreferencia(it) },
+                    onSolicitarPermisoNotificaciones = permisoNotificaciones.solicitar,
+                    onAbrirAjustesNotificaciones = permisoNotificaciones.abrirAjustes,
                     biometriaActivada = estado.biometriaActivada,
                     sinConexion = estadoBilletera?.sinConexion == true,
                     cerrandoSesion = estado.cargando,
-                    onCerrarSesion = {
-                        billetera?.eliminarDatosLocales()
-                        viewModel.cerrarSesion()
-                    },
+                    onCerrarSesion = cerrarSesionCliente,
                     onInicio = {
                         navController.popBackStack(ScreenRoute.Home.route, false)
                     },
@@ -1050,6 +1168,44 @@ fun NavGraph(
 
         if (siniestros != null) {
             composable(
+                route = ScreenRoute.ClaimDetail.route,
+                arguments = listOf(
+                    navArgument(ScreenRoute.ClaimDetail.ARGUMENTO) { type = NavType.StringType }
+                )
+            ) { entrada ->
+                val siniestroId =
+                    entrada.arguments?.getString(ScreenRoute.ClaimDetail.ARGUMENTO).orEmpty()
+                val estadoSiniestros by siniestros.estado.collectAsState()
+                if (estado.sesion == null) {
+                    Box(modifier = Modifier.fillMaxSize())
+                } else {
+                    // Se pide siempre: al llegar desde una notificación el estado puede haber cambiado.
+                    LaunchedEffect(siniestroId) { siniestros.cargar() }
+                    PantallaConNavegacion(
+                        visible = true,
+                        seleccionada = SeccionNavegacion.SINIESTROS,
+                        navController = navController,
+                        polizasDisponibles = billetera != null,
+                        siniestrosDisponibles = true
+                    ) { pantallaModifier ->
+                        ClaimDetailScreen(
+                            siniestro = estadoSiniestros.siniestros?.siniestros
+                                ?.firstOrNull { it.siniestroId == siniestroId },
+                            cargando = estadoSiniestros.cargando,
+                            error = estadoSiniestros.error,
+                            onReintentar = { siniestros.cargar() },
+                            onVolver = {
+                                if (!navController.popBackStack()) {
+                                    navController.navigate(ScreenRoute.Home.route) { launchSingleTop = true }
+                                }
+                            },
+                            modifier = pantallaModifier
+                        )
+                    }
+                }
+            }
+
+            composable(
                 route = ScreenRoute.Claims.route,
                 arguments = listOf(
                     navArgument(ScreenRoute.Claims.ORIGEN_NAVBAR) {
@@ -1078,6 +1234,11 @@ fun NavGraph(
                             error = estadoSiniestros.error,
                             onReintentar = { siniestros.cargar() },
                             onVolver = { navController.popBackStack() },
+                            onVerDetalle = { siniestro ->
+                                navController.navigate(ScreenRoute.ClaimDetail.ruta(siniestro.siniestroId)) {
+                                    launchSingleTop = true
+                                }
+                            },
                             onReportar = {
                                 navController.navigate(ScreenRoute.ClaimForm.ruta(desdeNavbar)) {
                                     launchSingleTop = true
@@ -1290,6 +1451,69 @@ fun NavGraph(
                         },
                         onHecho = {
                             asesor.consumirAnalistaCreado()
+                            navController.popBackStack()
+                        }
+                    )
+                }
+            }
+        }
+
+        if (asistencias != null) {
+            composable(route = ScreenRoute.Assistance.route) {
+                val sesion = estado.sesion
+                if (sesion == null) {
+                    Box(modifier = Modifier.fillMaxSize())
+                } else {
+                    val estadoAsistencias by asistencias.estado.collectAsState()
+                    // Las pólizas elegibles son las vigentes de la billetera; el backend revalida.
+                    val estadoBilletera = billetera?.estado?.collectAsState()?.value
+                    LaunchedEffect(billetera) { billetera?.cargar() }
+                    val elegibles = estadoBilletera?.billetera?.vigentes.orEmpty()
+                        .filter { it.ramo == "VIAJE" || it.ramo == "PROTECCION_DISPOSITIVOS" }
+                        .map {
+                            PolizaAsistenciaElegible(
+                                polizaId = it.polizaId,
+                                etiqueta = "${it.nombreRamo} · ${it.numeroPoliza}"
+                            )
+                        }
+
+                    // Pide los permisos de ubicación con las APIs modernas (HU06). Si el cliente
+                    // concede alguno, se buscan prestadores; si no, se ofrece "Reintentar".
+                    val lanzadorPermiso = rememberLauncherForActivityResult(
+                        ActivityResultContracts.RequestMultiplePermissions()
+                    ) { concedidos ->
+                        if (concedidos.values.any { it }) {
+                            asistencias.buscarPrestadores()
+                        } else {
+                            asistencias.permisoDenegado()
+                        }
+                    }
+
+                    AssistanceScreen(
+                        estado = estadoAsistencias,
+                        polizasElegibles = elegibles,
+                        tienePermisoUbicacion = asistencias.tienePermisoUbicacion(),
+                        onSeleccionarPoliza = { poliza ->
+                            asistencias.seleccionarPoliza(poliza.polizaId, poliza.etiqueta)
+                        },
+                        onSeleccionarServicio = { asistencias.seleccionarServicio(it) },
+                        onSolicitarPermiso = {
+                            if (asistencias.tienePermisoUbicacion()) {
+                                asistencias.buscarPrestadores()
+                            } else {
+                                lanzadorPermiso.launch(
+                                    com.example.solventa.data.local.ProveedorUbicacion.PERMISOS
+                                )
+                            }
+                        },
+                        onBuscarPrestadores = { radio -> asistencias.buscarPrestadores(radio) },
+                        onSeleccionarPrestador = { asistencias.seleccionarPrestador(it) },
+                        onConfirmarSolicitud = { asistencias.solicitar(it) },
+                        onVerMisAsistencias = { asistencias.cargarAsistencias() },
+                        onCancelarAsistencia = { asistencias.cancelar(it) },
+                        onNuevaSolicitud = { asistencias.reiniciarFlujo() },
+                        onVolver = {
+                            asistencias.consumirError()
                             navController.popBackStack()
                         }
                     )

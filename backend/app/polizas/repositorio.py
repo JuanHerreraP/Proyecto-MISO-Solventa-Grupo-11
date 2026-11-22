@@ -36,6 +36,10 @@ class RepositorioPolizas(Protocol):
         """Pólizas no canceladas cuyo fin de vigencia está entre ambas fechas (HU17)."""
         ...
 
+    def listar_que_vencen_el(self, fecha_fin: date) -> list[Poliza]:
+        """Pólizas no canceladas cuya vigencia termina ese día (HU05: avisos de vencimiento)."""
+        ...
+
 
 class RepositorioEnlaces(Protocol):
     def guardar(self, enlace: EnlaceCertificado) -> None: ...
@@ -90,6 +94,13 @@ class RepositorioPolizasEnMemoria:
             ),
             key=lambda poliza: (poliza.fecha_fin, poliza.poliza_id),
         )
+
+    def listar_que_vencen_el(self, fecha_fin: date) -> list[Poliza]:
+        return [
+            poliza.model_copy(deep=True)
+            for poliza in self._por_id.values()
+            if poliza.fecha_fin == fecha_fin and poliza.estado is EstadoRegistroPoliza.VIGENTE
+        ]
 
 
 class RepositorioEnlacesEnMemoria:
@@ -152,6 +163,13 @@ class RepositorioPolizasPostgres:
                 PolizaDB.fecha_fin <= hasta,
             )
             .order_by(PolizaDB.fecha_fin, PolizaDB.poliza_id)
+        )
+        return [_poliza_a_dominio(registro) for registro in self._db.scalars(sentencia).all()]
+
+    def listar_que_vencen_el(self, fecha_fin: date) -> list[Poliza]:
+        sentencia = select(PolizaDB).where(
+            PolizaDB.fecha_fin == fecha_fin,
+            PolizaDB.estado == EstadoRegistroPoliza.VIGENTE.value,
         )
         return [_poliza_a_dominio(registro) for registro in self._db.scalars(sentencia).all()]
 

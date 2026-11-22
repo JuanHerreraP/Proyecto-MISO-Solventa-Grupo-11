@@ -12,6 +12,7 @@ from starlette.concurrency import run_in_threadpool
 from app import __version__
 from app.api import (
     asesor,
+    asistencias,
     autenticacion,
     autorizacion_socios,
     billetera,
@@ -26,9 +27,12 @@ from app.api import (
     firmas,
     historial_poliza,
     identidad,
+    notificaciones,
     oauth_socios,
+    operaciones_asistencias,
     pagos,
     perfilamiento,
+    prestadores,
     primas_pendientes,
     pse_simulado,
     renovacion_automatica,
@@ -42,6 +46,7 @@ from app.api import (
 from app.api import (
     auditoria as api_auditoria,
 )
+from app.asistencias import modelos_db as modelos_db_asistencias  # noqa: F401
 from app.desembolsos import modelos_db as modelos_db_desembolsos  # noqa: F401
 from app.firmas import modelos_db as modelos_db_firmas  # noqa: F401
 from app.identidad import (
@@ -57,6 +62,8 @@ from app.infraestructura.database import (
     esperar_base_disponible,
     preparar_esquema_registro,
 )
+from app.notificaciones import modelos_db as modelos_db_notificaciones  # noqa: F401
+from app.notificaciones.composicion import enviador_push
 from app.pagos import modelos_db as modelos_db_pagos  # noqa: F401
 from app.polizas import modelos_db as modelos_db_polizas  # noqa: F401
 from app.siniestros import modelos_db as modelos_db_siniestros  # noqa: F401
@@ -69,6 +76,9 @@ def crear_app() -> FastAPI:
     Base.metadata.create_all(bind=engine)
     preparar_esquema_registro()
     asegurar_manager_bootstrap()
+    # Arma el canal de push al arrancar: si su configuración está mal, se ve en el log desde el
+    # inicio y no en el primer evento que intente notificar.
+    enviador_push()
 
     app = FastAPI(
         title="Solventa API",
@@ -97,9 +107,10 @@ def crear_app() -> FastAPI:
     async def errores_de_validacion(request: Request, error: RequestValidationError):
         detalle = jsonable_encoder(error.errors())
         if request.url.path.startswith(
-            ("/api/v1/pagos", "/api/v1/firmas")
+            ("/api/v1/pagos", "/api/v1/firmas", "/api/v1/notificaciones/dispositivos")
         ) or request.url.path.endswith("/renovacion-automatica"):
-            # Los errores de FastAPI devuelven el valor recibido: un PAN o un código OTP.
+            # Los errores de FastAPI devuelven el valor recibido: un PAN, un código OTP o el
+            # token de FCM de un teléfono.
             detalle = [
                 {campo: valor for campo, valor in e.items() if campo not in {"input", "ctx"}}
                 for e in detalle
@@ -159,6 +170,9 @@ def crear_app() -> FastAPI:
     app.include_router(pse_simulado.router)
     app.include_router(siniestros.router)
     app.include_router(evidencias_siniestro.router)
+    app.include_router(asistencias.router)
+    app.include_router(prestadores.router)
+    app.include_router(operaciones_asistencias.router)
     app.include_router(asesor.router)
     app.include_router(desembolsos.router_cliente)
     app.include_router(desembolsos.router_operaciones)
@@ -173,6 +187,8 @@ def crear_app() -> FastAPI:
     app.include_router(renovacion_automatica.router)
     app.include_router(renovacion_automatica.router_operaciones)
     app.include_router(primas_pendientes.router)
+    app.include_router(notificaciones.router)
+    app.include_router(notificaciones.router_interno)
     app.include_router(perfilamiento.router)
     app.include_router(enriquecimiento.router)
     app.include_router(socios.router)

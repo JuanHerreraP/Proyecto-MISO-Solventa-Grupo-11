@@ -30,9 +30,17 @@ object ApiClient {
     fun crearSiniestrosApi(urlBase: String = BuildConfig.API_BASE_URL): SiniestrosApi =
         retrofit(urlBase).create(SiniestrosApi::class.java)
 
+    /** Asistencia en sitio y prestadores cercanos (HU06). */
+    fun crearAsistenciasApi(urlBase: String = BuildConfig.API_BASE_URL): AsistenciasApi =
+        retrofit(urlBase).create(AsistenciasApi::class.java)
+
     /** Gestión de clientes del asesor de ventas (HU20). */
     fun crearAsesorApi(urlBase: String = BuildConfig.API_BASE_URL): AsesorApi =
         retrofit(urlBase).create(AsesorApi::class.java)
+
+    /** Notificaciones del cliente: bandeja, dispositivos de push y preferencia (HU05). */
+    fun crearNotificacionesApi(urlBase: String = BuildConfig.API_BASE_URL): NotificacionesApi =
+        retrofit(urlBase).create(NotificacionesApi::class.java)
 
     private val cliente: OkHttpClient by lazy {
         OkHttpClient.Builder()

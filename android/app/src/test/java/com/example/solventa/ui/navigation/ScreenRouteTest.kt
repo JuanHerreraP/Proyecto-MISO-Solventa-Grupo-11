@@ -110,9 +110,12 @@ class ScreenRouteTest {
                 "payments_screen",
                 "claims_screen?desdeNavbar={desdeNavbar}",
                 "claim_form_screen?desdeNavbar={desdeNavbar}",
+                "notifications_screen",
+                "claim_detail/{siniestroId}",
                 "assisted_claim_form/{clienteId}",
                 "create_advisor_screen",
-                "create_auditor_screen"
+                "create_auditor_screen",
+                "assistance_screen"
             ),
             ScreenRoute.privadas
         )

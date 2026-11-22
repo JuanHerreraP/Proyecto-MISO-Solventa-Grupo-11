@@ -16,7 +16,7 @@ Necesitas:
 
 - **AWS CLI v2** autenticada (`aws sts get-caller-identity` debe responder) con
   permisos de CloudFormation, IAM, ECR, ECS, EC2/VPC/NAT, RDS, Secrets Manager,
-  CloudWatch Logs, API Gateway, S3 y CloudFront.
+  CloudWatch Logs, API Gateway, S3, CloudFront y EventBridge (HU05).
 - **Docker** (sirve el clásico; no hace falta `buildx`).
 - **Node 20+** y **npm** para compilar la web.
 - **Python 3** y **OpenSSL** para generar las llaves.
@@ -92,7 +92,16 @@ echo "$JWT_SECRET_ARN"
 
 La API lee `PAGOS_WEBHOOK_SECRET` (el secreto compartido con la pasarela de pagos) de un
 secreto de AWS. En el workflow **AWS Infra** ese valor sale del secret de GitHub
-`PAGOS_WEBHOOK_SECRET`; a mano se hace así:
+`PAGOS_WEBHOOK_SECRET`; a mano se hace así.
+
+Las notificaciones push (HU05) usan otros dos valores del mismo secreto. Son opcionales, pero las
+dos claves deben existir siempre en el JSON (ECS no inicia la tarea si falta una); vacías, apagan
+la función:
+
+| Clave del secreto | Secret de GitHub | Qué activa |
+|---|---|---|
+| `fcm_credenciales_json` | `FCM_CREDENCIALES_JSON` | El JSON de la cuenta de servicio de Firebase. Con él la API manda push de verdad por FCM; vacío, el push queda simulado (solo log). |
+| `notificaciones_clave_interna` | `NOTIFICACIONES_CLAVE_INTERNA` | Clave (mínimo 32 caracteres) con la que el job diario llama a la API. Con ella el stack programa el aviso de pólizas por vencer; vacía, el endpoint responde 503 y no se programa nada. |
 
 ```bash
 # Un valor aleatorio, o el que entregue la pasarela (mínimo 32 caracteres).
@@ -102,7 +111,12 @@ python3 - <<'PY'
 import json, os
 from pathlib import Path
 p = Path('infra/secrets/app.json')
-p.write_text(json.dumps({'pagos_webhook_secret': os.environ['PAGOS_WEBHOOK_SECRET']}))
+p.write_text(json.dumps({
+    'pagos_webhook_secret': os.environ['PAGOS_WEBHOOK_SECRET'],
+    # HU05: vacíos si no se usan, pero las claves deben existir.
+    'fcm_credenciales_json': os.environ.get('FCM_CREDENCIALES_JSON', ''),
+    'notificaciones_clave_interna': os.environ.get('NOTIFICACIONES_CLAVE_INTERNA', ''),
+}))
 p.chmod(0o600)
 PY
 
@@ -137,6 +151,9 @@ values = {
     'AppSecretsArn': os.environ['APP_SECRETS_ARN'],
     'PostgresEngineVersion': os.environ['POSTGRES_ENGINE_VERSION'],
 }
+# HU05: programa el job diario de avisos (EventBridge) solo si hay clave interna guardada.
+if os.environ.get('NOTIFICACIONES_CLAVE_INTERNA'):
+    values['AvisosVencimientoActivos'] = 'true'
 p = Path('infra/secrets/parameters.json')
 p.write_text(json.dumps([{'ParameterKey': k, 'ParameterValue': v} for k, v in values.items()]))
 p.chmod(0o600)

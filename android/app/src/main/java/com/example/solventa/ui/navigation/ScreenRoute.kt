@@ -82,6 +82,16 @@ sealed class ScreenRoute(val route: String) {
             if (desdeNavbar) "claim_form_screen?desdeNavbar=true" else "claim_form_screen"
     }
 
+    /** Bandeja de notificaciones (HU05). */
+    object Notifications : ScreenRoute("notifications_screen")
+
+    /** Detalle de un siniestro, al que llevan la lista y las notificaciones (HU05). */
+    object ClaimDetail : ScreenRoute("claim_detail/{siniestroId}") {
+        const val ARGUMENTO = "siniestroId"
+        fun ruta(siniestroId: String) =
+            "claim_detail/${URLEncoder.encode(siniestroId, "UTF-8")}"
+    }
+
     /** Registro asistido de un asesor para un cliente asociado (HU20). */
     object AssistedClaimForm : ScreenRoute("assisted_claim_form/{clienteId}") {
         const val ARGUMENTO = "clienteId"
@@ -94,6 +104,9 @@ sealed class ScreenRoute(val route: String) {
 
     /** Alta de un analista de cumplimiento por un manager (HU25). */
     object CreateAuditor : ScreenRoute("create_auditor_screen")
+
+    /** Asistencia en sitio: prestadores cercanos y solicitudes (HU06). */
+    object Assistance : ScreenRoute("assistance_screen")
 
     companion object {
         /** Rutas que solo se pueden ver con una sesión activa. */
@@ -117,9 +130,12 @@ sealed class ScreenRoute(val route: String) {
                 Payments.route,
                 Claims.route,
                 ClaimForm.route,
+                Notifications.route,
+                ClaimDetail.route,
                 AssistedClaimForm.route,
                 CreateAdvisor.route,
-                CreateAuditor.route
+                CreateAuditor.route,
+                Assistance.route
             )
     }
 }
