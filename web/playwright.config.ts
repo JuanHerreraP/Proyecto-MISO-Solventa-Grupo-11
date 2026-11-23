@@ -1,11 +1,15 @@
 import { defineConfig, devices } from "@playwright/test";
+import { existsSync } from "node:fs";
 import process from "node:process";
 
+if (existsSync(".env.e2e.local")) process.loadEnvFile(".env.e2e.local");
+
 const externalBaseUrl = process.env.E2E_BASE_URL;
-const baseURL = externalBaseUrl ?? "http://127.0.0.1:5173";
+const baseURL = externalBaseUrl ?? "http://localhost:5173";
 
 export default defineConfig({
   testDir: "./e2e",
+  timeout: 60_000,
   fullyParallel: true,
   forbidOnly: Boolean(process.env.CI),
   retries: process.env.CI ? 2 : 0,
