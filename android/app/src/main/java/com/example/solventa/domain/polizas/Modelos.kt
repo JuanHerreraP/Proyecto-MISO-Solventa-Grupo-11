@@ -113,6 +113,12 @@ data class MovimientoPoliza(
     val cambios: List<CambioMovimiento>
 )
 
+/** Movimiento para Inicio, asociado al ramo de la póliza que lo originó. */
+data class MovimientoReciente(
+    val movimiento: MovimientoPoliza,
+    val nombreRamo: String
+)
+
 /**
  * Historial consolidado de movimientos de una póliza (HU25): emisión, pago de prima inicial,
  * endosos, desembolsos y demás. El backend ya ordena los movimientos del más reciente al más antiguo.

@@ -348,6 +348,9 @@ fun NavGraph(
             } else {
                 val estadoBilletera = billetera?.estado?.collectAsState()?.value
                 LaunchedEffect(billetera) { billetera?.cargar() }
+                LaunchedEffect(estadoBilletera?.billetera?.polizas) {
+                    billetera?.cargarMovimientosRecientes()
+                }
 
                 // Expiración: al vencer el access token se cierra la sesión en memoria.
                 LaunchedEffect(sesion.expiraEnMs) {
@@ -433,12 +436,20 @@ fun NavGraph(
                             }
                         }
                     },
-                    onNavbarPerfil = {
+                    onVerPerfil = {
                         navController.navigate(ScreenRoute.Profile.route) {
                             launchSingleTop = true
                         }
                     },
                     cantidadPolizasActivas = estadoBilletera?.billetera?.totalVigentes,
+                    movimientosRecientes = estadoBilletera?.movimientosRecientes.orEmpty(),
+                    cargandoMovimientosRecientes =
+                        estadoBilletera?.cargandoMovimientosRecientes == true,
+                    onVerHistorialPoliza = { polizaId ->
+                        navController.navigate(ScreenRoute.PolicyHistory.ruta(polizaId)) {
+                            launchSingleTop = true
+                        }
+                    },
                     sinConexion = estadoBilletera?.sinConexion == true,
                     ultimaSincronizacionMs = estadoBilletera?.ultimaSincronizacionMs,
                     onCrearAsesor = if (sesion.perfil.rol == "SERVICIO_INTERNO" && asesor != null) {
@@ -520,6 +531,22 @@ fun NavGraph(
                     onSiniestros = siniestros?.let {
                         {
                             navController.navigate(ScreenRoute.Claims.ruta(desdeNavbar = true)) {
+                                popUpTo(ScreenRoute.Home.route)
+                                launchSingleTop = true
+                            }
+                        }
+                    },
+                    onCotizaciones = cotizaciones?.let {
+                        {
+                            navController.navigate(ScreenRoute.Quotes.route) {
+                                popUpTo(ScreenRoute.Home.route)
+                                launchSingleTop = true
+                            }
+                        }
+                    },
+                    onPagos = pagos?.let {
+                        {
+                            navController.navigate(ScreenRoute.Payments.route) {
                                 popUpTo(ScreenRoute.Home.route)
                                 launchSingleTop = true
                             }
@@ -643,6 +670,16 @@ fun NavGraph(
                         onVolver = { navController.popBackStack() },
                         onCrearCotizacion = {
                             navController.navigate(ScreenRoute.NewQuote.route) { launchSingleTop = true }
+                        },
+                        onInicio = { navController.popBackStack(ScreenRoute.Home.route, false) },
+                        onPolizas = billetera?.let {
+                            { navController.navigate(ScreenRoute.Wallet.ruta(desdeNavbar = true)) { launchSingleTop = true } }
+                        },
+                        onSiniestros = siniestros?.let {
+                            { navController.navigate(ScreenRoute.Claims.ruta(desdeNavbar = true)) { launchSingleTop = true } }
+                        },
+                        onPagos = pagos?.let {
+                            { navController.navigate(ScreenRoute.Payments.route) { launchSingleTop = true } }
                         }
                     )
                 }
@@ -1158,8 +1195,14 @@ fun NavGraph(
                         onCerrarComprobante = { pagos.cerrarComprobante() },
                         onVolver = { navController.popBackStack() },
                         onInicio = { navController.popBackStack(ScreenRoute.Home.route, false) },
+                        onCotizaciones = cotizaciones?.let {
+                            { navController.navigate(ScreenRoute.Quotes.route) { launchSingleTop = true } }
+                        },
                         onVerBilletera = billetera?.let {
                             { navController.navigate(ScreenRoute.Wallet.ruta()) { launchSingleTop = true } }
+                        },
+                        onVerSiniestros = siniestros?.let {
+                            { navController.navigate(ScreenRoute.Claims.ruta(desdeNavbar = true)) { launchSingleTop = true } }
                         }
                     )
                 }
@@ -1564,8 +1607,14 @@ private fun PantallaConNavegacion(
                     } else {
                         null
                     },
-                    onPerfil = {
-                        navController.navigate(ScreenRoute.Profile.route) {
+                    onCotizaciones = {
+                        navController.navigate(ScreenRoute.Quotes.route) {
+                            popUpTo(ScreenRoute.Home.route)
+                            launchSingleTop = true
+                        }
+                    },
+                    onPagos = {
+                        navController.navigate(ScreenRoute.Payments.route) {
                             popUpTo(ScreenRoute.Home.route)
                             launchSingleTop = true
                         }

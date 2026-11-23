@@ -16,14 +16,12 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.outlined.AccountBalance
 import androidx.compose.material.icons.outlined.CreditCard
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -46,6 +44,7 @@ import com.example.solventa.domain.pagos.PrimaPendiente
 import com.example.solventa.domain.pagos.TipoPrimaPendiente
 import com.example.solventa.domain.polizas.Formatos
 import com.example.solventa.ui.components.SolventaBottomNavigation
+import com.example.solventa.ui.components.SeccionNavegacion
 import com.example.solventa.ui.components.SolventaPrimaryButton
 import com.example.solventa.ui.theme.Atencion
 import com.example.solventa.ui.theme.Navegacion
@@ -66,7 +65,9 @@ fun PaymentsScreen(
     onVolver: () -> Unit,
     modifier: Modifier = Modifier,
     onInicio: () -> Unit = {},
+    onCotizaciones: (() -> Unit)? = null,
     onVerBilletera: (() -> Unit)? = null,
+    onVerSiniestros: (() -> Unit)? = null,
     pendientes: List<PrimaPendiente> = emptyList(),
     errorPendientes: String? = null,
     onPagar: (PrimaPendiente) -> Unit = {},
@@ -80,27 +81,18 @@ fun PaymentsScreen(
         modifier = modifier.fillMaxSize(),
         containerColor = MaterialTheme.colorScheme.surface,
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
-        bottomBar = { SolventaBottomNavigation(onInicio = onInicio, onPolizas = onVerBilletera) }
+        bottomBar = {
+            SolventaBottomNavigation(
+                onInicio = onInicio,
+                onCotizaciones = onCotizaciones,
+                onPolizas = onVerBilletera,
+                onSiniestros = onVerSiniestros,
+                seleccionada = SeccionNavegacion.PAGOS
+            )
+        }
     ) { paddingValues ->
         Column(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                IconButton(onClick = onVolver) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "Volver",
-                        tint = MaterialTheme.colorScheme.onSurface
-                    )
-                }
-                Text(
-                    text = "Pagos",
-                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
-                    color = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.weight(1f)
-                )
-            }
+            Encabezado(titulo = "Pagos", onVolver = onVolver)
             val sinNada = pagos.isEmpty() && pendientes.isEmpty()
             when {
                 sinNada && cargando -> EstadoPagoCentrado {

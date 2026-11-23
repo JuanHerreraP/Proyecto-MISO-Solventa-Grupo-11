@@ -2,10 +2,11 @@ package com.example.solventa.ui.components
 
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Description
 import androidx.compose.material.icons.outlined.Home
-import androidx.compose.material.icons.outlined.PersonOutline
+import androidx.compose.material.icons.outlined.Payments
 import androidx.compose.material.icons.outlined.Policy
+import androidx.compose.material.icons.outlined.RequestQuote
+import androidx.compose.material.icons.outlined.WarningAmber
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
@@ -18,18 +19,20 @@ import com.example.solventa.ui.theme.Noche
 
 enum class SeccionNavegacion {
     INICIO,
+    COTIZACIONES,
     POLIZAS,
     SINIESTROS,
-    PERFIL
+    PAGOS
 }
 
 @Composable
 fun SolventaBottomNavigation(
     onInicio: () -> Unit = {},
+    onCotizaciones: (() -> Unit)? = null,
     onPolizas: (() -> Unit)? = null,
     onSiniestros: (() -> Unit)? = null,
-    onPerfil: (() -> Unit)? = null,
-    seleccionada: SeccionNavegacion = SeccionNavegacion.INICIO
+    onPagos: (() -> Unit)? = null,
+    seleccionada: SeccionNavegacion? = SeccionNavegacion.INICIO
 ) {
     val colores = NavigationBarItemDefaults.colors(
         selectedIconColor = Navegacion,
@@ -53,6 +56,14 @@ fun SolventaBottomNavigation(
             colors = colores
         )
         NavigationBarItem(
+            selected = seleccionada == SeccionNavegacion.COTIZACIONES,
+            onClick = { onCotizaciones?.invoke() },
+            enabled = onCotizaciones != null || seleccionada == SeccionNavegacion.COTIZACIONES,
+            icon = { Icon(Icons.Outlined.RequestQuote, contentDescription = null) },
+            label = { Text("Cotizaciones") },
+            colors = colores
+        )
+        NavigationBarItem(
             selected = seleccionada == SeccionNavegacion.POLIZAS,
             onClick = { onPolizas?.invoke() },
             enabled = onPolizas != null || seleccionada == SeccionNavegacion.POLIZAS,
@@ -64,16 +75,16 @@ fun SolventaBottomNavigation(
             selected = seleccionada == SeccionNavegacion.SINIESTROS,
             onClick = { onSiniestros?.invoke() },
             enabled = onSiniestros != null || seleccionada == SeccionNavegacion.SINIESTROS,
-            icon = { Icon(Icons.Outlined.Description, contentDescription = null) },
+            icon = { Icon(Icons.Outlined.WarningAmber, contentDescription = null) },
             label = { Text("Siniestros") },
             colors = colores
         )
         NavigationBarItem(
-            selected = seleccionada == SeccionNavegacion.PERFIL,
-            onClick = { onPerfil?.invoke() },
-            enabled = onPerfil != null || seleccionada == SeccionNavegacion.PERFIL,
-            icon = { Icon(Icons.Outlined.PersonOutline, contentDescription = null) },
-            label = { Text("Perfil") },
+            selected = seleccionada == SeccionNavegacion.PAGOS,
+            onClick = { onPagos?.invoke() },
+            enabled = onPagos != null || seleccionada == SeccionNavegacion.PAGOS,
+            icon = { Icon(Icons.Outlined.Payments, contentDescription = null) },
+            label = { Text("Pagos") },
             colors = colores
         )
     }

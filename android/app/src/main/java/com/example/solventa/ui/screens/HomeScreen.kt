@@ -1,6 +1,5 @@
 package com.example.solventa.ui.screens
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -21,18 +20,16 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.automirrored.outlined.ManageSearch
 import androidx.compose.material.icons.outlined.NotificationsNone
-import androidx.compose.material.icons.outlined.Payments
+import androidx.compose.material.icons.outlined.PersonOutline
 import androidx.compose.material.icons.outlined.PersonAddAlt
-import androidx.compose.material.icons.outlined.RequestQuote
 import androidx.compose.material.icons.outlined.Shield
 import androidx.compose.material.icons.outlined.SupportAgent
-import androidx.compose.material.icons.outlined.VerifiedUser
-import androidx.compose.material.icons.outlined.WarningAmber
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -42,7 +39,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
@@ -51,6 +47,10 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.solventa.R
 import com.example.solventa.domain.auth.Perfil
+import com.example.solventa.domain.polizas.Formatos
+import com.example.solventa.domain.polizas.MovimientoReciente
+import com.example.solventa.domain.polizas.NaturalezaMonto
+import com.example.solventa.domain.polizas.TipoMovimiento
 import com.example.solventa.ui.components.SolventaNoticePill
 import com.example.solventa.ui.components.SolventaBottomNavigation
 import com.example.solventa.ui.theme.Navegacion
@@ -78,9 +78,12 @@ fun HomeScreen(
     onVerAsistencia: (() -> Unit)? = null,
     onNavbarPolizas: (() -> Unit)? = null,
     onNavbarSiniestros: (() -> Unit)? = null,
-    onNavbarPerfil: (() -> Unit)? = null,
+    onVerPerfil: (() -> Unit)? = null,
     onCotizarSeguro: () -> Unit = {},
     cantidadPolizasActivas: Int? = null,
+    movimientosRecientes: List<MovimientoReciente> = emptyList(),
+    cargandoMovimientosRecientes: Boolean = false,
+    onVerHistorialPoliza: (String) -> Unit = {},
     onCrearAsesor: (() -> Unit)? = null,
     onCrearAnalista: (() -> Unit)? = null,
     sinConexion: Boolean = false,
@@ -109,9 +112,10 @@ fun HomeScreen(
         contentWindowInsets = WindowInsets(0, 0, 0, 0),
         bottomBar = {
             SolventaBottomNavigation(
+                onCotizaciones = onVerCotizaciones,
                 onPolizas = onNavbarPolizas ?: onVerBilletera,
                 onSiniestros = onNavbarSiniestros ?: onVerSiniestros,
-                onPerfil = onNavbarPerfil
+                onPagos = onVerPagos
             )
         }
     ) { paddingValues ->
@@ -123,7 +127,7 @@ fun HomeScreen(
                 .padding(horizontal = 20.dp, vertical = 16.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
-            EncabezadoInicio(notificacionesSinLeer, onVerNotificaciones)
+            EncabezadoInicio(notificacionesSinLeer, onVerNotificaciones, onVerPerfil)
 
             Text(
                 text = "Hola, ${perfil.nombre}",
@@ -144,46 +148,15 @@ fun HomeScreen(
                 ultimaSincronizacionMs = ultimaSincronizacionMs
             )
 
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                AccionInicio(
-                    titulo = "Ver pólizas",
-                    icono = Icons.Outlined.VerifiedUser,
-                    onClick = onVerBilletera,
-                    modifier = Modifier.weight(1f)
-                )
-                AccionInicio(
-                    titulo = "Cotizaciones",
-                    icono = Icons.Outlined.RequestQuote,
-                    onClick = onVerCotizaciones,
-                    modifier = Modifier.weight(1f)
-                )
-            }
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                AccionInicio(
-                    titulo = "Mis siniestros",
-                    icono = Icons.Outlined.WarningAmber,
-                    onClick = onVerSiniestros,
-                    modifier = Modifier.weight(1f)
-                )
-                AccionInicio(
-                    titulo = "Pagos",
-                    icono = Icons.Outlined.Payments,
-                    onClick = onVerPagos,
-                    modifier = Modifier.weight(1f)
-                )
+            if (onVerAsistencia != null) {
+                BotonAsistencia(onClick = onVerAsistencia)
             }
 
-            if (onVerAsistencia != null) {
-                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    AccionInicio(
-                        titulo = "Asistencia en sitio",
-                        icono = Icons.Outlined.SupportAgent,
-                        onClick = onVerAsistencia,
-                        modifier = Modifier.weight(1f)
-                    )
-                    Spacer(modifier = Modifier.weight(1f))
-                }
-            }
+            HistorialReciente(
+                movimientos = movimientosRecientes,
+                cargando = cargandoMovimientosRecientes,
+                onVerHistorialPoliza = onVerHistorialPoliza
+            )
 
             if (onCrearAsesor != null) {
                 Surface(
@@ -249,7 +222,11 @@ fun HomeScreen(
 }
 
 @Composable
-private fun EncabezadoInicio(sinLeer: Int, onVerNotificaciones: (() -> Unit)?) {
+private fun EncabezadoInicio(
+    sinLeer: Int,
+    onVerNotificaciones: (() -> Unit)?,
+    onVerPerfil: (() -> Unit)?
+) {
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -268,21 +245,30 @@ private fun EncabezadoInicio(sinLeer: Int, onVerNotificaciones: (() -> Unit)?) {
                 color = MaterialTheme.colorScheme.onSurface
             )
         }
-        IconButton(onClick = { onVerNotificaciones?.invoke() }, enabled = onVerNotificaciones != null) {
-            BadgedBox(
-                badge = {
-                    if (sinLeer > 0) {
-                        Badge { Text(if (sinLeer > 99) "99+" else sinLeer.toString()) }
+        Row {
+            IconButton(onClick = { onVerNotificaciones?.invoke() }, enabled = onVerNotificaciones != null) {
+                BadgedBox(
+                    badge = {
+                        if (sinLeer > 0) {
+                            Badge { Text(if (sinLeer > 99) "99+" else sinLeer.toString()) }
+                        }
                     }
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.NotificationsNone,
+                        contentDescription = if (sinLeer > 0) {
+                            "Notificaciones, $sinLeer sin leer"
+                        } else {
+                            "Notificaciones"
+                        },
+                        tint = MaterialTheme.colorScheme.onSurface
+                    )
                 }
-            ) {
+            }
+            IconButton(onClick = { onVerPerfil?.invoke() }, enabled = onVerPerfil != null) {
                 Icon(
-                    imageVector = Icons.Outlined.NotificationsNone,
-                    contentDescription = if (sinLeer > 0) {
-                        "Notificaciones, $sinLeer sin leer"
-                    } else {
-                        "Notificaciones"
-                    },
+                    imageVector = Icons.Outlined.PersonOutline,
+                    contentDescription = "Perfil",
                     tint = MaterialTheme.colorScheme.onSurface
                 )
             }
@@ -363,43 +349,150 @@ private fun textoPolizas(cantidad: Int?): String = when (cantidad) {
 }
 
 @Composable
-private fun AccionInicio(
-    titulo: String,
-    icono: ImageVector,
-    modifier: Modifier = Modifier,
-    onClick: (() -> Unit)? = null
+private fun HistorialReciente(
+    movimientos: List<MovimientoReciente>,
+    cargando: Boolean,
+    onVerHistorialPoliza: (String) -> Unit
 ) {
     Surface(
-        modifier = modifier
-            .height(108.dp)
-            .then(
-                if (onClick == null) Modifier else Modifier.clickable(
-                    role = Role.Button,
-                    onClick = onClick
-                )
-            ),
         shape = RoundedCornerShape(18.dp),
-        color = MaterialTheme.colorScheme.surface,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f))
+        color = MaterialTheme.colorScheme.surfaceContainer,
+        modifier = Modifier.fillMaxWidth()
     ) {
         Column(
-            modifier = Modifier.padding(14.dp),
-            verticalArrangement = Arrangement.SpaceBetween
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Surface(shape = RoundedCornerShape(12.dp), color = Navegacion.copy(alpha = 0.1f)) {
+            Text(
+                text = "Historial reciente",
+                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            when {
+                cargando -> Text(
+                    text = "Cargando movimientos…",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.65f)
+                )
+                movimientos.isEmpty() -> Text(
+                    text = "Aún no tienes movimientos registrados.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.65f)
+                )
+                else -> movimientos.forEachIndexed { indice, reciente ->
+                    if (indice > 0) HorizontalDivider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f))
+                    FilaMovimientoReciente(reciente, onVerHistorialPoliza)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun FilaMovimientoReciente(
+    reciente: MovimientoReciente,
+    onVerHistorialPoliza: (String) -> Unit
+) {
+    val movimiento = reciente.movimiento
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(role = Role.Button, onClick = { onVerHistorialPoliza(movimiento.polizaId) })
+            .padding(vertical = 4.dp),
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+        verticalAlignment = Alignment.Top
+    ) {
+        Text(
+            text = Formatos.fecha(movimiento.fecha),
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.65f),
+            modifier = Modifier.width(72.dp)
+        )
+        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text(
+                text = movimiento.tipo.tituloCorto(),
+                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Text(
+                text = reciente.nombreRamo,
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.65f)
+            )
+        }
+        Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text(
+                text = movimiento.monto?.let {
+                    montoMovimiento(it, movimiento.moneda, movimiento.naturalezaMonto)
+                } ?: "—",
+                style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            movimiento.estado?.let { EstadoMovimiento(it) }
+        }
+    }
+}
+
+@Composable
+private fun EstadoMovimiento(estado: String) {
+    Surface(shape = RoundedCornerShape(50), color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f)) {
+        Text(
+            text = estado,
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.65f),
+            modifier = Modifier.padding(horizontal = 7.dp, vertical = 3.dp)
+        )
+    }
+}
+
+@Composable
+private fun BotonAsistencia(onClick: () -> Unit) {
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(72.dp)
+            .clickable(role = Role.Button, onClick = onClick),
+        shape = RoundedCornerShape(18.dp),
+        color = Navegacion.copy(alpha = 0.1f)
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 16.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Surface(shape = RoundedCornerShape(12.dp), color = Navegacion.copy(alpha = 0.12f)) {
                 Icon(
-                    imageVector = icono,
+                    imageVector = Icons.Outlined.SupportAgent,
                     contentDescription = null,
                     tint = Navegacion,
                     modifier = Modifier.padding(10.dp).size(22.dp)
                 )
             }
             Text(
-                text = titulo,
+                text = "Asistencia en sitio",
                 style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
                 color = MaterialTheme.colorScheme.onSurface
             )
         }
+    }
+}
+
+private fun TipoMovimiento.tituloCorto(): String = when (this) {
+    TipoMovimiento.EMISION -> "Emisión de póliza"
+    TipoMovimiento.PAGO_PRIMA_INICIAL -> "Pago de prima inicial"
+    TipoMovimiento.ENDOSO -> "Modificación contractual"
+    TipoMovimiento.RENOVACION -> "Renovación"
+    TipoMovimiento.CANCELACION -> "Cancelación"
+    TipoMovimiento.DESEMBOLSO_INDEMNIZACION -> "Pago de indemnización"
+    TipoMovimiento.REEMBOLSO -> "Reembolso"
+}
+
+private fun montoMovimiento(monto: String, moneda: String?, naturaleza: NaturalezaMonto?): String {
+    val formateado = Formatos.dinero(monto, moneda ?: "COP")
+    return when (naturaleza) {
+        NaturalezaMonto.COBRO -> "−$formateado"
+        NaturalezaMonto.REEMBOLSO, NaturalezaMonto.INDEMNIZACION -> "+$formateado"
+        else -> formateado
     }
 }
 

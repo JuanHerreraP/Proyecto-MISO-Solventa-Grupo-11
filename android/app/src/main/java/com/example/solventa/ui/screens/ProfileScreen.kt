@@ -49,7 +49,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.example.solventa.domain.auth.Perfil
-import com.example.solventa.ui.components.SeccionNavegacion
 import com.example.solventa.ui.components.SolventaBottomNavigation
 import com.example.solventa.ui.theme.Avance
 import com.example.solventa.ui.theme.Navegacion
@@ -65,6 +64,8 @@ fun ProfileScreen(
     onInicio: () -> Unit,
     onPolizas: (() -> Unit)?,
     onSiniestros: (() -> Unit)?,
+    onCotizaciones: (() -> Unit)? = null,
+    onPagos: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
     notificaciones: PreferenciasNotificacionesUi? = null,
     onCambiarPush: (Boolean) -> Unit = {},
@@ -80,10 +81,11 @@ fun ProfileScreen(
         bottomBar = {
             SolventaBottomNavigation(
                 onInicio = onInicio,
+                onCotizaciones = onCotizaciones,
                 onPolizas = onPolizas,
                 onSiniestros = onSiniestros,
-                onPerfil = {},
-                seleccionada = SeccionNavegacion.PERFIL
+                onPagos = onPagos,
+                seleccionada = null
             )
         }
     ) { padding ->
@@ -91,64 +93,70 @@ fun ProfileScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 20.dp, vertical = 18.dp),
+                .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             val detalle = seccion
             if (detalle != null) {
-                DetallePerfil(
-                    seccion = detalle,
-                    perfil = perfil,
-                    biometriaActivada = biometriaActivada,
-                    sinConexion = sinConexion,
-                    notificaciones = notificaciones,
-                    onCambiarPush = onCambiarPush,
-                    onSolicitarPermisoNotificaciones = onSolicitarPermisoNotificaciones,
-                    onAbrirAjustesNotificaciones = onAbrirAjustesNotificaciones,
-                    onVolver = { seccion = null }
-                )
+                Column(modifier = Modifier.padding(horizontal = 20.dp)) {
+                    DetallePerfil(
+                        seccion = detalle,
+                        perfil = perfil,
+                        biometriaActivada = biometriaActivada,
+                        sinConexion = sinConexion,
+                        notificaciones = notificaciones,
+                        onCambiarPush = onCambiarPush,
+                        onSolicitarPermisoNotificaciones = onSolicitarPermisoNotificaciones,
+                        onAbrirAjustesNotificaciones = onAbrirAjustesNotificaciones,
+                        onVolver = { seccion = null }
+                    )
+                }
                 return@Column
             }
 
-            Text("Perfil", style = MaterialTheme.typography.titleLarge)
-            CabeceraPerfil(perfil)
-            Text(
-                "MI CUENTA",
-                style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f)
-            )
-
-            OpcionPerfil(
-                "Datos personales",
-                "Documento, correo y celular",
-                Icons.Outlined.PersonOutline
-            ) { seccion = SeccionPerfil.CUENTA }
-            OpcionPerfil(
-                "Seguridad y privacidad",
-                textoSeguridad(biometriaActivada, sinConexion),
-                Icons.Outlined.Shield
-            ) { seccion = SeccionPerfil.SEGURIDAD }
-            OpcionPerfil(
-                "Idioma y moneda",
-                "Español (Colombia) · Peso colombiano (COP)",
-                Icons.Outlined.Language
-            ) { seccion = SeccionPerfil.IDIOMA }
-            OpcionPerfil(
-                "Notificaciones",
-                textoNotificaciones(notificaciones),
-                Icons.Outlined.NotificationsNone,
-                habilitada = notificaciones != null
-            ) { seccion = SeccionPerfil.NOTIFICACIONES }
-
-            TextButton(
-                onClick = onCerrarSesion,
-                enabled = !cerrandoSesion,
-                modifier = Modifier.fillMaxWidth()
+            Encabezado(titulo = "Perfil", onVolver = onInicio)
+            Column(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
-                Icon(Icons.AutoMirrored.Outlined.Logout, contentDescription = null)
-                Spacer(Modifier.width(8.dp))
-                Text(if (cerrandoSesion) "Cerrando sesión…" else "Cerrar sesión")
+                CabeceraPerfil(perfil)
+                Text(
+                    "MI CUENTA",
+                    style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f)
+                )
+
+                OpcionPerfil(
+                    "Datos personales",
+                    "Documento, correo y celular",
+                    Icons.Outlined.PersonOutline
+                ) { seccion = SeccionPerfil.CUENTA }
+                OpcionPerfil(
+                    "Seguridad y privacidad",
+                    textoSeguridad(biometriaActivada, sinConexion),
+                    Icons.Outlined.Shield
+                ) { seccion = SeccionPerfil.SEGURIDAD }
+                OpcionPerfil(
+                    "Idioma y moneda",
+                    "Español (Colombia) · Peso colombiano (COP)",
+                    Icons.Outlined.Language
+                ) { seccion = SeccionPerfil.IDIOMA }
+                OpcionPerfil(
+                    "Notificaciones",
+                    textoNotificaciones(notificaciones),
+                    Icons.Outlined.NotificationsNone,
+                    habilitada = notificaciones != null
+                ) { seccion = SeccionPerfil.NOTIFICACIONES }
+
+                TextButton(
+                    onClick = onCerrarSesion,
+                    enabled = !cerrandoSesion,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(Icons.AutoMirrored.Outlined.Logout, contentDescription = null)
+                    Spacer(Modifier.width(8.dp))
+                    Text(if (cerrandoSesion) "Cerrando sesión…" else "Cerrar sesión")
+                }
             }
         }
     }
