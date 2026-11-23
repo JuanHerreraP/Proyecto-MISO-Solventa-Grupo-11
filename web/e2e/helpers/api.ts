@@ -32,6 +32,10 @@ interface SignatureResponse {
   poliza_id: string | null;
 }
 
+interface ClaimResponse {
+  siniestro_id: string;
+}
+
 async function body(response: APIResponse): Promise<string> {
   return response.text().catch(() => "<sin cuerpo>");
 }
@@ -184,6 +188,23 @@ export class SolventaApi {
     const signature = await signatureResponse.json() as SignatureResponse;
     if (!signature.poliza_id) throw new Error("La firma terminó sin emitir una póliza.");
     return { policyId: signature.poliza_id, quoteId };
+  }
+
+  async registerClaim(client: TestUser, policyId: string): Promise<string> {
+    const token = await this.login(client);
+    const response = await this.request.post(`${API_URL}/api/v1/siniestros`, {
+      headers: { ...this.headers(token), "Idempotency-Key": randomUUID() },
+      data: {
+        poliza_id: policyId,
+        fecha_evento: futureDate(0),
+        hora_evento: "10:30:00",
+        lugar: "Aeropuerto Internacional El Dorado",
+        descripcion: "Equipaje extraviado durante el trayecto contratado.",
+        estimacion_danos: 850000,
+      },
+    });
+    await expectStatus(response, 201, "Registrar siniestro");
+    return ((await response.json()) as ClaimResponse).siniestro_id;
   }
 
   travelRisk(startInDays = 30, endInDays = 40): Record<string, unknown> {

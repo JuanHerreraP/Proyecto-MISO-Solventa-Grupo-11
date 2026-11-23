@@ -10,7 +10,7 @@ const evidence = process.env.E2E_EVIDENCE === "1";
 
 export default defineConfig({
   testDir: "./e2e",
-  outputDir: evidence ? "./e2e/evidence/artifacts" : "./test-results",
+  outputDir: evidence ? "./e2e/evidencias/artifacts" : "./test-results",
   timeout: 60_000,
   fullyParallel: true,
   forbidOnly: Boolean(process.env.CI),
@@ -19,7 +19,7 @@ export default defineConfig({
   reporter: process.env.CI
     ? [["github"], ["html", { open: "never" }]]
     : evidence
-      ? [["list"], ["html", { open: "never", outputFolder: "./e2e/evidence/report" }]]
+      ? [["list"], ["html", { open: "never", outputFolder: "./e2e/evidencias/report" }]]
       : "list",
   use: {
     baseURL,

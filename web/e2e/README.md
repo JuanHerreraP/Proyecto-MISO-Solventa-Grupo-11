@@ -27,11 +27,11 @@ Para conservar capturas y un reporte HTML versionable incluso cuando las pruebas
 
 ```bash
 E2E_EVIDENCE=1 npm run test:e2e
-npx playwright show-report e2e/evidence/report
+npx playwright show-report e2e/evidencias/report
 ```
 
-Los artefactos quedan en `web/e2e/evidence/artifacts/` y el reporte en
-`web/e2e/evidence/report/`. Estas carpetas se pueden subir al repositorio. Las trazas y videos
+Los artefactos quedan en `web/e2e/evidencias/artifacts/` y el reporte en
+`web/e2e/evidencias/report/`. Estas carpetas se pueden subir al repositorio. Las trazas y videos
 no se generan en este modo porque pueden contener tokens, cookies o cuerpos de solicitudes.
 
 Para probar un despliegue existente sin iniciar Vite:
