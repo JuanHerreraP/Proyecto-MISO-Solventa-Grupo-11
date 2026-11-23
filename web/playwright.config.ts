@@ -6,6 +6,7 @@ if (existsSync(".env.e2e.local")) process.loadEnvFile(".env.e2e.local");
 
 const externalBaseUrl = process.env.E2E_BASE_URL;
 const baseURL = externalBaseUrl ?? "http://localhost:5173";
+const evidence = process.env.E2E_EVIDENCE === "1";
 
 export default defineConfig({
   testDir: "./e2e",
@@ -16,12 +17,14 @@ export default defineConfig({
   workers: process.env.CI ? 1 : undefined,
   reporter: process.env.CI
     ? [["github"], ["html", { open: "never" }]]
-    : "list",
+    : evidence
+      ? [["list"], ["html", { open: "never" }]]
+      : "list",
   use: {
     baseURL,
-    screenshot: "only-on-failure",
-    trace: "on-first-retry",
-    video: "retain-on-failure",
+    screenshot: evidence ? "on" : "only-on-failure",
+    trace: evidence ? "on" : "on-first-retry",
+    video: evidence ? "on" : "retain-on-failure",
   },
   webServer: externalBaseUrl
     ? undefined

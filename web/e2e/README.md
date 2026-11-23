@@ -23,6 +23,15 @@ En local, el código OTP se obtiene del log del proveedor simulado de Docker. En
 pruebas externo puede suministrarse con `E2E_OTP`. Nunca use credenciales ni OTP de producción.
 Playwright carga automáticamente las variables guardadas en `web/.env.e2e.local`.
 
+Para conservar captura, video, traza y reporte HTML incluso cuando las pruebas pasan:
+
+```bash
+E2E_EVIDENCE=1 npm run test:e2e
+npx playwright show-report
+```
+
+Los artefactos quedan en `web/test-results/` y el reporte en `web/playwright-report/`.
+
 Para probar un despliegue existente sin iniciar Vite:
 
 ```bash
