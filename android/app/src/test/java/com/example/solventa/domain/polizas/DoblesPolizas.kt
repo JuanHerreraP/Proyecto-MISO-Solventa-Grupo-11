@@ -146,6 +146,9 @@ class PolizasGatewayFalso : PolizasGateway {
         DocumentoPoliza("poliza.pdf", "%PDF-prueba".toByteArray(), "a".repeat(64))
     )
 
+    /** Respuesta de historial por póliza; si no hay una, se usa [respuestaHistorial]. */
+    val respuestasHistorialPorPoliza = mutableMapOf<String, ResultadoApi<HistorialPoliza>>()
+
     val tokensUsados = mutableListOf<String>()
     val certificadosPedidos = mutableListOf<String>()
     val historialesPedidos = mutableListOf<String>()
@@ -179,7 +182,7 @@ class PolizasGatewayFalso : PolizasGateway {
     ): ResultadoApi<HistorialPoliza> {
         tokensUsados += accessToken
         historialesPedidos += polizaId
-        return respuestaHistorial
+        return respuestasHistorialPorPoliza[polizaId] ?: respuestaHistorial
     }
 
     override suspend fun documento(

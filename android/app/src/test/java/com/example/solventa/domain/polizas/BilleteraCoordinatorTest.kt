@@ -3,6 +3,7 @@ package com.example.solventa.domain.polizas
 import com.example.solventa.domain.auth.ResultadoApi
 import com.example.solventa.domain.auth.RelojFalso
 import com.example.solventa.domain.auth.ejecutar
+import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -565,4 +566,114 @@ class BilleteraCoordinatorTest {
     }
 
     private lateinit var coordinadorLento: BilleteraCoordinator
+
+    // --- Historial reciente de Inicio -----------------------------------------------
+    // cargarMovimientosRecientes lanza consultas con async: se ejecuta con runTest porque
+    // ejecutar() exige que la corrutina termine sin suspenderse.
+
+    private fun historialCon(id: String, vararg fechas: String): HistorialPoliza {
+        val base = historialPoliza(id).movimientos.first()
+        return historialPoliza(id).copy(
+            movimientos = fechas.mapIndexed { i, fecha ->
+                base.copy(movimientoId = "MOV-$id-$i", polizaId = id, fecha = fecha)
+            }
+        )
+    }
+
+    private fun cargarBilleteraConDosPolizas() {
+        gateway.respuestaBilletera = ResultadoApi.Exito(
+            billeteraDe(
+                resumen(id = "POL-1", nombreRamo = "Seguro de viaje"),
+                resumen(id = "POL-2", nombreRamo = "Seguro de vida")
+            )
+        )
+        ejecutar { billetera.cargar() }
+    }
+
+    @Test
+    fun movimientosRecientesSinPolizasQuedaVacioSinConsultarHistoriales() {
+        gateway.respuestaBilletera = ResultadoApi.Exito(billeteraDe())
+        ejecutar { billetera.cargar() }
+
+        runTest { billetera.cargarMovimientosRecientes() }
+
+        assertTrue(billetera.estado.movimientosRecientes.isEmpty())
+        assertFalse(billetera.estado.cargandoMovimientosRecientes)
+        assertTrue(gateway.historialesPedidos.isEmpty())
+    }
+
+    @Test
+    fun movimientosRecientesCombinaLasPolizasOrdenaYTomaLosCincoMasNuevos() {
+        cargarBilleteraConDosPolizas()
+        gateway.respuestasHistorialPorPoliza["POL-1"] = ResultadoApi.Exito(
+            historialCon("POL-1", "2026-10-01T10:00:00Z", "2026-10-03T10:00:00Z", "2026-10-05T10:00:00Z")
+        )
+        gateway.respuestasHistorialPorPoliza["POL-2"] = ResultadoApi.Exito(
+            historialCon("POL-2", "2026-10-02T10:00:00Z", "2026-10-04T10:00:00Z", "2026-10-06T10:00:00Z")
+        )
+
+        runTest { billetera.cargarMovimientosRecientes() }
+
+        val recientes = billetera.estado.movimientosRecientes
+        assertEquals(
+            listOf("2026-10-06", "2026-10-05", "2026-10-04", "2026-10-03", "2026-10-02"),
+            recientes.map { it.movimiento.fecha.take(10) }
+        )
+        assertEquals("Seguro de vida", recientes.first().nombreRamo)
+        assertEquals("Seguro de viaje", recientes[1].nombreRamo)
+        assertEquals(setOf("POL-1", "POL-2"), gateway.historialesPedidos.toSet())
+        assertFalse(billetera.estado.cargandoMovimientosRecientes)
+    }
+
+    @Test
+    fun movimientosRecientesConUnFalloParcialMuestraLosDeLasDemasPolizas() {
+        cargarBilleteraConDosPolizas()
+        gateway.respuestasHistorialPorPoliza["POL-1"] = ResultadoApi.Fallo(500, "ERROR", null)
+        gateway.respuestasHistorialPorPoliza["POL-2"] = ResultadoApi.Exito(
+            historialCon("POL-2", "2026-10-02T10:00:00Z")
+        )
+
+        runTest { billetera.cargarMovimientosRecientes() }
+
+        assertEquals(
+            listOf("POL-2"),
+            billetera.estado.movimientosRecientes.map { it.movimiento.polizaId }
+        )
+        assertEquals(0, sesion.rechazos)
+        assertFalse(billetera.estado.cargandoMovimientosRecientes)
+    }
+
+    @Test
+    fun movimientosRecientesConSesionVencidaCierraLaSesion() {
+        cargarBilleteraConDosPolizas()
+        gateway.respuestasHistorialPorPoliza["POL-2"] = ResultadoApi.Fallo(401, "TOKEN_EXPIRED", null)
+
+        runTest { billetera.cargarMovimientosRecientes() }
+
+        assertEquals(1, sesion.rechazos)
+        assertEquals(MensajesBilletera.SESION_VENCIDA, billetera.estado.mensaje)
+        assertTrue(billetera.estado.movimientosRecientes.isEmpty())
+        assertFalse(billetera.estado.cargandoMovimientosRecientes)
+    }
+
+    @Test
+    fun movimientosRecientesSinConexionUsaLosHistorialesGuardados() {
+        cargarBilleteraConDosPolizas()
+        gateway.respuestasHistorialPorPoliza["POL-1"] = ResultadoApi.Exito(
+            historialCon("POL-1", "2026-10-01T10:00:00Z")
+        )
+        gateway.respuestasHistorialPorPoliza["POL-2"] = ResultadoApi.Exito(
+            historialCon("POL-2", "2026-10-02T10:00:00Z")
+        )
+        runTest { billetera.cargarMovimientosRecientes() }
+
+        gateway.respuestasHistorialPorPoliza["POL-1"] = ResultadoApi.SinConexion
+        gateway.respuestasHistorialPorPoliza["POL-2"] = ResultadoApi.SinConexion
+        runTest { billetera.cargarMovimientosRecientes() }
+
+        assertEquals(
+            listOf("POL-2", "POL-1"),
+            billetera.estado.movimientosRecientes.map { it.movimiento.polizaId }
+        )
+    }
 }

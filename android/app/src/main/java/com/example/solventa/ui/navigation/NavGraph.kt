@@ -755,7 +755,11 @@ fun NavGraph(
                         seleccionada = SeccionNavegacion.POLIZAS,
                         navController = navController,
                         polizasDisponibles = true,
-                        siniestrosDisponibles = siniestros != null
+                        siniestrosDisponibles = siniestros != null,
+
+                        cotizacionesDisponibles = cotizaciones != null,
+
+                        pagosDisponibles = pagos != null
                     ) { pantallaModifier ->
                         WalletScreen(
                             billetera = estadoBilletera.billetera,
@@ -823,7 +827,11 @@ fun NavGraph(
                         seleccionada = SeccionNavegacion.POLIZAS,
                         navController = navController,
                         polizasDisponibles = true,
-                        siniestrosDisponibles = siniestros != null
+                        siniestrosDisponibles = siniestros != null,
+
+                        cotizacionesDisponibles = cotizaciones != null,
+
+                        pagosDisponibles = pagos != null
                     ) { pantallaModifier ->
                         CertificateScreen(
                             certificado = certificado,
@@ -892,7 +900,11 @@ fun NavGraph(
                         seleccionada = SeccionNavegacion.POLIZAS,
                         navController = navController,
                         polizasDisponibles = true,
-                        siniestrosDisponibles = siniestros != null
+                        siniestrosDisponibles = siniestros != null,
+
+                        cotizacionesDisponibles = cotizaciones != null,
+
+                        pagosDisponibles = pagos != null
                     ) { pantallaModifier ->
                         RenewalScreen(
                             propuesta = estadoBilletera.propuestaRenovacion
@@ -950,7 +962,11 @@ fun NavGraph(
                         seleccionada = SeccionNavegacion.POLIZAS,
                         navController = navController,
                         polizasDisponibles = true,
-                        siniestrosDisponibles = siniestros != null
+                        siniestrosDisponibles = siniestros != null,
+
+                        cotizacionesDisponibles = cotizaciones != null,
+
+                        pagosDisponibles = pagos != null
                     ) { pantallaModifier ->
                         PolicyHistoryScreen(
                             numeroPoliza = numeroPoliza,
@@ -1001,7 +1017,11 @@ fun NavGraph(
                         seleccionada = SeccionNavegacion.POLIZAS,
                         navController = navController,
                         polizasDisponibles = true,
-                        siniestrosDisponibles = siniestros != null
+                        siniestrosDisponibles = siniestros != null,
+
+                        cotizacionesDisponibles = cotizaciones != null,
+
+                        pagosDisponibles = pagos != null
                     ) { pantallaModifier ->
                         if (estadoBilletera.cancelacionRealizada?.polizaId == polizaId) {
                             CancelSuccessScreen(
@@ -1229,7 +1249,11 @@ fun NavGraph(
                         seleccionada = SeccionNavegacion.SINIESTROS,
                         navController = navController,
                         polizasDisponibles = billetera != null,
-                        siniestrosDisponibles = true
+                        siniestrosDisponibles = true,
+
+                        cotizacionesDisponibles = cotizaciones != null,
+
+                        pagosDisponibles = pagos != null
                     ) { pantallaModifier ->
                         ClaimDetailScreen(
                             siniestro = estadoSiniestros.siniestros?.siniestros
@@ -1269,7 +1293,11 @@ fun NavGraph(
                         seleccionada = SeccionNavegacion.SINIESTROS,
                         navController = navController,
                         polizasDisponibles = billetera != null,
-                        siniestrosDisponibles = true
+                        siniestrosDisponibles = true,
+
+                        cotizacionesDisponibles = cotizaciones != null,
+
+                        pagosDisponibles = pagos != null
                     ) { pantallaModifier ->
                         ClaimsScreen(
                             siniestros = estadoSiniestros.siniestros,
@@ -1352,7 +1380,11 @@ fun NavGraph(
                         seleccionada = SeccionNavegacion.SINIESTROS,
                         navController = navController,
                         polizasDisponibles = billetera != null,
-                        siniestrosDisponibles = true
+                        siniestrosDisponibles = true,
+
+                        cotizacionesDisponibles = cotizaciones != null,
+
+                        pagosDisponibles = pagos != null
                     ) { pantallaModifier ->
                         ClaimFormScreen(
                             polizas = elegibles,
@@ -1576,6 +1608,8 @@ private fun PantallaConNavegacion(
     navController: NavHostController,
     polizasDisponibles: Boolean,
     siniestrosDisponibles: Boolean,
+    cotizacionesDisponibles: Boolean,
+    pagosDisponibles: Boolean,
     contenido: @Composable (Modifier) -> Unit
 ) {
     Scaffold(
@@ -1607,17 +1641,26 @@ private fun PantallaConNavegacion(
                     } else {
                         null
                     },
-                    onCotizaciones = {
-                        navController.navigate(ScreenRoute.Quotes.route) {
-                            popUpTo(ScreenRoute.Home.route)
-                            launchSingleTop = true
+                    // Las rutas de cotizaciones y pagos solo existen si su ViewModel está presente.
+                    onCotizaciones = if (cotizacionesDisponibles) {
+                        {
+                            navController.navigate(ScreenRoute.Quotes.route) {
+                                popUpTo(ScreenRoute.Home.route)
+                                launchSingleTop = true
+                            }
                         }
+                    } else {
+                        null
                     },
-                    onPagos = {
-                        navController.navigate(ScreenRoute.Payments.route) {
-                            popUpTo(ScreenRoute.Home.route)
-                            launchSingleTop = true
+                    onPagos = if (pagosDisponibles) {
+                        {
+                            navController.navigate(ScreenRoute.Payments.route) {
+                                popUpTo(ScreenRoute.Home.route)
+                                launchSingleTop = true
+                            }
                         }
+                    } else {
+                        null
                     },
                     seleccionada = seleccionada
                 )

@@ -2,6 +2,9 @@ package com.example.solventa.domain.polizas
 
 import com.example.solventa.domain.auth.Reloj
 import com.example.solventa.domain.auth.ResultadoApi
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 
 /** Estado que observa la UI de la billetera y del certificado. */
 data class EstadoBilletera(
@@ -303,9 +306,17 @@ class BilleteraCoordinator(
         }
         val inicio = generacion
         estado = estado.copy(cargandoMovimientosRecientes = true)
+        // Las consultas van en paralelo para no sumar la latencia de cada póliza en Inicio;
+        // los resultados se procesan en orden para mantener la escritura de la caché secuencial.
+        val resultados = coroutineScope {
+            polizas.map { poliza ->
+                async { poliza to gateway.historialPoliza(token, poliza.polizaId) }
+            }.awaitAll()
+        }
+        if (inicio != generacion) return
         val movimientos = mutableListOf<MovimientoReciente>()
-        for (poliza in polizas) {
-            when (val resultado = gateway.historialPoliza(token, poliza.polizaId)) {
+        for ((poliza, resultado) in resultados) {
+            when (resultado) {
                 is ResultadoApi.Exito -> {
                     guardarHistorialPoliza(usuario, poliza.polizaId, resultado.valor)
                     movimientos += resultado.valor.movimientos.map {
