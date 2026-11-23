@@ -41,6 +41,18 @@
         "false"
       ],
       "Description": "HU05: programa el job diario que avisa las pólizas por vencer. Solo con 'true' y con la clave interna (key notificaciones_clave_interna de AppSecretsArn) ya guardada."
+    },
+    "WorkerConcurrencia": {
+      "Type": "Number",
+      "Default": 4,
+      "MinValue": 1,
+      "Description": "HU20 contrapresion: numero de eventos de telemetria que el worker procesa en paralelo (EC_WORKER_CONCURRENCIA). Bajarlo reduce la tasa de drenaje de la cola."
+    },
+    "WorkerDesiredCount": {
+      "Type": "Number",
+      "Default": 1,
+      "MinValue": 0,
+      "Description": "HU20 contrapresion: numero de tareas del WorkerService. 0 detiene el drenaje (la cola crece); subirlo acelera el vaciado."
     }
   },
   "Conditions": {
@@ -323,6 +335,35 @@
         "RetentionInDays": 14
       }
     },
+    "TelemetriaDlq": {
+      "Type": "AWS::SQS::Queue",
+      "Properties": {
+        "MessageRetentionPeriod": 1209600
+      }
+    },
+    "TelemetriaQueue": {
+      "Type": "AWS::SQS::Queue",
+      "Properties": {
+        "VisibilityTimeout": 60,
+        "MessageRetentionPeriod": 345600,
+        "ReceiveMessageWaitTimeSeconds": 20,
+        "RedrivePolicy": {
+          "deadLetterTargetArn": {
+            "Fn::GetAtt": [
+              "TelemetriaDlq",
+              "Arn"
+            ]
+          },
+          "maxReceiveCount": 5
+        }
+      }
+    },
+    "WorkerLogs": {
+      "Type": "AWS::Logs::LogGroup",
+      "Properties": {
+        "RetentionInDays": 14
+      }
+    },
     "Cluster": {
       "Type": "AWS::ECS::Cluster",
       "Properties": {}
@@ -413,6 +454,85 @@
                       "PolizasBucket",
                       "Arn"
                     ]
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "PolicyName": "PublicarTelemetria",
+            "PolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Action": "sqs:SendMessage",
+                  "Resource": {
+                    "Fn::GetAtt": [
+                      "TelemetriaQueue",
+                      "Arn"
+                    ]
+                  }
+                },
+                {
+                  "Effect": "Allow",
+                  "Action": "cloudwatch:PutMetricData",
+                  "Resource": "*",
+                  "Condition": {
+                    "StringEquals": {
+                      "cloudwatch:namespace": "Solventa/Telemetria"
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "WorkerTaskRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "ecs-tasks.amazonaws.com"
+              },
+              "Action": "sts:AssumeRole"
+            }
+          ]
+        },
+        "Policies": [
+          {
+            "PolicyName": "ConsumirTelemetria",
+            "PolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "sqs:ReceiveMessage",
+                    "sqs:DeleteMessage",
+                    "sqs:GetQueueAttributes"
+                  ],
+                  "Resource": {
+                    "Fn::GetAtt": [
+                      "TelemetriaQueue",
+                      "Arn"
+                    ]
+                  }
+                },
+                {
+                  "Effect": "Allow",
+                  "Action": "cloudwatch:PutMetricData",
+                  "Resource": "*",
+                  "Condition": {
+                    "StringEquals": {
+                      "cloudwatch:namespace": "Solventa/Telemetria"
+                    }
                   }
                 }
               ]
@@ -979,6 +1099,12 @@
                 "Value": {
                   "Ref": "AWS::Region"
                 }
+              },
+              {
+                "Name": "SQS_QUEUE_URL",
+                "Value": {
+                  "Ref": "TelemetriaQueue"
+                }
               }
             ],
             "Secrets": [
@@ -1118,6 +1244,188 @@
       },
       "DependsOn": [
         "Listener",
+        "Database",
+        "AppDefaultRoute0",
+        "AppDefaultRoute1",
+        "AppSubnetRoute0",
+        "AppSubnetRoute1"
+      ]
+    },
+    "WorkerTask": {
+      "Type": "AWS::ECS::TaskDefinition",
+      "Properties": {
+        "RequiresCompatibilities": [
+          "FARGATE"
+        ],
+        "NetworkMode": "awsvpc",
+        "Cpu": "512",
+        "Memory": "1024",
+        "RuntimePlatform": {
+          "CpuArchitecture": "X86_64",
+          "OperatingSystemFamily": "LINUX"
+        },
+        "ExecutionRoleArn": {
+          "Fn::GetAtt": [
+            "ExecutionRole",
+            "Arn"
+          ]
+        },
+        "TaskRoleArn": {
+          "Fn::GetAtt": [
+            "WorkerTaskRole",
+            "Arn"
+          ]
+        },
+        "ContainerDefinitions": [
+          {
+            "Name": "worker",
+            "Image": {
+              "Ref": "BackendImage"
+            },
+            "Essential": true,
+            "Environment": [
+              {
+                "Name": "APP_ENV",
+                "Value": "production"
+              },
+              {
+                "Name": "SOLVENTA_ROL",
+                "Value": "worker"
+              },
+              {
+                "Name": "DB_HOST",
+                "Value": {
+                  "Fn::GetAtt": [
+                    "Database",
+                    "Endpoint.Address"
+                  ]
+                }
+              },
+              {
+                "Name": "AWS_DEFAULT_REGION",
+                "Value": {
+                  "Ref": "AWS::Region"
+                }
+              },
+              {
+                "Name": "SQS_QUEUE_URL",
+                "Value": {
+                  "Ref": "TelemetriaQueue"
+                }
+              },
+              {
+                "Name": "EC_WORKER_CONCURRENCIA",
+                "Value": {
+                  "Ref": "WorkerConcurrencia"
+                }
+              },
+              {
+                "Name": "EC_ORDENAR_DESEMBOLSO",
+                "Value": "false"
+              },
+              {
+                "Name": "POLIZAS_S3_BUCKET",
+                "Value": {
+                  "Ref": "PolizasBucket"
+                }
+              }
+            ],
+            "Secrets": [
+              {
+                "Name": "DB_PASSWORD",
+                "ValueFrom": {
+                  "Fn::Sub": "${DbSecret}:password::"
+                }
+              },
+              {
+                "Name": "JWT_PRIVATE_KEY_PEM",
+                "ValueFrom": {
+                  "Fn::Sub": "${JwtSecretArn}:private_key::"
+                }
+              },
+              {
+                "Name": "JWT_PUBLIC_KEY_PEM",
+                "ValueFrom": {
+                  "Fn::Sub": "${JwtSecretArn}:public_key::"
+                }
+              },
+              {
+                "Name": "PAGOS_WEBHOOK_SECRET",
+                "ValueFrom": {
+                  "Fn::Sub": "${AppSecretsArn}:pagos_webhook_secret::"
+                }
+              },
+              {
+                "Name": "FCM_CREDENCIALES_JSON",
+                "ValueFrom": {
+                  "Fn::Sub": "${AppSecretsArn}:fcm_credenciales_json::"
+                }
+              },
+              {
+                "Name": "NOTIFICACIONES_CLAVE_INTERNA",
+                "ValueFrom": {
+                  "Fn::Sub": "${AppSecretsArn}:notificaciones_clave_interna::"
+                }
+              }
+            ],
+            "LogConfiguration": {
+              "LogDriver": "awslogs",
+              "Options": {
+                "awslogs-group": {
+                  "Ref": "WorkerLogs"
+                },
+                "awslogs-region": {
+                  "Ref": "AWS::Region"
+                },
+                "awslogs-stream-prefix": "worker"
+              }
+            }
+          }
+        ]
+      }
+    },
+    "WorkerService": {
+      "Type": "AWS::ECS::Service",
+      "Properties": {
+        "Cluster": {
+          "Ref": "Cluster"
+        },
+        "TaskDefinition": {
+          "Ref": "WorkerTask"
+        },
+        "DesiredCount": {
+          "Ref": "WorkerDesiredCount"
+        },
+        "LaunchType": "FARGATE",
+        "PlatformVersion": "1.4.0",
+        "DeploymentConfiguration": {
+          "MinimumHealthyPercent": 0,
+          "MaximumPercent": 100,
+          "DeploymentCircuitBreaker": {
+            "Enable": true,
+            "Rollback": true
+          }
+        },
+        "NetworkConfiguration": {
+          "AwsvpcConfiguration": {
+            "AssignPublicIp": "DISABLED",
+            "Subnets": [
+              {
+                "Ref": "AppSubnet0"
+              },
+              {
+                "Ref": "AppSubnet1"
+              }
+            ],
+            "SecurityGroups": [
+              {
+                "Ref": "TaskSg"
+              }
+            ]
+          }
+        }
+      },
+      "DependsOn": [
         "Database",
         "AppDefaultRoute0",
         "AppDefaultRoute1",
@@ -1670,6 +1978,24 @@
         "Fn::GetAtt": [
           "HttpApi",
           "ApiEndpoint"
+        ]
+      }
+    },
+    "QueueUrl": {
+      "Value": {
+        "Ref": "TelemetriaQueue"
+      }
+    },
+    "DlqUrl": {
+      "Value": {
+        "Ref": "TelemetriaDlq"
+      }
+    },
+    "WorkerService": {
+      "Value": {
+        "Fn::GetAtt": [
+          "WorkerService",
+          "Name"
         ]
       }
     }
