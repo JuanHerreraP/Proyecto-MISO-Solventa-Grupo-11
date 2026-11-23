@@ -32,6 +32,10 @@ class RepositorioPolizas(Protocol):
 
     def listar_parametricas(self) -> list[Poliza]: ...
 
+    def listar_por_vencer(self, desde: date, hasta: date) -> list[Poliza]:
+        """Pólizas no canceladas cuyo fin de vigencia está entre ambas fechas (HU17)."""
+        ...
+
     def listar_que_vencen_el(self, fecha_fin: date) -> list[Poliza]:
         """Pólizas no canceladas cuya vigencia termina ese día (HU05: avisos de vencimiento)."""
         ...
@@ -79,6 +83,17 @@ class RepositorioPolizasEnMemoria:
             for poliza in self._por_id.values()
             if poliza.ramo is RamoPoliza.PARAMETRICO
         ]
+
+    def listar_por_vencer(self, desde: date, hasta: date) -> list[Poliza]:
+        return sorted(
+            (
+                poliza.model_copy(deep=True)
+                for poliza in self._por_id.values()
+                if poliza.estado is EstadoRegistroPoliza.VIGENTE
+                and desde <= poliza.fecha_fin <= hasta
+            ),
+            key=lambda poliza: (poliza.fecha_fin, poliza.poliza_id),
+        )
 
     def listar_que_vencen_el(self, fecha_fin: date) -> list[Poliza]:
         return [
@@ -137,6 +152,18 @@ class RepositorioPolizasPostgres:
 
     def listar_parametricas(self) -> list[Poliza]:
         sentencia = select(PolizaDB).where(PolizaDB.ramo == RamoPoliza.PARAMETRICO.value)
+        return [_poliza_a_dominio(registro) for registro in self._db.scalars(sentencia).all()]
+
+    def listar_por_vencer(self, desde: date, hasta: date) -> list[Poliza]:
+        sentencia = (
+            select(PolizaDB)
+            .where(
+                PolizaDB.estado == EstadoRegistroPoliza.VIGENTE.value,
+                PolizaDB.fecha_fin >= desde,
+                PolizaDB.fecha_fin <= hasta,
+            )
+            .order_by(PolizaDB.fecha_fin, PolizaDB.poliza_id)
+        )
         return [_poliza_a_dominio(registro) for registro in self._db.scalars(sentencia).all()]
 
     def listar_que_vencen_el(self, fecha_fin: date) -> list[Poliza]:

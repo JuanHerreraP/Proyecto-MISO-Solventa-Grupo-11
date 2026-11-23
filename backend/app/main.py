@@ -35,6 +35,7 @@ from app.api import (
     prestadores,
     primas_pendientes,
     pse_simulado,
+    renovacion_automatica,
     renovaciones,
     salud,
     sesion_web,
@@ -107,7 +108,7 @@ def crear_app() -> FastAPI:
         detalle = jsonable_encoder(error.errors())
         if request.url.path.startswith(
             ("/api/v1/pagos", "/api/v1/firmas", "/api/v1/notificaciones/dispositivos")
-        ):
+        ) or request.url.path.endswith("/renovacion-automatica"):
             # Los errores de FastAPI devuelven el valor recibido: un PAN, un código OTP o el
             # token de FCM de un teléfono.
             detalle = [
@@ -183,6 +184,8 @@ def crear_app() -> FastAPI:
     app.include_router(api_auditoria.router)
     app.include_router(cancelaciones.router)
     app.include_router(renovaciones.router)
+    app.include_router(renovacion_automatica.router)
+    app.include_router(renovacion_automatica.router_operaciones)
     app.include_router(primas_pendientes.router)
     app.include_router(notificaciones.router)
     app.include_router(notificaciones.router_interno)

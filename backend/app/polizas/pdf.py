@@ -1,4 +1,5 @@
-"""Compilación de los documentos PDF de la póliza (HU12) y de sus endosos (HU16).
+"""Compilación de los documentos PDF de la póliza (HU12), de sus endosos (HU16) y de sus
+renovaciones automáticas (HU17).
 
 La salida es determinista: los mismos datos producen los mismos bytes (`invariant=1` fija
 fechas e identificador internos y la página va sin comprimir). Así, emitir dos veces la misma
@@ -16,8 +17,10 @@ from reportlab.lib.units import cm
 from reportlab.pdfgen.canvas import Canvas
 
 from app.firmas.modelos import ProcesoFirma
+from app.pagos.modelos import Pago
 from app.polizas.dominio.endosos import Endoso
 from app.polizas.dominio.modelos import ZONA_COLOMBIA, Poliza
+from app.polizas.dominio.renovacion import Renovacion
 
 _MARGEN = 2 * cm
 _ANCHO_TEXTO = A4[0] - 2 * _MARGEN
@@ -251,6 +254,107 @@ def generar_pdf_endoso(poliza: Poliza, endoso: Endoso) -> bytes:
     )
     pag.par("Huella de la solicitud", "")
     pag.parrafo(endoso.huella_solicitud, tamano=7, fuente="Courier")
+
+    canvas.save()
+    return buffer.getvalue()
+
+
+def generar_pdf_renovacion(poliza: Poliza, renovacion: Renovacion, pago: Pago | None) -> bytes:
+    """Documento contractual del nuevo periodo de una póliza renovada (HU17).
+
+    El documento original de la póliza no se toca: este documento lo complementa con la nueva
+    vigencia y la prima cobrada. Conserva el número de la póliza y su código de verificación.
+    """
+
+    buffer = io.BytesIO()
+    canvas = Canvas(
+        buffer,
+        pagesize=A4,
+        pageCompression=0,
+        invariant=1,
+        title=f"Renovación de la póliza {poliza.numero_poliza}",
+        author="Solventa",
+    )
+    pag = _Pagina(canvas)
+
+    canvas.setFont("Helvetica-Bold", 18)
+    canvas.drawString(_MARGEN, pag.y, "Solventa")
+    canvas.setFont("Helvetica", 10)
+    canvas.drawString(_MARGEN, pag.y - 0.6 * cm, "Renovación de la póliza de seguro")
+    canvas.setFont("Helvetica-Bold", 13)
+    canvas.drawRightString(A4[0] - _MARGEN, pag.y, f"No. {poliza.numero_poliza}")
+    pag.y -= 1.2 * cm
+
+    pag.titulo("Datos de la renovación")
+    pag.par("Seguro", poliza.nombre_ramo)
+    pag.par("Renovación", renovacion.renovacion_id)
+    pag.par(
+        "Nueva vigencia",
+        f"{renovacion.nuevo_inicio.isoformat()} a {renovacion.nuevo_fin.isoformat()}",
+    )
+    pag.par(
+        "Vigencia anterior",
+        f"{renovacion.anterior_inicio.isoformat()} a {renovacion.anterior_fin.isoformat()}",
+    )
+    if renovacion.aplicada_en is not None:
+        pag.par("Renovada el", _fecha_hora(renovacion.aplicada_en))
+    origen = (
+        "Renovación automática"
+        if renovacion.rol_solicitante == "SERVICIO_INTERNO"
+        else _ROLES_SOLICITANTE.get(renovacion.rol_solicitante, renovacion.rol_solicitante)
+    )
+    pag.par("Origen", origen)
+
+    pag.titulo("Asegurado")
+    pag.par("Nombre", poliza.titular_nombre)
+    pag.par("Documento", f"{poliza.titular_tipo_documento} {poliza.titular_numero_documento}")
+
+    pag.titulo("Coberturas")
+    for cobertura in (poliza.cobertura_principal, *poliza.coberturas_opcionales):
+        pag.par(cobertura.nombre, _moneda(cobertura.suma_asegurada, poliza.moneda), 7 * cm)
+
+    if poliza.beneficiarios:
+        pag.titulo("Beneficiarios")
+        for b in poliza.beneficiarios:
+            pag.par(
+                f"{b.porcentaje:.2f}".replace(".", ",") + " %",
+                f"{b.nombre_completo} ({b.parentesco}) - {b.tipo_documento} {b.numero_documento}",
+            )
+
+    pag.titulo("Prima del nuevo periodo")
+    pag.par("Prima anterior", _moneda(renovacion.anterior_prima, renovacion.moneda))
+    pag.par("Cobertura principal", _moneda(renovacion.prima_principal, renovacion.moneda))
+    pag.par("Coberturas opcionales", _moneda(renovacion.prima_opcionales, renovacion.moneda))
+    pag.par("Prima total", _moneda(renovacion.prima_total, renovacion.moneda))
+    pag.par("Pago", renovacion.pago_id or "-")
+    if pago is not None:
+        pag.par("Referencia", pago.referencia_pasarela or "-")
+        pag.par("Fecha del pago", _fecha_hora(pago.actualizado_en))
+
+    pag.titulo("Condiciones")
+    for numero, clausula in enumerate(
+        (
+            "Este documento hace parte integral de la póliza y renueva su vigencia en los "
+            "mismos términos del documento de la póliza y de sus endosos.",
+            "La prima del nuevo periodo se calculó con la tarifa y el perfil de riesgo vigentes "
+            "a la fecha de la renovación.",
+            "La renovación automática puede desactivarse en cualquier momento desde el portal; "
+            "la desactivación aplica a los periodos siguientes.",
+        ),
+        start=1,
+    ):
+        pag.parrafo(f"{numero}. {clausula}")
+
+    lado = 2.6 * cm
+    pag.espacio(lado + 1.6 * cm)
+    pag.titulo("Verificación")
+    pag.par("Código", poliza.codigo_verificacion)
+    qr = QrCodeWidget(poliza.contenido_qr, barLevel="M")
+    x0, y0, x1, y1 = qr.getBounds()
+    dibujo = Drawing(lado, lado, transform=[lado / (x1 - x0), 0, 0, lado / (y1 - y0), 0, 0])
+    dibujo.add(qr)
+    renderPDF.draw(dibujo, canvas, _MARGEN, pag.y - lado)
+    pag.y -= lado
 
     canvas.save()
     return buffer.getvalue()

@@ -27,6 +27,7 @@ se mantienen en la [wiki del proyecto](https://github.com/JuanHerreraP/Proyecto-
 | --- | --- |
 | [Billetera digital de pólizas](billetera-digital.md) | HU07: billetera, estados, certificado con QR y enlace temporal para compartir |
 | [Modificación de coberturas y endosos](endosos.md) | HU16: beneficiarios, coberturas opcionales, ajuste pro-rata, PDF del endoso y trazabilidad |
+| [Renovación automática y facturación continua](renovacion-automatica.md) | HU17: preaviso 30 días antes con la prima recalculada, cobro con la tarjeta registrada al vencer, documento del nuevo periodo y tarea diaria idempotente |
 
 ## Pagos y contratación
 
