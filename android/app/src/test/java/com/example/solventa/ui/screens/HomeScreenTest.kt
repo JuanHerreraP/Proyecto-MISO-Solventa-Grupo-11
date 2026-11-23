@@ -128,10 +128,10 @@ class HomeScreenTest {
     }
 
     @Test
-    fun permiteAbrirElHistorialDeCotizaciones() {
+    fun permiteAbrirCotizacionesDesdeLaNavegacion() {
         mostrar()
 
-        compose.boton("Cotizaciones").performScrollTo().performClick()
+        compose.boton("Cotizaciones").performClick()
 
         assertEquals(listOf("cotizaciones"), eventos)
     }
