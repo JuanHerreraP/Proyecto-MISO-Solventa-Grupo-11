@@ -19,9 +19,31 @@ VITE_API_URL=http://localhost:8000 \
 npm run test:e2e
 ```
 
-En local, el código OTP se obtiene del log del proveedor simulado de Docker. En un ambiente de
-pruebas externo puede suministrarse con `E2E_OTP`. Nunca use credenciales ni OTP de producción.
+### OTP de la firma electrónica
+
+El proveedor de firma simulado escribe el OTP en el log del backend
+(`[FIRMA SIMULADA] OTP ... (proceso FIR-...)`). Las pruebas lo leen de la primera fuente
+configurada, reintentando unos segundos mientras el log llega:
+
+| Ambiente | Variable | Ejemplo |
+| --- | --- | --- |
+| AWS (ECS → CloudWatch) | `E2E_LOG_GROUP` | grupo de logs del backend; requiere AWS CLI autenticada |
+| Backend con `uvicorn` | `E2E_BACKEND_LOG` | `uvicorn app.main:app 2>&1 \| tee /tmp/backend.log` y `E2E_BACKEND_LOG=/tmp/backend.log` |
+| Docker Compose | `E2E_COMPOSE_FILE`, `E2E_COMPOSE_ENV`, `E2E_COMPOSE_SERVICE` | por defecto `infra/compose.yaml`, `.env` y `backend` |
+
+Para obtener el grupo de logs del stack de AWS:
+
+```bash
+aws cloudformation describe-stack-resource --stack-name <stack> --logical-resource-id Logs \
+  --query StackResourceDetail.PhysicalResourceId --output text
+```
+
+`E2E_OTP` fija un único código y solo sirve para ejecutar una prueba con una sola firma, porque
+cada proceso de firma genera un OTP nuevo. Nunca use credenciales ni OTP de producción.
 Playwright carga automáticamente las variables guardadas en `web/.env.e2e.local`.
+
+En GitHub Actions, el flujo manual **E2E web (nube)** (`.github/workflows/e2e-cloud.yml`) ejecuta
+estas pruebas contra el ambiente de AWS y publica el reporte como artefacto.
 
 Cada ejecución conserva automáticamente las capturas y el reporte HTML dentro de una única
 carpeta:

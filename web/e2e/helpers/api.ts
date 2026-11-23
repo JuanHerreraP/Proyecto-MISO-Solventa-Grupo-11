@@ -1,5 +1,6 @@
 import { execFileSync } from "node:child_process";
 import { createHash, randomUUID } from "node:crypto";
+import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import type { APIRequestContext, APIResponse } from "@playwright/test";
 
@@ -178,7 +179,7 @@ export class SolventaApi {
     });
     await expectStatus(otpResponse, 200, "Solicitar OTP");
     const otpProcess = await otpResponse.json() as SignatureResponse;
-    const otp = readOtp(otpProcess.firma_id);
+    const otp = await readOtp(otpProcess.firma_id);
 
     const signatureResponse = await this.request.post(`${API_URL}/api/v1/firmas/${quoteId}/firma`, {
       headers: this.headers(clientToken),
@@ -233,19 +234,79 @@ export class SolventaApi {
   }
 }
 
-export function readOtp(signatureId: string): string {
-  if (process.env.E2E_OTP) return process.env.E2E_OTP;
-  let logs: string;
-  try {
-    logs = execFileSync(
-      "docker",
-      ["compose", "--env-file", ".env.local", "-f", "compose.local.yaml", "logs", "--since", "2m", "backend"],
-      { cwd: INFRA_DIR, encoding: "utf8" },
-    );
-  } catch (error) {
-    throw new Error("No se pudo leer el OTP local. Levante Docker o configure E2E_OTP.", { cause: error });
+const OTP_ATTEMPTS = Number(process.env.E2E_OTP_ATTEMPTS ?? 10);
+const OTP_WAIT_MS = 2_000;
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/** Log del backend desplegado en AWS (ECS envía la salida a CloudWatch Logs). */
+function cloudWatchLogs(logGroup: string, signatureId: string): string {
+  return execFileSync(
+    "aws",
+    [
+      "logs", "filter-log-events",
+      "--log-group-name", logGroup,
+      "--start-time", String(Date.now() - 10 * 60_000),
+      "--filter-pattern", `"${signatureId}"`,
+      "--query", "events[].message",
+      "--output", "text",
+    ],
+    { encoding: "utf8" },
+  );
+}
+
+/** Log del stack de Docker Compose de infra/ (por defecto compose.yaml con .env). */
+function dockerComposeLogs(): string {
+  return execFileSync(
+    "docker",
+    [
+      "compose",
+      "--env-file", process.env.E2E_COMPOSE_ENV ?? ".env",
+      "-f", process.env.E2E_COMPOSE_FILE ?? "compose.yaml",
+      "logs", "--since", "10m", process.env.E2E_COMPOSE_SERVICE ?? "backend",
+    ],
+    { cwd: INFRA_DIR, encoding: "utf8" },
+  );
+}
+
+/** Fuente del log del proveedor de firma simulado según el ambiente de la prueba. */
+function backendLogs(signatureId: string): { source: string; read: () => string } {
+  const logGroup = process.env.E2E_LOG_GROUP;
+  if (logGroup) {
+    return { source: `CloudWatch (${logGroup})`, read: () => cloudWatchLogs(logGroup, signatureId) };
   }
-  const match = logs.match(new RegExp(`\\[FIRMA SIMULADA] OTP (\\d{6}).*\\(proceso ${escapeRegex(signatureId)}\\)`));
-  if (!match) throw new Error(`No se encontró el OTP del proceso ${signatureId} en el log local.`);
-  return match[1];
+  const logFile = process.env.E2E_BACKEND_LOG;
+  if (logFile) {
+    return { source: `archivo ${logFile}`, read: () => readFileSync(logFile, "utf8") };
+  }
+  return { source: "Docker Compose", read: dockerComposeLogs };
+}
+
+/**
+ * Obtiene el OTP que el proveedor de firma simulado deja en el log del backend.
+ * E2E_OTP solo sirve para una ejecución con una única firma: cada proceso genera un OTP nuevo.
+ */
+export async function readOtp(signatureId: string): Promise<string> {
+  if (process.env.E2E_OTP) return process.env.E2E_OTP;
+  const pattern = new RegExp(`\\[FIRMA SIMULADA] OTP (\\d{6}).*\\(proceso ${escapeRegex(signatureId)}\\)`);
+  const logs = backendLogs(signatureId);
+  // CloudWatch y el volcado de logs no son inmediatos: se reintenta antes de fallar.
+  for (let attempt = 1; attempt <= OTP_ATTEMPTS; attempt += 1) {
+    let content: string;
+    try {
+      content = logs.read();
+    } catch (error) {
+      throw new Error(
+        `No se pudo leer el log del backend desde ${logs.source}. ` +
+          "Configure E2E_BACKEND_LOG, E2E_LOG_GROUP o el stack de Docker (ver e2e/README.md).",
+        { cause: error },
+      );
+    }
+    const match = content.match(pattern);
+    if (match) return match[1];
+    if (attempt < OTP_ATTEMPTS) await sleep(OTP_WAIT_MS);
+  }
+  throw new Error(`No se encontró el OTP del proceso ${signatureId} en ${logs.source}.`);
 }

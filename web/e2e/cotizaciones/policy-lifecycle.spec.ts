@@ -36,7 +36,7 @@ test("cotiza, paga, firma y muestra la póliza emitida", async ({ page, request 
   );
   expect(contractResponse.ok()).toBeTruthy();
   const signatureProcess = await contractResponse.json() as { firma_id: string };
-  const otp = readOtp(signatureProcess.firma_id);
+  const otp = await readOtp(signatureProcess.firma_id);
   await page.getByLabel("Código de verificación").fill(otp);
   await page.getByRole("button", { name: "Firmar contrato" }).click();
 
