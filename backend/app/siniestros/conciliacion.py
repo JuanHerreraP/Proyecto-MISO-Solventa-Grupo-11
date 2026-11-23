@@ -47,8 +47,10 @@ class Conciliacion:
 
 def contar_siniestros_telemetria(db: Session) -> int:
     """Siniestros originados por telemetría en la base (`registrado_por = 'TELEMETRIA'`)."""
-    sentencia = select(func.count()).select_from(SiniestroDB).where(
-        SiniestroDB.registrado_por == ORIGEN_TELEMETRIA
+    sentencia = (
+        select(func.count())
+        .select_from(SiniestroDB)
+        .where(SiniestroDB.registrado_por == ORIGEN_TELEMETRIA)
     )
     return int(db.scalar(sentencia) or 0)
 

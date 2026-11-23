@@ -40,9 +40,7 @@ class MetricasTelemetria:
         if self._cliente is None:
             import boto3
 
-            self._cliente = boto3.client(
-                "cloudwatch", region_name=os.getenv("AWS_DEFAULT_REGION")
-            )
+            self._cliente = boto3.client("cloudwatch", region_name=os.getenv("AWS_DEFAULT_REGION"))
         return self._cliente
 
     def contar(self, metrica: str, valor: float = 1.0) -> None:
