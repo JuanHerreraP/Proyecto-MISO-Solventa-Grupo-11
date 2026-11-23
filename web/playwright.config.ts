@@ -6,26 +6,23 @@ if (existsSync(".env.e2e.local")) process.loadEnvFile(".env.e2e.local");
 
 const externalBaseUrl = process.env.E2E_BASE_URL;
 const baseURL = externalBaseUrl ?? "http://localhost:5173";
-const evidence = process.env.E2E_EVIDENCE === "1";
 
 export default defineConfig({
   testDir: "./e2e",
-  outputDir: evidence ? "./e2e/evidencias/artifacts" : "./test-results",
+  outputDir: "./e2e/evidencias/artifacts",
   timeout: 60_000,
   fullyParallel: true,
   forbidOnly: Boolean(process.env.CI),
   retries: process.env.CI ? 2 : 0,
   workers: process.env.CI ? 1 : undefined,
   reporter: process.env.CI
-    ? [["github"], ["html", { open: "never" }]]
-    : evidence
-      ? [["list"], ["html", { open: "never", outputFolder: "./e2e/evidencias/report" }]]
-      : "list",
+    ? [["github"], ["html", { open: "never", outputFolder: "./e2e/evidencias/report" }]]
+    : [["list"], ["html", { open: "never", outputFolder: "./e2e/evidencias/report" }]],
   use: {
     baseURL,
-    screenshot: evidence ? "on" : "only-on-failure",
-    trace: evidence ? "off" : "on-first-retry",
-    video: evidence ? "off" : "retain-on-failure",
+    screenshot: "on",
+    trace: "off",
+    video: "off",
   },
   webServer: externalBaseUrl
     ? undefined
