@@ -65,6 +65,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
+import com.example.solventa.i18n.tr
 
 /** Formulario único que renderiza los campos correspondientes al ramo seleccionado. */
 @Composable
@@ -143,7 +144,7 @@ fun QuoteFormScreen(
                             campoRequerido(campo, valores) &&
                             valores[campo.codigo].isNullOrBlank()
                         ) {
-                            "Este campo es obligatorio."
+                            tr(R.string.quote_form_este_campo_es_obligatorio)
                         } else {
                             null
                         },
@@ -152,9 +153,9 @@ fun QuoteFormScreen(
                 }
 
                 SolventaNoticePill(
-                    text = "Usaremos únicamente los datos financieros que autorizaste para personalizar el precio.",
+                    text = tr(R.string.quote_form_usaremos_unicamente_los_datos_financieros),
                     icon = painterResource(id = R.drawable.ic_shield_card),
-                    iconDescription = "Protección de datos financieros"
+                    iconDescription = tr(R.string.quote_form_proteccion_de_datos_financieros)
                 )
 
                 if (errorRemoto != null) {
@@ -166,7 +167,7 @@ fun QuoteFormScreen(
                 }
 
                 SolventaPrimaryButton(
-                    text = "Calcular cotización",
+                    text = tr(R.string.quote_form_calcular_cotizacion),
                     isLoading = cargando,
                     onClick = {
                         val incompleto = camposVisibles.any {
@@ -226,7 +227,7 @@ private fun CampoFecha(
             trailingIcon = {
                 Icon(
                     imageVector = Icons.Outlined.CalendarMonth,
-                    contentDescription = "Abrir calendario"
+                    contentDescription = tr(R.string.quote_form_abrir_calendario)
                 )
             },
             error = error
@@ -250,12 +251,12 @@ private fun CampoFecha(
                         mostrarCalendario = false
                     }
                 ) {
-                    Text("Aceptar")
+                    Text(tr(R.string.claim_form_aceptar))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { mostrarCalendario = false }) {
-                    Text("Cancelar")
+                    Text(tr(R.string.assistance_cancelar))
                 }
             }
         ) {
@@ -263,7 +264,7 @@ private fun CampoFecha(
                 state = estadoCalendario,
                 title = {
                     Text(
-                        text = "Selecciona una fecha",
+                        text = tr(R.string.quote_form_selecciona_una_fecha),
                         modifier = Modifier.padding(start = 24.dp, top = 16.dp)
                     )
                 }
@@ -287,7 +288,7 @@ private fun CampoOpcion(
             value = etiquetaOpcion(valor),
             onValueChange = {},
             label = etiquetaCampo(campo),
-            placeholder = "Selecciona una opción",
+            placeholder = tr(R.string.create_advisor_selecciona_una_opcion),
             readOnly = true,
             trailingIcon = {
                 ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandido)
@@ -336,13 +337,13 @@ private fun CampoBooleano(
             FilterChip(
                 selected = valor == "true",
                 onClick = { onValueChange("true") },
-                label = { Text("Sí") },
+                label = { Text(tr(R.string.quote_form_si)) },
                 modifier = Modifier.weight(1f)
             )
             FilterChip(
                 selected = valor == "false",
                 onClick = { onValueChange("false") },
-                label = { Text("No") },
+                label = { Text(tr(R.string.quote_form_no)) },
                 modifier = Modifier.weight(1f)
             )
         }
@@ -363,7 +364,7 @@ private fun EncabezadoFormulario(titulo: String, onVolver: () -> Unit) {
         IconButton(onClick = onVolver) {
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                contentDescription = "Volver",
+                contentDescription = tr(R.string.biometrical_login_volver),
                 tint = MaterialTheme.colorScheme.onSurface
             )
         }
@@ -398,12 +399,12 @@ private fun etiquetaCampo(campo: CampoCotizacion): String =
     if (campo.requerido || campo.codigo in setOf("numero_vuelo", "ubicacion")) {
         campo.etiqueta
     } else {
-        "${campo.etiqueta} (Opcional)"
+        tr(R.string.quote_form_opcional, campo.etiqueta)
     }
 
 private fun placeholderCampo(campo: CampoCotizacion): String = when (campo.tipo) {
     TipoCampoCotizacion.FECHA -> "AAAA-MM-DD"
-    TipoCampoCotizacion.ENTERO -> "Ingresa un número"
+    TipoCampoCotizacion.ENTERO -> tr(R.string.quote_form_ingresa_un_numero)
     TipoCampoCotizacion.DECIMAL -> if (campo.unidad == "COP") "$ 0 COP" else "0"
     else -> campo.descripcion
 }
@@ -432,10 +433,10 @@ private fun formatoFechaApi() = SimpleDateFormat("yyyy-MM-dd", Locale.ROOT).appl
 }
 
 private fun tituloRamo(ramo: RamoCotizacion): String = when (ramo) {
-    RamoCotizacion.VIAJE -> "Seguro de viaje"
-    RamoCotizacion.DISPOSITIVOS -> "Protección de dispositivos"
-    RamoCotizacion.VIDA -> "Seguro de vida"
-    RamoCotizacion.PARAMETRICO -> "Seguro paramétrico"
+    RamoCotizacion.VIAJE -> tr(R.string.quote_form_seguro_de_viaje)
+    RamoCotizacion.DISPOSITIVOS -> tr(R.string.quote_form_proteccion_de_dispositivos)
+    RamoCotizacion.VIDA -> tr(R.string.quote_form_seguro_de_vida)
+    RamoCotizacion.PARAMETRICO -> tr(R.string.quote_form_seguro_parametrico)
 }
 
 @Preview(showBackground = true, showSystemUi = true)

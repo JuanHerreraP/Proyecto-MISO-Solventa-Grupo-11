@@ -70,6 +70,9 @@ import com.example.solventa.ui.validation.errorTipoSiniestro
 import com.example.solventa.ui.validation.esFormularioSiniestroValido
 import com.example.solventa.ui.validation.normalizarEstimacion
 import java.util.Calendar
+import com.example.solventa.R
+import com.example.solventa.i18n.Idioma
+import com.example.solventa.i18n.tr
 
 /** Una póliza elegible para reportar un siniestro: id y una etiqueta legible. */
 data class PolizaElegible(val polizaId: String, val etiqueta: String)
@@ -145,7 +148,7 @@ fun ClaimFormScreen(
 
     Surface(modifier = modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surface) {
         Column(modifier = Modifier.fillMaxSize()) {
-            Encabezado(titulo = "Reportar siniestro", onVolver = onVolver)
+            Encabezado(titulo = tr(R.string.claim_form_reportar_siniestro), onVolver = onVolver)
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -159,7 +162,7 @@ fun ClaimFormScreen(
 
                 if (registrado) {
                     Text(
-                        text = "Tu siniestro ya quedó registrado. Solo falta enviar " +
+                        text = tr(R.string.claim_form_tu_siniestro_ya_quedo_registrado) +
                             "${borrador?.pendientes?.size ?: 0} evidencia(s).",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurface
@@ -171,13 +174,13 @@ fun ClaimFormScreen(
                         verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "Retomaste un reporte guardado como borrador.",
+                            text = tr(R.string.claim_form_retomaste_un_reporte_guardado_como),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurface,
                             modifier = Modifier.weight(1f)
                         )
                         TextButton(onClick = onDescartarBorrador, enabled = !registrando) {
-                            Text("Descartar")
+                            Text(tr(R.string.claim_form_descartar))
                         }
                     }
                 }
@@ -205,7 +208,7 @@ fun ClaimFormScreen(
 
                 when {
                     cargandoPolizas -> Text(
-                        text = "Cargando las pólizas del cliente…",
+                        text = tr(R.string.claim_form_cargando_las_polizas_del_cliente),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                     )
@@ -219,7 +222,7 @@ fun ClaimFormScreen(
 
                     // Para el asesor sin pólizas vigentes del cliente, se avisa en vez de pedir texto.
                     clienteNombre != null -> Text(
-                        text = "El cliente no tiene pólizas vigentes para reportar un siniestro.",
+                        text = tr(R.string.claim_form_el_cliente_no_tiene_polizas),
                         style = MaterialTheme.typography.bodyMedium,
                         color = Atencion
                     )
@@ -227,8 +230,8 @@ fun ClaimFormScreen(
                     else -> SolventaTextField(
                         value = polizaId,
                         onValueChange = { polizaId = it },
-                        label = "Póliza",
-                        placeholder = "Número o identificador de la póliza",
+                        label = tr(R.string.assistance_poliza),
+                        placeholder = tr(R.string.claim_form_numero_o_identificador_de_la),
                         error = if (intentado) errorPolizaSiniestro(polizaId) else null
                     )
                 }
@@ -240,16 +243,16 @@ fun ClaimFormScreen(
                 )
 
                 CampoSeleccionable(
-                    label = "Fecha del evento",
-                    valor = if (fecha.isBlank()) "Selecciona la fecha" else Formatos.fecha(fecha),
+                    label = tr(R.string.claim_form_fecha_del_evento),
+                    valor = if (fecha.isBlank()) tr(R.string.claim_form_selecciona_la_fecha) else Formatos.fecha(fecha),
                     placeholderActivo = fecha.isNotBlank(),
                     onClick = { mostrarFecha = true },
                     error = if (intentado) errorFechaSiniestro(fecha) else null,
                     icono = Icons.Filled.CalendarMonth
                 )
                 CampoSeleccionable(
-                    label = "Hora del evento",
-                    valor = if (hora.isBlank()) "Selecciona la hora" else hora,
+                    label = tr(R.string.claim_form_hora_del_evento),
+                    valor = if (hora.isBlank()) tr(R.string.claim_form_selecciona_la_hora) else hora,
                     placeholderActivo = hora.isNotBlank(),
                     onClick = { mostrarHora = true },
                     error = if (intentado) errorHoraSiniestro(hora) else null,
@@ -258,15 +261,15 @@ fun ClaimFormScreen(
                 SolventaTextField(
                     value = lugar,
                     onValueChange = { lugar = it },
-                    label = "Lugar",
-                    placeholder = "¿Dónde ocurrió?",
+                    label = tr(R.string.claim_form_lugar),
+                    placeholder = tr(R.string.claim_form_donde_ocurrio),
                     error = if (intentado) errorLugarSiniestro(lugar) else null
                 )
                 SolventaTextField(
                     value = descripcion,
                     onValueChange = { descripcion = it },
-                    label = "Descripción",
-                    placeholder = "Cuéntanos qué pasó",
+                    label = tr(R.string.claim_form_descripcion),
+                    placeholder = tr(R.string.claim_form_cuentanos_que_paso),
                     singleLine = false,
                     minLines = 5,
                     error = if (intentado) errorDescripcionSiniestro(descripcion) else null
@@ -274,8 +277,8 @@ fun ClaimFormScreen(
                 SolventaTextField(
                     value = estimacion,
                     onValueChange = { estimacion = it },
-                    label = "Estimación del daño (COP)",
-                    placeholder = "Ej. 850000",
+                    label = tr(R.string.claim_form_estimacion_del_dano_cop),
+                    placeholder = tr(R.string.claim_form_ej_850000),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     error = if (intentado) errorEstimacionSiniestro(estimacion) else null
                 )
@@ -292,7 +295,7 @@ fun ClaimFormScreen(
 
                 Spacer(modifier = Modifier.size(4.dp))
                 SolventaPrimaryButton(
-                    text = if (registrado) "Enviar evidencias pendientes" else "Registrar siniestro",
+                    text = if (registrado) tr(R.string.claim_form_enviar_evidencias_pendientes) else tr(R.string.advisor_home_registrar_siniestro),
                     onClick = {
                         intentado = true
                         if (puedeEnviar) {
@@ -370,7 +373,7 @@ private fun SelectorTipoSiniestro(
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                     )
                     Text(
-                        text = seleccionado?.etiqueta ?: "Selecciona qué ocurrió",
+                        text = seleccionado?.etiqueta ?: tr(R.string.claim_form_selecciona_que_ocurrio),
                         style = MaterialTheme.typography.bodyMedium,
                         color = if (seleccionado != null) {
                             MaterialTheme.colorScheme.onSurface
@@ -379,7 +382,7 @@ private fun SelectorTipoSiniestro(
                         }
                     )
                 }
-                Icon(Icons.Filled.ArrowDropDown, contentDescription = "Elegir tipo de siniestro")
+                Icon(Icons.Filled.ArrowDropDown, contentDescription = tr(R.string.claim_form_elegir_tipo_de_siniestro))
             }
         }
         DropdownMenu(expanded = abierto, onDismissRequest = { abierto = false }) {
@@ -421,8 +424,8 @@ private fun SeccionEvidencias(
             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
         )
         Text(
-            text = "Adjunta fotos o videos del evento. Si autorizas la ubicación, cada captura " +
-                "queda con el lugar, la fecha y la hora.",
+            text = tr(R.string.claim_form_adjunta_fotos_o_videos_del) +
+                tr(R.string.claim_form_queda_con_el_lugar_la),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
         )
@@ -431,21 +434,21 @@ private fun SeccionEvidencias(
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             BotonEvidencia(
-                texto = "Foto",
+                texto = tr(R.string.claim_form_foto),
                 icono = Icons.Filled.PhotoCamera,
                 habilitado = habilitada && !lleno,
                 onClick = acciones.tomarFoto,
                 modifier = Modifier.weight(1f)
             )
             BotonEvidencia(
-                texto = "Video",
+                texto = tr(R.string.claim_form_video),
                 icono = Icons.Filled.Videocam,
                 habilitado = habilitada && !lleno,
                 onClick = acciones.grabarVideo,
                 modifier = Modifier.weight(1f)
             )
             BotonEvidencia(
-                texto = "Galería",
+                texto = tr(R.string.claim_form_galeria),
                 icono = Icons.Filled.Image,
                 habilitado = habilitada && !lleno,
                 onClick = acciones.elegirArchivo,
@@ -488,8 +491,8 @@ private fun FilaEvidencia(
     habilitada: Boolean,
     onQuitar: () -> Unit
 ) {
-    val tipo = if (evidencia.tipo == TipoEvidencia.FOTO) "Foto" else "Video"
-    val ubicacion = if (evidencia.geoetiquetada) "con ubicación" else "sin ubicación"
+    val tipo = if (evidencia.tipo == TipoEvidencia.FOTO) tr(R.string.claim_form_foto) else tr(R.string.claim_form_video)
+    val ubicacion = if (evidencia.geoetiquetada) tr(R.string.claim_form_con_ubicacion) else tr(R.string.claim_form_sin_ubicacion)
     Surface(
         shape = RoundedCornerShape(12.dp),
         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.04f),
@@ -511,16 +514,16 @@ private fun FilaEvidencia(
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
-                    text = if (evidencia.subida) "Enviada · $ubicacion" else "Pendiente · $ubicacion",
+                    text = if (evidencia.subida) tr(R.string.claim_form_enviada, ubicacion) else tr(R.string.claim_form_pendiente, ubicacion),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                 )
             }
             if (evidencia.subida) {
-                Icon(Icons.Filled.CloudDone, contentDescription = "Enviada")
+                Icon(Icons.Filled.CloudDone, contentDescription = tr(R.string.claim_form_enviada_2))
             } else {
                 IconButton(onClick = onQuitar, enabled = habilitada) {
-                    Icon(Icons.Filled.Close, contentDescription = "Quitar evidencia $numero")
+                    Icon(Icons.Filled.Close, contentDescription = tr(R.string.claim_form_quitar_evidencia, numero))
                 }
             }
         }
@@ -531,9 +534,9 @@ private fun FilaEvidencia(
 internal fun tamanoLegible(bytes: Long): String {
     val kb = bytes / 1024.0
     return if (kb < 1024) {
-        String.format(java.util.Locale("es", "CO"), "%.1f KB", kb)
+        String.format(Idioma.locale(), "%.1f KB", kb)
     } else {
-        String.format(java.util.Locale("es", "CO"), "%.1f MB", kb / 1024.0)
+        String.format(Idioma.locale(), "%.1f MB", kb / 1024.0)
     }
 }
 
@@ -611,9 +614,9 @@ private fun SelectorFecha(onConfirmar: (String) -> Unit, onCancelar: () -> Unit)
             TextButton(onClick = {
                 val millis = estado.selectedDateMillis
                 if (millis != null) onConfirmar(isoDesdeMillisUtc(millis)) else onCancelar()
-            }) { Text("Aceptar") }
+            }) { Text(tr(R.string.claim_form_aceptar)) }
         },
-        dismissButton = { TextButton(onClick = onCancelar) { Text("Cancelar") } }
+        dismissButton = { TextButton(onClick = onCancelar) { Text(tr(R.string.assistance_cancelar)) } }
     ) {
         DatePicker(state = estado)
     }
@@ -635,9 +638,9 @@ private fun SelectorHora(onConfirmar: (String) -> Unit, onCancelar: () -> Unit) 
                 val hh = estado.hour.toString().padStart(2, '0')
                 val mm = estado.minute.toString().padStart(2, '0')
                 onConfirmar("$hh:$mm")
-            }) { Text("Aceptar") }
+            }) { Text(tr(R.string.claim_form_aceptar)) }
         },
-        dismissButton = { TextButton(onClick = onCancelar) { Text("Cancelar") } },
+        dismissButton = { TextButton(onClick = onCancelar) { Text(tr(R.string.assistance_cancelar)) } },
         text = {
             Column(horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally) {
                 TimePicker(state = estado)
@@ -666,7 +669,7 @@ private fun SelectorPoliza(
 ) {
     var abierto by remember { mutableStateOf(false) }
     val etiqueta = polizas.firstOrNull { it.polizaId == seleccionada }?.etiqueta
-        ?: "Selecciona una póliza"
+        ?: tr(R.string.assistance_selecciona_una_poliza)
     Column {
         Surface(
             shape = RoundedCornerShape(16.dp),
@@ -688,7 +691,7 @@ private fun SelectorPoliza(
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurface
                 )
-                Icon(Icons.Filled.ArrowDropDown, contentDescription = "Elegir póliza")
+                Icon(Icons.Filled.ArrowDropDown, contentDescription = tr(R.string.claim_form_elegir_poliza))
             }
         }
         DropdownMenu(expanded = abierto, onDismissRequest = { abierto = false }) {

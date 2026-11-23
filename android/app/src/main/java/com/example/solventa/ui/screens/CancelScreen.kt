@@ -50,6 +50,8 @@ import com.example.solventa.domain.polizas.PropuestaCancelacion
 import com.example.solventa.ui.components.SolventaPrimaryButton
 import com.example.solventa.ui.theme.Navegacion
 import com.example.solventa.ui.theme.SolventaTheme
+import com.example.solventa.R
+import com.example.solventa.i18n.tr
 
 private val Borde = Color(0xFFE2E8F0)
 private val AvisoFondo = Color(0xFFFFEEDD)
@@ -73,7 +75,7 @@ fun CancelScreen(
 ) {
     Surface(modifier = modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surface) {
         Column(modifier = Modifier.fillMaxSize()) {
-            Encabezado(titulo = "Pólizas", onVolver = onVolver)
+            Encabezado(titulo = tr(R.string.cancel_polizas), onVolver = onVolver)
 
             when {
                 propuesta == null && cargando -> Box(
@@ -83,7 +85,7 @@ fun CancelScreen(
                     CircularProgressIndicator(
                         color = Navegacion,
                         modifier = Modifier.semantics {
-                            contentDescription = "Cargando las condiciones de la cancelación"
+                            contentDescription = tr(R.string.cancel_cargando_las_condiciones_de_la)
                         }
                     )
                 }
@@ -96,12 +98,12 @@ fun CancelScreen(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        text = error ?: "No pudimos cargar la cancelación.",
+                        text = error ?: tr(R.string.cancel_no_pudimos_cargar_la_cancelacion),
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Spacer(modifier = Modifier.size(16.dp))
-                    SolventaPrimaryButton(text = "Reintentar", onClick = onReintentar)
+                    SolventaPrimaryButton(text = tr(R.string.assistance_reintentar), onClick = onReintentar)
                 }
 
                 else -> Contenido(
@@ -138,12 +140,12 @@ private fun Contenido(
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Text(
-                text = "Confirma tu decisión",
+                text = tr(R.string.cancel_confirma_tu_decision),
                 style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
                 color = MaterialTheme.colorScheme.onSurface
             )
             Text(
-                text = "La cobertura y los cobros programados terminarán al procesar la cancelación.",
+                text = tr(R.string.cancel_la_cobertura_y_los_cobros),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
             )
@@ -151,7 +153,7 @@ private fun Contenido(
 
         if (propuesta.cancelable) {
             Aviso(
-                "Perderás la protección asociada a la póliza ${propuesta.numeroPoliza}."
+                tr(R.string.cancel_perderas_la_proteccion_asociada_a, propuesta.numeroPoliza)
             )
             if (motivo != null) {
                 SelectorMotivo(
@@ -171,7 +173,7 @@ private fun Contenido(
                     verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
                     Text(
-                        text = "Saldo estimado a favor",
+                        text = tr(R.string.cancel_saldo_estimado_a_favor),
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                     )
@@ -186,7 +188,7 @@ private fun Contenido(
             // No se puede cancelar (p. ej. siniestro en trámite): se explica el motivo.
             Aviso(
                 propuesta.bloqueos.ifEmpty {
-                    listOf(BloqueoCancelacion("", "No se puede cancelar en este momento."))
+                    listOf(BloqueoCancelacion("", tr(R.string.cancel_no_se_puede_cancelar_en)))
                 }.joinToString("\n") { it.mensaje }
             )
         }
@@ -220,10 +222,10 @@ private fun Contenido(
                         strokeWidth = 2.dp,
                         modifier = Modifier
                             .size(20.dp)
-                            .semantics { contentDescription = "Cancelando la póliza" }
+                            .semantics { contentDescription = tr(R.string.cancel_cancelando_la_poliza) }
                     )
                 } else {
-                    ContenidoBoton(Icons.Outlined.Block, "Confirmar cancelación")
+                    ContenidoBoton(Icons.Outlined.Block, tr(R.string.cancel_confirmar_cancelacion))
                 }
             }
         }
@@ -238,7 +240,7 @@ private fun Contenido(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(52.dp)
-        ) { ContenidoBoton(Icons.Outlined.Shield, "Conservar mi póliza") }
+        ) { ContenidoBoton(Icons.Outlined.Shield, tr(R.string.cancel_conservar_mi_poliza)) }
     }
 }
 
@@ -294,7 +296,7 @@ private fun SelectorMotivo(
                 .clickable(
                     enabled = habilitado,
                     role = Role.DropdownList,
-                    onClickLabel = "Elegir el motivo de cancelación"
+                    onClickLabel = tr(R.string.cancel_elegir_el_motivo_de_cancelacion)
                 ) { abierto = true }
         ) {
             Row(
@@ -303,7 +305,7 @@ private fun SelectorMotivo(
             ) {
                 Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(
-                        text = "Motivo de cancelación",
+                        text = tr(R.string.cancel_motivo_de_cancelacion),
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                     )

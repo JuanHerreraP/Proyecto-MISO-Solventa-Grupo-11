@@ -56,7 +56,9 @@ import com.example.solventa.ui.theme.Navegacion
 import com.example.solventa.ui.theme.Noche
 import java.math.BigDecimal
 import java.text.NumberFormat
-import java.util.Locale
+import com.example.solventa.R
+import com.example.solventa.i18n.Idioma
+import com.example.solventa.i18n.tr
 
 /** Bancos simulados para el flujo PSE (desarrollo). */
 private val BANCOS_PSE = listOf(
@@ -119,19 +121,19 @@ fun PaymentScreen(
                 TarjetaTotal(monto, moneda)
 
                 Text(
-                    text = "¿Cómo quieres pagar?",
+                    text = tr(R.string.payment_como_quieres_pagar),
                     style = MaterialTheme.typography.titleLarge,
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 OpcionMetodo(
                     seleccionado = metodo == MetodoPago.TARJETA,
-                    titulo = "Tarjeta de crédito o débito",
+                    titulo = tr(R.string.payment_tarjeta_de_credito_o_debito),
                     icono = rememberVectorPainter(Icons.Outlined.CreditCard),
                     onClick = { metodo = MetodoPago.TARJETA }
                 )
                 OpcionMetodo(
                     seleccionado = metodo == MetodoPago.PSE,
-                    titulo = "PSE (débito bancario)",
+                    titulo = tr(R.string.payment_pse_debito_bancario),
                     icono = rememberVectorPainter(Icons.Outlined.AccountBalance),
                     onClick = { metodo = MetodoPago.PSE }
                 )
@@ -140,17 +142,17 @@ fun PaymentScreen(
                     SolventaTextField(
                         value = numeroTarjeta,
                         onValueChange = { numeroTarjeta = formatearNumeroTarjeta(it) },
-                        label = "Número de tarjeta",
+                        label = tr(R.string.payment_numero_de_tarjeta),
                         placeholder = "4111 1111 1111 1111",
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        error = if (mostrarErrores && !tarjetaCompleta) "Revisa los datos de la tarjeta." else null
+                        error = if (mostrarErrores && !tarjetaCompleta) tr(R.string.payment_revisa_los_datos_de_la) else null
                     )
                     Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                         Column(modifier = Modifier.weight(1f)) {
                             SolventaTextField(
                                 value = vencimiento,
                                 onValueChange = { vencimiento = formatearVencimiento(it) },
-                                label = "Vencimiento",
+                                label = tr(R.string.payment_vencimiento),
                                 placeholder = "MM/AA",
                                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
                             )
@@ -166,14 +168,14 @@ fun PaymentScreen(
                         }
                     }
                     SolventaNoticePill(
-                        text = "Tus datos se tokenizan en el dispositivo; nunca enviamos el número de la tarjeta.",
+                        text = tr(R.string.payment_tus_datos_se_tokenizan_en),
                         icon = rememberVectorPainter(Icons.Outlined.Lock)
                     )
                 } else {
                     CampoBancoPse(
                         codigoBanco = codigoBanco,
                         onSeleccionar = { codigoBanco = it },
-                        error = if (mostrarErrores && !pseCompleto) "Selecciona tu banco." else null
+                        error = if (mostrarErrores && !pseCompleto) tr(R.string.payment_selecciona_tu_banco) else null
                     )
                 }
 
@@ -186,7 +188,7 @@ fun PaymentScreen(
                 }
 
                 SolventaPrimaryButton(
-                    text = "Pagar prima",
+                    text = tr(R.string.payment_pagar_prima),
                     isLoading = procesando,
                     onClick = {
                         if (!puedePagar) {
@@ -211,7 +213,7 @@ fun PaymentScreen(
                         )
                     }
                 )
-                SolventaSecondaryButton(text = "Volver", onClick = onVolver)
+                SolventaSecondaryButton(text = tr(R.string.biometrical_login_volver), onClick = onVolver)
             }
         }
     }
@@ -291,8 +293,8 @@ private fun CampoBancoPse(
         SolventaTextField(
             value = nombre,
             onValueChange = {},
-            label = "Banco",
-            placeholder = "Selecciona tu banco",
+            label = tr(R.string.payment_banco),
+            placeholder = tr(R.string.payment_selecciona_tu_banco_2),
             readOnly = true,
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandido) },
             error = error,
@@ -323,12 +325,12 @@ private fun EncabezadoPago(onVolver: () -> Unit) {
         IconButton(onClick = onVolver) {
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                contentDescription = "Volver",
+                contentDescription = tr(R.string.biometrical_login_volver),
                 tint = MaterialTheme.colorScheme.onSurface
             )
         }
         Text(
-            text = "Pagar la prima",
+            text = tr(R.string.payment_pagar_la_prima),
             style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
             color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.weight(1f)
@@ -357,7 +359,7 @@ internal fun tokenizarTarjeta(numero: String): String {
 }
 
 private fun formatearMonedaPago(valor: BigDecimal, moneda: String): String {
-    val formato = NumberFormat.getNumberInstance(Locale.forLanguageTag("es-CO")).apply {
+    val formato = NumberFormat.getNumberInstance(Idioma.locale()).apply {
         minimumFractionDigits = if (valor.stripTrailingZeros().scale() > 0) 2 else 0
         maximumFractionDigits = 2
     }

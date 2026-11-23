@@ -65,9 +65,16 @@ import com.example.solventa.ui.navigation.NavGraph
 import com.example.solventa.ui.theme.SolventaTheme
 import com.example.solventa.ui.theme.SuperficieContenedor
 import com.example.solventa.ui.theme.SuperficieContenedorOscura
+import android.content.Context
+import com.example.solventa.i18n.Idioma
 
 /** FragmentActivity porque BiometricPrompt la necesita para mostrar su diálogo. */
 class MainActivity : FragmentActivity() {
+
+    override fun attachBaseContext(newBase: Context) {
+        // La actividad usa el idioma elegido en el perfil, no solo el del sistema.
+        super.attachBaseContext(Idioma.envolver(newBase))
+    }
 
     private val autenticador by lazy { AutenticadorBiometrico(this) }
 

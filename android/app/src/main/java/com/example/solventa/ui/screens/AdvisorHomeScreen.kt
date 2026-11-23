@@ -47,6 +47,8 @@ import com.example.solventa.ui.theme.Atencion
 import com.example.solventa.ui.theme.Avance
 import com.example.solventa.ui.theme.Navegacion
 import com.example.solventa.ui.theme.SolventaTheme
+import com.example.solventa.R
+import com.example.solventa.i18n.tr
 
 /**
  * Inicio del asesor de ventas (HU20): lista los clientes que atiende, permite asociar nuevos
@@ -93,19 +95,19 @@ fun AdvisorHomeScreen(
                 )
                 Spacer(modifier = Modifier.width(10.dp))
                 Text(
-                    text = "Solventa · Asesor",
+                    text = tr(R.string.advisor_home_solventa_asesor),
                     style = MaterialTheme.typography.titleLarge,
                     color = MaterialTheme.colorScheme.onSurface
                 )
             }
 
             Text(
-                text = "Hola, $nombre",
+                text = tr(R.string.advisor_home_hola, nombre),
                 style = MaterialTheme.typography.headlineLarge,
                 color = MaterialTheme.colorScheme.onBackground
             )
             Text(
-                text = "Gestiona tus clientes y registra siniestros en su nombre.",
+                text = tr(R.string.advisor_home_gestiona_tus_clientes_y_registra),
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.65f)
             )
@@ -125,7 +127,7 @@ fun AdvisorHomeScreen(
                         Icon(Icons.Outlined.PersonAdd, contentDescription = null, tint = Navegacion)
                         Spacer(modifier = Modifier.width(12.dp))
                         Text(
-                            text = "Crear un asesor de ventas",
+                            text = tr(R.string.advisor_home_crear_un_asesor_de_ventas),
                             style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
                             color = MaterialTheme.colorScheme.onSurface,
                             modifier = Modifier.weight(1f)
@@ -146,14 +148,14 @@ fun AdvisorHomeScreen(
                     verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     Text(
-                        text = "Asociar un cliente",
+                        text = tr(R.string.advisor_home_asociar_un_cliente),
                         style = MaterialTheme.typography.titleMedium,
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     SolventaTextField(
                         value = email,
                         onValueChange = { email = it },
-                        label = "Correo del cliente",
+                        label = tr(R.string.advisor_home_correo_del_cliente),
                         placeholder = "cliente@correo.com"
                     )
                     if (errorAsociar != null) {
@@ -163,7 +165,7 @@ fun AdvisorHomeScreen(
                         Text(text = avisoAsociado, style = MaterialTheme.typography.bodyMedium, color = Avance)
                     }
                     SolventaPrimaryButton(
-                        text = "Asociar cliente",
+                        text = tr(R.string.advisor_home_asociar_cliente),
                         onClick = {
                             if (email.isNotBlank()) {
                                 onAsociarCliente(email.trim())
@@ -177,7 +179,7 @@ fun AdvisorHomeScreen(
             }
 
             Text(
-                text = "Mis clientes",
+                text = tr(R.string.advisor_home_mis_clientes),
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onSurface
             )
@@ -189,7 +191,7 @@ fun AdvisorHomeScreen(
                 ) {
                     CircularProgressIndicator(
                         color = Navegacion,
-                        modifier = Modifier.semantics { contentDescription = "Cargando tus clientes" }
+                        modifier = Modifier.semantics { contentDescription = tr(R.string.advisor_home_cargando_tus_clientes) }
                     )
                 }
 
@@ -198,7 +200,7 @@ fun AdvisorHomeScreen(
 
                 clientes.isEmpty() ->
                     Text(
-                        text = "Aún no tienes clientes asociados.",
+                        text = tr(R.string.advisor_home_aun_no_tienes_clientes_asociados),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                     )
@@ -216,7 +218,7 @@ fun AdvisorHomeScreen(
             ) {
                 Icon(Icons.AutoMirrored.Outlined.Logout, contentDescription = null, tint = Navegacion)
                 Spacer(modifier = Modifier.width(8.dp))
-                Text(if (cerrandoSesion) "Cerrando sesión…" else "Cerrar sesión", color = Navegacion)
+                Text(if (cerrandoSesion) tr(R.string.advisor_home_cerrando_sesion) else tr(R.string.advisor_home_cerrar_sesion), color = Navegacion)
             }
             Spacer(modifier = Modifier.size(24.dp))
         }
@@ -230,7 +232,7 @@ private fun TarjetaCliente(cliente: ClienteDeAsesor, onRegistrar: () -> Unit) {
         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.04f),
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(role = Role.Button, onClickLabel = "Registrar siniestro", onClick = onRegistrar)
+            .clickable(role = Role.Button, onClickLabel = tr(R.string.advisor_home_registrar_siniestro), onClick = onRegistrar)
     ) {
         Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
@@ -245,7 +247,7 @@ private fun TarjetaCliente(cliente: ClienteDeAsesor, onRegistrar: () -> Unit) {
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                 )
                 Text(
-                    text = "Registrar siniestro",
+                    text = tr(R.string.advisor_home_registrar_siniestro),
                     style = MaterialTheme.typography.labelMedium,
                     color = Navegacion
                 )

@@ -44,7 +44,9 @@ import com.example.solventa.ui.theme.Noche
 import com.example.solventa.ui.theme.SolventaTheme
 import java.math.BigDecimal
 import java.text.NumberFormat
-import java.util.Locale
+import com.example.solventa.R
+import com.example.solventa.i18n.Idioma
+import com.example.solventa.i18n.tr
 
 /** Presenta el precio y la cobertura calculados sin conocer el origen de los datos. */
 @Composable
@@ -88,7 +90,7 @@ fun QuoteResultScreen(
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
-                    text = "Cotización vigente durante las próximas 24 horas.",
+                    text = tr(R.string.quote_result_cotizacion_vigente_durante_las_proximas),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.65f)
                 )
@@ -101,7 +103,7 @@ fun QuoteResultScreen(
 
                 if (cotizacion.perfilRiesgoId != null) {
                     SolventaNoticePill(
-                        text = "Precio personalizado con la información que autorizaste.",
+                        text = tr(R.string.quote_result_precio_personalizado_con_la_informacion),
                         icon = rememberVectorPainter(Icons.Outlined.Shield),
                         containerColor = Avance.copy(alpha = 0.16f),
                         contentColor = Color(0xFF47720D)
@@ -109,14 +111,14 @@ fun QuoteResultScreen(
                 }
 
                 if (modoDetalle) {
-                    SolventaPrimaryButton(text = "Cerrar", onClick = onVolver)
+                    SolventaPrimaryButton(text = tr(R.string.payment_result_cerrar), onClick = onVolver)
                 } else {
                     SolventaPrimaryButton(
-                        text = "Aceptar y continuar",
+                        text = tr(R.string.quote_result_aceptar_y_continuar),
                         onClick = onAceptar,
                         enabled = cotizacion.estado == "VIGENTE"
                     )
-                    SolventaSecondaryButton(text = "Crear otra cotización", onClick = onCrearOtra)
+                    SolventaSecondaryButton(text = tr(R.string.quote_result_crear_otra_cotizacion), onClick = onCrearOtra)
                 }
             }
         }
@@ -134,12 +136,12 @@ private fun EncabezadoResultado(onVolver: () -> Unit) {
         IconButton(onClick = onVolver) {
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                contentDescription = "Volver",
+                contentDescription = tr(R.string.biometrical_login_volver),
                 tint = MaterialTheme.colorScheme.onSurface
             )
         }
         Text(
-            text = "Tu cotización",
+            text = tr(R.string.quote_result_tu_cotizacion),
             style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
             color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.weight(1f)
@@ -209,13 +211,13 @@ private fun TarjetaCobertura(cotizacion: ResultadoCotizacion) {
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Text(
-                text = "Cobertura principal",
+                text = tr(R.string.quote_result_cobertura_principal),
                 style = MaterialTheme.typography.titleLarge,
                 color = MaterialTheme.colorScheme.onSurface
             )
             DatoCobertura(cobertura.nombre)
             DatoCobertura(
-                "Suma asegurada: ${formatearMoneda(cobertura.sumaAsegurada, cotizacion.moneda)}"
+                tr(R.string.quote_result_suma_asegurada, formatearMoneda(cobertura.sumaAsegurada, cotizacion.moneda))
             )
             cobertura.descripcion?.takeIf(String::isNotBlank)?.let { DatoCobertura(it) }
         }
@@ -242,7 +244,7 @@ private fun TarjetaDatosSolicitud(cotizacion: ResultadoCotizacion) {
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Text(
-                text = "Datos de la solicitud",
+                text = tr(R.string.quote_result_datos_de_la_solicitud),
                 style = MaterialTheme.typography.titleLarge,
                 color = MaterialTheme.colorScheme.onSurface
             )
@@ -291,10 +293,10 @@ private fun DatoCobertura(texto: String) {
 }
 
 private fun tituloResultado(ramo: RamoCotizacion): String = when (ramo) {
-    RamoCotizacion.VIAJE -> "Protección para tu viaje"
-    RamoCotizacion.DISPOSITIVOS -> "Protección para tu dispositivo"
-    RamoCotizacion.VIDA -> "Protección para tu vida"
-    RamoCotizacion.PARAMETRICO -> "Protección ante eventos"
+    RamoCotizacion.VIAJE -> tr(R.string.quote_result_proteccion_para_tu_viaje)
+    RamoCotizacion.DISPOSITIVOS -> tr(R.string.quote_result_proteccion_para_tu_dispositivo)
+    RamoCotizacion.VIDA -> tr(R.string.quote_result_proteccion_para_tu_vida)
+    RamoCotizacion.PARAMETRICO -> tr(R.string.quote_result_proteccion_ante_eventos)
 }
 
 private fun etiquetaEstado(estado: String): String = when (estado) {
@@ -303,7 +305,7 @@ private fun etiquetaEstado(estado: String): String = when (estado) {
 }
 
 private fun formatearMoneda(valor: BigDecimal, moneda: String): String {
-    val formato = NumberFormat.getNumberInstance(Locale.forLanguageTag("es-CO")).apply {
+    val formato = NumberFormat.getNumberInstance(Idioma.locale()).apply {
         minimumFractionDigits = if (valor.stripTrailingZeros().scale() > 0) 2 else 0
         maximumFractionDigits = 2
     }

@@ -53,6 +53,17 @@ import com.example.solventa.ui.components.SolventaBottomNavigation
 import com.example.solventa.ui.theme.Avance
 import com.example.solventa.ui.theme.Navegacion
 import com.example.solventa.ui.theme.Noche
+import com.example.solventa.R
+import com.example.solventa.i18n.tr
+import android.app.Activity
+import android.content.Context
+import android.content.ContextWrapper
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.material3.RadioButton
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.Role
+import com.example.solventa.i18n.Idioma
 
 @Composable
 fun ProfileScreen(
@@ -114,7 +125,7 @@ fun ProfileScreen(
                 return@Column
             }
 
-            Encabezado(titulo = "Perfil", onVolver = onInicio)
+            Encabezado(titulo = tr(R.string.home_perfil), onVolver = onInicio)
             Column(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp),
                 verticalArrangement = Arrangement.spacedBy(14.dp)
@@ -127,22 +138,22 @@ fun ProfileScreen(
                 )
 
                 OpcionPerfil(
-                    "Datos personales",
-                    "Documento, correo y celular",
+                    tr(R.string.profile_datos_personales),
+                    tr(R.string.profile_documento_correo_y_celular),
                     Icons.Outlined.PersonOutline
                 ) { seccion = SeccionPerfil.CUENTA }
                 OpcionPerfil(
-                    "Seguridad y privacidad",
+                    tr(R.string.profile_seguridad_y_privacidad),
                     textoSeguridad(biometriaActivada, sinConexion),
                     Icons.Outlined.Shield
                 ) { seccion = SeccionPerfil.SEGURIDAD }
                 OpcionPerfil(
-                    "Idioma y moneda",
-                    "Español (Colombia) · Peso colombiano (COP)",
+                    tr(R.string.profile_idioma_y_moneda),
+                    tr(R.string.profile_idioma_resumen, nombreIdioma(Idioma.actual)),
                     Icons.Outlined.Language
                 ) { seccion = SeccionPerfil.IDIOMA }
                 OpcionPerfil(
-                    "Notificaciones",
+                    tr(R.string.home_notificaciones),
                     textoNotificaciones(notificaciones),
                     Icons.Outlined.NotificationsNone,
                     habilitada = notificaciones != null
@@ -155,7 +166,7 @@ fun ProfileScreen(
                 ) {
                     Icon(Icons.AutoMirrored.Outlined.Logout, contentDescription = null)
                     Spacer(Modifier.width(8.dp))
-                    Text(if (cerrandoSesion) "Cerrando sesión…" else "Cerrar sesión")
+                    Text(if (cerrandoSesion) tr(R.string.advisor_home_cerrando_sesion) else tr(R.string.advisor_home_cerrar_sesion))
                 }
             }
         }
@@ -239,7 +250,7 @@ private fun OpcionPerfil(
             if (habilitada) {
                 Icon(
                     Icons.AutoMirrored.Outlined.KeyboardArrowRight,
-                    contentDescription = "Abrir $titulo"
+                    contentDescription = tr(R.string.profile_abrir, titulo)
                 )
             }
         }
@@ -273,14 +284,14 @@ private fun DetallePerfil(
 ) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         IconButton(onClick = onVolver) {
-            Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = "Volver al perfil")
+            Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = tr(R.string.profile_volver_al_perfil))
         }
         Text(
             when (seccion) {
-                SeccionPerfil.CUENTA -> "Datos personales"
-                SeccionPerfil.SEGURIDAD -> "Seguridad y privacidad"
-                SeccionPerfil.IDIOMA -> "Idioma y moneda"
-                SeccionPerfil.NOTIFICACIONES -> "Notificaciones"
+                SeccionPerfil.CUENTA -> tr(R.string.profile_datos_personales)
+                SeccionPerfil.SEGURIDAD -> tr(R.string.profile_seguridad_y_privacidad)
+                SeccionPerfil.IDIOMA -> tr(R.string.profile_idioma_y_moneda)
+                SeccionPerfil.NOTIFICACIONES -> tr(R.string.home_notificaciones)
             },
             style = MaterialTheme.typography.titleLarge
         )
@@ -288,18 +299,18 @@ private fun DetallePerfil(
 
     when (seccion) {
         SeccionPerfil.CUENTA -> {
-            CampoPerfil("Nombre completo", "${perfil.nombre} ${perfil.apellido}")
-            CampoPerfil("Correo electrónico", perfil.email)
-            CampoPerfil("Documento de identidad", documento(perfil))
-            CampoPerfil("Teléfono", perfil.celular?.takeIf(String::isNotBlank) ?: "No disponible")
+            CampoPerfil(tr(R.string.profile_nombre_completo), "${perfil.nombre} ${perfil.apellido}")
+            CampoPerfil(tr(R.string.credentials_login_correo_electronico), perfil.email)
+            CampoPerfil(tr(R.string.profile_documento_de_identidad), documento(perfil))
+            CampoPerfil(tr(R.string.profile_telefono), perfil.celular?.takeIf(String::isNotBlank) ?: tr(R.string.profile_no_disponible))
         }
         SeccionPerfil.SEGURIDAD -> {
-            CampoPerfil("Acceso biométrico", if (biometriaActivada) "Activado" else "No activado")
-            CampoPerfil("Datos de pólizas", if (sinConexion) "Disponibles sin conexión" else "Copia local cifrada")
+            CampoPerfil(tr(R.string.profile_acceso_biometrico), if (biometriaActivada) tr(R.string.profile_activado) else tr(R.string.profile_no_activado))
+            CampoPerfil(tr(R.string.profile_datos_de_polizas), if (sinConexion) tr(R.string.profile_disponibles_sin_conexion) else tr(R.string.profile_copia_local_cifrada))
         }
         SeccionPerfil.IDIOMA -> {
-            CampoPerfil("Idioma", "Español (Colombia)")
-            CampoPerfil("Moneda", "Peso colombiano (COP)")
+            SelectorIdioma()
+            CampoPerfil(tr(R.string.profile_moneda), tr(R.string.profile_peso_colombiano_cop))
         }
         SeccionPerfil.NOTIFICACIONES -> SeccionNotificaciones(
             notificaciones = notificaciones,
@@ -326,11 +337,11 @@ private fun SeccionNotificaciones(
     ) {
         Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
-                Text("Recibir notificaciones push", fontWeight = FontWeight.Bold)
+                Text(tr(R.string.profile_recibir_notificaciones_push), fontWeight = FontWeight.Bold)
                 Spacer(Modifier.height(4.dp))
                 Text(
-                    "Avisos de pagos de tu seguro paramétrico, vencimientos de pólizas y cambios " +
-                        "en tus siniestros. Siempre los verás también dentro de la app.",
+                    tr(R.string.profile_avisos_de_pagos_de_tu) +
+                        tr(R.string.profile_en_tus_siniestros_siempre_los),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                 )
@@ -344,7 +355,7 @@ private fun SeccionNotificaciones(
                     // El permiso se pide en el momento en que el cliente quiere los avisos.
                     if (activar && !preferencia.permisoConcedido) onSolicitarPermiso()
                 },
-                modifier = Modifier.semantics { contentDescription = "Recibir notificaciones push" }
+                modifier = Modifier.semantics { contentDescription = tr(R.string.profile_recibir_notificaciones_push) }
             )
         }
     }
@@ -359,14 +370,14 @@ private fun SeccionNotificaciones(
         ) {
             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(
-                    "Las notificaciones están bloqueadas en tu teléfono. Permítelas para recibir " +
-                        "los avisos como notificación.",
+                    tr(R.string.profile_las_notificaciones_estan_bloqueadas_en) +
+                        tr(R.string.profile_los_avisos_como_notificacion),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onErrorContainer
                 )
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    TextButton(onClick = onSolicitarPermiso) { Text("Permitir") }
-                    TextButton(onClick = onAbrirAjustes) { Text("Abrir ajustes") }
+                    TextButton(onClick = onSolicitarPermiso) { Text(tr(R.string.profile_permitir)) }
+                    TextButton(onClick = onAbrirAjustes) { Text(tr(R.string.profile_abrir_ajustes)) }
                 }
             }
         }
@@ -374,10 +385,56 @@ private fun SeccionNotificaciones(
 }
 
 private fun textoNotificaciones(notificaciones: PreferenciasNotificacionesUi?): String = when {
-    notificaciones == null -> "Disponible próximamente"
-    notificaciones.pushHabilitado == null -> "Avisos de pagos, siniestros y vencimientos"
-    notificaciones.pushHabilitado -> "Notificaciones push activadas"
-    else -> "Push desactivado · los avisos se ven en la app"
+    notificaciones == null -> tr(R.string.profile_disponible_proximamente)
+    notificaciones.pushHabilitado == null -> tr(R.string.profile_avisos_de_pagos_siniestros_y)
+    notificaciones.pushHabilitado -> tr(R.string.profile_notificaciones_push_activadas)
+    else -> tr(R.string.profile_push_desactivado_los_avisos_se)
+}
+
+/** Selector del idioma de la app; al elegir otro, la actividad se recrea en ese idioma. */
+@Composable
+private fun SelectorIdioma() {
+    val actividad = LocalContext.current.buscarActividad()
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        color = MaterialTheme.colorScheme.surfaceContainer
+    ) {
+        Column(Modifier.padding(16.dp).selectableGroup()) {
+            Text(tr(R.string.profile_idioma), style = MaterialTheme.typography.labelMedium)
+            Spacer(Modifier.height(4.dp))
+            Idioma.Opcion.entries.forEach { opcion ->
+                val seleccionado = opcion == Idioma.actual
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .selectable(
+                            selected = seleccionado,
+                            role = Role.RadioButton,
+                            onClick = { actividad?.let { Idioma.cambiar(it, opcion) } }
+                        )
+                        .padding(vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    RadioButton(selected = seleccionado, onClick = null)
+                    Spacer(Modifier.width(12.dp))
+                    Text(nombreIdioma(opcion), fontWeight = FontWeight.SemiBold)
+                }
+            }
+        }
+    }
+}
+
+/** Nombre de cada idioma en su propio idioma, para reconocerlo aunque no se entienda el actual. */
+private fun nombreIdioma(opcion: Idioma.Opcion): String = when (opcion) {
+    Idioma.Opcion.ESPANOL -> tr(R.string.idioma_espanol)
+    Idioma.Opcion.INGLES -> tr(R.string.idioma_ingles)
+}
+
+private tailrec fun Context.buscarActividad(): Activity? = when (this) {
+    is Activity -> this
+    is ContextWrapper -> baseContext.buscarActividad()
+    else -> null
 }
 
 @Composable
@@ -406,8 +463,10 @@ private fun nombreRol(rol: String) = rol.split('_').joinToString(" ") {
 private fun documento(perfil: Perfil) = listOfNotNull(
     perfil.tipoDocumento?.takeIf(String::isNotBlank),
     perfil.numeroDocumento?.takeIf(String::isNotBlank)
-).joinToString(" ").ifBlank { "No disponible" }
+).joinToString(" ").ifBlank { tr(R.string.profile_no_disponible) }
 
-private fun textoSeguridad(biometria: Boolean, sinConexion: Boolean): String =
-    "${if (biometria) "Biometría activa" else "Biometría no activada"} · " +
-        if (sinConexion) "datos offline disponibles" else "datos offline cifrados"
+private fun textoSeguridad(biometria: Boolean, sinConexion: Boolean): String = tr(
+    R.string.profile_seguridad_resumen,
+    if (biometria) tr(R.string.profile_biometria_activa) else tr(R.string.profile_biometria_no_activada),
+    if (sinConexion) tr(R.string.profile_datos_offline_disponibles) else tr(R.string.profile_datos_offline_cifrados)
+)

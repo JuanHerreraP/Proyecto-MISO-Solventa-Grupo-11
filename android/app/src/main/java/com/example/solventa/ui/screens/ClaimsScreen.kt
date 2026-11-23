@@ -39,6 +39,8 @@ import com.example.solventa.ui.theme.Atencion
 import com.example.solventa.ui.theme.Avance
 import com.example.solventa.ui.theme.Navegacion
 import com.example.solventa.ui.theme.SolventaTheme
+import com.example.solventa.R
+import com.example.solventa.i18n.tr
 
 /** Lista de siniestros del cliente (HU20): manuales y automáticos de telemetría. */
 @Composable
@@ -54,13 +56,13 @@ fun ClaimsScreen(
 ) {
     Surface(modifier = modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surface) {
         Column(modifier = Modifier.fillMaxSize()) {
-            Encabezado(titulo = "Mis siniestros", onVolver = onVolver)
+            Encabezado(titulo = tr(R.string.claims_mis_siniestros), onVolver = onVolver)
 
             when {
                 siniestros == null && cargando -> CentradoClaims {
                     CircularProgressIndicator(
                         color = Navegacion,
-                        modifier = Modifier.semantics { contentDescription = "Cargando tus siniestros" }
+                        modifier = Modifier.semantics { contentDescription = tr(R.string.claims_cargando_tus_siniestros) }
                     )
                 }
 
@@ -71,23 +73,23 @@ fun ClaimsScreen(
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Spacer(modifier = Modifier.size(16.dp))
-                    SolventaPrimaryButton(text = "Reintentar", onClick = onReintentar)
+                    SolventaPrimaryButton(text = tr(R.string.assistance_reintentar), onClick = onReintentar)
                 }
 
                 siniestros == null || siniestros.vacia -> CentradoClaims {
                     Text(
-                        text = "Aún no tienes siniestros",
+                        text = tr(R.string.claims_aun_no_tienes_siniestros),
                         style = MaterialTheme.typography.titleMedium,
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Spacer(modifier = Modifier.size(8.dp))
                     Text(
-                        text = "Aquí verás los siniestros que reportes y los que Solventa detecte automáticamente.",
+                        text = tr(R.string.claims_aqui_veras_los_siniestros_que),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                     )
                     Spacer(modifier = Modifier.size(16.dp))
-                    SolventaPrimaryButton(text = "Reportar siniestro", onClick = onReportar)
+                    SolventaPrimaryButton(text = tr(R.string.claim_form_reportar_siniestro), onClick = onReportar)
                 }
 
                 else -> ListaSiniestros(
@@ -119,7 +121,7 @@ private fun ListaSiniestros(
         }
         item {
             Text(
-                text = "${siniestros.total} en total · ${siniestros.automaticos} automáticos",
+                text = tr(R.string.claims_en_total_automaticos, siniestros.total, siniestros.automaticos),
                 style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
             )
@@ -129,7 +131,7 @@ private fun ListaSiniestros(
         }
         item {
             Spacer(modifier = Modifier.size(4.dp))
-            SolventaPrimaryButton(text = "Reportar siniestro", onClick = onReportar)
+            SolventaPrimaryButton(text = tr(R.string.claim_form_reportar_siniestro), onClick = onReportar)
         }
     }
 }
@@ -141,7 +143,7 @@ private fun TarjetaSiniestro(siniestro: Siniestro, onClick: () -> Unit) {
         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.04f),
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(role = Role.Button, onClickLabel = "Ver detalle", onClick = onClick)
+            .clickable(role = Role.Button, onClickLabel = tr(R.string.claims_ver_detalle), onClick = onClick)
     ) {
         Column(
             modifier = Modifier.padding(16.dp),
@@ -149,7 +151,7 @@ private fun TarjetaSiniestro(siniestro: Siniestro, onClick: () -> Unit) {
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    text = "Póliza ${siniestro.polizaId}",
+                    text = tr(R.string.claim_detail_poliza, siniestro.polizaId),
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier.weight(1f, fill = false)
@@ -160,7 +162,7 @@ private fun TarjetaSiniestro(siniestro: Siniestro, onClick: () -> Unit) {
                 EtiquetaEstadoSiniestro(siniestro.estado)
             }
             Text(
-                text = "Evento: ${Formatos.fecha(siniestro.fechaEvento)}" +
+                text = tr(R.string.claims_evento, Formatos.fecha(siniestro.fechaEvento)) +
                     if (siniestro.lugar.isNotBlank()) " · ${siniestro.lugar}" else "",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
@@ -174,7 +176,7 @@ private fun TarjetaSiniestro(siniestro: Siniestro, onClick: () -> Unit) {
             }
             if (siniestro.estimacionDanos.isNotBlank()) {
                 Text(
-                    text = "Estimación: ${Formatos.dinero(siniestro.estimacionDanos, siniestro.moneda)}",
+                    text = tr(R.string.claims_estimacion, Formatos.dinero(siniestro.estimacionDanos, siniestro.moneda)),
                     style = MaterialTheme.typography.labelMedium,
                     color = Navegacion
                 )
@@ -187,9 +189,9 @@ private fun TarjetaSiniestro(siniestro: Siniestro, onClick: () -> Unit) {
 @Composable
 internal fun EtiquetaOrigen(origen: OrigenSiniestro) {
     val (fondo, texto, etiqueta) = when (origen) {
-        OrigenSiniestro.AUTOMATICO -> Triple(Navegacion.copy(alpha = 0.15f), Navegacion, "Automático")
+        OrigenSiniestro.AUTOMATICO -> Triple(Navegacion.copy(alpha = 0.15f), Navegacion, tr(R.string.claims_automatico))
         OrigenSiniestro.MANUAL -> Triple(
-            Color(0xFF8A8F98).copy(alpha = 0.2f), Color(0xFF3A3D42), "Manual"
+            Color(0xFF8A8F98).copy(alpha = 0.2f), Color(0xFF3A3D42), tr(R.string.claims_manual)
         )
     }
     Surface(shape = RoundedCornerShape(8.dp), color = fondo) {
@@ -205,12 +207,12 @@ internal fun EtiquetaOrigen(origen: OrigenSiniestro) {
 @Composable
 internal fun EtiquetaEstadoSiniestro(estado: EstadoSiniestro) {
     val (fondo, texto, etiqueta) = when (estado) {
-        EstadoSiniestro.REGISTRADO -> Triple(Avance.copy(alpha = 0.25f), Color(0xFF2F5A0B), "Registrado")
+        EstadoSiniestro.REGISTRADO -> Triple(Avance.copy(alpha = 0.25f), Color(0xFF2F5A0B), tr(R.string.claims_registrado))
         EstadoSiniestro.EN_EVALUACION ->
-            Triple(Atencion.copy(alpha = 0.2f), Color(0xFF7A3A05), "En evaluación")
-        EstadoSiniestro.APROBADO -> Triple(Avance.copy(alpha = 0.25f), Color(0xFF2F5A0B), "Aprobado")
+            Triple(Atencion.copy(alpha = 0.2f), Color(0xFF7A3A05), tr(R.string.claims_en_evaluacion))
+        EstadoSiniestro.APROBADO -> Triple(Avance.copy(alpha = 0.25f), Color(0xFF2F5A0B), tr(R.string.claim_detail_aprobado))
         EstadoSiniestro.RECHAZADO ->
-            Triple(Color(0xFFB00020).copy(alpha = 0.15f), Color(0xFF7A0012), "Rechazado")
+            Triple(Color(0xFFB00020).copy(alpha = 0.15f), Color(0xFF7A0012), tr(R.string.claim_detail_rechazado))
     }
     Surface(shape = RoundedCornerShape(8.dp), color = fondo) {
         Text(

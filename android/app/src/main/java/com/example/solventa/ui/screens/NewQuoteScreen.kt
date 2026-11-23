@@ -40,6 +40,8 @@ import com.example.solventa.domain.cotizaciones.RamoCotizacion
 import com.example.solventa.ui.components.SolventaBottomNavigation
 import com.example.solventa.ui.theme.Navegacion
 import com.example.solventa.ui.theme.SolventaTheme
+import com.example.solventa.R
+import com.example.solventa.i18n.tr
 
 private data class OpcionRamo(
     val ramo: RamoCotizacion,
@@ -48,29 +50,29 @@ private data class OpcionRamo(
     val icono: ImageVector
 )
 
-private val opcionesRamo = listOf(
+private fun opcionesRamo() = listOf(
     OpcionRamo(
         RamoCotizacion.VIAJE,
-        "Viaje",
-        "Cobertura durante tu recorrido",
+        tr(R.string.new_quote_viaje),
+        tr(R.string.new_quote_cobertura_durante_tu_recorrido),
         Icons.Outlined.Flight
     ),
     OpcionRamo(
         RamoCotizacion.DISPOSITIVOS,
-        "Dispositivos",
-        "Protege celular o portátil",
+        tr(R.string.new_quote_dispositivos),
+        tr(R.string.new_quote_protege_celular_o_portatil),
         Icons.Outlined.Devices
     ),
     OpcionRamo(
         RamoCotizacion.VIDA,
-        "Vida",
-        "Protección para ti y tu familia",
+        tr(R.string.new_quote_vida),
+        tr(R.string.new_quote_proteccion_para_ti_y_tu),
         Icons.Outlined.FavoriteBorder
     ),
     OpcionRamo(
         RamoCotizacion.PARAMETRICO,
-        "Paramétrico",
-        "Respuesta ante eventos definidos",
+        tr(R.string.new_quote_parametrico),
+        tr(R.string.new_quote_respuesta_ante_eventos_definidos),
         Icons.Outlined.Bolt
     )
 )
@@ -109,17 +111,17 @@ fun NewQuoteScreen(
                     color = Navegacion
                 )
                 Text(
-                    text = "¿Qué quieres proteger?",
+                    text = tr(R.string.new_quote_que_quieres_proteger),
                     style = MaterialTheme.typography.headlineMedium,
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
-                    text = "Elige un tipo de seguro para mostrar únicamente los datos necesarios.",
+                    text = tr(R.string.new_quote_elige_un_tipo_de_seguro),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.65f)
                 )
 
-                opcionesRamo.forEach { opcion ->
+                opcionesRamo().forEach { opcion ->
                     TarjetaRamo(opcion = opcion, onClick = { onSeleccionarRamo(opcion.ramo) })
                 }
             }
@@ -138,12 +140,12 @@ private fun EncabezadoCotizacion(onVolver: () -> Unit) {
         IconButton(onClick = onVolver) {
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                contentDescription = "Volver",
+                contentDescription = tr(R.string.biometrical_login_volver),
                 tint = MaterialTheme.colorScheme.onSurface
             )
         }
         Text(
-            text = "Nueva cotización",
+            text = tr(R.string.new_quote_nueva_cotizacion),
             style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
             color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.weight(1f)

@@ -2,7 +2,11 @@ package com.example.solventa.ui.screens
 
 import org.junit.Assert.assertEquals
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
 
+// Robolectric: los mensajes salen de strings.xml (i18n) y necesitan los recursos de Android.
+@RunWith(RobolectricTestRunner::class)
 class SyncStatusBannerTest {
     @Test
     fun describeMinutosHorasYDiasDesdeLaUltimaSincronizacion() {

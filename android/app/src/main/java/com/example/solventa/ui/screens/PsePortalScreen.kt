@@ -31,6 +31,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.net.toUri
 import com.example.solventa.ui.theme.Navegacion
+import com.example.solventa.R
+import com.example.solventa.i18n.tr
 
 /**
  * Portal PSE simulado dentro de la app. Carga en un WebView la URL que devolvió el backend
@@ -61,12 +63,12 @@ fun PsePortalScreen(
                 IconButton(onClick = onVolver) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "Volver",
+                        contentDescription = tr(R.string.biometrical_login_volver),
                         tint = MaterialTheme.colorScheme.onSurface
                     )
                 }
                 Text(
-                    text = "Pago con PSE",
+                    text = tr(R.string.pse_portal_pago_con_pse),
                     style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
                     color = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier.weight(1f)

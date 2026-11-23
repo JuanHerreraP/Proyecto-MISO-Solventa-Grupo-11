@@ -28,6 +28,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.solventa.ui.components.SolventaPrimaryButton
 import com.example.solventa.ui.theme.SolventaTheme
+import com.example.solventa.R
+import com.example.solventa.i18n.tr
 
 /** Confirmación de que la póliza quedó cancelada (HU22). */
 @Composable
@@ -38,7 +40,7 @@ fun CancelSuccessScreen(
 ) {
     Surface(modifier = modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surface) {
         Column(modifier = Modifier.fillMaxSize()) {
-            Encabezado(titulo = "Pólizas", onVolver = onVolver)
+            Encabezado(titulo = tr(R.string.cancel_polizas), onVolver = onVolver)
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -61,21 +63,21 @@ fun CancelSuccessScreen(
                     )
                 }
                 Text(
-                    text = "Póliza cancelada",
+                    text = tr(R.string.cancel_success_poliza_cancelada),
                     style = MaterialTheme.typography.headlineLarge.copy(fontWeight = FontWeight.Bold),
                     color = MaterialTheme.colorScheme.onSurface,
                     textAlign = TextAlign.Center
                 )
                 Text(
-                    text = "Suspendimos la cobertura y los cobros futuros. " +
-                        "La póliza seguirá disponible en tu historial.",
+                    text = tr(R.string.cancel_success_suspendimos_la_cobertura_y_los) +
+                        tr(R.string.cancel_success_la_poliza_seguira_disponible_en),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
                     textAlign = TextAlign.Center
                 )
                 Spacer(modifier = Modifier.size(4.dp))
                 SolventaPrimaryButton(
-                    text = "Volver a mis pólizas",
+                    text = tr(R.string.cancel_success_volver_a_mis_polizas),
                     onClick = onVolverALasPolizas,
                     icon = rememberVectorPainter(Icons.AutoMirrored.Filled.ArrowForward)
                 )

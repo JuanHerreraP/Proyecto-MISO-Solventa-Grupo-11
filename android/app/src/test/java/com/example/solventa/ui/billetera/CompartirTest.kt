@@ -4,7 +4,11 @@ import com.example.solventa.domain.polizas.EnlaceCompartido
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
 
+// Robolectric: los mensajes salen de strings.xml (i18n) y necesitan los recursos de Android.
+@RunWith(RobolectricTestRunner::class)
 class CompartirTest {
     private val url = "https://api.solventa.co/api/v1/certificados-compartidos/abc"
 

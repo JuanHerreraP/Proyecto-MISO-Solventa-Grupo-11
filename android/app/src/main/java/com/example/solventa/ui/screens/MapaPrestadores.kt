@@ -16,6 +16,8 @@ import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.rememberCameraPositionState
 import com.google.maps.android.compose.rememberMarkerState
+import com.example.solventa.R
+import com.example.solventa.i18n.tr
 
 /**
  * Mapa con la ubicación del cliente y los prestadores cercanos (HU06).
@@ -49,7 +51,7 @@ fun MapaPrestadores(
             MapUiSettings(zoomControlsEnabled = true, zoomGesturesEnabled = true)
         }
     ) {
-        Marker(state = miUbicacion, title = "Mi ubicación")
+        Marker(state = miUbicacion, title = tr(R.string.mapa_prestadores_mi_ubicacion))
         estado.prestadores.forEach { prestador ->
             Marker(
                 state = MarkerState(position = LatLng(prestador.latitud, prestador.longitud)),

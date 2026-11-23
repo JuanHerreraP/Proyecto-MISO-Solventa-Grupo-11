@@ -45,6 +45,7 @@ import com.example.solventa.ui.theme.Atencion
 import com.example.solventa.ui.theme.Navegacion
 import com.example.solventa.ui.theme.SolventaTheme
 import com.example.solventa.ui.validation.canSubmitCredentialsLogin
+import com.example.solventa.i18n.tr
 
 @Composable
 fun CredentialsLoginScreen(
@@ -88,7 +89,7 @@ fun CredentialsLoginScreen(
                     ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
-                            contentDescription = "Volver",
+                            contentDescription = tr(R.string.biometrical_login_volver),
                             tint = MaterialTheme.colorScheme.onSurface
                         )
                     }
@@ -96,7 +97,7 @@ fun CredentialsLoginScreen(
                     Spacer(modifier = Modifier.width(16.dp))
 
                     Text(
-                        text = "Ingresar",
+                        text = tr(R.string.credentials_login_ingresar),
                         style = MaterialTheme.typography.titleLarge,
                         color = MaterialTheme.colorScheme.onSurface
                     )
@@ -106,7 +107,7 @@ fun CredentialsLoginScreen(
 
                 // 2. Headline & Subtitle
                 Text(
-                    text = "Accede a tu cuenta",
+                    text = tr(R.string.credentials_login_accede_a_tu_cuenta),
                     style = MaterialTheme.typography.headlineLarge,
                     color = MaterialTheme.colorScheme.onBackground
                 )
@@ -114,7 +115,7 @@ fun CredentialsLoginScreen(
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Text(
-                    text = "Esta alternativa está disponible cuando no puedes utilizar la biometría.",
+                    text = tr(R.string.credentials_login_esta_alternativa_esta_disponible_cuando),
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
                 )
@@ -129,7 +130,7 @@ fun CredentialsLoginScreen(
                     SolventaTextField(
                         value = email,
                         onValueChange = { email = it },
-                        label = "Correo electrónico",
+                        label = tr(R.string.credentials_login_correo_electronico),
                         placeholder = "tu.correo@ejemplo.com",
                         keyboardOptions = KeyboardOptions(
                             keyboardType = KeyboardType.Email,
@@ -140,7 +141,7 @@ fun CredentialsLoginScreen(
                     SolventaTextField(
                         value = password,
                         onValueChange = { password = it },
-                        label = "Contraseña",
+                        label = tr(R.string.create_advisor_contrasena),
                         placeholder = "••••••••",
                         visualTransformation = PasswordVisualTransformation(),
                         keyboardOptions = KeyboardOptions(
@@ -151,7 +152,7 @@ fun CredentialsLoginScreen(
 
                     // Forgot Password Link
                     Text(
-                        text = "¿Olvidaste tu contraseña?",
+                        text = tr(R.string.credentials_login_olvidaste_tu_contrasena),
                         style = MaterialTheme.typography.bodyMedium.copy(
                             fontWeight = FontWeight.Bold,
                             color = Navegacion
@@ -179,19 +180,19 @@ fun CredentialsLoginScreen(
                 }
 
                 SolventaPrimaryButton(
-                    text = "Ingresar",
+                    text = tr(R.string.credentials_login_ingresar),
                     enabled = canSubmitCredentialsLogin(email, password),
                     isLoading = cargando,
                     onClick = { onLoginSubmit(email, password) }
                 )
 
                 SolventaSecondaryButton(
-                    text = "Usar ingreso biométrico",
+                    text = tr(R.string.credentials_login_usar_ingreso_biometrico),
                     onClick = onSwitchToBiometric
                 )
 
                 SolventaNoticePill(
-                    text = "Nunca compartas tu contraseña ni códigos de verificación.",
+                    text = tr(R.string.credentials_login_nunca_compartas_tu_contrasena_ni),
                     icon = painterResource(id = R.drawable.ic_main_page)
                 )
             }
