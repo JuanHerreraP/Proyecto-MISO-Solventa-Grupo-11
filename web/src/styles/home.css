@@ -677,6 +677,7 @@
   cursor: pointer;
 }
 
+<<<<<<< Updated upstream
 /* Varias acciones en la misma celda (Comprobante, Contrato): separadas y sin romper en móvil. */
 .pagos-acciones {
   display: flex;
@@ -739,6 +740,8 @@
   color: #8a93a2;
 }
 
+=======
+>>>>>>> Stashed changes
 /* Filas del historial reciente en la página de inicio (HU25). */
 .home-fila-clic {
   cursor: pointer;

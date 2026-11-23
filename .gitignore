@@ -24,3 +24,5 @@ infra/backups/
 backend/solventa.db
 backend/documentos_polizas/
 backend/evidencias_siniestros/
+backend/tests/jmeter/salidas/
+jmeter.log

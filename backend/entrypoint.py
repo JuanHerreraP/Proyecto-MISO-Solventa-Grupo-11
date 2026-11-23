@@ -24,6 +24,9 @@ def main() -> None:
             ruta.touch(mode=0o600)
             ruta.write_text(valor)
             os.environ[f"JWT_{tipo}_KEY_PATH"] = str(ruta)
+    if os.environ.get("SOLVENTA_ROL", "api").strip().lower() == "worker":
+        _arrancar_worker()
+        return
     os.execvp(
         "uvicorn",
         [
@@ -36,6 +39,16 @@ def main() -> None:
             "--no-proxy-headers",
         ],
     )
+
+
+def _arrancar_worker() -> None:
+    """Modo worker (SOLVENTA_ROL=worker): consume la cola de telemetría en vez de servir la API."""
+    import logging
+
+    from app.siniestros.worker import ejecutar
+
+    logging.basicConfig(level=logging.INFO)
+    ejecutar()
 
 
 if __name__ == "__main__":

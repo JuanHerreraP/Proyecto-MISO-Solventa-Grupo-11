@@ -1,12 +1,22 @@
 """Endpoint de integración de telemetría externa (HU20).
 
-Recibe los eventos que empuja el proveedor externo (retraso de vuelo, clima) y delega en el
-servicio paramétrico. La autenticación es `sistema → sistema` mediante la cabecera `X-API-Key`:
-no usa JWT de usuario. La credencial se lee de la variable de entorno
-`SOLVENTA_TELEMETRY_API_KEY`; nunca se escribe en el código.
+Recibe los eventos que empuja el proveedor externo (retraso de vuelo, clima) y, por defecto, los
+encola para que un worker los procese a su ritmo (contrapresión): así un pico del proveedor no
+tumba el backend. La autenticación es `sistema → sistema` mediante la cabecera `X-API-Key`: no usa
+JWT de usuario. La credencial se lee de la variable de entorno `SOLVENTA_TELEMETRY_API_KEY`;
+nunca se escribe en el código.
 
-Queda preparado para sustituir la API Key por OAuth Client Credentials o API Gateway sin tocar
-el servicio: bastaría cambiar `verificar_api_key`.
+Modos de operación (variable `EC_MODO_SINCRONO`, por defecto `false`):
+
+- Asíncrono (recomendado): valida el cuerpo, publica en la cola y responde 202 solo si el
+  transporte confirmó la recepción (hay `MessageId`). Si el publicador falla, responde 503 para
+  que el proveedor reintente. El publicador se elige por entorno: `PublicadorSQS` si está
+  definido `SQS_QUEUE_URL`, si no `PublicadorEnMemoria`.
+- Síncrono (`EC_MODO_SINCRONO=true`): conserva el comportamiento anterior, procesando el evento
+  en línea con `ServicioTelemetria`. Útil para desarrollo local y para no romper pruebas.
+
+Queda preparado para sustituir la API Key por OAuth Client Credentials o API Gateway sin tocar el
+servicio: bastaría cambiar `verificar_api_key`.
 """
 
 import os
@@ -20,10 +30,11 @@ from sqlalchemy.orm import Session
 from app.api.desembolsos import construir_evaluacion
 from app.infraestructura.database import get_db
 from app.polizas.repositorio import RepositorioPolizasPostgres
+from app.siniestros.cola import PublicacionFallida, PublicadorEventos, construir_publicador
+from app.siniestros.metricas import EVENTOS_RECIBIDOS, MetricasTelemetria
 from app.siniestros.repositorio import RepositorioSiniestrosPostgres
 from app.siniestros.telemetria import (
     EventoParametrico,
-    RespuestaTelemetria,
     ResultadoTelemetria,
     ServicioTelemetria,
 )
@@ -31,6 +42,11 @@ from app.siniestros.telemetria import (
 router = APIRouter(prefix="/api/v1/integraciones/telemetria", tags=["integraciones"])
 
 API_KEY_POR_DEFECTO = "solventa-telemetry-dev"
+
+
+def modo_sincrono() -> bool:
+    """Si es verdadero, el evento se procesa en línea en vez de encolarse."""
+    return os.getenv("EC_MODO_SINCRONO", "false").strip().lower() == "true"
 
 
 def verificar_api_key(x_api_key: str | None = Header(default=None)) -> None:
@@ -54,6 +70,15 @@ def obtener_servicio(db: Session = Depends(get_db)) -> ServicioTelemetria:
         polizas=RepositorioPolizasPostgres(db),
         al_crear=evaluacion.aprobar_automatico,
     )
+
+
+def obtener_publicador() -> PublicadorEventos:
+    """Publicador de la cola. Se sobreescribe en pruebas con uno en memoria o uno que falla."""
+    return construir_publicador()
+
+
+def obtener_metricas() -> MetricasTelemetria:
+    return MetricasTelemetria()
 
 
 class EventoTelemetriaEntrada(BaseModel):
@@ -83,19 +108,45 @@ _ESTADOS = {
 
 @router.post(
     "/eventos",
-    response_model=RespuestaTelemetria,
-    status_code=status.HTTP_200_OK,
-    summary="Recibe un evento de telemetría externa y evalúa la cobertura paramétrica",
+    status_code=status.HTTP_202_ACCEPTED,
+    summary="Recibe un evento de telemetría externa y lo encola para evaluación paramétrica",
     responses={
-        200: {"description": "Evento recibido: sin cobertura o ya procesado (idempotente)."},
-        201: {"description": "Se creó un siniestro automático por alcanzar el umbral."},
+        200: {"description": "Modo síncrono: evento procesado (sin cobertura o duplicado)."},
+        201: {"description": "Modo síncrono: se creó un siniestro automático."},
+        202: {"description": "Evento aceptado y encolado para su procesamiento."},
         401: {"description": "Credencial de servicio ausente o inválida."},
+        503: {"description": "La cola no está disponible: reintentar."},
     },
     dependencies=[Depends(verificar_api_key)],
 )
 def recibir_evento(
     entrada: EventoTelemetriaEntrada,
     servicio: ServicioTelemetria = Depends(obtener_servicio),
+    publicador: PublicadorEventos = Depends(obtener_publicador),
+    metricas: MetricasTelemetria = Depends(obtener_metricas),
+) -> JSONResponse:
+    if modo_sincrono():
+        return _procesar_inline(entrada, servicio)
+
+    try:
+        message_id = publicador.publicar(entrada.model_dump())
+    except PublicacionFallida as error:
+        raise HTTPException(
+            status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail={
+                "codigo": "COLA_NO_DISPONIBLE",
+                "mensaje": "No se pudo encolar el evento; reintentar.",
+            },
+        ) from error
+    metricas.contar(EVENTOS_RECIBIDOS)
+    return JSONResponse(
+        status_code=status.HTTP_202_ACCEPTED,
+        content={"evento_id": entrada.evento_id, "estado": "ENCOLADO", "message_id": message_id},
+    )
+
+
+def _procesar_inline(
+    entrada: EventoTelemetriaEntrada, servicio: ServicioTelemetria
 ) -> JSONResponse:
     evento = EventoParametrico(
         evento_id=entrada.evento_id,

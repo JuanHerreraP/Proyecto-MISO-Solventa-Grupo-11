@@ -5,11 +5,14 @@ import { obtenerPerfil, type Perfil } from "../services/auth.service";
 import { obtenerBilletera, type PolizaResumen } from "../services/billetera.service";
 import { obtenerHistorialPoliza } from "../services/historial-poliza.service";
 import type { MovimientoPoliza, NaturalezaMonto, TipoMovimiento } from "../types/historial";
+<<<<<<< Updated upstream
 import {
   asociarCliente,
   listarClientesDeAsesor,
   type ClienteDeAsesor,
 } from "../services/asesor.service";
+=======
+>>>>>>> Stashed changes
 
 const ACCIONES = [
   { icono: "error", titulo: "Reportar un siniestro", detalle: "Registra lo ocurrido", ruta: "/siniestros/nuevo" },
@@ -27,7 +30,11 @@ const MOVIMIENTO_NOMBRE: Record<TipoMovimiento, string> = {
   REEMBOLSO: "Reembolso",
 };
 
+<<<<<<< Updated upstream
 /** Movimiento del historial junto con la póliza a la que pertenece (vista de inicio, HU25). */
+=======
+/** Movimiento del historial junto con la póliza a la que pertenece, para la vista de inicio. */
+>>>>>>> Stashed changes
 type MovimientoReciente = MovimientoPoliza & { nombre_ramo: string };
 
 const MAX_RECIENTES = 5;
@@ -50,7 +57,11 @@ function formatearFechaMovimiento(iso: string): string {
   });
 }
 
+<<<<<<< Updated upstream
 /** Monto con signo según la perspectiva del cliente; "—" si el movimiento no tiene monto. */
+=======
+/** Monto con signo según la perspectiva del cliente; vacío si el movimiento no tiene monto. */
+>>>>>>> Stashed changes
 function montoConSigno(movimiento: MovimientoPoliza): string {
   if (movimiento.monto === null) return "—";
   const valor = Number(movimiento.monto).toLocaleString("es-CO", {
@@ -64,6 +75,7 @@ function montoConSigno(movimiento: MovimientoPoliza): string {
   return valor;
 }
 
+<<<<<<< Updated upstream
 /**
  * Reúne los movimientos recientes de todas las pólizas del cliente (HU25) para la vista de
  * inicio. Cada póliza se consulta en paralelo; un fallo individual no rompe el listado.
@@ -85,6 +97,8 @@ async function cargarRecientes(polizas: PolizaResumen[]): Promise<MovimientoReci
     .slice(0, MAX_RECIENTES);
 }
 
+=======
+>>>>>>> Stashed changes
 export default function HomePage() {
   const [perfil, setPerfil] = useState<Perfil | null>(null);
   const [polizas, setPolizas] = useState<PolizaResumen[] | null>(null);
@@ -103,10 +117,14 @@ export default function HomePage() {
             (billetera) => {
               if (!activo) return;
               setPolizas(billetera.polizas);
+<<<<<<< Updated upstream
               cargarRecientes(billetera.polizas).then(
                 (recientes) => { if (activo) setMovimientos(recientes); },
                 () => { if (activo) setMovimientos([]); },
               );
+=======
+              void cargarRecientes(billetera.polizas, () => activo, setMovimientos);
+>>>>>>> Stashed changes
             },
             () => { if (activo) { setPolizas([]); setMovimientos([]); } },
           );
@@ -239,6 +257,7 @@ export default function HomePage() {
   );
 }
 
+<<<<<<< Updated upstream
 /** Inicio del asesor de ventas: gestiona sus clientes y registra siniestros en su nombre. */
 function HomeAsesor({ perfil }: { perfil: Perfil | null }) {
   const navigate = useNavigate();
@@ -351,4 +370,34 @@ function HomeAsesor({ perfil }: { perfil: Perfil | null }) {
       </div>
     </AppLayout>
   );
+=======
+/**
+ * Reúne los movimientos recientes de todas las pólizas del cliente (HU25) para la vista de
+ * inicio. Cada póliza se consulta en paralelo; un fallo individual no rompe el listado.
+ */
+async function cargarRecientes(
+  polizas: PolizaResumen[],
+  sigueActivo: () => boolean,
+  setMovimientos: (movs: MovimientoReciente[]) => void,
+): Promise<void> {
+  if (polizas.length === 0) {
+    if (sigueActivo()) setMovimientos([]);
+    return;
+  }
+  const resultados = await Promise.all(
+    polizas.map((poliza) =>
+      obtenerHistorialPoliza(poliza.poliza_id).then(
+        (historial) =>
+          historial.movimientos.map((m) => ({ ...m, nombre_ramo: poliza.nombre_ramo })),
+        () => [] as MovimientoReciente[],
+      ),
+    ),
+  );
+  if (!sigueActivo()) return;
+  const todos = resultados
+    .flat()
+    .sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime())
+    .slice(0, MAX_RECIENTES);
+  setMovimientos(todos);
+>>>>>>> Stashed changes
 }

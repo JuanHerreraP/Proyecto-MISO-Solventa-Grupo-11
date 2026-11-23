@@ -50,6 +50,13 @@ def poliza_parametrica(descripcion: str, **cambios) -> "object":
     return poliza(**base)
 
 
+@pytest.fixture(autouse=True)
+def _modo_sincrono(monkeypatch):
+    # Este conjunto valida la decisión de negocio inline; la contrapresión (202/503) se prueba
+    # aparte en test_cola_telemetria.py. Se fuerza el modo síncrono para no encolar.
+    monkeypatch.setenv("EC_MODO_SINCRONO", "true")
+
+
 @pytest.fixture
 def entorno():
     polizas = RepositorioPolizasEnMemoria()
