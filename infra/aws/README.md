@@ -137,8 +137,8 @@ aws rds describe-orderable-db-instance-options --engine postgres \
   --db-instance-class db.t3.micro \
   --query 'OrderableDBInstanceOptions[].EngineVersion' --output text
 
-# 3.2 Fijar una versión de esa lista (ej. 16.9).
-export POSTGRES_ENGINE_VERSION=16.9
+# 3.2 Fijar una versión de esa lista (ej. 16.15; las menores antiguas dejan de existir).
+export POSTGRES_ENGINE_VERSION=16.15
 
 # 3.3 Generar el archivo de parámetros con los cuatro valores.
 python3 - <<'PY'
