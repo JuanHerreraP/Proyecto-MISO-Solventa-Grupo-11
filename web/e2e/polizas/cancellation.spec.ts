@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
-import { SolventaApi } from "./helpers/api.js";
-import { cancelVisiblePolicy, loginUi } from "./helpers/ui.js";
+import { SolventaApi } from "../helpers/api.js";
+import { cancelVisiblePolicy, loginUi } from "../helpers/ui.js";
 
 test.describe.configure({ mode: "serial" });
 

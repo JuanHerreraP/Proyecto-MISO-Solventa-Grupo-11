@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
-import { SolventaApi, readOtp } from "./helpers/api.js";
-import { loginUi } from "./helpers/ui.js";
+import { SolventaApi, readOtp } from "../helpers/api.js";
+import { loginUi } from "../helpers/ui.js";
 
 test("cotiza, paga, firma y muestra la póliza emitida", async ({ page, request }) => {
   const api = new SolventaApi(request);

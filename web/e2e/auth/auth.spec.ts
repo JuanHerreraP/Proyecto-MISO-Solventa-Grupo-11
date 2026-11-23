@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
-import { SolventaApi } from "./helpers/api.js";
-import { loginUi } from "./helpers/ui.js";
+import { SolventaApi } from "../helpers/api.js";
+import { loginUi } from "../helpers/ui.js";
 
 test("protege rutas, inicia sesión, muestra el perfil y cierra sesión", async ({ page, request }) => {
   const user = await new SolventaApi(request).registerClient();
