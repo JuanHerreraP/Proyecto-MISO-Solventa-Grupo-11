@@ -35,11 +35,8 @@ function inicio() {
     <Route path="/home" element={<HomePage />} />
     <Route path="/login" element={<h1>Inicia sesión</h1>} />
     <Route path="/admin/socios/nuevo" element={<h1>Registro de socio</h1>} />
-<<<<<<< Updated upstream
     <Route path="/admin/asesores/nuevo" element={<h1>Crear asesor</h1>} />
-=======
     <Route path="/polizas/:polizaId/historial" element={<h1>Historial de la póliza</h1>} />
->>>>>>> Stashed changes
   </Routes></MemoryRouter>);
 }
 
