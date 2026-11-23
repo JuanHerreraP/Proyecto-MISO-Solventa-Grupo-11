@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -21,6 +22,7 @@ import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -36,6 +38,8 @@ import androidx.compose.ui.unit.dp
 import com.example.solventa.domain.cotizaciones.RamoCotizacion
 import com.example.solventa.domain.cotizaciones.ResultadoCotizacion
 import com.example.solventa.ui.components.SolventaPrimaryButton
+import com.example.solventa.ui.components.SeccionNavegacion
+import com.example.solventa.ui.components.SolventaBottomNavigation
 import com.example.solventa.ui.cotizaciones.CotizacionDemostracion
 import com.example.solventa.ui.theme.Atencion
 import com.example.solventa.ui.theme.Avance
@@ -53,10 +57,27 @@ fun QuotesScreen(
     onReintentar: () -> Unit,
     onVolver: () -> Unit,
     modifier: Modifier = Modifier,
-    onCrearCotizacion: () -> Unit = {}
+    onCrearCotizacion: () -> Unit = {},
+    onInicio: () -> Unit = {},
+    onPolizas: (() -> Unit)? = null,
+    onSiniestros: (() -> Unit)? = null,
+    onPagos: (() -> Unit)? = null
 ) {
-    Surface(modifier = modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surface) {
-        Column(modifier = Modifier.fillMaxSize()) {
+    Scaffold(
+        modifier = modifier.fillMaxSize(),
+        containerColor = MaterialTheme.colorScheme.surface,
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
+        bottomBar = {
+            SolventaBottomNavigation(
+                onInicio = onInicio,
+                onPolizas = onPolizas,
+                onSiniestros = onSiniestros,
+                onPagos = onPagos,
+                seleccionada = SeccionNavegacion.COTIZACIONES
+            )
+        }
+    ) { paddingValues ->
+        Column(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
             Encabezado(titulo = "Cotizaciones", onVolver = onVolver)
             when {
                 cotizaciones.isEmpty() && cargando -> EstadoCentrado {

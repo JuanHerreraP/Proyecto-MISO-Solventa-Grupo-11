@@ -1,0 +1,94 @@
+# Ejecuta las pruebas E2E web (Playwright) contra el MVP desplegado en AWS.
+#
+# Se lanza a mano después de "Infraestructura AWS". Toma la URL pública y el grupo de logs
+# del backend desde las salidas del stack, así que no hay que copiarlos.
+#
+# Secrets:
+#   AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_SESSION_TOKEN (los mismos de aws-infra.yml)
+#   ADMIN_PASSWORD (opcional): contraseña del usuario SERVICIO_INTERNO; sin ella se omiten
+#   los escenarios de asesor.
+
+name: E2E web (nube)
+
+on:
+  workflow_dispatch:
+    inputs:
+      stack:
+        description: "Stack de CloudFormation del MVP"
+        type: string
+        default: solventa-mvp
+      admin_email:
+        description: "Correo del usuario SERVICIO_INTERNO (escenarios de asesor)"
+        type: string
+        default: manager@solventa.local
+
+concurrency:
+  group: e2e-cloud
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  AWS_REGION: us-east-1
+
+jobs:
+  e2e:
+    name: Playwright contra AWS
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Resolver URL y grupo de logs del stack
+        env:
+          STACK: ${{ inputs.stack }}
+        run: |
+          URL=$(aws cloudformation describe-stacks --stack-name "$STACK" \
+            --query "Stacks[0].Outputs[?OutputKey=='Url'].OutputValue" --output text)
+          LOG_GROUP=$(aws cloudformation describe-stack-resource --stack-name "$STACK" \
+            --logical-resource-id Logs --query StackResourceDetail.PhysicalResourceId --output text)
+          if [ -z "$URL" ] || [ "$URL" = "None" ]; then
+            echo "El stack $STACK no tiene la salida Url; ¿está desplegado?"; exit 1
+          fi
+          URL="${URL%/}"
+          curl --fail --silent --show-error "$URL/salud" > /dev/null
+          echo "E2E_BASE_URL=$URL" >> "$GITHUB_ENV"
+          echo "E2E_API_URL=$URL" >> "$GITHUB_ENV"
+          echo "E2E_LOG_GROUP=$LOG_GROUP" >> "$GITHUB_ENV"
+          echo "Ambiente: $URL · logs: $LOG_GROUP"
+
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+
+      - name: Pruebas E2E
+        env:
+          E2E_ADMIN_EMAIL: ${{ secrets.ADMIN_PASSWORD != '' && inputs.admin_email || '' }}
+          E2E_ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
+        run: npm run test:e2e
+
+      - name: Publicar reporte
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reporte-e2e-web
+          path: |
+            web/e2e/evidencias/report
+            web/e2e/evidencias/artifacts
+          retention-days: 14

@@ -62,7 +62,7 @@ class NavGraphTest {
         ingresarConCredenciales()
         compose.onNodeWithText("Hola, Ana").assertIsDisplayed()
 
-        compose.boton("Perfil").performClick()
+        compose.onNodeWithContentDescription("Perfil").performClick()
         compose.boton("Cerrar sesión").performClick()
         compose.waitForIdle()
 

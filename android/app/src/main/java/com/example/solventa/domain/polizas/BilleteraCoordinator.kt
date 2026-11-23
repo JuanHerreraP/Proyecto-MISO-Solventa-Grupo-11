@@ -2,6 +2,9 @@ package com.example.solventa.domain.polizas
 
 import com.example.solventa.domain.auth.Reloj
 import com.example.solventa.domain.auth.ResultadoApi
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 
 /** Estado que observa la UI de la billetera y del certificado. */
 data class EstadoBilletera(
@@ -20,6 +23,8 @@ data class EstadoBilletera(
     val cargandoHistorial: Boolean = false,
     val historial: HistorialPoliza? = null,
     val errorHistorial: String? = null,
+    val cargandoMovimientosRecientes: Boolean = false,
+    val movimientosRecientes: List<MovimientoReciente> = emptyList(),
     val descargandoDocumento: Boolean = false,
     /** Evento: la UI abre este PDF y luego lo consume. */
     val documentoParaAbrir: DocumentoPoliza? = null,
@@ -286,6 +291,53 @@ class BilleteraCoordinator(
                 )
             }
         }
+    }
+
+    /** Reúne los últimos movimientos de la billetera para Inicio, como la vista web. */
+    suspend fun cargarMovimientosRecientes() {
+        if (estado.cargandoMovimientosRecientes) return
+        val usuario = usuarioOFinalizar() ?: return
+        activarUsuario(usuario)
+        val token = tokenOFinalizar() ?: return
+        val polizas = estado.billetera?.polizas.orEmpty()
+        if (polizas.isEmpty()) {
+            estado = estado.copy(movimientosRecientes = emptyList())
+            return
+        }
+        val inicio = generacion
+        estado = estado.copy(cargandoMovimientosRecientes = true)
+        // Las consultas van en paralelo para no sumar la latencia de cada póliza en Inicio;
+        // los resultados se procesan en orden para mantener la escritura de la caché secuencial.
+        val resultados = coroutineScope {
+            polizas.map { poliza ->
+                async { poliza to gateway.historialPoliza(token, poliza.polizaId) }
+            }.awaitAll()
+        }
+        if (inicio != generacion) return
+        val movimientos = mutableListOf<MovimientoReciente>()
+        for ((poliza, resultado) in resultados) {
+            when (resultado) {
+                is ResultadoApi.Exito -> {
+                    guardarHistorialPoliza(usuario, poliza.polizaId, resultado.valor)
+                    movimientos += resultado.valor.movimientos.map {
+                        MovimientoReciente(it, poliza.nombreRamo)
+                    }
+                }
+                is ResultadoApi.Fallo -> if (resultado.http == 401) {
+                    rechazada()
+                    return
+                }
+                ResultadoApi.SinConexion -> leerHistorialPoliza(usuario, poliza.polizaId)
+                    ?.historial?.movimientos?.let { cacheados ->
+                        movimientos += cacheados.map { MovimientoReciente(it, poliza.nombreRamo) }
+                    }
+            }
+            if (inicio != generacion) return
+        }
+        estado = estado.copy(
+            cargandoMovimientosRecientes = false,
+            movimientosRecientes = movimientos.sortedByDescending { it.movimiento.fecha }.take(5)
+        )
     }
 
     /** Condiciones de la renovación: nueva vigencia, coberturas y prima recalculada (HU22). */

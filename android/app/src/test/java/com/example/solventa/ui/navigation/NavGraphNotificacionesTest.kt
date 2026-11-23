@@ -155,7 +155,7 @@ class NavGraphNotificacionesTest {
     @Test
     fun elInterruptorDelPerfilGuardaLaPreferencia() {
         mostrar()
-        compose.boton("Perfil").performClick()
+        compose.onNodeWithContentDescription("Perfil").performClick()
         compose.waitForIdle()
 
         compose.boton("Notificaciones", substring = true).performClick()
@@ -171,7 +171,7 @@ class NavGraphNotificacionesTest {
         mostrar()
         assertTrue(gatewayNotificaciones.bajas.isEmpty())
 
-        compose.boton("Perfil").performClick()
+        compose.onNodeWithContentDescription("Perfil").performClick()
         compose.waitForIdle()
         compose.boton("Cerrar sesión").performClick()
         compose.waitUntil(timeoutMillis = 5_000) { gatewayNotificaciones.bajas.isNotEmpty() }

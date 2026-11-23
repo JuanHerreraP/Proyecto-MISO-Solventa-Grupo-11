@@ -1,7 +1,9 @@
 package com.example.solventa.ui.navigation
 
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -63,9 +65,9 @@ class NavGraphCotizacionesTest {
         compose.boton("Ingresar").performClick()
         compose.waitForIdle()
 
-        compose.boton("Cotizaciones").performScrollTo().performClick()
+        compose.boton("Cotizaciones").performClick()
         compose.waitForIdle()
-        compose.onNodeWithText("Cotizaciones").assertIsDisplayed()
+        compose.onAllNodesWithText("Cotizaciones").assertCountEquals(2)
         assertEquals(listOf("u-1"), gateway.clientesListados)
 
         compose.boton("Seguro de viaje").performClick()
@@ -74,7 +76,7 @@ class NavGraphCotizacionesTest {
 
         compose.onNodeWithContentDescription("Volver").performClick()
         compose.waitForIdle()
-        compose.onNodeWithText("Cotizaciones").assertIsDisplayed()
+        compose.onAllNodesWithText("Cotizaciones").assertCountEquals(2)
     }
 }
 

@@ -78,8 +78,8 @@ class NavGraphBilleteraTest {
         compose.boton("Ver mi billetera").performClick()
         compose.waitForIdle()
         compose.onNodeWithText("Pólizas").assertIsDisplayed()
-        // El inicio consulta el resumen y la billetera vuelve a cargar la fuente de verdad.
-        assertEquals(listOf("access-1", "access-1"), gatewayPolizas.tokensUsados)
+        // Inicio carga la billetera y los movimientos recientes; la billetera se refresca al abrirse.
+        assertEquals(listOf("access-1", "access-1", "access-1", "access-1"), gatewayPolizas.tokensUsados)
 
         compose.boton("Seguro de viaje", substring = true).performClick()
         compose.waitForIdle()

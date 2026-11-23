@@ -38,6 +38,10 @@ class BilleteraViewModel(private val coordinador: BilleteraCoordinator) : ViewMo
         viewModelScope.launch { coordinador.verHistorialPoliza(polizaId) }
     }
 
+    fun cargarMovimientosRecientes() {
+        viewModelScope.launch { coordinador.cargarMovimientosRecientes() }
+    }
+
     fun verPropuestaRenovacion(polizaId: String) {
         viewModelScope.launch { coordinador.verPropuestaRenovacion(polizaId) }
     }
