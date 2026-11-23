@@ -1,4 +1,4 @@
-package com.example.solventa.e2e
+package com.example.solventa.e2e.autenticacion
 
 import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.SemanticsNodeInteractionsProvider

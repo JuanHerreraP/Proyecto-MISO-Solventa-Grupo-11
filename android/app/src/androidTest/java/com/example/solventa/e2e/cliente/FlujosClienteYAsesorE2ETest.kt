@@ -1,4 +1,4 @@
-package com.example.solventa.e2e
+package com.example.solventa.e2e.cliente
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
