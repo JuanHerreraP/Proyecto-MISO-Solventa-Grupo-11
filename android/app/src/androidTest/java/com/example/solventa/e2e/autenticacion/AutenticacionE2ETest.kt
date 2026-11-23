@@ -40,12 +40,13 @@ class AutenticacionE2ETest {
     private val gateway = GatewayE2E()
 
     private fun mostrar(desde: String = ScreenRoute.Home.route) {
+        val viewModel = AuthViewModel(
+            AuthCoordinator(gateway, BovedaE2E(), RelojE2E()) { false }
+        )
         compose.setContent {
             SolventaTheme {
                 NavGraph(
-                    viewModel = AuthViewModel(
-                        AuthCoordinator(gateway, BovedaE2E(), RelojE2E()) { false }
-                    ),
+                    viewModel = viewModel,
                     autenticador = AutenticadorBiometrico(compose.activity),
                     startDestination = desde
                 )
