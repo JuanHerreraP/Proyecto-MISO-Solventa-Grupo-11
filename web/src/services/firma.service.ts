@@ -1,5 +1,7 @@
 import { fetchAutenticado } from "./session";
 
+import { t } from "../i18n";
+
 const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:8000";
 
 export type EstadoFirma = "PENDIENTE" | "FIRMADA" | "BLOQUEADA";
@@ -95,11 +97,11 @@ function post(url: string, cuerpo: unknown): Promise<Response> {
 }
 
 export async function obtenerContrato(cotizacionId: string): Promise<ProcesoFirma> {
-  return procesar(await fetchAutenticado(ruta(cotizacionId)), "No fue posible cargar el contrato.");
+  return procesar(await fetchAutenticado(ruta(cotizacionId)), t("firmaService.no_fue_posible_cargar_el"));
 }
 
 export async function solicitarCodigo(cotizacionId: string, canal: CanalOtp): Promise<ProcesoFirma> {
-  return procesar(await post(ruta(cotizacionId, "/otp"), { canal }), "No fue posible enviar el código.");
+  return procesar(await post(ruta(cotizacionId, "/otp"), { canal }), t("firmaService.no_fue_posible_enviar_el"));
 }
 
 export async function firmarContrato(
@@ -107,6 +109,6 @@ export async function firmarContrato(
 ): Promise<ProcesoFirma> {
   return procesar(
     await post(ruta(cotizacionId, "/firma"), { codigo, huella_documento: huellaDocumento }),
-    "No fue posible firmar el contrato.",
+    t("firmaService.no_fue_posible_firmar_el"),
   );
 }

@@ -11,8 +11,10 @@ import {
 } from "../services/cancelaciones.service";
 import "../styles/cancelaciones.css";
 
+import { t, localeActual } from "../i18n";
+
 function formatearMonto(monto: string, moneda: string): string {
-  return Number(monto).toLocaleString("es-CO", {
+  return Number(monto).toLocaleString(localeActual(), {
     style: "currency",
     currency: moneda,
     maximumFractionDigits: 0,
@@ -21,7 +23,7 @@ function formatearMonto(monto: string, moneda: string): string {
 
 function formatearFecha(iso: string): string {
   const [anio, mes, dia] = iso.slice(0, 10).split("-").map(Number);
-  return new Date(anio, mes - 1, dia).toLocaleDateString("es-CO", {
+  return new Date(anio, mes - 1, dia).toLocaleDateString(localeActual(), {
     day: "numeric",
     month: "long",
     year: "numeric",
@@ -101,39 +103,39 @@ export default function CancelarPolizaPage() {
     <AppLayout activo="Mis pólizas" rol={perfil?.rol ?? null}>
       <header className="home-header">
         <div>
-          <h1>Cancelar póliza</h1>
-          <p>{condiciones?.numero_poliza ?? "Consulta las condiciones antes de continuar."}</p>
+          <h1>{t("cancelarPolizaPage.cancelar_poliza")}</h1>
+          <p>{condiciones?.numero_poliza ?? t("cancelarPolizaPage.consulta_las_condiciones_antes_de")}</p>
         </div>
         <button
           type="button"
           className="cotizar-boton-secundario"
           onClick={() => navigate("/polizas")}
         >
-          Volver a mis pólizas
+          {t("cancelarPolizaPage.volver_a_mis_polizas")}
         </button>
       </header>
 
-      {cargando && <p role="status" className="home-card-vacio">Calculando condiciones…</p>}
+      {cargando && <p role="status" className="home-card-vacio">{t("cancelarPolizaPage.calculando_condiciones")}</p>}
       {error && <p role="alert" className="home-aviso">{error}</p>}
 
       {esAsesor && (
         <p className="cancelacion-asistida">
           <span className="material-symbols-outlined" aria-hidden="true">support_agent</span>
-          Estás gestionando esta cancelación como asesor
-          {clienteNombre ? ` para ${clienteNombre}` : " en nombre del cliente"}.
+          {t("cancelarPolizaPage.estas_gestionando_esta_cancelacion_como")}
+          {clienteNombre ? ` para ${clienteNombre}` : t("cancelarPolizaPage.en_nombre_del_cliente")}.
         </p>
       )}
 
       {cancelacion && (
-        <section className="home-panel cancelacion-resultado" aria-label="Póliza cancelada">
+        <section className="home-panel cancelacion-resultado" aria-label={t("cancelarPolizaPage.poliza_cancelada")}>
           <span className="material-symbols-outlined" aria-hidden="true">check_circle</span>
           <div>
-            <h2>Póliza cancelada</h2>
-            <p>La cancelación rige desde el {formatearFecha(cancelacion.fecha_efecto)}.</p>
+            <h2>{t("cancelarPolizaPage.poliza_cancelada")}</h2>
+            <p>{t("cancelarPolizaPage.la_cancelacion_rige_desde_el", { formatearFecha: formatearFecha(cancelacion.fecha_efecto) })}</p>
             <strong>
               {cancelacion.saldo_estimado === "0.00"
-                ? "No hay saldo pendiente de devolución."
-                : `Saldo estimado a devolver: ${formatearMonto(cancelacion.saldo_estimado, cancelacion.moneda)}`}
+                ? t("cancelarPolizaPage.no_hay_saldo_pendiente_de")
+                : t("cancelarPolizaPage.saldo_estimado_a_devolver_formatearmonto", { formatearMonto: formatearMonto(cancelacion.saldo_estimado, cancelacion.moneda) })}
             </strong>
           </div>
         </section>
@@ -141,7 +143,7 @@ export default function CancelarPolizaPage() {
 
       {condiciones && !cancelacion && !condiciones.cancelable && (
         <section className="home-panel cancelacion-bloqueada" aria-labelledby="cancelacion-no-disponible">
-          <h2 id="cancelacion-no-disponible">Esta póliza no se puede cancelar</h2>
+          <h2 id="cancelacion-no-disponible">{t("cancelarPolizaPage.esta_poliza_no_se_puede")}</h2>
           <ul>
             {condiciones.bloqueos.map((bloqueo) => (
               <li key={bloqueo.codigo}>{bloqueo.mensaje}</li>
@@ -153,22 +155,22 @@ export default function CancelarPolizaPage() {
       {condiciones?.cancelable && !cancelacion && (
         <div className="cancelacion-pagina">
           <section className="home-panel cancelacion-resumen" aria-labelledby="resumen-cancelacion">
-            <h2 id="resumen-cancelacion">Liquidación estimada</h2>
+            <h2 id="resumen-cancelacion">{t("cancelarPolizaPage.liquidacion_estimada")}</h2>
             <dl className="cotizacion-datos">
-              <div><dt>Prima pagada</dt><dd>{formatearMonto(condiciones.prima_total, condiciones.moneda)}</dd></div>
-              <div><dt>Días de cobertura sin usar</dt><dd>{condiciones.dias_no_transcurridos}</dd></div>
+              <div><dt>{t("cancelarPolizaPage.prima_pagada")}</dt><dd>{formatearMonto(condiciones.prima_total, condiciones.moneda)}</dd></div>
+              <div><dt>{t("cancelarPolizaPage.dias_de_cobertura_sin_usar")}</dt><dd>{condiciones.dias_no_transcurridos}</dd></div>
               <div className="cancelacion-saldo">
-                <dt>Saldo estimado a devolver</dt>
+                <dt>{t("cancelarPolizaPage.saldo_estimado_a_devolver")}</dt>
                 <dd>{formatearMonto(condiciones.saldo_estimado, condiciones.moneda)}</dd>
               </div>
             </dl>
-            <small>El valor definitivo se gestionará como devolución después de confirmar.</small>
+            <small>{t("cancelarPolizaPage.el_valor_definitivo_se_gestionara")}</small>
           </section>
 
           <section className="home-panel cancelacion-formulario" aria-labelledby="motivo-cancelacion">
-            <h2 id="motivo-cancelacion">Motivo de cancelación</h2>
+            <h2 id="motivo-cancelacion">{t("cancelarPolizaPage.motivo_de_cancelacion")}</h2>
             <div className="cotizar-campo">
-              <label htmlFor="motivo">Selecciona un motivo</label>
+              <label htmlFor="motivo">{t("cancelarPolizaPage.selecciona_un_motivo")}</label>
               <select
                 id="motivo"
                 value={motivo}
@@ -177,7 +179,7 @@ export default function CancelarPolizaPage() {
                   setConfirmado(false);
                 }}
               >
-                <option value="">Selecciona una opción</option>
+                <option value="">{t("cancelarPolizaPage.selecciona_una_opcion")}</option>
                 {condiciones.motivos.map((opcion) => (
                   <option key={opcion.codigo} value={opcion.codigo}>{opcion.etiqueta}</option>
                 ))}
@@ -185,7 +187,7 @@ export default function CancelarPolizaPage() {
             </div>
 
             <div className="cotizar-campo">
-              <label htmlFor="detalle">Cuéntanos más {motivo === "OTRO" ? "(obligatorio)" : "(opcional)"}</label>
+              <label htmlFor="detalle">{motivo === "OTRO" ? t("cancelarPolizaPage.cuentanos_mas_obligatorio") : t("cancelarPolizaPage.cuentanos_mas_opcional")}</label>
               <textarea
                 id="detalle"
                 value={detalle}
@@ -198,7 +200,7 @@ export default function CancelarPolizaPage() {
               />
             </div>
 
-            <h3>Ten en cuenta</h3>
+            <h3>{t("cancelarPolizaPage.ten_en_cuenta")}</h3>
             <ul className="cancelacion-consecuencias">
               {condiciones.consecuencias.map((consecuencia) => (
                 <li key={consecuencia}>{consecuencia}</li>
@@ -211,7 +213,7 @@ export default function CancelarPolizaPage() {
                 checked={confirmado}
                 onChange={(evento) => setConfirmado(evento.target.checked)}
               />
-              Confirmo que quiero cancelar esta póliza de forma definitiva.
+              {t("cancelarPolizaPage.confirmo_que_quiero_cancelar_esta")}
             </label>
 
             <div className="cotizar-acciones">
@@ -220,7 +222,7 @@ export default function CancelarPolizaPage() {
                 className="cotizar-boton-secundario"
                 onClick={() => navigate("/polizas")}
               >
-                Conservar mi póliza
+                {t("cancelarPolizaPage.conservar_mi_poliza")}
               </button>
               <button
                 type="button"
@@ -228,7 +230,7 @@ export default function CancelarPolizaPage() {
                 disabled={!puedeConfirmar}
                 onClick={() => void cancelar()}
               >
-                {procesando ? "Cancelando…" : "Confirmar cancelación"}
+                {procesando ? t("cancelarPolizaPage.cancelando") : t("cancelarPolizaPage.confirmar_cancelacion")}
               </button>
             </div>
           </section>

@@ -4,7 +4,10 @@ import AppLayout from "../components/AppLayout";
 import { obtenerPerfil, type Perfil } from "../services/auth.service";
 import "../styles/profile.css";
 
-const disponible = (valor?: string) => valor?.trim() || "No disponible";
+import { idiomaActual, t } from "../i18n";
+import SelectorIdioma from "../i18n/SelectorIdioma";
+
+const disponible = (valor?: string) => valor?.trim() || t("profilePage.no_disponible");
 
 function nombreRol(rol: string): string {
   return rol.split("_").map((palabra) =>
@@ -35,7 +38,7 @@ export default function ProfilePage() {
       <AppLayout activo="Perfil" rol={null}>
         <p role="alert" className="home-aviso">{error}</p>
         <button type="button" className="profile-link" onClick={() => navigate("/login", { replace: true })}>
-          Volver al ingreso
+          {t("profilePage.volver_al_ingreso")}
         </button>
       </AppLayout>
     );
@@ -46,14 +49,14 @@ export default function ProfilePage() {
       <div className="profile-page">
         <header className="home-header">
           <div>
-            <h1>Perfil y preferencias</h1>
-            <p>Consulta los datos y preferencias asociados a tu cuenta.</p>
+            <h1>{t("profilePage.perfil_y_preferencias")}</h1>
+            <p>{t("profilePage.consulta_los_datos_y_preferencias")}</p>
           </div>
         </header>
 
-        {!perfil ? <p role="status">Cargando tu perfil…</p> : (
+        {!perfil ? <p role="status">{t("profilePage.cargando_tu_perfil")}</p> : (
           <>
-            <section className="profile-identity" aria-label="Identidad de la cuenta">
+            <section className="profile-identity" aria-label={t("profilePage.identidad_de_la_cuenta")}>
               <span className="profile-avatar" aria-hidden="true">{iniciales(perfil)}</span>
               <div>
                 <strong>{nombreRol(perfil.rol)}</strong>
@@ -63,33 +66,34 @@ export default function ProfilePage() {
             </section>
 
             <div className="profile-grid">
-              <Tarjeta titulo="Datos personales" icono="person">
+              <Tarjeta titulo={t("profilePage.datos_personales")} icono="person">
                 <Datos items={[
-                  ["Nombre completo", disponible(`${perfil.nombre ?? ""} ${perfil.apellido ?? ""}`)],
-                  ["Correo electrónico", disponible(perfil.email)],
-                  ["Documento de identidad", disponible(
+                  [t("profilePage.nombre_completo"), disponible(`${perfil.nombre ?? ""} ${perfil.apellido ?? ""}`)],
+                  [t("profilePage.correo_electronico"), disponible(perfil.email)],
+                  [t("profilePage.documento_de_identidad"), disponible(
                     [perfil.tipo_documento, perfil.numero_documento].filter(Boolean).join(" ")
                   )],
-                  ["Teléfono", disponible(perfil.celular)],
+                  [t("profilePage.telefono"), disponible(perfil.celular)],
                 ]} />
               </Tarjeta>
 
-              <Tarjeta titulo="Seguridad y privacidad" icono="shield">
+              <Tarjeta titulo={t("profilePage.seguridad_y_privacidad")} icono="shield">
                 <Datos items={[
-                  ["Sesión", "Acceso autenticado"],
-                  ["Datos sin conexión", "No almacenados en la web"],
+                  [t("profilePage.sesion"), t("profilePage.acceso_autenticado")],
+                  [t("profilePage.datos_sin_conexion"), t("profilePage.no_almacenados_en_la_web")],
                 ]} />
               </Tarjeta>
 
-              <Tarjeta titulo="Idioma y moneda" icono="language">
+              <Tarjeta titulo={t("profilePage.idioma_y_moneda")} icono="language">
                 <Datos items={[
-                  ["Idioma", "Español (Colombia)"],
-                  ["Moneda", "Peso colombiano (COP)"],
+                  [t("profilePage.idioma"), t(`idioma.nombre.${idiomaActual()}`)],
+                  [t("profilePage.moneda"), t("profilePage.peso_colombiano_cop")],
                 ]} />
+                <SelectorIdioma className="profile-selector-idioma" />
               </Tarjeta>
 
-              <Tarjeta titulo="Notificaciones" icono="notifications" deshabilitada>
-                <p>Disponible próximamente</p>
+              <Tarjeta titulo={t("profilePage.notificaciones")} icono="notifications" deshabilitada>
+                <p>{t("profilePage.disponible_proximamente")}</p>
               </Tarjeta>
             </div>
           </>

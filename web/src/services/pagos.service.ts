@@ -1,5 +1,7 @@
 import { fetchAutenticado } from "./session";
 
+import { t } from "../i18n";
+
 const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:8000";
 
 export interface PagoResumen {
@@ -78,14 +80,14 @@ async function mensajeError(response: Response, porDefecto: string): Promise<str
 
 export async function listarPagos(): Promise<PagoResumen[]> {
   const response = await fetchAutenticado(`${API_URL}/api/v1/pagos`);
-  if (!response.ok) throw new Error("No fue posible consultar tus pagos.");
+  if (!response.ok) throw new Error(t("pagosService.no_fue_posible_consultar_tus"));
   return response.json();
 }
 
 /** Primas pendientes del cliente: renovaciones, cotizaciones sin pagar y contratos por firmar. */
 export async function listarPrimasPendientes(): Promise<PrimaPendiente[]> {
   const response = await fetchAutenticado(`${API_URL}/api/v1/primas-pendientes`);
-  if (!response.ok) throw new Error("No fue posible consultar tus pagos pendientes.");
+  if (!response.ok) throw new Error(t("pagosService.no_fue_posible_consultar_tus_2"));
   const cuerpo: { primas: PrimaPendiente[] } = await response.json();
   return cuerpo.primas;
 }
@@ -95,7 +97,7 @@ export async function obtenerComprobante(pagoId: string): Promise<Comprobante> {
   const response = await fetchAutenticado(
     `${API_URL}/api/v1/pagos/${encodeURIComponent(pagoId)}/comprobante`,
   );
-  if (!response.ok) throw new Error("No fue posible consultar el comprobante.");
+  if (!response.ok) throw new Error(t("pagosService.no_fue_posible_consultar_el"));
   return response.json();
 }
 
@@ -104,7 +106,7 @@ export async function obtenerPago(pagoId: string): Promise<Pago> {
   const response = await fetchAutenticado(
     `${API_URL}/api/v1/pagos/${encodeURIComponent(pagoId)}`,
   );
-  if (!response.ok) throw new Error("No fue posible consultar tu pago.");
+  if (!response.ok) throw new Error(t("pagosService.no_fue_posible_consultar_tu"));
   return response.json();
 }
 
@@ -125,7 +127,7 @@ export async function crearPago(
     body: JSON.stringify(solicitud),
   });
   if (!response.ok) {
-    throw new Error(await mensajeError(response, "No fue posible procesar el pago."));
+    throw new Error(await mensajeError(response, t("pagosService.no_fue_posible_procesar_el")));
   }
   return response.json();
 }

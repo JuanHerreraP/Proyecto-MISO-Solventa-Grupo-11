@@ -5,6 +5,8 @@ import { obtenerPerfil, type Perfil } from "../services/auth.service";
 import { listarCotizaciones, obtenerRamos } from "../services/cotizaciones.service";
 import type { Cotizacion, DefinicionRamo, RamoSeguro } from "../types/cotizaciones";
 
+import { t, localeActual } from "../i18n";
+
 const ICONO_RAMO: Record<RamoSeguro, string> = {
   VIAJE: "flight_takeoff",
   PROTECCION_DISPOSITIVOS: "devices",
@@ -13,15 +15,15 @@ const ICONO_RAMO: Record<RamoSeguro, string> = {
 };
 
 const ESTADOS: Record<string, string> = {
-  VIGENTE: "Vigente",
-  ACEPTADA: "Aceptada",
-  EXPIRADA: "Expirada",
-  CANCELADA: "Cancelada",
-  BORRADOR: "Borrador",
+  get VIGENTE() { return t("cotizacionesPage.vigente"); },
+  get ACEPTADA() { return t("cotizacionesPage.aceptada"); },
+  get EXPIRADA() { return t("cotizacionesPage.expirada"); },
+  get CANCELADA() { return t("cotizacionesPage.cancelada"); },
+  get BORRADOR() { return t("cotizacionesPage.borrador"); },
 };
 
 function formatearMonto(monto: string, moneda: string): string {
-  return Number(monto).toLocaleString("es-CO", {
+  return Number(monto).toLocaleString(localeActual(), {
     style: "currency",
     currency: moneda,
     maximumFractionDigits: 0,
@@ -29,7 +31,7 @@ function formatearMonto(monto: string, moneda: string): string {
 }
 
 function formatearFecha(iso: string): string {
-  return new Date(iso).toLocaleDateString("es-CO", {
+  return new Date(iso).toLocaleDateString(localeActual(), {
     day: "numeric",
     month: "long",
     year: "numeric",
@@ -38,8 +40,8 @@ function formatearFecha(iso: string): string {
 
 /** Presenta un valor del formulario de forma legible (booleanos, números, texto). */
 function formatearValor(valor: unknown): string {
-  if (typeof valor === "boolean") return valor ? "Sí" : "No";
-  if (typeof valor === "number") return valor.toLocaleString("es-CO");
+  if (typeof valor === "boolean") return valor ? t("cotizacionesPage.si") : t("cotizacionesPage.no");
+  if (typeof valor === "number") return valor.toLocaleString(localeActual());
   return String(valor);
 }
 
@@ -105,27 +107,27 @@ export default function CotizacionesPage() {
     <AppLayout activo="Mis cotizaciones" rol={rol}>
       <header className="home-header">
         <div>
-          <h1>Mis cotizaciones</h1>
-          <p>Consulta tus cotizaciones y el detalle de cada una.</p>
+          <h1>{t("cotizacionesPage.mis_cotizaciones")}</h1>
+          <p>{t("cotizacionesPage.consulta_tus_cotizaciones_y_el")}</p>
         </div>
         <button
           type="button"
           className="cotizar-boton-primario"
           onClick={() => navigate("/cotizar")}
         >
-          Crear cotización
+          {t("cotizacionesPage.crear_cotizacion")}
         </button>
       </header>
 
       {error && <p role="alert" className="home-aviso">{error}</p>}
 
-      <section aria-label="Lista de cotizaciones" className="cotizaciones-lista">
+      <section aria-label={t("cotizacionesPage.lista_de_cotizaciones")} className="cotizaciones-lista">
         {cotizaciones === null && !error && (
-          <p role="status" className="home-card-vacio">Cargando tus cotizaciones…</p>
+          <p role="status" className="home-card-vacio">{t("cotizacionesPage.cargando_tus_cotizaciones")}</p>
         )}
         {cotizaciones?.length === 0 && (
           <div className="home-panel">
-            <p className="home-card-vacio">Aún no tienes cotizaciones.</p>
+            <p className="home-card-vacio">{t("cotizacionesPage.aun_no_tienes_cotizaciones")}</p>
           </div>
         )}
         {cotizaciones?.map((cotizacion) => {
@@ -163,19 +165,18 @@ export default function CotizacionesPage() {
                 <div className="cotizacion-detalle">
                   {cotizacion.cobertura_principal && (
                     <div className="cotizar-detalle">
-                      <span>Cobertura principal</span>
+                      <span>{t("cotizacionesPage.cobertura_principal")}</span>
                       <strong>{cotizacion.cobertura_principal.nombre}</strong>
                       <small>
-                        Suma asegurada:{" "}
-                        {formatearMonto(
+                        {t("cotizacionesPage.suma_asegurada_formatearmonto", { formatearMonto: formatearMonto(
                           cotizacion.cobertura_principal.suma_asegurada,
                           cotizacion.moneda,
-                        )}
+                        ) })}
                       </small>
                     </div>
                   )}
 
-                  <h3 className="cotizacion-subtitulo">Datos de la solicitud</h3>
+                  <h3 className="cotizacion-subtitulo">{t("cotizacionesPage.datos_de_la_solicitud")}</h3>
                   <dl className="cotizacion-datos">
                     {datos.map(([codigo, valor]) => (
                       <div key={codigo}>
@@ -184,7 +185,7 @@ export default function CotizacionesPage() {
                       </div>
                     ))}
                     {datos.length === 0 && (
-                      <p className="home-card-vacio">Sin datos registrados.</p>
+                      <p className="home-card-vacio">{t("cotizacionesPage.sin_datos_registrados")}</p>
                     )}
                   </dl>
 
@@ -196,23 +197,23 @@ export default function CotizacionesPage() {
                         navigate(`/cotizar?cotizacion=${encodeURIComponent(cotizacion.cotizacion_id)}`)
                       }
                     >
-                      Pagar
+                      {t("cotizacionesPage.pagar")}
                     </button>
                   )}
 
                   <dl className="cotizacion-datos">
                     {cotizacion.vigente_hasta && (
                       <div>
-                        <dt>Vigencia de la oferta</dt>
-                        <dd>Hasta el {formatearFecha(cotizacion.vigente_hasta)}</dd>
+                        <dt>{t("cotizacionesPage.vigencia_de_la_oferta")}</dt>
+                        <dd>{t("cotizacionesPage.hasta_el_formatearfecha", { formatearFecha: formatearFecha(cotizacion.vigente_hasta) })}</dd>
                       </div>
                     )}
                     <div>
-                      <dt>Creada</dt>
+                      <dt>{t("cotizacionesPage.creada")}</dt>
                       <dd>{formatearFecha(cotizacion.creada_en)}</dd>
                     </div>
                     <div>
-                      <dt>Referencia</dt>
+                      <dt>{t("cotizacionesPage.referencia")}</dt>
                       <dd>{cotizacion.cotizacion_id}</dd>
                     </div>
                   </dl>

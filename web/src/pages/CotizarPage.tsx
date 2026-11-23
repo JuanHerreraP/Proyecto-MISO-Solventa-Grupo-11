@@ -21,6 +21,8 @@ import type {
   RamoSeguro,
 } from "../types/cotizaciones";
 
+import { t, localeActual } from "../i18n";
+
 /** Icono de Material Symbols para cada ramo. */
 const ICONO_RAMO: Record<RamoSeguro, string> = {
   VIAJE: "flight_takeoff",
@@ -32,8 +34,8 @@ const ICONO_RAMO: Record<RamoSeguro, string> = {
 type Paso = "ramo" | "formulario" | "resultado" | "pago" | "confirmacion";
 
 const METODOS_PAGO = [
-  { valor: "TARJETA", etiqueta: "Tarjeta de crédito o débito", icono: "credit_card" },
-  { valor: "PSE", etiqueta: "PSE (débito bancario)", icono: "account_balance" },
+  { valor: "TARJETA", get etiqueta() { return t("cotizarPage.tarjeta_de_credito_o_debito"); }, icono: "credit_card" },
+  { valor: "PSE", get etiqueta() { return t("cotizarPage.pse_debito_bancario"); }, icono: "account_balance" },
 ] as const;
 
 type MetodoPago = (typeof METODOS_PAGO)[number]["valor"];
@@ -49,7 +51,7 @@ const BANCOS_PSE = [
 ] as const;
 
 function formatearMonto(monto: string, moneda: string): string {
-  return Number(monto).toLocaleString("es-CO", {
+  return Number(monto).toLocaleString(localeActual(), {
     style: "currency",
     currency: moneda,
     maximumFractionDigits: 0,
@@ -57,7 +59,7 @@ function formatearMonto(monto: string, moneda: string): string {
 }
 
 function formatearFecha(iso: string): string {
-  return new Date(iso).toLocaleDateString("es-CO", {
+  return new Date(iso).toLocaleDateString(localeActual(), {
     day: "numeric",
     month: "long",
     year: "numeric",
@@ -162,7 +164,7 @@ export default function CotizarPage() {
           () => undefined,
         );
       },
-      () => setErrorCarga("No fue posible consultar el resultado del pago."),
+      () => setErrorCarga(t("cotizarPage.no_fue_posible_consultar_el")),
     );
   }, [searchParams, setSearchParams]);
 
@@ -179,7 +181,7 @@ export default function CotizarPage() {
           cot.estado === "VIGENTE" &&
           (!cot.vigente_hasta || new Date(cot.vigente_hasta) > new Date());
         if (!vigente) {
-          setErrorCarga("Esta cotización ya no está disponible para pago.");
+          setErrorCarga(t("cotizarPage.esta_cotizacion_ya_no_esta"));
           return;
         }
         setCotizacion(cot);
@@ -188,7 +190,7 @@ export default function CotizarPage() {
         setIdempotencyKey(crypto.randomUUID());
         setPaso("pago");
       },
-      () => setErrorCarga("No fue posible consultar la cotización."),
+      () => setErrorCarga(t("cotizarPage.no_fue_posible_consultar_la")),
     );
   }, [searchParams, setSearchParams]);
 
@@ -230,7 +232,7 @@ export default function CotizarPage() {
   async function enviarFormulario(evento: React.FormEvent) {
     evento.preventDefault();
     if (!ramoSeleccionado || !perfil?.id) {
-      setErrorForm("No fue posible identificar tu cuenta. Inicia sesión nuevamente.");
+      setErrorForm(t("cotizarPage.no_fue_posible_identificar_tu"));
       return;
     }
 
@@ -333,13 +335,13 @@ export default function CotizarPage() {
     <AppLayout activo="Mis cotizaciones" rol={rol}>
       <header className="home-header">
         <div>
-          <h1>Cotizar un nuevo seguro</h1>
+          <h1>{t("cotizarPage.cotizar_un_nuevo_seguro")}</h1>
           <p>
-            {paso === "ramo" && "Elige el tipo de seguro que quieres cotizar."}
-            {paso === "formulario" && "Completa los datos para calcular tu prima."}
-            {paso === "resultado" && "Revisa tu cotización antes de continuar."}
-            {paso === "pago" && "Elige cómo quieres pagar la prima."}
-            {paso === "confirmacion" && "Resultado de tu pago."}
+            {paso === "ramo" && t("cotizarPage.elige_el_tipo_de_seguro")}
+            {paso === "formulario" && t("cotizarPage.completa_los_datos_para_calcular")}
+            {paso === "resultado" && t("cotizarPage.revisa_tu_cotizacion_antes_de")}
+            {paso === "pago" && t("cotizarPage.elige_como_quieres_pagar_la")}
+            {paso === "confirmacion" && t("cotizarPage.resultado_de_tu_pago")}
           </p>
         </div>
       </header>
@@ -348,9 +350,9 @@ export default function CotizarPage() {
 
       {/* Paso 1: selección de ramo */}
       {paso === "ramo" && (
-        <section aria-label="Tipos de seguro" className="cotizar-ramos">
+        <section aria-label={t("cotizarPage.tipos_de_seguro")} className="cotizar-ramos">
           {ramos === null && !errorCarga && (
-            <p role="status" className="home-card-vacio">Cargando ramos disponibles…</p>
+            <p role="status" className="home-card-vacio">{t("cotizarPage.cargando_ramos_disponibles")}</p>
           )}
           <div className="cotizar-grid-ramos">
             {ramos?.map((ramo) => (
@@ -366,7 +368,7 @@ export default function CotizarPage() {
                 <strong>{ramo.nombre}</strong>
                 <small>{ramo.descripcion}</small>
                 <span className="cotizar-ramo-cta">
-                  Cotizar
+                  {t("cotizarPage.cotizar")}
                   <span className="material-symbols-outlined" aria-hidden="true">arrow_forward</span>
                 </span>
               </button>
@@ -377,7 +379,7 @@ export default function CotizarPage() {
 
       {/* Paso 2: formulario del ramo */}
       {paso === "formulario" && ramoSeleccionado && (
-        <section className="home-panel cotizar-form-panel" aria-label="Datos del riesgo">
+        <section className="home-panel cotizar-form-panel" aria-label={t("cotizarPage.datos_del_riesgo")}>
           <div className="cotizar-form-encabezado">
             <span className="cotizar-ramo-icono material-symbols-outlined" aria-hidden="true">
               {ICONO_RAMO[ramoSeleccionado.ramo]}
@@ -396,7 +398,7 @@ export default function CotizarPage() {
                 <label htmlFor={campo.codigo}>
                   {campo.etiqueta}
                   {campo.unidad ? ` (${campo.unidad})` : ""}
-                  {!campo.requerido && <span className="cotizar-opcional"> · opcional</span>}
+                  {!campo.requerido && <span className="cotizar-opcional"> · {t("cotizarPage.opcional")}</span>}
                 </label>
 
                 {campo.tipo === "OPCION" ? (
@@ -406,7 +408,7 @@ export default function CotizarPage() {
                     required={campo.requerido}
                     onChange={(e) => actualizarCampo(campo.codigo, e.target.value)}
                   >
-                    <option value="">Selecciona una opción</option>
+                    <option value="">{t("cotizarPage.selecciona_una_opcion")}</option>
                     {campo.opciones.map((opcion) => (
                       <option key={opcion} value={opcion}>{opcion}</option>
                     ))}
@@ -417,8 +419,8 @@ export default function CotizarPage() {
                     value={valores[campo.codigo] ?? "false"}
                     onChange={(e) => actualizarCampo(campo.codigo, e.target.value)}
                   >
-                    <option value="false">No</option>
-                    <option value="true">Sí</option>
+                    <option value="false">{t("cotizarPage.no")}</option>
+                    <option value="true">{t("cotizarPage.si")}</option>
                   </select>
                 ) : (
                   <input
@@ -437,14 +439,14 @@ export default function CotizarPage() {
 
             <div className="cotizar-acciones">
               <button type="button" className="cotizar-boton-secundario" onClick={reiniciar}>
-                Volver
+                {t("cotizarPage.volver")}
               </button>
               <button
                 type="submit"
                 className="cotizar-boton-primario"
                 disabled={enviando || faltanRequeridos}
               >
-                {enviando ? "Calculando…" : "Continuar"}
+                {enviando ? t("cotizarPage.calculando") : t("cotizarPage.continuar")}
               </button>
             </div>
           </form>
@@ -453,23 +455,23 @@ export default function CotizarPage() {
 
       {/* Paso 3: resultado de la cotización (HU23: aceptar o cancelar) */}
       {paso === "resultado" && cotizacion && (
-        <section className="home-panel cotizar-resultado" aria-label="Resumen de la cotización">
+        <section className="home-panel cotizar-resultado" aria-label={t("cotizarPage.resumen_de_la_cotizacion")}>
           <div className="cotizar-resultado-encabezado">
             <span className="cotizar-ramo-icono material-symbols-outlined" aria-hidden="true">
               {ICONO_RAMO[cotizacion.ramo]}
             </span>
             <div>
               <strong>{ramoSeleccionado?.nombre ?? cotizacion.ramo}</strong>
-              <small>Cotización {cotizacion.cotizacion_id}</small>
+              <small>{t("cotizarPage.cotizacion_cotizacion_id", { cotizacion_id: cotizacion.cotizacion_id })}</small>
             </div>
             <span className="home-chip home-chip-verde">
-              {cotizacion.estado === "VIGENTE" ? "Vigente" : cotizacion.estado}
+              {cotizacion.estado === "VIGENTE" ? t("cotizarPage.vigente") : cotizacion.estado}
             </span>
           </div>
 
           {cotizacion.cobertura_principal && (
             <div className="cotizar-detalle">
-              <span>Cobertura principal</span>
+              <span>{t("cotizarPage.cobertura_principal")}</span>
               <strong>{cotizacion.cobertura_principal.nombre}</strong>
               {cotizacion.cobertura_principal.descripcion && (
                 <small>{cotizacion.cobertura_principal.descripcion}</small>
@@ -480,7 +482,7 @@ export default function CotizarPage() {
           <dl className="cotizar-resumen">
             {cotizacion.cobertura_principal && (
               <div>
-                <dt>Suma asegurada</dt>
+                <dt>{t("cotizarPage.suma_asegurada")}</dt>
                 <dd>
                   {formatearMonto(cotizacion.cobertura_principal.suma_asegurada, cotizacion.moneda)}
                 </dd>
@@ -488,12 +490,12 @@ export default function CotizarPage() {
             )}
             {cotizacion.vigente_hasta && (
               <div>
-                <dt>Vigencia de la oferta</dt>
-                <dd>Hasta el {formatearFecha(cotizacion.vigente_hasta)}</dd>
+                <dt>{t("cotizarPage.vigencia_de_la_oferta")}</dt>
+                <dd>{t("cotizarPage.hasta_el_formatearfecha", { formatearFecha: formatearFecha(cotizacion.vigente_hasta) })}</dd>
               </div>
             )}
             <div className="cotizar-resumen-total">
-              <dt>Valor total de la prima</dt>
+              <dt>{t("cotizarPage.valor_total_de_la_prima")}</dt>
               <dd>
                 {cotizacion.prima_total
                   ? formatearMonto(cotizacion.prima_total, cotizacion.moneda)
@@ -504,10 +506,10 @@ export default function CotizarPage() {
 
           <div className="cotizar-acciones">
             <button type="button" className="cotizar-boton-secundario" onClick={reiniciar}>
-              Cancelar
+              {t("cotizarPage.cancelar")}
             </button>
             <button type="button" className="cotizar-boton-primario" onClick={irAPagar}>
-              Aceptar y continuar
+              {t("cotizarPage.aceptar_y_continuar")}
             </button>
           </div>
         </section>
@@ -515,20 +517,20 @@ export default function CotizarPage() {
 
       {/* Paso 4: pago de la prima (HU13) */}
       {paso === "pago" && cotizacion && (
-        <section className="home-panel cotizar-resultado" aria-label="Pago de la prima">
+        <section className="home-panel cotizar-resultado" aria-label={t("cotizarPage.pago_de_la_prima")}>
           <div className="cotizar-resultado-encabezado">
             <span className="cotizar-ramo-icono material-symbols-outlined" aria-hidden="true">
               payments
             </span>
             <div>
-              <strong>Pagar la prima</strong>
-              <small>Cotización {cotizacion.cotizacion_id}</small>
+              <strong>{t("cotizarPage.pagar_la_prima")}</strong>
+              <small>{t("cotizarPage.cotizacion_cotizacion_id", { cotizacion_id: cotizacion.cotizacion_id })}</small>
             </div>
           </div>
 
           <dl className="cotizar-resumen">
             <div className="cotizar-resumen-total">
-              <dt>Total a pagar</dt>
+              <dt>{t("cotizarPage.total_a_pagar")}</dt>
               <dd>
                 {cotizacion.prima_total
                   ? formatearMonto(cotizacion.prima_total, cotizacion.moneda)
@@ -540,7 +542,7 @@ export default function CotizarPage() {
           {errorPago && <p role="alert" className="home-aviso">{errorPago}</p>}
 
           <form onSubmit={procesarPago} className="cotizar-form">
-            <fieldset className="cotizar-metodos" aria-label="Medio de pago">
+            <fieldset className="cotizar-metodos" aria-label={t("cotizarPage.medio_de_pago")}>
               {METODOS_PAGO.map((opcion) => (
                 <label
                   key={opcion.valor}
@@ -562,7 +564,7 @@ export default function CotizarPage() {
             {metodoPago === "TARJETA" ? (
               <>
                 <div className="cotizar-campo cotizar-campo-ancho">
-                  <label htmlFor="numero-tarjeta">Número de tarjeta</label>
+                  <label htmlFor="numero-tarjeta">{t("cotizarPage.numero_de_tarjeta")}</label>
                   <input
                     id="numero-tarjeta"
                     type="text"
@@ -574,11 +576,11 @@ export default function CotizarPage() {
                     onChange={(e) => setNumeroTarjeta(formatearNumeroTarjeta(e.target.value))}
                   />
                   <small className="cotizar-ayuda">
-                    Los datos de la tarjeta se tokenizan y no se envían al servidor.
+                    {t("cotizarPage.los_datos_de_la_tarjeta")}
                   </small>
                 </div>
                 <div className="cotizar-campo">
-                  <label htmlFor="vencimiento">Vencimiento (MM/AA)</label>
+                  <label htmlFor="vencimiento">{t("cotizarPage.vencimiento_mm_aa")}</label>
                   <input
                     id="vencimiento"
                     type="text"
@@ -607,20 +609,20 @@ export default function CotizarPage() {
               </>
             ) : (
               <div className="cotizar-campo cotizar-campo-ancho">
-                <label htmlFor="codigo-banco">Banco</label>
+                <label htmlFor="codigo-banco">{t("cotizarPage.banco")}</label>
                 <select
                   id="codigo-banco"
                   value={codigoBanco}
                   required
                   onChange={(e) => setCodigoBanco(e.target.value)}
                 >
-                  <option value="">Selecciona tu banco</option>
+                  <option value="">{t("cotizarPage.selecciona_tu_banco")}</option>
                   {BANCOS_PSE.map((banco) => (
                     <option key={banco.codigo} value={banco.codigo}>{banco.nombre}</option>
                   ))}
                 </select>
                 <small className="cotizar-ayuda">
-                  Serás llevado al portal de tu banco para confirmar el débito.
+                  {t("cotizarPage.seras_llevado_al_portal_de")}
                 </small>
               </div>
             )}
@@ -632,10 +634,10 @@ export default function CotizarPage() {
                 onClick={() => setPaso("resultado")}
                 disabled={pagando}
               >
-                Volver
+                {t("cotizarPage.volver")}
               </button>
               <button type="submit" className="cotizar-boton-primario" disabled={pagando}>
-                {pagando ? "Procesando…" : "Pagar prima"}
+                {pagando ? t("cotizarPage.procesando") : t("cotizarPage.pagar_prima")}
               </button>
             </div>
           </form>
@@ -644,7 +646,7 @@ export default function CotizarPage() {
 
       {/* Paso 5: confirmación del pago */}
       {paso === "confirmacion" && pago && (
-        <section className="home-panel cotizar-resultado" aria-label="Confirmación del pago">
+        <section className="home-panel cotizar-resultado" aria-label={t("cotizarPage.confirmacion_del_pago")}>
           <div className="cotizar-resultado-encabezado">
             <span
               className={`cotizar-ramo-icono material-symbols-outlined cotizar-pago-${pago.estado.toLowerCase()}`}
@@ -654,40 +656,40 @@ export default function CotizarPage() {
             </span>
             <div>
               <strong>
-                {pago.estado === "APROBADO" && "Pago aprobado"}
-                {pago.estado === "PENDIENTE" && "Pago pendiente"}
-                {pago.estado === "RECHAZADO" && "Pago rechazado"}
+                {pago.estado === "APROBADO" && t("cotizarPage.pago_aprobado")}
+                {pago.estado === "PENDIENTE" && t("cotizarPage.pago_pendiente")}
+                {pago.estado === "RECHAZADO" && t("cotizarPage.pago_rechazado")}
               </strong>
-              <small>Pago {pago.pago_id}</small>
+              <small>{t("cotizarPage.pago_pago_id", { pago_id: pago.pago_id })}</small>
             </div>
           </div>
 
           {pago.estado === "APROBADO" && (
             <p className="cotizar-mensaje-ok">
-              Tu pago de {formatearMonto(pago.monto, pago.moneda)} fue aprobado.{" "}
+              {t("cotizarPage.tu_pago_de_formatearmonto_fue", { formatearMonto: formatearMonto(pago.monto, pago.moneda) })}{" "}
               {pago.concepto === "RENOVACION"
-                ? "Tu póliza fue renovada."
-                : "En un único flujo de compra, el siguiente paso es firmar el contrato para emitir tu póliza."}
+                ? t("cotizarPage.tu_poliza_fue_renovada")
+                : t("cotizarPage.en_un_unico_flujo_de")}
             </p>
           )}
           {pago.estado === "APROBADO" && comprobante?.pago_id === pago.pago_id && (
-            <dl className="cotizar-resumen" aria-label="Comprobante de pago">
-              <div><dt>Comprobante</dt><dd>{comprobante.numero}</dd></div>
-              <div><dt>Concepto</dt><dd>{comprobante.descripcion}</dd></div>
+            <dl className="cotizar-resumen" aria-label={t("cotizarPage.comprobante_de_pago")}>
+              <div><dt>{t("cotizarPage.comprobante")}</dt><dd>{comprobante.numero}</dd></div>
+              <div><dt>{t("cotizarPage.concepto")}</dt><dd>{comprobante.descripcion}</dd></div>
               <div>
-                <dt>Valor pagado</dt>
+                <dt>{t("cotizarPage.valor_pagado")}</dt>
                 <dd>{formatearMonto(comprobante.monto, comprobante.moneda)}</dd>
               </div>
             </dl>
           )}
           {pago.estado === "PENDIENTE" && (
             <p className="cotizar-mensaje-pendiente">
-              Tu pago está pendiente de confirmación.
+              {t("cotizarPage.tu_pago_esta_pendiente_de")}
               {pago.url_redireccion && (
                 <>
                   {" "}
                   <a href={pago.url_redireccion} target="_blank" rel="noreferrer">
-                    Continúa en el portal de tu banco
+                    {t("cotizarPage.continua_en_el_portal_de")}
                   </a>
                   .
                 </>
@@ -696,8 +698,7 @@ export default function CotizarPage() {
           )}
           {pago.estado === "RECHAZADO" && (
             <p className="cotizar-mensaje-error">
-              Tu pago fue rechazado{pago.motivo_rechazo ? ` (${pago.motivo_rechazo})` : ""}. No se
-              generó ninguna póliza. Puedes intentarlo de nuevo.
+              {t("cotizarPage.tu_pago_fue_rechazado_valor", { valor: pago.motivo_rechazo ? ` (${pago.motivo_rechazo})` : "" })}
             </p>
           )}
 
@@ -705,7 +706,7 @@ export default function CotizarPage() {
             {pago.estado === "RECHAZADO" ? (
               <>
                 <button type="button" className="cotizar-boton-secundario" onClick={reiniciar}>
-                  Cancelar
+                  {t("cotizarPage.cancelar")}
                 </button>
                 <button
                   type="button"
@@ -713,7 +714,7 @@ export default function CotizarPage() {
                   onClick={reintentarPago}
                   disabled={!cotizacion}
                 >
-                  Reintentar pago
+                  {t("cotizarPage.reintentar_pago")}
                 </button>
               </>
             ) : pago.estado === "APROBADO" && pago.concepto === "RENOVACION" ? (
@@ -722,7 +723,7 @@ export default function CotizarPage() {
                 className="cotizar-boton-primario"
                 onClick={() => navigate("/polizas")}
               >
-                Ver mis pólizas
+                {t("cotizarPage.ver_mis_polizas")}
               </button>
             ) : pago.estado === "APROBADO" ? (
               <button
@@ -730,7 +731,7 @@ export default function CotizarPage() {
                 className="cotizar-boton-primario"
                 onClick={() => navigate(`/firma/${encodeURIComponent(pago.cotizacion_id)}`)}
               >
-                Firmar contrato
+                {t("cotizarPage.firmar_contrato")}
               </button>
             ) : (
               <button
@@ -738,7 +739,7 @@ export default function CotizarPage() {
                 className="cotizar-boton-primario"
                 onClick={() => navigate("/home")}
               >
-                Cerrar
+                {t("cotizarPage.cerrar")}
               </button>
             )}
           </div>

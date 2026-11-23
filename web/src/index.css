@@ -66,3 +66,65 @@ select,
 textarea {
   font: inherit;
 }
+/* Selector de idioma (i18n) */
+.selector-idioma {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.selector-idioma .material-symbols-outlined {
+  font-size: 18px;
+}
+
+.selector-idioma select {
+  padding: 6px 8px;
+  border: 1px solid var(--solventa-border);
+  border-radius: 8px;
+  background: var(--solventa-white);
+  color: var(--solventa-text);
+  font: inherit;
+  cursor: pointer;
+}
+
+.selector-idioma select:focus-visible {
+  outline: 2px solid var(--solventa-blue);
+  outline-offset: 2px;
+}
+
+.home-selector-idioma {
+  margin: auto 12px 8px;
+  color: #dbe4f5;
+}
+
+.auth-content {
+  position: relative;
+}
+
+.auth-selector-idioma {
+  position: absolute;
+  top: 20px;
+  right: 24px;
+  color: var(--solventa-muted);
+}
+
+.profile-selector-idioma {
+  margin-top: 12px;
+  color: var(--solventa-text);
+}
+
+.home-selector-idioma .selector-idioma-texto {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.home-selector-idioma select {
+  flex: 1;
+  min-width: 0;
+}

@@ -10,13 +10,17 @@ import {
 import logoSolventa from "../assets/solventa-logo.png";
 import "../styles/home.css";
 
+import { t } from "../i18n";
+import SelectorIdioma from "../i18n/SelectorIdioma";
+
+// `id` coincide con la prop `activo` de las páginas; `clave` es el texto traducido del menú.
 const MENU = [
-  { icono: "home", texto: "Inicio", ruta: "/home" },
-  { icono: "description", texto: "Mis cotizaciones", ruta: "/cotizaciones" },
-  { icono: "shield", texto: "Mis pólizas", ruta: "/polizas" },
-  { icono: "error", texto: "Siniestros", ruta: "/siniestros" },
-  { icono: "payments", texto: "Pagos", ruta: "/pagos" },
-  { icono: "person", texto: "Perfil", ruta: "/perfil" },
+  { id: "Inicio", icono: "home", clave: "appLayout.inicio", ruta: "/home" },
+  { id: "Mis cotizaciones", icono: "description", clave: "appLayout.mis_cotizaciones", ruta: "/cotizaciones" },
+  { id: "Mis pólizas", icono: "shield", clave: "appLayout.mis_polizas", ruta: "/polizas" },
+  { id: "Siniestros", icono: "error", clave: "appLayout.siniestros", ruta: "/siniestros" },
+  { id: "Pagos", icono: "payments", clave: "appLayout.pagos", ruta: "/pagos" },
+  { id: "Perfil", icono: "person", clave: "appLayout.perfil", ruta: "/perfil" },
 ] as const;
 
 type Props = {
@@ -49,19 +53,19 @@ export default function AppLayout({ activo, rol, children }: Props) {
           <img src={logoSolventa} alt="" className="home-brand-logo" aria-hidden="true" />
           Solventa
         </div>
-        <nav aria-label="Principal">
-          {MENU.map(({ icono, texto, ruta }) => (
+        <nav aria-label={t("appLayout.principal")}>
+          {MENU.map(({ id, icono, clave, ruta }) => (
             <button
-              key={texto}
+              key={id}
               type="button"
               className="home-nav-item"
-              aria-current={texto === activo ? "page" : undefined}
+              aria-current={id === activo ? "page" : undefined}
               disabled={ruta === null}
-              title={ruta === null ? "Próximamente" : undefined}
+              title={ruta === null ? t("appLayout.proximamente") : undefined}
               onClick={ruta ? () => navigate(ruta) : undefined}
             >
               <span className="material-symbols-outlined" aria-hidden="true">{icono}</span>
-              {texto}
+              {t(clave)}
             </button>
           ))}
           {evaluaSiniestros && (
@@ -72,7 +76,7 @@ export default function AppLayout({ activo, rol, children }: Props) {
               onClick={() => navigate("/operaciones/siniestros")}
             >
               <span className="material-symbols-outlined" aria-hidden="true">fact_check</span>
-              Bandeja de siniestros
+              {t("appLayout.bandeja_de_siniestros")}
             </button>
           )}
           {esAuditoria && (
@@ -83,39 +87,40 @@ export default function AppLayout({ activo, rol, children }: Props) {
               onClick={() => navigate("/auditoria/historial")}
             >
               <span className="material-symbols-outlined" aria-hidden="true">manage_search</span>
-              Historial contractual
+              {t("appLayout.historial_contractual")}
             </button>
           )}
           {puedeCrearSocios && (
             <button type="button" className="home-nav-item" onClick={() => navigate("/admin/socios/nuevo")}>
               <span className="material-symbols-outlined" aria-hidden="true">group_add</span>
-              Crear un nuevo socio
+              {t("appLayout.crear_un_nuevo_socio")}
             </button>
           )}
           {puedeCrearAsesor && (
             <button type="button" className="home-nav-item" onClick={() => navigate("/admin/asesores/nuevo")}>
               <span className="material-symbols-outlined" aria-hidden="true">support_agent</span>
-              Crear un asesor de ventas
+              {t("appLayout.crear_un_asesor_de_ventas")}
             </button>
           )}
           {puedeCrearAsesor && (
             <button type="button" className="home-nav-item" onClick={() => navigate("/admin/auditores/nuevo")}>
               <span className="material-symbols-outlined" aria-hidden="true">manage_search</span>
-              Crear un analista de cumplimiento
+              {t("appLayout.crear_un_analista_de_cumplimiento")}
             </button>
           )}
         </nav>
+        <SelectorIdioma className="home-selector-idioma" />
         <button
           type="button"
           className="home-nav-item"
           onClick={() => {
             setErrorSesion("");
             void cerrarSesion().then(() => navigate("/login", { replace: true }))
-              .catch(() => setErrorSesion("No fue posible cerrar la sesión. Inténtalo nuevamente."));
+              .catch(() => setErrorSesion(t("appLayout.no_fue_posible_cerrar_la")));
           }}
         >
           <span className="material-symbols-outlined" aria-hidden="true">logout</span>
-          Cerrar sesión
+          {t("appLayout.cerrar_sesion")}
         </button>
       </aside>
       <main className="home-main">

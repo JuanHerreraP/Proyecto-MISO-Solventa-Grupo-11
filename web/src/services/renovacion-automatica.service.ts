@@ -1,5 +1,7 @@
 import { fetchAutenticado } from "./session";
 
+import { t } from "../i18n";
+
 const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:8000";
 
 export type EstadoCicloRenovacion =
@@ -68,7 +70,7 @@ async function error(respuesta: Response, mensaje: string): Promise<ErrorRenovac
   }
   if (Array.isArray(detalle)) {
     return new ErrorRenovacionAutomatica(
-      "Revisa los datos de la tarjeta.",
+      t("renovacionAutomaticaService.revisa_los_datos_de_la"),
       "DATOS_INVALIDOS",
       respuesta.status,
     );
@@ -85,7 +87,7 @@ export async function consultarRenovacionAutomatica(
 ): Promise<RenovacionAutomatica> {
   const respuesta = await fetchAutenticado(ruta(polizaId));
   if (!respuesta.ok) {
-    throw await error(respuesta, "No fue posible consultar la renovación automática.");
+    throw await error(respuesta, t("renovacionAutomaticaService.no_fue_posible_consultar_la"));
   }
   return respuesta.json();
 }
@@ -100,7 +102,7 @@ export async function configurarRenovacionAutomatica(
     body: JSON.stringify(solicitud),
   });
   if (!respuesta.ok) {
-    throw await error(respuesta, "No fue posible guardar la renovación automática.");
+    throw await error(respuesta, t("renovacionAutomaticaService.no_fue_posible_guardar_la"));
   }
   return respuesta.json();
 }
@@ -114,7 +116,7 @@ export async function descargarDocumentoRenovacion(
     `${ruta(polizaId)}/${encodeURIComponent(renovacionId)}/documento`,
   );
   if (!respuesta.ok) {
-    throw await error(respuesta, "No fue posible descargar el documento de la renovación.");
+    throw await error(respuesta, t("renovacionAutomaticaService.no_fue_posible_descargar_el"));
   }
   const cabecera = respuesta.headers.get("Content-Disposition") ?? "";
   const nombre = /filename="([^"]+)"/.exec(cabecera)?.[1] ?? `renovacion-${polizaId}.pdf`;

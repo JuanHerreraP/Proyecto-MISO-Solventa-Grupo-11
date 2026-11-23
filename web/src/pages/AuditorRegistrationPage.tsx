@@ -7,6 +7,8 @@ import {
 } from "../services/auditor.service";
 import "../styles/socios.css";
 
+import { t } from "../i18n";
+
 const INITIAL_FORM: SolicitudCrearAnalista = {
   nombre: "",
   apellido: "",
@@ -39,11 +41,11 @@ export default function AuditorRegistrationPage() {
     setError("");
 
     if (form.password.length < 8) {
-      setError("La contraseña debe tener mínimo 8 caracteres.");
+      setError(t("auditorRegistrationPage.la_contrasena_debe_tener_minimo"));
       return;
     }
     if (form.password !== confirmarPassword) {
-      setError("Las contraseñas no coinciden.");
+      setError(t("auditorRegistrationPage.las_contrasenas_no_coinciden"));
       return;
     }
 
@@ -60,7 +62,7 @@ export default function AuditorRegistrationPage() {
       setCreado({ nombre: analista.nombre, apellido: analista.apellido, email: analista.email });
     } catch (fallo) {
       setError(
-        fallo instanceof Error ? fallo.message : "No fue posible crear el analista de cumplimiento.",
+        fallo instanceof Error ? fallo.message : t("auditorRegistrationPage.no_fue_posible_crear_el"),
       );
     } finally {
       setLoading(false);
@@ -81,22 +83,21 @@ export default function AuditorRegistrationPage() {
           <span className="material-symbols-outlined" aria-hidden="true">shield</span>
           <span>
             <strong>Solventa</strong>
-            <span className="socio-brand-section"> · Administración</span>
+            <span className="socio-brand-section"> {t("auditorRegistrationPage.administracion")}</span>
           </span>
         </Link>
         <Link className="socio-exit" to="/home">
           <span className="material-symbols-outlined" aria-hidden="true">logout</span>
-          Salir
+          {t("auditorRegistrationPage.salir")}
         </Link>
       </header>
 
       <main className="socio-content">
         <div className="socio-title-row">
           <div>
-            <h1>Crear analista de cumplimiento</h1>
+            <h1>{t("auditorRegistrationPage.crear_analista_de_cumplimiento")}</h1>
             <p>
-              Registra un analista de cumplimiento. Con su cuenta podrá consultar el historial
-              contractual de cualquier póliza para auditoría.
+              {t("auditorRegistrationPage.registra_un_analista_de_cumplimiento")}
             </p>
           </div>
           <div className="socio-title-icon" aria-hidden="true">
@@ -110,25 +111,25 @@ export default function AuditorRegistrationPage() {
               <span className="material-symbols-outlined" aria-hidden="true">check_circle</span>
             </div>
             <div>
-              <span className="socio-eyebrow">Alta completada</span>
-              <h2>Analista creado correctamente</h2>
-              <p>El analista ya puede iniciar sesión con las credenciales configuradas.</p>
+              <span className="socio-eyebrow">{t("auditorRegistrationPage.alta_completada")}</span>
+              <h2>{t("auditorRegistrationPage.analista_creado_correctamente")}</h2>
+              <p>{t("auditorRegistrationPage.el_analista_ya_puede_iniciar")}</p>
               <dl className="socio-result-grid">
                 <div>
-                  <dt>Nombre</dt>
+                  <dt>{t("auditorRegistrationPage.nombre")}</dt>
                   <dd>{creado.nombre} {creado.apellido}</dd>
                 </div>
                 <div>
-                  <dt>Correo</dt>
+                  <dt>{t("auditorRegistrationPage.correo")}</dt>
                   <dd>{creado.email}</dd>
                 </div>
                 <div>
-                  <dt>Rol</dt>
+                  <dt>{t("auditorRegistrationPage.rol")}</dt>
                   <dd><span className="socio-status">ANALISTA_CUMPLIMIENTO</span></dd>
                 </div>
               </dl>
               <button className="socio-secondary-button" type="button" onClick={reiniciar}>
-                Crear otro analista
+                {t("auditorRegistrationPage.crear_otro_analista")}
               </button>
             </div>
           </section>
@@ -138,19 +139,19 @@ export default function AuditorRegistrationPage() {
               <div className="socio-section-heading">
                 <span className="material-symbols-outlined" aria-hidden="true">badge</span>
                 <div>
-                  <h2>Datos del analista</h2>
-                  <p>Información personal y documento de identidad.</p>
+                  <h2>{t("auditorRegistrationPage.datos_del_analista")}</h2>
+                  <p>{t("auditorRegistrationPage.informacion_personal_y_documento_de")}</p>
                 </div>
               </div>
 
               <div className="socio-form-grid">
                 <label>
-                  Nombre
+                  {t("auditorRegistrationPage.nombre")}
                   <input
                     name="nombre"
                     minLength={2}
                     maxLength={100}
-                    placeholder="María"
+                    placeholder={t("auditorRegistrationPage.maria")}
                     value={form.nombre}
                     onChange={(e) => actualizar("nombre", e.target.value)}
                     required
@@ -158,12 +159,12 @@ export default function AuditorRegistrationPage() {
                 </label>
 
                 <label>
-                  Apellido
+                  {t("auditorRegistrationPage.apellido")}
                   <input
                     name="apellido"
                     minLength={2}
                     maxLength={100}
-                    placeholder="Torres"
+                    placeholder={t("auditorRegistrationPage.torres")}
                     value={form.apellido}
                     onChange={(e) => actualizar("apellido", e.target.value)}
                     required
@@ -171,21 +172,21 @@ export default function AuditorRegistrationPage() {
                 </label>
 
                 <label>
-                  Tipo de documento
+                  {t("auditorRegistrationPage.tipo_de_documento")}
                   <select
                     name="tipo_documento"
                     value={form.tipo_documento}
                     onChange={(e) => actualizar("tipo_documento", e.target.value)}
                     required
                   >
-                    <option value="CC">Cédula de ciudadanía</option>
-                    <option value="CE">Cédula de extranjería</option>
-                    <option value="PA">Pasaporte</option>
+                    <option value="CC">{t("auditorRegistrationPage.cedula_de_ciudadania")}</option>
+                    <option value="CE">{t("auditorRegistrationPage.cedula_de_extranjeria")}</option>
+                    <option value="PA">{t("auditorRegistrationPage.pasaporte")}</option>
                   </select>
                 </label>
 
                 <label>
-                  Número de documento
+                  {t("auditorRegistrationPage.numero_de_documento")}
                   <input
                     name="numero_documento"
                     minLength={3}
@@ -198,7 +199,7 @@ export default function AuditorRegistrationPage() {
                 </label>
 
                 <label>
-                  Fecha de nacimiento
+                  {t("auditorRegistrationPage.fecha_de_nacimiento")}
                   <input
                     name="fecha_nacimiento"
                     type="date"
@@ -214,14 +215,14 @@ export default function AuditorRegistrationPage() {
               <div className="socio-section-heading">
                 <span className="material-symbols-outlined" aria-hidden="true">lock</span>
                 <div>
-                  <h2>Credenciales de acceso</h2>
-                  <p>Correo y contraseña con los que el analista iniciará sesión.</p>
+                  <h2>{t("auditorRegistrationPage.credenciales_de_acceso")}</h2>
+                  <p>{t("auditorRegistrationPage.correo_y_contrasena_con_los")}</p>
                 </div>
               </div>
 
               <div className="socio-form-grid">
                 <label>
-                  Correo corporativo
+                  {t("auditorRegistrationPage.correo_corporativo")}
                   <input
                     name="email"
                     type="email"
@@ -235,13 +236,13 @@ export default function AuditorRegistrationPage() {
                 </label>
 
                 <label>
-                  Contraseña
+                  {t("auditorRegistrationPage.contrasena")}
                   <input
                     name="password"
                     type="password"
                     minLength={8}
                     maxLength={128}
-                    placeholder="Mínimo 8 caracteres"
+                    placeholder={t("auditorRegistrationPage.minimo_8_caracteres")}
                     value={form.password}
                     onChange={(e) => actualizar("password", e.target.value)}
                     required
@@ -249,13 +250,13 @@ export default function AuditorRegistrationPage() {
                 </label>
 
                 <label>
-                  Confirmar contraseña
+                  {t("auditorRegistrationPage.confirmar_contrasena")}
                   <input
                     name="confirmar_password"
                     type="password"
                     minLength={8}
                     maxLength={128}
-                    placeholder="Repite la contraseña"
+                    placeholder={t("auditorRegistrationPage.repite_la_contrasena")}
                     value={confirmarPassword}
                     onChange={(e) => setConfirmarPassword(e.target.value)}
                     required
@@ -272,10 +273,10 @@ export default function AuditorRegistrationPage() {
             )}
 
             <div className="socio-submit-row">
-              <p>Al guardar, Solventa creará la cuenta con el rol ANALISTA_CUMPLIMIENTO.</p>
+              <p>{t("auditorRegistrationPage.al_guardar_solventa_creara_la")}</p>
               <button className="socio-primary-button" type="submit" disabled={loading}>
                 <span className="material-symbols-outlined" aria-hidden="true">person_add</span>
-                {loading ? "Creando..." : "Crear analista"}
+                {loading ? t("auditorRegistrationPage.creando") : t("auditorRegistrationPage.crear_analista")}
               </button>
             </div>
           </form>

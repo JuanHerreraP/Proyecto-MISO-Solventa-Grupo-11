@@ -5,12 +5,14 @@ import type {
 } from "../types/socios";
 import { fetchAutenticado, obtenerAccessToken as tokenDeSesion } from "./session";
 
+import { t } from "../i18n";
+
 const API_URL =
   import.meta.env.VITE_API_URL ?? "http://localhost:8000";
 
 async function obtenerMensajeError(
   response: Response,
-  mensajePredeterminado = "No fue posible registrar el socio.",
+  mensajePredeterminado = t("sociosService.no_fue_posible_registrar_el"),
 ): Promise<string> {
   try {
     const body = await response.json();
@@ -25,22 +27,22 @@ async function obtenerMensajeError(
 
     if (Array.isArray(body.detail)) {
       const campos: Record<string, string> = {
-        nit: "NIT", razon_social: "Razón social", contactos_tecnicos: "Contacto técnico",
-        nombre: "Nombre", correo: "Correo", telefono: "Teléfono",
-        pais_operacion: "País", tipos_seguros_autorizados: "Tipos de seguro",
-        endpoints_autorizados: "Permisos de API",
+        nit: "NIT", razon_social: t("sociosService.razon_social"), contactos_tecnicos: t("sociosService.contacto_tecnico"),
+        nombre: t("sociosService.nombre"), correo: t("sociosService.correo"), telefono: t("sociosService.telefono"),
+        pais_operacion: t("sociosService.pais"), tipos_seguros_autorizados: t("sociosService.tipos_de_seguro"),
+        endpoints_autorizados: t("sociosService.permisos_de_api"),
       };
       return body.detail.map((error: { loc?: (string | number)[]; msg?: string }) => {
         const campo = (error.loc ?? []).filter((parte) => parte !== "body")
           .map((parte) => typeof parte === "number" ? `${parte + 1}` : (campos[parte] ?? parte))
           .join(" / ");
-        return `${campo || "Datos del socio"}: ${error.msg ?? "Valor inválido."}`;
+        return `${campo || t("sociosService.datos_del_socio")}: ${error.msg ?? t("sociosService.valor_invalido")}`;
       }).join("; ");
     }
 
     return mensajePredeterminado;
   } catch {
-    return "No fue posible comunicarse correctamente con el servidor.";
+    return t("sociosService.no_fue_posible_comunicarse_correctamente");
   }
 }
 
@@ -49,7 +51,7 @@ function obtenerAccessToken(): string {
 
   if (!accessToken) {
     throw new Error(
-      "Debes iniciar sesión con un usuario autorizado para registrar socios.",
+      t("sociosService.debes_iniciar_sesion_con_un"),
     );
   }
 
@@ -95,7 +97,7 @@ export async function generarCredencialesSocio(
     throw new Error(
       await obtenerMensajeError(
         response,
-        "El socio fue registrado, pero no fue posible generar sus credenciales.",
+        t("sociosService.el_socio_fue_registrado_pero"),
       ),
     );
   }

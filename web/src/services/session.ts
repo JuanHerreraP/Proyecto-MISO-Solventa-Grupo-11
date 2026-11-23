@@ -1,6 +1,8 @@
 import { conBloqueoSesion, postSesionWeb } from "./web-session";
 import type { LoginResponse } from "../types/auth";
 
+import { t } from "../i18n";
+
 const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:8000";
 const INACTIVIDAD_MS = 30 * 60 * 1000;
 let accessToken: string | null = null;
@@ -37,7 +39,7 @@ function expirarSesion(revocar = true): void {
 
 export async function cerrarSesion(): Promise<void> {
   const respuesta = await conBloqueoSesion(() => postSesionWeb("logout"));
-  if (!respuesta.ok) throw new Error("No fue posible cerrar la sesión en el servidor.");
+  if (!respuesta.ok) throw new Error(t("session.no_fue_posible_cerrar_la"));
   expirarSesion(false);
 }
 
@@ -54,7 +56,7 @@ export async function restaurarSesion(): Promise<boolean> {
 function comprobarInactividad(): void {
   if (Date.now() - ultimaActividad >= INACTIVIDAD_MS) {
     expirarSesion();
-    throw new Error("La sesión expiró por inactividad. Inicia sesión nuevamente.");
+    throw new Error(t("session.la_sesion_expiro_por_inactividad"));
   }
 }
 
@@ -65,9 +67,9 @@ async function renovarSesion(restaurando = false): Promise<void> {
   renovacion = (async () => {
     try {
       const respuesta = await conBloqueoSesion(() => postSesionWeb("refresh"));
-      if (!respuesta.ok) throw new Error("No fue posible renovar la sesión.");
+      if (!respuesta.ok) throw new Error(t("session.no_fue_posible_renovar_la"));
       const sesion: LoginResponse = await respuesta.json();
-      if (actual !== version) throw new Error("La sesión cambió.");
+      if (actual !== version) throw new Error(t("session.la_sesion_cambio"));
       comprobarInactividad();
       accessToken = sesion.access_token;
       expiraEn = Date.now() + sesion.expires_in * 1000;
@@ -86,7 +88,7 @@ async function renovarSesion(restaurando = false): Promise<void> {
 
 export async function fetchAutenticado(url: string, opciones: RequestInit = {}): Promise<Response> {
   comprobarInactividad();
-  if (!accessToken) throw new Error("Inicia sesión para continuar.");
+  if (!accessToken) throw new Error(t("session.inicia_sesion_para_continuar"));
   if (Date.now() >= expiraEn - 60_000) await renovarSesion();
   const enviar = () => {
     const headers = new Headers(opciones.headers);

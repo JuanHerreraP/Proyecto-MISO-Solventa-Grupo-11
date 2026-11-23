@@ -1,5 +1,7 @@
 import { fetchAutenticado } from "./session";
 
+import { t } from "../i18n";
+
 const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:8000";
 
 export type MotivoCancelacion =
@@ -90,7 +92,7 @@ async function procesar<T>(respuesta: Response, mensaje: string): Promise<T> {
     );
   }
   if (Array.isArray(detalle)) {
-    throw new ErrorCancelacion("Revisa los datos ingresados.", "DATOS_INVALIDOS", respuesta.status);
+    throw new ErrorCancelacion(t("cancelacionesService.revisa_los_datos_ingresados"), "DATOS_INVALIDOS", respuesta.status);
   }
   throw new ErrorCancelacion(mensaje, "ERROR", respuesta.status);
 }
@@ -102,7 +104,7 @@ function ruta(polizaId: string): string {
 export async function consultarCancelacion(polizaId: string): Promise<CondicionesCancelacion> {
   return procesar(
     await fetchAutenticado(ruta(polizaId)),
-    "No fue posible consultar las condiciones de cancelación.",
+    t("cancelacionesService.no_fue_posible_consultar_las"),
   );
 }
 
@@ -120,6 +122,6 @@ export async function confirmarCancelacion(
       },
       body: JSON.stringify({ ...solicitud, confirmo: true }),
     }),
-    "No fue posible cancelar la póliza.",
+    t("cancelacionesService.no_fue_posible_cancelar_la"),
   );
 }

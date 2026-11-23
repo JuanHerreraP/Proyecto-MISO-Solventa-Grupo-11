@@ -15,6 +15,8 @@ import type {
   RegisterRequest,
 } from "../types/auth";
 
+import { t } from "../i18n";
+
 export default function RegisterPage() {
   const navigate = useNavigate();
 
@@ -64,21 +66,21 @@ export default function RegisterPage() {
 
     if (form.password.length < 8) {
       setError(
-        "La contraseña debe tener mínimo 8 caracteres.",
+        t("registerPage.la_contrasena_debe_tener_minimo"),
       );
       return;
     }
 
     if (form.password !== confirmPassword) {
       setError(
-        "Las contraseñas no coinciden.",
+        t("registerPage.las_contrasenas_no_coinciden"),
       );
       return;
     }
 
     if (!form.acepta_validacion_identidad) {
       setError(
-        "Debes autorizar la validación de identidad para continuar.",
+        t("registerPage.debes_autorizar_la_validacion_de"),
       );
       return;
     }
@@ -89,7 +91,7 @@ export default function RegisterPage() {
       const response = await register(form);
 
       setSuccess(
-        `Cuenta creada correctamente. Bienvenido, ${response.nombre}.`,
+        t("registerPage.cuenta_creada_correctamente_bienvenido_nombre", { nombre: response.nombre }),
       );
 
       setTimeout(() => {
@@ -100,7 +102,7 @@ export default function RegisterPage() {
         setError(error.message);
       } else {
         setError(
-          "No fue posible crear la cuenta.",
+          t("registerPage.no_fue_posible_crear_la"),
         );
       }
     } finally {
@@ -110,19 +112,18 @@ export default function RegisterPage() {
 
   return (
     <AuthLayout
-      title="Crea tu cuenta en menos de 3 minutos"
-      description="Con tu cuenta podrás autorizar el uso de tu información financiera, ver tu perfil de riesgo y cotizar tu seguro de vida hipotecario al instante."
+      title={t("registerPage.crea_tu_cuenta_en_menos")}
+      description={t("registerPage.con_tu_cuenta_podras_autorizar")}
       benefits={[
-        "Verificación de identidad segura",
-        "Tus datos protegidos durante todo el proceso",
+        t("registerPage.verificacion_de_identidad_segura"),
+        t("registerPage.tus_datos_protegidos_durante_todo"),
       ]}
     >
       <div className="register-container">
-        <h2>Crear cuenta</h2>
+        <h2>{t("registerPage.crear_cuenta")}</h2>
 
         <p className="register-subtitle">
-          Completa tus datos para comenzar tu proceso
-          de contratación.
+          {t("registerPage.completa_tus_datos_para_comenzar")}
         </p>
 
         <form
@@ -132,13 +133,13 @@ export default function RegisterPage() {
           <div className="register-row">
             <div className="register-field">
               <label htmlFor="nombre">
-                Nombre
+                {t("registerPage.nombre")}
               </label>
 
               <input
                 id="nombre"
                 type="text"
-                placeholder="María Fernanda"
+                placeholder={t("registerPage.maria_fernanda")}
                 value={form.nombre}
                 onChange={(event) =>
                   actualizarCampo(
@@ -152,13 +153,13 @@ export default function RegisterPage() {
 
             <div className="register-field">
               <label htmlFor="apellido">
-                Apellido
+                {t("registerPage.apellido")}
               </label>
 
               <input
                 id="apellido"
                 type="text"
-                placeholder="Torres"
+                placeholder={t("registerPage.torres")}
                 value={form.apellido}
                 onChange={(event) =>
                   actualizarCampo(
@@ -173,7 +174,7 @@ export default function RegisterPage() {
 
           <div className="register-field">
             <label htmlFor="register-email">
-              Correo electrónico
+              {t("registerPage.correo_electronico")}
             </label>
 
             <input
@@ -194,7 +195,7 @@ export default function RegisterPage() {
           <div className="register-row">
             <div className="register-field register-document-type">
               <label htmlFor="tipo-documento">
-                Tipo documento
+                {t("registerPage.tipo_documento")}
               </label>
 
               <select
@@ -208,22 +209,22 @@ export default function RegisterPage() {
                 }
               >
                 <option value="CC">
-                  Cédula
+                  {t("registerPage.cedula")}
                 </option>
 
                 <option value="CE">
-                  Cédula extranjería
+                  {t("registerPage.cedula_extranjeria")}
                 </option>
 
                 <option value="PAS">
-                  Pasaporte
+                  {t("registerPage.pasaporte")}
                 </option>
               </select>
             </div>
 
             <div className="register-field">
               <label htmlFor="numero-documento">
-                Número de documento
+                {t("registerPage.numero_de_documento")}
               </label>
 
               <input
@@ -244,7 +245,7 @@ export default function RegisterPage() {
 
           <div className="register-field">
             <label htmlFor="fecha-nacimiento">
-              Fecha de nacimiento
+              {t("registerPage.fecha_de_nacimiento")}
             </label>
 
             <input
@@ -263,13 +264,13 @@ export default function RegisterPage() {
 
           <div className="register-field">
             <label htmlFor="register-password">
-              Contraseña
+              {t("registerPage.contrasena")}
             </label>
 
             <input
               id="register-password"
               type="password"
-              placeholder="Mínimo 8 caracteres"
+              placeholder={t("registerPage.minimo_8_caracteres")}
               value={form.password}
               onChange={(event) =>
                 actualizarCampo(
@@ -284,13 +285,13 @@ export default function RegisterPage() {
 
           <div className="register-field">
             <label htmlFor="confirm-password">
-              Confirmar contraseña
+              {t("registerPage.confirmar_contrasena")}
             </label>
 
             <input
               id="confirm-password"
               type="password"
-              placeholder="Repite tu contraseña"
+              placeholder={t("registerPage.repite_tu_contrasena")}
               value={confirmPassword}
               onChange={(event) =>
                 setConfirmPassword(
@@ -316,8 +317,7 @@ export default function RegisterPage() {
             />
 
             <span>
-              Acepto los términos y condiciones y la política de tratamiento
-              de datos de Solventa
+              {t("registerPage.acepto_los_terminos_y_condiciones")}
             </span>
           </label>
 
@@ -345,15 +345,15 @@ export default function RegisterPage() {
             disabled={loading}
           >
             {loading
-              ? "Validando identidad..."
-              : "Crear cuenta y continuar →"}
+              ? t("registerPage.validando_identidad")
+              : t("registerPage.crear_cuenta_y_continuar")}
           </button>
         </form>
 
         <p className="register-link">
-          ¿Ya tienes cuenta?{" "}
+          {t("registerPage.ya_tienes_cuenta")}{" "}
           <Link to="/login">
-            Inicia sesión
+            {t("registerPage.inicia_sesion")}
           </Link>
         </p>
       </div>

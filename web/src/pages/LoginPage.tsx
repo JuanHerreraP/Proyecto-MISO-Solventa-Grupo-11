@@ -13,6 +13,8 @@ import { login } from "../services/auth.service";
 import { guardarAccessToken, guardarSesion } from "../services/session";
 
 
+import { t } from "../i18n";
+
 export default function LoginPage() {
   const [email, setEmail] =
     useState("");
@@ -58,7 +60,7 @@ export default function LoginPage() {
         setError(error.message);
       } else {
         setError(
-          "No fue posible iniciar sesión.",
+          t("loginPage.no_fue_posible_iniciar_sesion"),
         );
       }
     } finally {
@@ -72,12 +74,11 @@ export default function LoginPage() {
       <div className="login-container">
 
         <h2>
-          Inicia sesión
+          {t("loginPage.inicia_sesion")}
         </h2>
 
         <p className="login-subtitle">
-          Accede a tu cuenta de Solventa para continuar
-          con tu proceso.
+          {t("loginPage.accede_a_tu_cuenta_de")}
         </p>
 
 
@@ -87,7 +88,7 @@ export default function LoginPage() {
         >
 
           <label htmlFor="email">
-            Correo electrónico
+            {t("loginPage.correo_electronico")}
           </label>
 
           <input
@@ -103,7 +104,7 @@ export default function LoginPage() {
 
 
           <label htmlFor="password">
-            Contraseña
+            {t("loginPage.contrasena")}
           </label>
 
           <input
@@ -123,7 +124,7 @@ export default function LoginPage() {
               type="button"
               className="forgot-password"
             >
-              ¿Olvidaste tu contraseña?
+              {t("loginPage.olvidaste_tu_contrasena")}
             </button>
           </div>
 
@@ -143,7 +144,7 @@ export default function LoginPage() {
               className="login-success"
               role="status"
             >
-              Inicio de sesión exitoso.
+              {t("loginPage.inicio_de_sesion_exitoso")}
             </div>
           )}
 
@@ -154,17 +155,17 @@ export default function LoginPage() {
             disabled={loading}
           >
             {loading
-              ? "Ingresando..."
-              : "Iniciar sesión →"}
+              ? t("loginPage.ingresando")
+              : t("loginPage.iniciar_sesion")}
           </button>
 
         </form>
 
 
         <p className="register-link">
-          ¿Nuevo en Solventa?{" "}
+          {t("loginPage.nuevo_en_solventa")}{" "}
           <Link to="/registro">
-            Crea tu cuenta
+            {t("loginPage.crea_tu_cuenta")}
           </Link>
         </p>
 

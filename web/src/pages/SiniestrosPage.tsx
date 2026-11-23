@@ -9,22 +9,24 @@ import { listarDesembolsos, type Desembolso } from "../services/desembolsos.serv
 import { listarSiniestros } from "../services/siniestros.service";
 import type { EstadoSiniestro, Siniestro } from "../types/siniestros";
 
+import { t, localeActual } from "../i18n";
+
 const ESTADOS: Record<EstadoSiniestro, string> = {
-  REGISTRADO: "Registrado",
-  EN_EVALUACION: "En evaluación",
-  APROBADO: "Aprobado",
-  RECHAZADO: "Rechazado",
+  get REGISTRADO() { return t("siniestrosPage.registrado"); },
+  get EN_EVALUACION() { return t("siniestrosPage.en_evaluacion"); },
+  get APROBADO() { return t("siniestrosPage.aprobado"); },
+  get RECHAZADO() { return t("siniestrosPage.rechazado"); },
 };
 
 function formatearFecha(iso: string): string {
   const [anio, mes, dia] = iso.split("-").map(Number);
-  return new Date(anio, mes - 1, dia).toLocaleDateString("es-CO", {
+  return new Date(anio, mes - 1, dia).toLocaleDateString(localeActual(), {
     day: "numeric", month: "long", year: "numeric",
   });
 }
 
 function formatearMonto(monto: string, moneda: string): string {
-  return Number(monto).toLocaleString("es-CO", {
+  return Number(monto).toLocaleString(localeActual(), {
     style: "currency", currency: moneda, maximumFractionDigits: 0,
   });
 }
@@ -79,15 +81,15 @@ export default function SiniestrosPage() {
     <AppLayout activo="Siniestros" rol={rol}>
       <header className="home-header">
         <div>
-          <h1>Mis siniestros</h1>
-          <p>Consulta tus reclamaciones y el detalle de cada una.</p>
+          <h1>{t("siniestrosPage.mis_siniestros")}</h1>
+          <p>{t("siniestrosPage.consulta_tus_reclamaciones_y_el")}</p>
         </div>
         <button
           type="button"
           className="cotizar-boton-primario"
           onClick={() => navigate("/siniestros/nuevo")}
         >
-          Reportar siniestro
+          {t("siniestrosPage.reportar_siniestro")}
         </button>
       </header>
 
@@ -95,13 +97,13 @@ export default function SiniestrosPage() {
 
       <CuentaIndemnizaciones />
 
-      <section aria-label="Lista de siniestros" className="cotizaciones-lista">
+      <section aria-label={t("siniestrosPage.lista_de_siniestros")} className="cotizaciones-lista">
         {siniestros === null && !error && (
-          <p role="status" className="home-card-vacio">Cargando tus siniestros…</p>
+          <p role="status" className="home-card-vacio">{t("siniestrosPage.cargando_tus_siniestros")}</p>
         )}
         {siniestros?.length === 0 && (
           <div className="home-panel">
-            <p className="home-card-vacio">Aún no tienes siniestros registrados.</p>
+            <p className="home-card-vacio">{t("siniestrosPage.aun_no_tienes_siniestros_registrados")}</p>
           </div>
         )}
         {siniestros?.map((siniestro) => {
@@ -120,7 +122,7 @@ export default function SiniestrosPage() {
                   error
                 </span>
                 <span className="cotizacion-cabecera-texto">
-                  <strong>{poliza?.nombre_ramo ?? "Siniestro"}</strong>
+                  <strong>{poliza?.nombre_ramo ?? t("siniestrosPage.siniestro")}</strong>
                   <small>{formatearFecha(siniestro.fecha_evento)} · {siniestro.lugar}</small>
                 </span>
                 <span className="home-chip cotizacion-estado">
@@ -135,7 +137,7 @@ export default function SiniestrosPage() {
                 <div className="cotizacion-detalle">
                   {poliza && (
                     <div className="cotizar-detalle">
-                      <span>Póliza afectada</span>
+                      <span>{t("siniestrosPage.poliza_afectada")}</span>
                       <strong>{poliza.nombre_ramo}</strong>
                       <small>{poliza.numero_poliza} · {poliza.cobertura_principal}</small>
                     </div>
@@ -144,37 +146,37 @@ export default function SiniestrosPage() {
                   {desembolso && <DetalleDesembolso desembolso={desembolso} />}
                   {siniestro.estado === "RECHAZADO" && siniestro.motivo_rechazo && (
                     <div className="cotizar-detalle">
-                      <span>Motivo del rechazo</span>
+                      <span>{t("siniestrosPage.motivo_del_rechazo")}</span>
                       <strong>{siniestro.motivo_rechazo}</strong>
                     </div>
                   )}
 
-                  <h3 className="cotizacion-subtitulo">Detalle del evento</h3>
+                  <h3 className="cotizacion-subtitulo">{t("siniestrosPage.detalle_del_evento")}</h3>
                   <dl className="cotizacion-datos">
                     <div>
-                      <dt>Fecha y hora</dt>
+                      <dt>{t("siniestrosPage.fecha_y_hora")}</dt>
                       <dd>{formatearFecha(siniestro.fecha_evento)} · {siniestro.hora_evento}</dd>
                     </div>
                     <div>
-                      <dt>Lugar</dt>
+                      <dt>{t("siniestrosPage.lugar")}</dt>
                       <dd>{siniestro.lugar}</dd>
                     </div>
                     <div>
-                      <dt>Estimación de daños</dt>
+                      <dt>{t("siniestrosPage.estimacion_de_danos")}</dt>
                       <dd>{formatearMonto(siniestro.estimacion_danos, siniestro.moneda)}</dd>
                     </div>
                   </dl>
 
-                  <h3 className="cotizacion-subtitulo">Descripción</h3>
+                  <h3 className="cotizacion-subtitulo">{t("siniestrosPage.descripcion")}</h3>
                   <p className="siniestro-descripcion">{siniestro.descripcion}</p>
 
                   <dl className="cotizacion-datos">
                     <div>
-                      <dt>Número de siniestro</dt>
+                      <dt>{t("siniestrosPage.numero_de_siniestro")}</dt>
                       <dd>{siniestro.siniestro_id}</dd>
                     </div>
                     <div>
-                      <dt>Registrado</dt>
+                      <dt>{t("siniestrosPage.registrado")}</dt>
                       <dd>{formatearFecha(siniestro.registrado_en.slice(0, 10))}</dd>
                     </div>
                   </dl>

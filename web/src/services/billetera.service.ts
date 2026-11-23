@@ -1,5 +1,7 @@
 import { fetchAutenticado } from "./session";
 
+import { t } from "../i18n";
+
 const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:8000";
 
 export interface PolizaResumen {
@@ -41,7 +43,7 @@ export interface Certificado {
 
 export async function obtenerBilletera(): Promise<Billetera> {
   const response = await fetchAutenticado(`${API_URL}/api/v1/billetera/polizas`);
-  if (!response.ok) throw new Error("No fue posible consultar tus pólizas.");
+  if (!response.ok) throw new Error(t("billeteraService.no_fue_posible_consultar_tus"));
   return response.json();
 }
 
@@ -50,6 +52,6 @@ export async function obtenerCertificado(polizaId: string): Promise<Certificado>
   const response = await fetchAutenticado(
     `${API_URL}/api/v1/billetera/polizas/${encodeURIComponent(polizaId)}/certificado`,
   );
-  if (!response.ok) throw new Error("No fue posible consultar el certificado.");
+  if (!response.ok) throw new Error(t("billeteraService.no_fue_posible_consultar_el"));
   return response.json();
 }

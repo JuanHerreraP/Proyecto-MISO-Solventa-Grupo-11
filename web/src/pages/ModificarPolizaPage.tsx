@@ -16,24 +16,26 @@ import {
 } from "../services/endosos.service";
 import "../styles/endosos.css";
 
+import { localeActual, t } from "../i18n";
+
 const TIPOS_DOCUMENTO = ["CC", "CE", "TI", "RC", "PA"] as const;
 
 const CONCEPTO: Record<string, string> = {
-  COBRO: "Cobro adicional",
-  DEVOLUCION: "Devolución a tu favor",
-  SIN_AJUSTE: "Sin cambio en la prima",
+  get COBRO() { return t("modificarPolizaPage.cobro_adicional"); },
+  get DEVOLUCION() { return t("modificarPolizaPage.devolucion_a_tu_favor"); },
+  get SIN_AJUSTE() { return t("modificarPolizaPage.sin_cambio_en_la_prima"); },
 };
 
 const TIPO_ENDOSO: Record<string, string> = {
-  BENEFICIARIOS: "Beneficiarios",
-  COBERTURAS: "Coberturas",
-  BENEFICIARIOS_Y_COBERTURAS: "Beneficiarios y coberturas",
+  get BENEFICIARIOS() { return t("modificarPolizaPage.beneficiarios"); },
+  get COBERTURAS() { return t("modificarPolizaPage.coberturas"); },
+  get BENEFICIARIOS_Y_COBERTURAS() { return t("modificarPolizaPage.beneficiarios_y_coberturas"); },
 };
 
 type EstadoCobertura = { incluida: boolean; suma: string };
 
 function formatearMonto(monto: string, moneda: string): string {
-  return Number(monto).toLocaleString("es-CO", {
+  return Number(monto).toLocaleString(localeActual(), {
     style: "currency",
     currency: moneda,
     maximumFractionDigits: 0,
@@ -42,7 +44,7 @@ function formatearMonto(monto: string, moneda: string): string {
 
 function formatearFecha(iso: string): string {
   const [anio, mes, dia] = iso.slice(0, 10).split("-").map(Number);
-  return new Date(anio, mes - 1, dia).toLocaleDateString("es-CO", {
+  return new Date(anio, mes - 1, dia).toLocaleDateString(localeActual(), {
     day: "numeric",
     month: "long",
     year: "numeric",
@@ -61,7 +63,7 @@ function digitosDeMonto(monto: string): string {
 
 /** "50000000" -> "50.000.000", para leer la suma sin contar ceros. */
 function conSeparadorDeMiles(digitos: string): string {
-  return digitos ? Number(digitos).toLocaleString("es-CO", { maximumFractionDigits: 0 }) : "";
+  return digitos ? Number(digitos).toLocaleString(localeActual(), { maximumFractionDigits: 0 }) : "";
 }
 
 function sinDecimalesInnecesarios(valor: string): string {
@@ -232,50 +234,50 @@ export default function ModificarPolizaPage() {
     <AppLayout activo="Mis pólizas" rol={rol}>
       <header className="home-header">
         <div>
-          <h1>Modificar póliza</h1>
+          <h1>{t("modificarPolizaPage.modificar_poliza")}</h1>
           <p>
             {opciones
               ? `${opciones.nombre_ramo} · ${opciones.numero_poliza}`
-              : "Ajusta tus coberturas opcionales y beneficiarios."}
+              : t("modificarPolizaPage.ajusta_tus_coberturas_opcionales_y")}
           </p>
         </div>
         <button type="button" className="cotizar-boton-secundario" onClick={() => navigate("/polizas")}>
-          Volver a mis pólizas
+          {t("modificarPolizaPage.volver_a_mis_polizas")}
         </button>
       </header>
 
       {errorCarga && <p role="alert" className="home-aviso">{errorCarga}</p>}
-      {!opciones && !errorCarga && <p role="status" className="home-card-vacio">Cargando la póliza…</p>}
+      {!opciones && !errorCarga && <p role="status" className="home-card-vacio">{t("modificarPolizaPage.cargando_la_poliza")}</p>}
 
       {opciones && (
         <div className="endoso-pagina">
           {!opciones.modificable && (
             <p role="alert" className="home-aviso">
-              Esta póliza ya no está vigente, así que no admite cambios.
+              {t("modificarPolizaPage.esta_poliza_ya_no_esta")}
             </p>
           )}
 
           {emitido && (
-            <section className="home-panel" aria-label="Endoso emitido">
+            <section className="home-panel" aria-label={t("modificarPolizaPage.endoso_emitido")}>
               <p className="cotizar-mensaje-ok" role="status">
-                Listo. Emitimos el endoso No. {emitido.numero_endoso} y ya rige sobre tu póliza.
+                {t("modificarPolizaPage.listo_emitimos_el_endoso_no", { numero_endoso: emitido.numero_endoso })}
               </p>
               <button type="button" className="cotizar-boton-primario" onClick={() => void descargar(emitido.endoso_id)}>
                 <span className="material-symbols-outlined" aria-hidden="true">download</span>
-                Descargar endoso (PDF)
+                {t("modificarPolizaPage.descargar_endoso_pdf")}
               </button>
             </section>
           )}
 
           <section className="home-panel endoso-seccion" aria-labelledby="titulo-coberturas">
-            <h2 id="titulo-coberturas">Coberturas opcionales</h2>
-            <p>Incluye, ajusta o excluye amparos adicionales. El cambio se cobra o devuelve solo por los días que le quedan a la póliza.</p>
+            <h2 id="titulo-coberturas">{t("modificarPolizaPage.coberturas_opcionales")}</h2>
+            <p>{t("modificarPolizaPage.incluye_ajusta_o_excluye_amparos")}</p>
             <p className="endoso-principal">
-              Cobertura principal: <strong>{opciones.cobertura_principal.nombre}</strong> por{" "}
-              {formatearMonto(opciones.cobertura_principal.suma_asegurada, opciones.moneda)}
+              {t("modificarPolizaPage.cobertura_principal")} <strong>{opciones.cobertura_principal.nombre}</strong>{" "}
+              {t("modificarPolizaPage.por_monto", { monto: formatearMonto(opciones.cobertura_principal.suma_asegurada, opciones.moneda) })}
             </p>
             {opciones.coberturas_disponibles.length === 0 ? (
-              <p className="home-card-vacio">Este seguro no tiene coberturas opcionales.</p>
+              <p className="home-card-vacio">{t("modificarPolizaPage.este_seguro_no_tiene_coberturas")}</p>
             ) : (
               <div className="endoso-coberturas">
                 {opciones.coberturas_disponibles.map((disponible) => {
@@ -299,21 +301,20 @@ export default function ModificarPolizaPage() {
                         </span>
                       </label>
                       <div className="cotizar-campo">
-                        <label htmlFor={idSuma}>Suma asegurada</label>
+                        <label htmlFor={idSuma}>{t("modificarPolizaPage.suma_asegurada")}</label>
                         <input
                           id={idSuma}
-                          aria-label={`Suma asegurada de ${disponible.nombre}`}
+                          aria-label={t("modificarPolizaPage.suma_asegurada_de_nombre", { nombre: disponible.nombre })}
                           type="text"
                           inputMode="numeric"
                           autoComplete="off"
-                          placeholder={estado.incluida ? "Escribe la suma" : "No incluida"}
+                          placeholder={estado.incluida ? t("modificarPolizaPage.escribe_la_suma") : t("modificarPolizaPage.no_incluida")}
                           value={estado.incluida ? conSeparadorDeMiles(estado.suma) : ""}
                           disabled={bloqueada || !estado.incluida}
                           onChange={(e) => cambiarCobertura(disponible.codigo, { suma: soloDigitos(e.target.value) })}
                         />
                         <span className="cotizar-ayuda">
-                          Entre {formatearMonto(disponible.suma_minima, opciones.moneda)} y{" "}
-                          {formatearMonto(disponible.suma_maxima, opciones.moneda)}
+                          {t("modificarPolizaPage.entre_formatearmonto_y_formatearmonto2", { formatearMonto: formatearMonto(disponible.suma_minima, opciones.moneda), formatearMonto2: formatearMonto(disponible.suma_maxima, opciones.moneda) })}
                         </span>
                       </div>
                     </div>
@@ -325,39 +326,39 @@ export default function ModificarPolizaPage() {
 
           {opciones.admite_beneficiarios && (
             <section className="home-panel endoso-seccion" aria-labelledby="titulo-beneficiarios">
-              <h2 id="titulo-beneficiarios">Beneficiarios</h2>
-              <p>Los porcentajes deben sumar exactamente 100 %. Si no designas a nadie, la indemnización va a tus herederos legales.</p>
+              <h2 id="titulo-beneficiarios">{t("modificarPolizaPage.beneficiarios")}</h2>
+              <p>{t("modificarPolizaPage.los_porcentajes_deben_sumar_exactamente")}</p>
               {beneficiarios.map((b, indice) => {
                 const id = (campo: string) => `beneficiario-${indice}-${campo}`;
                 const numero = indice + 1;
                 return (
-                  <fieldset key={indice} className="endoso-beneficiario" disabled={bloqueada} aria-label={`Beneficiario ${numero}`}>
+                  <fieldset key={indice} className="endoso-beneficiario" disabled={bloqueada} aria-label={t("modificarPolizaPage.beneficiario_numero", { numero: numero })}>
                     <div className="cotizar-campo">
-                      <label htmlFor={id("nombre")}>Nombre completo</label>
+                      <label htmlFor={id("nombre")}>{t("modificarPolizaPage.nombre_completo")}</label>
                       <input id={id("nombre")} value={b.nombre_completo} onChange={(e) => cambiarBeneficiario(indice, { nombre_completo: e.target.value })} />
                     </div>
                     <div className="cotizar-campo">
-                      <label htmlFor={id("tipo")}>Tipo</label>
+                      <label htmlFor={id("tipo")}>{t("modificarPolizaPage.tipo")}</label>
                       <select id={id("tipo")} value={b.tipo_documento} onChange={(e) => cambiarBeneficiario(indice, { tipo_documento: e.target.value })}>
                         {TIPOS_DOCUMENTO.map((tipo) => <option key={tipo} value={tipo}>{tipo}</option>)}
                       </select>
                     </div>
                     <div className="cotizar-campo">
-                      <label htmlFor={id("documento")}>Documento</label>
+                      <label htmlFor={id("documento")}>{t("modificarPolizaPage.documento")}</label>
                       <input id={id("documento")} value={b.numero_documento} onChange={(e) => cambiarBeneficiario(indice, { numero_documento: e.target.value })} />
                     </div>
                     <div className="cotizar-campo">
-                      <label htmlFor={id("parentesco")}>Parentesco</label>
+                      <label htmlFor={id("parentesco")}>{t("modificarPolizaPage.parentesco")}</label>
                       <input id={id("parentesco")} value={b.parentesco} onChange={(e) => cambiarBeneficiario(indice, { parentesco: e.target.value })} />
                     </div>
                     <div className="cotizar-campo">
-                      <label htmlFor={id("porcentaje")}>Porcentaje</label>
+                      <label htmlFor={id("porcentaje")}>{t("modificarPolizaPage.porcentaje")}</label>
                       <input id={id("porcentaje")} type="number" inputMode="decimal" min={0.01} max={100} step={0.01} value={b.porcentaje} onChange={(e) => cambiarBeneficiario(indice, { porcentaje: e.target.value })} />
                     </div>
                     <button
                       type="button"
                       className="endoso-quitar"
-                      aria-label={`Quitar beneficiario ${numero}`}
+                      aria-label={t("modificarPolizaPage.quitar_beneficiario_numero", { numero: numero })}
                       onClick={() => { setBeneficiarios((previo) => previo.filter((_, i) => i !== indice)); editado(); }}
                     >
                       <span className="material-symbols-outlined" aria-hidden="true">delete</span>
@@ -372,11 +373,11 @@ export default function ModificarPolizaPage() {
                   disabled={bloqueada || beneficiarios.length >= opciones.max_beneficiarios}
                   onClick={() => { setBeneficiarios((previo) => [...previo, beneficiarioVacio()]); editado(); }}
                 >
-                  Agregar beneficiario
+                  {t("modificarPolizaPage.agregar_beneficiario")}
                 </button>
                 {beneficiarios.length > 0 && (
                   <span className={porcentajesValidos ? "endoso-total-ok" : "endoso-total-error"} aria-live="polite">
-                    Suman {totalPorcentaje.toLocaleString("es-CO")} %
+                    {t("modificarPolizaPage.suman_tolocalestring", { porcentaje: totalPorcentaje.toLocaleString(localeActual()) })}
                   </span>
                 )}
               </div>
@@ -393,33 +394,33 @@ export default function ModificarPolizaPage() {
                 disabled={bloqueada || !porcentajesValidos || !sumasCompletas}
                 onClick={() => void calcular()}
               >
-                {procesando === "simulando" ? "Calculando…" : "Calcular ajuste de prima"}
+                {procesando === "simulando" ? t("modificarPolizaPage.calculando") : t("modificarPolizaPage.calcular_ajuste_de_prima")}
               </button>
             </div>
           )}
 
           {propuesta && (
             <section className="home-panel endoso-seccion" aria-labelledby="titulo-propuesta">
-              <h2 id="titulo-propuesta">Revisa los cambios</h2>
-              <p>Rige desde el {formatearFecha(propuesta.fecha_efecto)}. El ajuste corresponde a {propuesta.dias_restantes} de {propuesta.dias_vigencia} días de vigencia.</p>
+              <h2 id="titulo-propuesta">{t("modificarPolizaPage.revisa_los_cambios")}</h2>
+              <p>{t("modificarPolizaPage.rige_desde_el_formatearfecha_el", { formatearFecha: formatearFecha(propuesta.fecha_efecto), dias_restantes: propuesta.dias_restantes, dias_vigencia: propuesta.dias_vigencia })}</p>
               <ul className="endoso-cambios">
                 {propuesta.cambios.map((cambio, i) => <li key={i}>{cambio.descripcion}</li>)}
               </ul>
               <dl className="cotizar-resumen">
-                <div><dt>Prima actual</dt><dd>{formatearMonto(propuesta.prima_anterior, propuesta.moneda)}</dd></div>
+                <div><dt>{t("modificarPolizaPage.prima_actual")}</dt><dd>{formatearMonto(propuesta.prima_anterior, propuesta.moneda)}</dd></div>
                 <div>
                   <dt>{CONCEPTO[propuesta.concepto_ajuste]}</dt>
                   <dd>{formatearMonto(String(Math.abs(Number(propuesta.ajuste_prima))), propuesta.moneda)}</dd>
                 </div>
-                <div className="cotizar-resumen-total"><dt>Nueva prima total</dt><dd>{formatearMonto(propuesta.prima_nueva, propuesta.moneda)}</dd></div>
+                <div className="cotizar-resumen-total"><dt>{t("modificarPolizaPage.nueva_prima_total")}</dt><dd>{formatearMonto(propuesta.prima_nueva, propuesta.moneda)}</dd></div>
               </dl>
               <label className="endoso-aceptar">
                 <input type="checkbox" checked={aceptado} onChange={(e) => setAceptado(e.target.checked)} />
-                Acepto estos cambios y el ajuste de prima. Entiendo que el endoso queda registrado a mi nombre.
+                {t("modificarPolizaPage.acepto_estos_cambios_y_el")}
               </label>
               <div className="cotizar-acciones">
                 <button type="button" className="cotizar-boton-secundario" disabled={procesando !== null} onClick={editado}>
-                  Seguir editando
+                  {t("modificarPolizaPage.seguir_editando")}
                 </button>
                 <button
                   type="button"
@@ -427,22 +428,22 @@ export default function ModificarPolizaPage() {
                   disabled={!aceptado || procesando !== null}
                   onClick={() => void confirmar()}
                 >
-                  {procesando === "confirmando" ? "Emitiendo…" : "Confirmar y emitir endoso"}
+                  {procesando === "confirmando" ? t("modificarPolizaPage.emitiendo") : t("modificarPolizaPage.confirmar_y_emitir_endoso")}
                 </button>
               </div>
             </section>
           )}
 
           <section className="home-panel endoso-seccion" aria-labelledby="titulo-historial">
-            <h2 id="titulo-historial">Endosos de esta póliza</h2>
+            <h2 id="titulo-historial">{t("modificarPolizaPage.endosos_de_esta_poliza")}</h2>
             {historial.length === 0 ? (
-              <p className="home-card-vacio">Esta póliza aún no tiene endosos.</p>
+              <p className="home-card-vacio">{t("modificarPolizaPage.esta_poliza_aun_no_tiene")}</p>
             ) : (
               <ul className="endoso-historial">
                 {historial.map((endoso) => (
                   <li key={endoso.endoso_id}>
                     <span>
-                      <strong>Endoso No. {endoso.numero_endoso} · {TIPO_ENDOSO[endoso.tipo] ?? endoso.tipo}</strong>
+                      <strong>{t("modificarPolizaPage.endoso_no_numero_endoso_valor", { numero_endoso: endoso.numero_endoso, valor: TIPO_ENDOSO[endoso.tipo] ?? endoso.tipo })}</strong>
                       <small>
                         {formatearFecha(endoso.creado_en)} · {CONCEPTO[endoso.concepto_ajuste]}{" "}
                         {endoso.concepto_ajuste !== "SIN_AJUSTE" &&
@@ -452,7 +453,7 @@ export default function ModificarPolizaPage() {
                     <button
                       type="button"
                       className="endoso-enlace"
-                      aria-label={`Descargar endoso No. ${endoso.numero_endoso}`}
+                      aria-label={t("modificarPolizaPage.descargar_endoso_no_numero_endoso", { numero_endoso: endoso.numero_endoso })}
                       onClick={() => void descargar(endoso.endoso_id)}
                     >
                       <span className="material-symbols-outlined" aria-hidden="true">download</span>

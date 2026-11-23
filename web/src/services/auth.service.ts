@@ -7,6 +7,8 @@ import type {
 import { postSesionWeb } from "./web-session";
 import { fetchAutenticado } from "./session";
 
+import { t } from "../i18n";
+
 const API_URL =
   import.meta.env.VITE_API_URL ?? "http://localhost:8000";
 
@@ -41,9 +43,9 @@ async function obtenerMensajeError(response: Response): Promise<string> {
       return body.detail.mensaje;
     }
 
-    return "Ocurrió un error al procesar la solicitud.";
+    return t("authService.ocurrio_un_error_al_procesar");
   } catch {
-    return "No fue posible comunicarse correctamente con el servidor.";
+    return t("authService.no_fue_posible_comunicarse_correctamente");
   }
 }
 
