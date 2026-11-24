@@ -54,13 +54,16 @@ La prueba se comprobó en las dos direcciones: con el color de texto secundario 
 
 ## Android
 
-`AccesibilidadTest` (Robolectric) revisa la semántica que anuncia TalkBack en 8 pantallas, en español e
-inglés: nombre en cada elemento táctil, etiqueta en cada campo y tamaño mínimo de toque.
+`AccesibilidadTest` (Robolectric, motor gráfico nativo) revisa la semántica que anuncia TalkBack en 9
+pantallas, incluida la firma del contrato: nombre en cada elemento táctil, etiqueta en cada campo y
+tamaño mínimo de toque. Cada pantalla se revisa en español e inglés, con la letra del sistema al 100 % y
+al 200 %: 36 casos.
 
 | Ejecución | Resultado |
 | --- | --- |
-| Primera, antes de corregir | 6 de 16 pruebas fallan: registro, ingreso con credenciales e ingreso biométrico, en los dos idiomas |
-| Después de corregir | 16 de 16 pasan; la suite completa de Android (618 pruebas) también pasa |
+| Primera, antes de corregir (letra al 100 %) | 6 de 16 casos fallan: registro, ingreso con credenciales e ingreso biométrico, en los dos idiomas |
+| Con fuentes reales | 2 casos fallan: el enlace "Cotizar un nuevo seguro" del inicio medía 26 dp de alto |
+| Después de corregir | 36 de 36 pasan; la suite completa de Android (640 pruebas) también pasa |
 
 Problemas encontrados en la primera ejecución (iguales en inglés):
 
@@ -70,15 +73,18 @@ Registro: elemento táctil sin nombre accesible (campo "Fecha de nacimiento")
 Registro: elemento táctil sin nombre accesible (casilla de términos)
 Ingreso con credenciales: '¿Olvidaste tu contraseña?' mide 363×35 dp
 Ingreso biométrico: '¿Aún no tienes cuenta? Crear una' mide 32×35 dp
+Inicio: 'Cotizar un nuevo seguro' mide 183×26 dp
 ```
 
 Las correcciones están en [docs/accesibilidad.md](../../accesibilidad.md#android).
 
-| Español (8/8) | Inglés (8/8) |
-| --- | --- |
-| ![Accesibilidad Android en español](android-accesibilidad-es.png) | ![Accesibilidad Android en inglés](android-accesibilidad-en.png) |
+![Accesibilidad Android: 36 casos, 0 fallas](android-accesibilidad-resumen.png)
 
-![Todas las pruebas de Android: 618, 0 fallas](android-todas-las-pruebas.png)
+| Español, letra al 200 % | Inglés, letra al 200 % |
+| --- | --- |
+| ![Accesibilidad Android en español con letra al 200 %](android-accesibilidad-es-200.png) | ![Accesibilidad Android en inglés con letra al 200 %](android-accesibilidad-en-200.png) |
+
+![Todas las pruebas de Android: 640, 0 fallas](android-todas-las-pruebas.png)
 
 ## Archivos
 
@@ -87,7 +93,7 @@ Las correcciones están en [docs/accesibilidad.md](../../accesibilidad.md#androi
 | [resultados-axe.json](resultados-axe.json) | Violaciones, reglas aprobadas y elementos revisados por pantalla, idioma y versión |
 | [resultados-lighthouse.json](resultados-lighthouse.json) | Puntaje y auditorías fallidas por pantalla y versión |
 | [ejecucion-axe-playwright.txt](ejecucion-axe-playwright.txt) | Salida de la prueba automática web |
-| [android-resultados-junit.xml](android-resultados-junit.xml) | Resultado JUnit de `AccesibilidadTest` (16 pruebas, 0 fallas) |
+| [android-resultados-junit.xml](android-resultados-junit.xml) | Resultado JUnit de `AccesibilidadTest` (36 casos, 0 fallas) |
 
 Las correcciones y el método están en [docs/accesibilidad.md](../../accesibilidad.md).
 
