@@ -85,10 +85,13 @@ class AccesibilidadTest(private val opcion: Idioma.Opcion) {
         val densidad = compose.density
 
         compose.onAllNodes(hasClickAction()).fetchSemanticsNodes().forEach { nodo ->
-            val tamano = nodo.boundsInRoot
-            val ancho = with(densidad) { tamano.width.toDp() }
-            val alto = with(densidad) { tamano.height.toDp() }
-            if (nombre(nodo).isBlank()) problemas += "$pantalla: elemento táctil sin nombre accesible en $tamano"
+            // Tamaño real del elemento, aunque esté fuera de la parte visible de una pantalla con scroll
+            // (boundsInRoot lo recorta y daría 0×0).
+            val ancho = with(densidad) { nodo.size.width.toDp() }
+            val alto = with(densidad) { nodo.size.height.toDp() }
+            if (nombre(nodo).isBlank()) {
+                problemas += "$pantalla: elemento táctil sin nombre accesible en ${nodo.positionInRoot}"
+            }
             if (ancho < 40.dp || alto < 40.dp) {
                 problemas += "$pantalla: '${nombre(nodo)}' mide ${ancho.value.toInt()}×${alto.value.toInt()} dp"
             }

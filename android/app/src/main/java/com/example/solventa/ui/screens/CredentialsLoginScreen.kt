@@ -46,6 +46,9 @@ import com.example.solventa.ui.theme.Navegacion
 import com.example.solventa.ui.theme.SolventaTheme
 import com.example.solventa.ui.validation.canSubmitCredentialsLogin
 import com.example.solventa.i18n.tr
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.ui.semantics.Role
 
 @Composable
 fun CredentialsLoginScreen(
@@ -160,7 +163,9 @@ fun CredentialsLoginScreen(
                         textAlign = TextAlign.End,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clickable { onForgotPasswordClick() }
+                            .clickable(role = Role.Button) { onForgotPasswordClick() }
+                            .heightIn(min = 48.dp)
+                            .wrapContentHeight(Alignment.CenterVertically)
                     )
                 }
             }

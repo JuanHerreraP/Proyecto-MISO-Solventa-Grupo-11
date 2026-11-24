@@ -68,6 +68,16 @@ cd android
 ./gradlew testDebugUnitTest --tests "com.example.solventa.ui.accesibilidad.AccesibilidadTest"
 ```
 
+### Correcciones hechas
+
+La primera ejecución encontró problemas en 3 de las 9 pantallas, en los dos idiomas. Todos quedaron corregidos:
+
+| Problema | Pantalla | Corrección |
+| --- | --- | --- |
+| Campos "Tipo de documento" y "Fecha de nacimiento" táctiles sin nombre: TalkBack solo decía "Doble toque para activar" | Registro | La capa táctil anuncia etiqueta y valor, con `Role.DropdownList` / `Role.Button` y la acción ("Abrir lista de tipos de documento", "Seleccionar fecha") |
+| Casilla de términos sin nombre y separada de su texto | Registro | La fila completa es la casilla (`toggleable` con `Role.Checkbox`): se anuncia el texto y el área de toque crece a 48 dp |
+| Enlaces de texto de 20 a 35 dp de alto | Ingreso biométrico, ingreso con credenciales, registro | Área táctil de 48 dp de alto, a todo el ancho, con `Role.Button` |
+
 ### Prácticas ya presentes
 
 - `contentDescription` en íconos con significado y `null` en los decorativos.

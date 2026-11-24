@@ -47,6 +47,9 @@ import com.example.solventa.ui.components.SolventaSecondaryButton
 import com.example.solventa.ui.theme.Navegacion
 import com.example.solventa.ui.theme.SolventaTheme
 import com.example.solventa.i18n.tr
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.ui.semantics.Role
 
 @Composable
 fun BiometricalLoginScreen(
@@ -234,7 +237,12 @@ fun BiometricalLoginScreen(
                     },
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
-                    modifier = Modifier.clickable { onRegisterClick() }
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable(role = Role.Button) { onRegisterClick() }
+                        .heightIn(min = 48.dp)
+                        .wrapContentHeight(Alignment.CenterVertically)
                 )
             }
         }
