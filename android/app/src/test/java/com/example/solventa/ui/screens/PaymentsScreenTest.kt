@@ -48,6 +48,7 @@ class PaymentsScreenTest {
                     pendientes = pendientes,
                     errorPendientes = errorPendientes,
                     onPagar = { eventos += "pagar:${it.cotizacionId}" },
+                    onFirmar = { eventos += "firmar:${it.cotizacionId}" },
                     onVerComprobante = { eventos += "comprobante:${it.pagoId}" },
                     comprobanteVisible = comprobanteVisible,
                     comprobante = comprobante,
@@ -59,29 +60,32 @@ class PaymentsScreenTest {
     }
 
     @Test
-    fun muestraLosPagosPendientesConValorFechaLimiteYPuedePagarlos() {
+    fun soloPermitePagarLasRenovacionesPendientes() {
         mostrar(pendientes = listOf(renovacion(), cotizacion()))
 
         compose.onNodeWithText("Pendientes de pago").assertIsDisplayed()
         compose.onNodeWithText("Renovación — póliza SOL-2026-0001").assertIsDisplayed()
         compose.onNodeWithText("$420.000 COP").assertIsDisplayed()
         compose.onNodeWithText("Microseguro de vida — cotización COT-9").assertIsDisplayed()
-        compose.onNodeWithText("$89.000 COP").assertIsDisplayed()
-        assertEquals(2, compose.onAllNodesWithText("Fecha límite", substring = true).fetchSemanticsNodes().size)
+        compose.onNodeWithText("El pago solo está disponible en el momento de crear la cotización.")
+            .assertIsDisplayed()
+        assertEquals(1, compose.onAllNodesWithText("Fecha límite", substring = true).fetchSemanticsNodes().size)
 
-        compose.onAllNodesWithText("Pagar")[1].performClick()
+        compose.onNodeWithText("Pagar").performClick()
 
-        assertEquals(listOf("pagar:COT-9"), eventos)
+        assertEquals(listOf("pagar:COT-R"), eventos)
     }
 
     @Test
-    fun lasFirmasPendientesSoloAvisanYNoSePagan() {
+    fun lasFirmasPendientesSeCompletanEnLaAppYNoSePagan() {
         mostrar(pendientes = listOf(firmaPendiente()))
 
         compose.onNodeWithText("Microseguro de vida — contrato por firmar").assertIsDisplayed()
-        compose.onNodeWithText("Firma tu contrato en el portal web para emitir tu póliza.")
+        compose.onNodeWithText("Tu pago fue aprobado. Firma el contrato para emitir la póliza.")
             .assertIsDisplayed()
         compose.onNodeWithText("Pagar").assertDoesNotExist()
+        compose.onNodeWithText("Firmar contrato").performClick()
+        assertEquals(listOf("firmar:COT-F"), eventos)
     }
 
     @Test

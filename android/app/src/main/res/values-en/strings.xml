@@ -371,7 +371,8 @@
     <string name="payment_result_cerrar">Close</string>
     <string name="payment_result_comprobante">Receipt %1$s</string>
     <string name="payment_result_el_pago_de_se_realizo">"The payment of %1$s was completed successfully. "</string>
-    <string name="payment_result_para_emitir_tu_poliza_firma">To issue your policy, sign your contract on the web portal.</string>
+    <string name="payment_result_para_emitir_tu_poliza_firma">The next step is signing your contract to issue the policy.</string>
+    <string name="payment_result_firmar_contrato">Sign contract</string>
     <string name="payment_result_tu_pago_esta_pendiente_de">Your payment is pending confirmation with your bank.</string>
     <string name="payment_result_tu_pago_fue_rechazado">"Your payment was declined%1$s. "</string>
     <string name="payment_result_no_se_genero_ninguna_poliza">No policy was created. You can try again.</string>
@@ -384,7 +385,9 @@
     <string name="payments_historial_de_pagos">Payment history</string>
     <string name="payments_fecha_limite">Deadline: %1$s</string>
     <string name="payments_pagar">Pay</string>
-    <string name="payments_firma_tu_contrato_en_el">Sign your contract on the web portal to issue your policy.</string>
+    <string name="payments_firma_tu_contrato_en_el">Your payment was approved. Sign the contract to issue your policy.</string>
+    <string name="payments_pago_solo_al_crear">Payment is only available when the quote is created.</string>
+    <string name="payments_firmar_contrato">Sign contract</string>
     <string name="payments_renovacion_poliza">Renewal — policy %1$s</string>
     <string name="payments_cotizacion">%1$s — quote %2$s</string>
     <string name="payments_contrato_por_firmar">%1$s — contract to sign</string>
@@ -400,6 +403,32 @@
     <string name="payments_cargando_el_comprobante">Loading the receipt</string>
     <string name="payments_pagado">Paid</string>
     <string name="payments_tarjeta">Card</string>
+
+    <!-- signature -->
+    <string name="signature_cargando_tu_contrato">Loading your contract…</string>
+    <string name="signature_firma_electronica">Electronic signature</string>
+    <string name="signature_revisa_las_condiciones">Review your contract terms. To sign it, we will send a secure code by SMS.</string>
+    <string name="signature_condiciones">Terms</string>
+    <string name="signature_huella_documento">Document fingerprint: %1$s…</string>
+    <string name="signature_enviando_codigo">Sending code…</string>
+    <string name="signature_enviar_codigo_sms">Send code by SMS</string>
+    <string name="signature_codigo_enviado_a">Code sent to %1$s</string>
+    <string name="signature_codigo_seis_digitos">Six-digit code</string>
+    <string name="signature_acepto_condiciones">I accept the terms and electronically sign this contract.</string>
+    <string name="signature_firmando">Signing…</string>
+    <string name="signature_firmar_y_emitir">Sign and issue policy</string>
+    <string name="signature_reenviar_codigo">Resend code</string>
+    <string name="signature_contrato_de">%1$s contract</string>
+    <string name="signature_suma_asegurada">Sum insured: %1$s</string>
+    <string name="signature_prima_pagada">Premium paid: %1$s</string>
+    <string name="signature_contrato_firmado">Contract signed!</string>
+    <string name="signature_poliza_emitida">Your policy was issued successfully.</string>
+    <string name="signature_ver_poliza">View policy</string>
+    <string name="signature_error_sin_conexion">We couldn\'t connect to Solventa. Check your connection and try again.</string>
+    <string name="signature_error_codigo_invalido">Enter the six-digit code you received.</string>
+    <string name="signature_error_sesion_vencida">Your session expired. Sign in again.</string>
+    <string name="signature_error_contrato_no_disponible">We couldn\'t load the contract to sign.</string>
+    <string name="signature_error_generico">We couldn\'t complete the signature. Try again.</string>
 
     <!-- policy_history -->
     <string name="policy_history_historial_de_la_poliza">Policy history</string>

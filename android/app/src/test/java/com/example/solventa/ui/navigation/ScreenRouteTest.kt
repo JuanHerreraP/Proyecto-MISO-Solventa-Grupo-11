@@ -107,6 +107,7 @@ class ScreenRouteTest {
                 "payment_screen/{cotizacionId}",
                 "pse_portal_screen",
                 "payment_result_screen",
+                "signature_screen/{cotizacionId}",
                 "payments_screen",
                 "claims_screen?desdeNavbar={desdeNavbar}",
                 "claim_form_screen?desdeNavbar={desdeNavbar}",

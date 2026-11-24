@@ -33,6 +33,7 @@ import com.example.solventa.domain.asesor.DatosNuevoAnalista
 import com.example.solventa.domain.cotizaciones.CatalogoCotizaciones
 import com.example.solventa.domain.cotizaciones.EstadoCotizaciones
 import com.example.solventa.domain.cotizaciones.RamoCotizacion
+import com.example.solventa.domain.firmas.EstadoFirma
 import com.example.solventa.domain.notificaciones.DestinoNotificacion
 import com.example.solventa.domain.notificaciones.EstadoNotificaciones
 import com.example.solventa.domain.pagos.ConceptoPago
@@ -54,6 +55,7 @@ import com.example.solventa.ui.notificaciones.AperturaNotificacion
 import com.example.solventa.ui.notificaciones.NotificacionesViewModel
 import com.example.solventa.ui.notificaciones.rememberSolicitudPermisoNotificaciones
 import com.example.solventa.ui.pagos.PagosViewModel
+import com.example.solventa.ui.firmas.FirmaViewModel
 import com.example.solventa.ui.siniestros.SiniestrosViewModel
 import com.example.solventa.ui.asistencias.AsistenciasViewModel
 import com.example.solventa.ui.siniestros.rememberCapturaEvidencias
@@ -86,6 +88,7 @@ import com.example.solventa.ui.screens.QuotesScreen
 import com.example.solventa.ui.screens.RegisterScreen
 import com.example.solventa.ui.screens.RenewalScreen
 import com.example.solventa.ui.screens.RenewalSuccessScreen
+import com.example.solventa.ui.screens.SignatureScreen
 import com.example.solventa.ui.screens.WalletScreen
 import com.example.solventa.ui.screens.WelcomeScreen
 import kotlinx.coroutines.delay
@@ -103,6 +106,7 @@ fun NavGraph(
     billetera: BilleteraViewModel? = null,
     cotizaciones: CotizacionesViewModel? = null,
     pagos: PagosViewModel? = null,
+    firmas: FirmaViewModel? = null,
     siniestros: SiniestrosViewModel? = null,
     asesor: AsesorViewModel? = null,
     notificaciones: NotificacionesViewModel? = null,
@@ -113,6 +117,7 @@ fun NavGraph(
     val estado by viewModel.estado.collectAsState()
     val estadoCotizaciones = cotizaciones?.estado?.collectAsState()?.value ?: EstadoCotizaciones()
     val estadoPagos = pagos?.estado?.collectAsState()?.value ?: EstadoPagos()
+    val estadoFirma = firmas?.estado?.collectAsState()?.value ?: EstadoFirma()
     val estadoNotificaciones = notificaciones?.estado?.collectAsState()?.value ?: EstadoNotificaciones()
     val autenticado = estado.sesion != null
     // Las notificaciones son del cliente: asesores y servicio interno no tienen bandeja.
@@ -145,6 +150,7 @@ fun NavGraph(
         if (!autenticado) {
             cotizaciones?.limpiar()
             pagos?.limpiar()
+            firmas?.limpiar()
             siniestros?.limpiar()
             asesor?.limpiar()
             notificaciones?.limpiar()
@@ -1160,6 +1166,45 @@ fun NavGraph(
                         },
                         onVerBilletera = billetera?.let {
                             { navController.navigate(ScreenRoute.Wallet.ruta()) { launchSingleTop = true } }
+                        },
+                        onFirmar = if (pago.estado == EstadoPago.APROBADO &&
+                            pago.concepto == ConceptoPago.COMPRA
+                        ) {
+                            {
+                                firmas?.limpiar()
+                                navController.navigate(ScreenRoute.Signature.ruta(pago.cotizacionId)) {
+                                    launchSingleTop = true
+                                }
+                            }
+                        } else null
+                    )
+                }
+            }
+
+            composable(
+                route = ScreenRoute.Signature.route,
+                arguments = listOf(
+                    navArgument(ScreenRoute.Signature.ARGUMENTO) { type = NavType.StringType }
+                )
+            ) { entrada ->
+                val cotizacionId = entrada.arguments?.getString(ScreenRoute.Signature.ARGUMENTO)
+                if (estado.sesion == null || cotizacionId == null || firmas == null) {
+                    Box(modifier = Modifier.fillMaxSize())
+                } else {
+                    LaunchedEffect(cotizacionId) { firmas.presentar(cotizacionId) }
+                    SignatureScreen(
+                        estado = estadoFirma,
+                        onSolicitarCodigo = { firmas.solicitarCodigo(cotizacionId) },
+                        onFirmar = { codigo -> firmas.firmar(cotizacionId, codigo) },
+                        onVolver = { navController.popBackStack() },
+                        onVerPoliza = { polizaId ->
+                            firmas.limpiar()
+                            pagos.limpiar()
+                            billetera?.cargar()
+                            navController.navigate(ScreenRoute.Certificate.ruta(polizaId)) {
+                                popUpTo(ScreenRoute.PaymentResult.route) { inclusive = true }
+                                launchSingleTop = true
+                            }
                         }
                     )
                 }
@@ -1207,6 +1252,12 @@ fun NavGraph(
                             // Nuevo intento: llave nueva y sin el resultado de un pago anterior.
                             pagos.prepararReintento()
                             navController.navigate(ScreenRoute.Payment.ruta(prima.cotizacionId)) {
+                                launchSingleTop = true
+                            }
+                        },
+                        onFirmar = { prima ->
+                            firmas?.limpiar()
+                            navController.navigate(ScreenRoute.Signature.ruta(prima.cotizacionId)) {
                                 launchSingleTop = true
                             }
                         },

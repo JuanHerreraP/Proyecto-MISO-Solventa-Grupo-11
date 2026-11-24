@@ -111,6 +111,11 @@ fun QuoteResultScreen(
                 }
 
                 if (modoDetalle) {
+                    Text(
+                        text = tr(R.string.payments_pago_solo_al_crear),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.65f)
+                    )
                     SolventaPrimaryButton(text = tr(R.string.payment_result_cerrar), onClick = onVolver)
                 } else {
                     SolventaPrimaryButton(

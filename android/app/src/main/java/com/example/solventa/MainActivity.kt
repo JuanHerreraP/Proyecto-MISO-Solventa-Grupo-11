@@ -31,6 +31,7 @@ import com.example.solventa.data.remote.ApiClient
 import com.example.solventa.data.remote.RemoteAuthGateway
 import com.example.solventa.data.remote.RemoteAsesorGateway
 import com.example.solventa.data.remote.RemoteCotizacionesGateway
+import com.example.solventa.data.remote.RemoteFirmasGateway
 import com.example.solventa.data.remote.RemoteNotificacionesGateway
 import com.example.solventa.data.remote.RemotePagosGateway
 import com.example.solventa.data.remote.RemotePolizasGateway
@@ -46,6 +47,7 @@ import com.example.solventa.domain.asesor.AsesorCoordinator
 import com.example.solventa.domain.asistencias.AsistenciasCoordinator
 import com.example.solventa.domain.auth.Reloj
 import com.example.solventa.domain.cotizaciones.CotizacionesCoordinator
+import com.example.solventa.domain.firmas.FirmaCoordinator
 import com.example.solventa.domain.notificaciones.NotificacionesCoordinator
 import com.example.solventa.domain.pagos.PagosCoordinator
 import com.example.solventa.domain.polizas.BilleteraCoordinator
@@ -60,6 +62,7 @@ import com.example.solventa.ui.notificaciones.AperturaNotificacion
 import com.example.solventa.ui.notificaciones.IntentsNotificacion
 import com.example.solventa.ui.notificaciones.NotificacionesViewModel
 import com.example.solventa.ui.pagos.PagosViewModel
+import com.example.solventa.ui.firmas.FirmaViewModel
 import com.example.solventa.ui.siniestros.SiniestrosViewModel
 import com.example.solventa.ui.navigation.NavGraph
 import com.example.solventa.ui.theme.SolventaTheme
@@ -127,6 +130,15 @@ class MainActivity : FragmentActivity() {
         PagosViewModel.Fabrica {
             PagosCoordinator(
                 gateway = RemotePagosGateway(ApiClient.crearPagosApi()),
+                sesion = viewModel.sesion
+            )
+        }
+    }
+
+    private val firmas: FirmaViewModel by viewModels {
+        FirmaViewModel.Fabrica {
+            FirmaCoordinator(
+                gateway = RemoteFirmasGateway(ApiClient.crearFirmasApi()),
                 sesion = viewModel.sesion
             )
         }
@@ -214,6 +226,7 @@ class MainActivity : FragmentActivity() {
                         billetera = billetera,
                         cotizaciones = cotizaciones,
                         pagos = pagos,
+                        firmas = firmas,
                         siniestros = siniestros,
                         asesor = asesor,
                         notificaciones = notificaciones,
