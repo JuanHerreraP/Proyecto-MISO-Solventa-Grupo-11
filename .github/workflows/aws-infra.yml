@@ -254,9 +254,19 @@ jobs:
 
       - name: Validar y desplegar el stack
         run: |
-          aws cloudformation validate-template --template-body "file://infra/aws/stack.json" >/dev/null
+          # CloudFormation acepta como máximo 51.200 bytes si la plantilla va en la solicitud
+          # (todavía no hay un bucket donde subirla). Minificada ocupa casi la mitad.
+          mkdir -p infra/secrets
+          python3 -c "import json; json.dump(json.load(open('infra/aws/stack.json')), open('infra/secrets/stack.min.json', 'w'), separators=(',', ':'))"
+          TAMANO=$(wc -c < infra/secrets/stack.min.json)
+          echo "Plantilla minificada: $TAMANO bytes (máximo 51200)."
+          if [ "$TAMANO" -gt 51200 ]; then
+            echo "::error::La plantilla supera el máximo de 51200 bytes; hay que subirla a S3 o dividir el stack."
+            exit 1
+          fi
+          aws cloudformation validate-template --template-body "file://infra/secrets/stack.min.json" >/dev/null
           aws cloudformation deploy --stack-name "$STACK" \
-            --template-file infra/aws/stack.json \
+            --template-file infra/secrets/stack.min.json \
             --parameter-overrides file://infra/secrets/parameters.json \
             --capabilities CAPABILITY_IAM --no-fail-on-empty-changeset
           aws cloudformation describe-stacks --stack-name "$STACK" \
