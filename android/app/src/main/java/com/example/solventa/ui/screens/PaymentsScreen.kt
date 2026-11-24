@@ -186,7 +186,7 @@ private fun TarjetaPendiente(
                 style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
                 color = MaterialTheme.colorScheme.onSurface
             )
-            if (prima.tipo == TipoPrimaPendiente.RENOVACION) {
+            if (prima.sePaga) {
                 Text(
                     text = formatearMontoPago(prima.monto, prima.moneda),
                     style = MaterialTheme.typography.titleMedium,

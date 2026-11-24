@@ -60,20 +60,19 @@ class PaymentsScreenTest {
     }
 
     @Test
-    fun soloPermitePagarLasRenovacionesPendientes() {
+    fun permitePagarCotizacionesYRenovacionesPendientes() {
         mostrar(pendientes = listOf(renovacion(), cotizacion()))
 
         compose.onNodeWithText("Pendientes de pago").assertIsDisplayed()
         compose.onNodeWithText("Renovación — póliza SOL-2026-0001").assertIsDisplayed()
         compose.onNodeWithText("$420.000 COP").assertIsDisplayed()
         compose.onNodeWithText("Microseguro de vida — cotización COT-9").assertIsDisplayed()
-        compose.onNodeWithText("El pago solo está disponible en el momento de crear la cotización.")
-            .assertIsDisplayed()
-        assertEquals(1, compose.onAllNodesWithText("Fecha límite", substring = true).fetchSemanticsNodes().size)
+        compose.onNodeWithText("$89.000 COP").assertIsDisplayed()
+        assertEquals(2, compose.onAllNodesWithText("Fecha límite", substring = true).fetchSemanticsNodes().size)
 
-        compose.onNodeWithText("Pagar").performClick()
+        compose.onAllNodesWithText("Pagar")[1].performClick()
 
-        assertEquals(listOf("pagar:COT-R"), eventos)
+        assertEquals(listOf("pagar:COT-9"), eventos)
     }
 
     @Test

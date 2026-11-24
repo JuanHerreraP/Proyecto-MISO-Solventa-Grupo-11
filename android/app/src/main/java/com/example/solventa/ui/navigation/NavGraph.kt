@@ -734,8 +734,7 @@ fun NavGraph(
                                     launchSingleTop = true
                                 }
                             }
-                        },
-                        modoDetalle = true
+                        }
                     )
                 }
             }
