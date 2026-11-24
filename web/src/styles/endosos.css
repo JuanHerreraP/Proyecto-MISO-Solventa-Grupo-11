@@ -56,7 +56,7 @@
 }
 
 .endoso-total { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; }
-.endoso-total-ok { color: #1b8a4a; font-weight: 700; font-size: 13px; }
+.endoso-total-ok { color: #16753f; font-weight: 700; font-size: 13px; }
 .endoso-total-error { color: #c0392b; font-weight: 700; font-size: 13px; }
 
 .endoso-cambios { margin: 0 0 16px; padding-left: 20px; font-size: 14px; line-height: 1.7; }

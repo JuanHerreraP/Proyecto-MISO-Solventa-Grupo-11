@@ -11,6 +11,8 @@ se mantienen en la [wiki del proyecto](https://github.com/JuanHerreraP/Proyecto-
 | Documento | Contenido |
 | --- | --- |
 | [Internacionalización y localización](internacionalizacion.md) | Español e inglés en web y Android: catálogos, selector de idioma, formatos por locale, pruebas y cómo agregar textos |
+| [Accesibilidad](accesibilidad.md) | WCAG 2.1 AA: pruebas con axe en la web, revisión de semántica en Android, correcciones de contraste y revisión manual |
+| [Colección de Postman](../postman/README.md) | Flujo de la demo con pruebas (cliente, firma, siniestro, Operaciones), ambientes local y AWS, y ejecución con Newman |
 
 ## Identidad, sesión y control de acceso
 
@@ -65,6 +67,9 @@ se mantienen en la [wiki del proyecto](https://github.com/JuanHerreraP/Proyecto-
 - [Evidencias de HU07](evidencias/hu07/README.md).
 - [Evidencias de HU14](evidencias/hu14/README.md).
 - [Evidencias de HU15](evidencias/hu15/README.md).
+- [Evidencias de internacionalización](evidencias/i18n/README.md).
+- [Evidencias de accesibilidad](evidencias/accesibilidad/README.md).
+- [Evidencias de la colección Postman](evidencias/postman/README.md).
 
 Los contratos ejecutables de la API están disponibles en `/docs` y `/openapi.json`
 al iniciar el backend; las rutas de este directorio describen su uso y contexto.

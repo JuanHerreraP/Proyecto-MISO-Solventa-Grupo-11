@@ -26,3 +26,6 @@ backend/documentos_polizas/
 backend/evidencias_siniestros/
 backend/tests/jmeter/salidas/
 jmeter.log
+
+# Reportes HTML de Newman (postman/ejecutar-flujo.sh con REPORTES)
+postman/reportes/

@@ -45,6 +45,10 @@ import com.example.solventa.ui.components.SolventaSecondaryButton
 import com.example.solventa.ui.theme.Navegacion
 import java.math.BigDecimal
 import java.text.NumberFormat
+import com.example.solventa.ui.theme.Sincronizado
+import androidx.compose.ui.semantics.Role
+import androidx.compose.foundation.selection.toggleable
+import androidx.compose.foundation.layout.heightIn
 
 /** Revisión contractual, OTP y emisión de póliza desde Android. */
 @Composable
@@ -177,7 +181,7 @@ private fun ContenidoFirma(
             Text(
                 tr(R.string.signature_codigo_enviado_a, proceso.otpDestino),
                 style = MaterialTheme.typography.bodyMedium,
-                color = Color(0xFF1B8A4A)
+                color = Sincronizado
             )
             OutlinedTextField(
                 value = codigo,
@@ -187,9 +191,20 @@ private fun ContenidoFirma(
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth()
             )
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Checkbox(checked = acepta, onCheckedChange = onAcepta)
-                Text(tr(R.string.signature_acepto_condiciones), style = MaterialTheme.typography.bodySmall)
+            // La fila completa es la casilla: TalkBack anuncia el texto y el área de toque crece.
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .toggleable(value = acepta, role = Role.Checkbox, onValueChange = onAcepta)
+                    .heightIn(min = 48.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Checkbox(checked = acepta, onCheckedChange = null)
+                Text(
+                    tr(R.string.signature_acepto_condiciones),
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.padding(start = 8.dp)
+                )
             }
             SolventaPrimaryButton(
                 text = tr(if (estado.firmando) R.string.signature_firmando else R.string.signature_firmar_y_emitir),

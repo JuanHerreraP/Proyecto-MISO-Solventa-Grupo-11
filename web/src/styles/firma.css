@@ -127,7 +127,7 @@
 }
 
 .firma-exito { align-items: center; border-color: #b8e6c9; background: #f1fbf4; }
-.firma-exito .material-symbols-outlined { color: #1b8a4a; font-size: 28px; }
+.firma-exito .material-symbols-outlined { color: #16753f; font-size: 28px; }
 .firma-exito strong { display: block; font-size: 13px; }
 .firma-exito small { color: var(--solventa-muted); }
 
@@ -161,7 +161,7 @@
   font-size: 22px;
   font-weight: 700;
 }
-.firma-ok { color: #1b8a4a; }
+.firma-ok { color: #16753f; }
 
 @media (max-width: 860px) {
   .firma-contenido { grid-template-columns: minmax(0, 1fr); }

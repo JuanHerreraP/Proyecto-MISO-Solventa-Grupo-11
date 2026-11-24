@@ -133,7 +133,7 @@
   font-weight: 700;
 }
 
-.home-chip-verde { background: #e3f7ea; color: #1b8a4a; }
+.home-chip-verde { background: #e3f7ea; color: #16753f; }
 
 .home-grid {
   display: grid;
@@ -184,7 +184,7 @@
   place-items: center;
   border-radius: 8px;
   background: #eaf0fe;
-  color: var(--solventa-blue);
+  color: #2f55d4;
   font-size: 18px;
 }
 
@@ -225,7 +225,7 @@
 .pagos-boton:disabled { cursor: default; }
 
 .pagos-estado { font-weight: 700; }
-.pagos-estado-aprobado { color: #1b8a4a; }
+.pagos-estado-aprobado { color: #16753f; }
 .pagos-estado-pendiente { color: #b36b00; }
 .pagos-estado-rechazado { color: #c0392b; }
 
@@ -443,7 +443,7 @@
   background: #f4f7ff;
 }
 
-.cotizar-pago-aprobado { background: #e3f7ea; color: #1b8a4a; }
+.cotizar-pago-aprobado { background: #e3f7ea; color: #16753f; }
 .cotizar-pago-pendiente { background: #fff4e5; color: #b36b00; }
 .cotizar-pago-rechazado { background: #fdecea; color: #c0392b; }
 
@@ -455,7 +455,7 @@
   line-height: 1.5;
 }
 
-.cotizar-mensaje-ok { color: #1b8a4a; }
+.cotizar-mensaje-ok { color: #16753f; }
 .cotizar-mensaje-pendiente { color: #b36b00; }
 .cotizar-mensaje-error { color: #c0392b; }
 
@@ -487,7 +487,7 @@
 
 .cotizar-modal-icono {
   font-size: 56px;
-  color: #1b8a4a;
+  color: #16753f;
   margin-bottom: 8px;
 }
 
@@ -754,4 +754,21 @@
   display: block;
   color: #5b6573;
   font-size: 12px;
+}
+
+.home-fila-enlace {
+  display: block;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.home-fila-enlace:focus-visible {
+  outline: 2px solid var(--solventa-blue);
+  outline-offset: 2px;
+  border-radius: 4px;
 }

@@ -50,7 +50,7 @@
   place-items: center;
   border-radius: 10px;
   background: #eaf0fe;
-  color: var(--solventa-blue);
+  color: #2f55d4;
   font-size: 20px;
 }
 
@@ -58,7 +58,10 @@
 .profile-data-grid div { min-width: 0; }
 .profile-data-grid dt { margin-bottom: 4px; color: var(--solventa-muted); font-size: 12px; font-weight: 700; }
 .profile-data-grid dd { margin: 0; overflow-wrap: anywhere; color: var(--solventa-night); font-size: 14px; font-weight: 700; }
-.profile-card-disabled { opacity: 0.5; }
+/* Tarjeta no disponible: se distingue por el color, no por opacidad (que bajaría el contraste). */
+.profile-card-disabled { background: #f7f8fa; }
+.profile-card-disabled h2 { color: var(--solventa-muted); }
+.profile-card-disabled .profile-card-title .material-symbols-outlined { background: #eceff3; color: var(--solventa-muted); }
 .profile-card-disabled p { margin: 0; color: var(--solventa-muted); font-size: 13px; }
 .profile-link { border: 0; background: transparent; color: var(--solventa-blue); font-weight: 700; cursor: pointer; }
 

@@ -1,0 +1,120 @@
+{
+ "antes|/login": {
+  "puntaje": 100,
+  "fallidas": [],
+  "url": "http://localhost:5174/login"
+ },
+ "antes|/registro": {
+  "puntaje": 94,
+  "fallidas": [
+   "color-contrast"
+  ],
+  "url": "http://localhost:5174/registro"
+ },
+ "antes|/home": {
+  "puntaje": 96,
+  "fallidas": [
+   "color-contrast"
+  ],
+  "url": "http://localhost:5174/home"
+ },
+ "antes|/polizas": {
+  "puntaje": 95,
+  "fallidas": [
+   "color-contrast"
+  ],
+  "url": "http://localhost:5174/polizas"
+ },
+ "antes|/cotizar": {
+  "puntaje": 95,
+  "fallidas": [
+   "color-contrast"
+  ],
+  "url": "http://localhost:5174/cotizar"
+ },
+ "antes|/cotizaciones": {
+  "puntaje": 95,
+  "fallidas": [
+   "color-contrast"
+  ],
+  "url": "http://localhost:5174/cotizaciones"
+ },
+ "antes|/siniestros": {
+  "puntaje": 95,
+  "fallidas": [
+   "color-contrast"
+  ],
+  "url": "http://localhost:5174/siniestros"
+ },
+ "antes|/siniestros/nuevo": {
+  "puntaje": 95,
+  "fallidas": [
+   "color-contrast"
+  ],
+  "url": "http://localhost:5174/siniestros/nuevo"
+ },
+ "antes|/pagos": {
+  "puntaje": 95,
+  "fallidas": [
+   "color-contrast"
+  ],
+  "url": "http://localhost:5174/pagos"
+ },
+ "antes|/perfil": {
+  "puntaje": 95,
+  "fallidas": [
+   "color-contrast"
+  ],
+  "url": "http://localhost:5174/perfil"
+ },
+ "despues|/login": {
+  "puntaje": 100,
+  "fallidas": [],
+  "url": "http://localhost:5173/login"
+ },
+ "despues|/registro": {
+  "puntaje": 100,
+  "fallidas": [],
+  "url": "http://localhost:5173/registro"
+ },
+ "despues|/home": {
+  "puntaje": 100,
+  "fallidas": [],
+  "url": "http://localhost:5173/home"
+ },
+ "despues|/polizas": {
+  "puntaje": 100,
+  "fallidas": [],
+  "url": "http://localhost:5173/polizas"
+ },
+ "despues|/cotizar": {
+  "puntaje": 100,
+  "fallidas": [],
+  "url": "http://localhost:5173/cotizar"
+ },
+ "despues|/cotizaciones": {
+  "puntaje": 100,
+  "fallidas": [],
+  "url": "http://localhost:5173/cotizaciones"
+ },
+ "despues|/siniestros": {
+  "puntaje": 100,
+  "fallidas": [],
+  "url": "http://localhost:5173/siniestros"
+ },
+ "despues|/siniestros/nuevo": {
+  "puntaje": 100,
+  "fallidas": [],
+  "url": "http://localhost:5173/siniestros/nuevo"
+ },
+ "despues|/pagos": {
+  "puntaje": 100,
+  "fallidas": [],
+  "url": "http://localhost:5173/pagos"
+ },
+ "despues|/perfil": {
+  "puntaje": 100,
+  "fallidas": [],
+  "url": "http://localhost:5173/perfil"
+ }
+}

@@ -4,7 +4,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -23,6 +23,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.example.solventa.ui.theme.Navegacion
+import androidx.compose.ui.text.style.TextAlign
 
 @Composable
 fun SolventaSecondaryButton(
@@ -40,7 +41,8 @@ fun SolventaSecondaryButton(
         onClick = onClick,
         modifier = modifier
             .fillMaxWidth()
-            .height(height),
+            // Alto mínimo, no fijo: con la letra grande del sistema el texto puede ocupar dos líneas.
+            .heightIn(min = height),
         enabled = enabled && !isLoading,
         shape = RoundedCornerShape(28.dp),
         border = BorderStroke(1.dp, if (enabled) borderColor else borderColor.copy(alpha = 0.5f)),
@@ -72,7 +74,8 @@ fun SolventaSecondaryButton(
                     text = text,
                     style = MaterialTheme.typography.bodyMedium.copy(
                         fontWeight = FontWeight.Bold
-                    )
+                    ),
+                    textAlign = TextAlign.Center
                 )
             }
         }

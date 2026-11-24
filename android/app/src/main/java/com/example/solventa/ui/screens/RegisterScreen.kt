@@ -80,6 +80,12 @@ import java.util.Calendar
 import java.util.Locale
 import com.example.solventa.R
 import com.example.solventa.i18n.tr
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.selection.toggleable
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 
 @Composable
 fun RegisterScreen(
@@ -219,10 +225,18 @@ fun RegisterScreen(
                         )
                     }
                 )
+                val etiquetaTipo = tr(R.string.create_advisor_tipo_de_documento)
+                val valorTipo = TipoDocumento.desdeCodigo(tipoDocumento)?.etiqueta
+                    ?: tr(R.string.create_advisor_selecciona_una_opcion)
                 Box(
                     modifier = Modifier
                         .matchParentSize()
-                        .clickable(enabled = !cargando) { menuDocumento = true }
+                        .clickable(
+                            enabled = !cargando,
+                            role = Role.DropdownList,
+                            onClickLabel = tr(R.string.register_abrir_lista_de_tipos_de)
+                        ) { menuDocumento = true }
+                        .semantics { contentDescription = "$etiquetaTipo: $valorTipo" }
                 )
                 DropdownMenu(
                     expanded = menuDocumento,
@@ -282,12 +296,19 @@ fun RegisterScreen(
                     },
                     error = errorFechaNacimiento(fechaNacimiento).takeIf { fechaNacimiento.isNotEmpty() }
                 )
+                val etiquetaFecha = tr(R.string.create_advisor_fecha_de_nacimiento)
+                val valorFecha = fechaNacimiento.ifEmpty { "AAAA-MM-DD" }
                 Box(
                     modifier = Modifier
                         .matchParentSize()
-                        .clickable(enabled = !cargando) {
+                        .clickable(
+                            enabled = !cargando,
+                            role = Role.Button,
+                            onClickLabel = tr(R.string.create_advisor_seleccionar_fecha)
+                        ) {
                             mostrarSelectorFecha(contexto, fechaNacimiento) { fechaNacimiento = it }
                         }
+                        .semantics { contentDescription = "$etiquetaFecha: $valorFecha" }
                 )
             }
 
@@ -330,13 +351,21 @@ fun RegisterScreen(
                 color = Offline.copy(alpha = 0.08f),
                 shape = RoundedCornerShape(16.dp)
             ) {
+                // La fila completa es la casilla: el lector anuncia el texto y el área de toque crece.
                 Row(
-                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                    modifier = Modifier
+                        .toggleable(
+                            value = aceptaTerminos,
+                            role = Role.Checkbox,
+                            onValueChange = { aceptaTerminos = it }
+                        )
+                        .heightIn(min = 48.dp)
+                        .padding(horizontal = 8.dp, vertical = 4.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Checkbox(
                         checked = aceptaTerminos,
-                        onCheckedChange = { aceptaTerminos = it },
+                        onCheckedChange = null,
                         colors = CheckboxDefaults.colors(checkedColor = Navegacion)
                     )
                     Text(
@@ -405,8 +434,10 @@ fun RegisterScreen(
                 text = tr(R.string.register_ya_tienes_cuenta_iniciar_sesion),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(bottom = 16.dp)
-                    .clickable(enabled = !cargando, onClick = onLoginClick),
+                    .padding(bottom = 4.dp)
+                    .clickable(enabled = !cargando, role = Role.Button, onClick = onLoginClick)
+                    .heightIn(min = 48.dp)
+                    .wrapContentHeight(Alignment.CenterVertically),
                 textAlign = TextAlign.Center,
                 style = MaterialTheme.typography.bodyMedium.copy(
                     fontWeight = FontWeight.Bold,

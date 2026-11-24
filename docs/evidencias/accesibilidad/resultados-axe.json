@@ -1,0 +1,340 @@
+{
+ "antes|es|/login": {
+  "violaciones": [],
+  "reglasAprobadas": 17,
+  "elementosRevisados": 45
+ },
+ "antes|es|/registro": {
+  "violaciones": [
+   {
+    "id": "color-contrast",
+    "impacto": "serious",
+    "nodos": 1,
+    "ayuda": "Elements must meet minimum color contrast ratio thresholds"
+   }
+  ],
+  "reglasAprobadas": 17,
+  "elementosRevisados": 77
+ },
+ "antes|es|/home": {
+  "violaciones": [
+   {
+    "id": "color-contrast",
+    "impacto": "serious",
+    "nodos": 6,
+    "ayuda": "Elements must meet minimum color contrast ratio thresholds"
+   },
+   {
+    "id": "label-content-name-mismatch",
+    "impacto": "serious",
+    "nodos": 2,
+    "ayuda": "Elements must have their visible text as part of their accessible name"
+   }
+  ],
+  "reglasAprobadas": 25,
+  "elementosRevisados": 130
+ },
+ "antes|es|/polizas": {
+  "violaciones": [
+   {
+    "id": "color-contrast",
+    "impacto": "serious",
+    "nodos": 2,
+    "ayuda": "Elements must meet minimum color contrast ratio thresholds"
+   }
+  ],
+  "reglasAprobadas": 17,
+  "elementosRevisados": 64
+ },
+ "antes|es|/cotizar": {
+  "violaciones": [
+   {
+    "id": "color-contrast",
+    "impacto": "serious",
+    "nodos": 1,
+    "ayuda": "Elements must meet minimum color contrast ratio thresholds"
+   }
+  ],
+  "reglasAprobadas": 17,
+  "elementosRevisados": 85
+ },
+ "antes|es|/cotizaciones": {
+  "violaciones": [
+   {
+    "id": "color-contrast",
+    "impacto": "serious",
+    "nodos": 2,
+    "ayuda": "Elements must meet minimum color contrast ratio thresholds"
+   }
+  ],
+  "reglasAprobadas": 17,
+  "elementosRevisados": 67
+ },
+ "antes|es|/siniestros": {
+  "violaciones": [
+   {
+    "id": "color-contrast",
+    "impacto": "serious",
+    "nodos": 2,
+    "ayuda": "Elements must meet minimum color contrast ratio thresholds"
+   }
+  ],
+  "reglasAprobadas": 21,
+  "elementosRevisados": 102
+ },
+ "antes|es|/siniestros/nuevo": {
+  "violaciones": [
+   {
+    "id": "color-contrast",
+    "impacto": "serious",
+    "nodos": 1,
+    "ayuda": "Elements must meet minimum color contrast ratio thresholds"
+   }
+  ],
+  "reglasAprobadas": 19,
+  "elementosRevisados": 94
+ },
+ "antes|es|/pagos": {
+  "violaciones": [
+   {
+    "id": "color-contrast",
+    "impacto": "serious",
+    "nodos": 2,
+    "ayuda": "Elements must meet minimum color contrast ratio thresholds"
+   }
+  ],
+  "reglasAprobadas": 20,
+  "elementosRevisados": 99
+ },
+ "antes|es|/perfil": {
+  "violaciones": [
+   {
+    "id": "color-contrast",
+    "impacto": "serious",
+    "nodos": 5,
+    "ayuda": "Elements must meet minimum color contrast ratio thresholds"
+   }
+  ],
+  "reglasAprobadas": 19,
+  "elementosRevisados": 108
+ },
+ "antes|en|/login": {
+  "violaciones": [],
+  "reglasAprobadas": 16,
+  "elementosRevisados": 44
+ },
+ "antes|en|/registro": {
+  "violaciones": [
+   {
+    "id": "color-contrast",
+    "impacto": "serious",
+    "nodos": 1,
+    "ayuda": "Elements must meet minimum color contrast ratio thresholds"
+   }
+  ],
+  "reglasAprobadas": 17,
+  "elementosRevisados": 77
+ },
+ "antes|en|/home": {
+  "violaciones": [
+   {
+    "id": "color-contrast",
+    "impacto": "serious",
+    "nodos": 6,
+    "ayuda": "Elements must meet minimum color contrast ratio thresholds"
+   },
+   {
+    "id": "label-content-name-mismatch",
+    "impacto": "serious",
+    "nodos": 2,
+    "ayuda": "Elements must have their visible text as part of their accessible name"
+   }
+  ],
+  "reglasAprobadas": 25,
+  "elementosRevisados": 130
+ },
+ "antes|en|/polizas": {
+  "violaciones": [
+   {
+    "id": "color-contrast",
+    "impacto": "serious",
+    "nodos": 2,
+    "ayuda": "Elements must meet minimum color contrast ratio thresholds"
+   }
+  ],
+  "reglasAprobadas": 17,
+  "elementosRevisados": 64
+ },
+ "antes|en|/cotizar": {
+  "violaciones": [
+   {
+    "id": "color-contrast",
+    "impacto": "serious",
+    "nodos": 1,
+    "ayuda": "Elements must meet minimum color contrast ratio thresholds"
+   }
+  ],
+  "reglasAprobadas": 17,
+  "elementosRevisados": 85
+ },
+ "antes|en|/cotizaciones": {
+  "violaciones": [
+   {
+    "id": "color-contrast",
+    "impacto": "serious",
+    "nodos": 2,
+    "ayuda": "Elements must meet minimum color contrast ratio thresholds"
+   }
+  ],
+  "reglasAprobadas": 17,
+  "elementosRevisados": 67
+ },
+ "antes|en|/siniestros": {
+  "violaciones": [
+   {
+    "id": "color-contrast",
+    "impacto": "serious",
+    "nodos": 2,
+    "ayuda": "Elements must meet minimum color contrast ratio thresholds"
+   }
+  ],
+  "reglasAprobadas": 21,
+  "elementosRevisados": 102
+ },
+ "antes|en|/siniestros/nuevo": {
+  "violaciones": [
+   {
+    "id": "color-contrast",
+    "impacto": "serious",
+    "nodos": 1,
+    "ayuda": "Elements must meet minimum color contrast ratio thresholds"
+   }
+  ],
+  "reglasAprobadas": 19,
+  "elementosRevisados": 94
+ },
+ "antes|en|/pagos": {
+  "violaciones": [
+   {
+    "id": "color-contrast",
+    "impacto": "serious",
+    "nodos": 2,
+    "ayuda": "Elements must meet minimum color contrast ratio thresholds"
+   }
+  ],
+  "reglasAprobadas": 20,
+  "elementosRevisados": 99
+ },
+ "antes|en|/perfil": {
+  "violaciones": [
+   {
+    "id": "color-contrast",
+    "impacto": "serious",
+    "nodos": 5,
+    "ayuda": "Elements must meet minimum color contrast ratio thresholds"
+   }
+  ],
+  "reglasAprobadas": 19,
+  "elementosRevisados": 108
+ },
+ "despues|es|/login": {
+  "violaciones": [],
+  "reglasAprobadas": 17,
+  "elementosRevisados": 45
+ },
+ "despues|es|/registro": {
+  "violaciones": [],
+  "reglasAprobadas": 17,
+  "elementosRevisados": 78
+ },
+ "despues|es|/home": {
+  "violaciones": [],
+  "reglasAprobadas": 24,
+  "elementosRevisados": 120
+ },
+ "despues|es|/polizas": {
+  "violaciones": [],
+  "reglasAprobadas": 17,
+  "elementosRevisados": 66
+ },
+ "despues|es|/cotizar": {
+  "violaciones": [],
+  "reglasAprobadas": 17,
+  "elementosRevisados": 86
+ },
+ "despues|es|/cotizaciones": {
+  "violaciones": [],
+  "reglasAprobadas": 17,
+  "elementosRevisados": 69
+ },
+ "despues|es|/siniestros": {
+  "violaciones": [],
+  "reglasAprobadas": 21,
+  "elementosRevisados": 104
+ },
+ "despues|es|/siniestros/nuevo": {
+  "violaciones": [],
+  "reglasAprobadas": 19,
+  "elementosRevisados": 95
+ },
+ "despues|es|/pagos": {
+  "violaciones": [],
+  "reglasAprobadas": 20,
+  "elementosRevisados": 101
+ },
+ "despues|es|/perfil": {
+  "violaciones": [],
+  "reglasAprobadas": 19,
+  "elementosRevisados": 113
+ },
+ "despues|en|/login": {
+  "violaciones": [],
+  "reglasAprobadas": 16,
+  "elementosRevisados": 44
+ },
+ "despues|en|/registro": {
+  "violaciones": [],
+  "reglasAprobadas": 17,
+  "elementosRevisados": 78
+ },
+ "despues|en|/home": {
+  "violaciones": [],
+  "reglasAprobadas": 24,
+  "elementosRevisados": 120
+ },
+ "despues|en|/polizas": {
+  "violaciones": [],
+  "reglasAprobadas": 17,
+  "elementosRevisados": 66
+ },
+ "despues|en|/cotizar": {
+  "violaciones": [],
+  "reglasAprobadas": 17,
+  "elementosRevisados": 86
+ },
+ "despues|en|/cotizaciones": {
+  "violaciones": [],
+  "reglasAprobadas": 17,
+  "elementosRevisados": 69
+ },
+ "despues|en|/siniestros": {
+  "violaciones": [],
+  "reglasAprobadas": 21,
+  "elementosRevisados": 104
+ },
+ "despues|en|/siniestros/nuevo": {
+  "violaciones": [],
+  "reglasAprobadas": 19,
+  "elementosRevisados": 95
+ },
+ "despues|en|/pagos": {
+  "violaciones": [],
+  "reglasAprobadas": 20,
+  "elementosRevisados": 101
+ },
+ "despues|en|/perfil": {
+  "violaciones": [],
+  "reglasAprobadas": 19,
+  "elementosRevisados": 113
+ }
+}
