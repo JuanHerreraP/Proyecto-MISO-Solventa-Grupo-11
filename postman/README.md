@@ -47,7 +47,7 @@ ADMIN_PASSWORD='...' LOG_GROUP="$LOG_GROUP" BASE_URL=https://<distribucion>.clou
   ./postman/ejecutar-flujo.sh aws
 ```
 
-Resultado contra el backend local: [docs/evidencias/postman/ejecucion-flujo-local.txt](../docs/evidencias/postman/ejecucion-flujo-local.txt)
+Resultado contra el backend local (22 requests, 34 aserciones, 0 fallas): [docs/evidencias/postman](../docs/evidencias/postman/README.md), con capturas y reportes HTML de Newman.
 (22 requests, 34 pruebas, 0 fallas).
 
 ## Regenerar la referencia

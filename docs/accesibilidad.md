@@ -36,6 +36,8 @@ La primera ejecución encontró 24 elementos con problemas en 9 de las 10 pantal
 | Tarjeta deshabilitada con opacidad 50 % (1,94:1) | Perfil → Notificaciones | Se distingue por color, sin bajar el contraste |
 | Nombre accesible distinto del texto visible (`label-content-name-mismatch`) y fila de tabla con rol de botón | Historial reciente del inicio | La fila deja de ser botón; el tipo de movimiento es un `<button>` real cuyo nombre incluye el texto visible |
 
+Evidencias antes y después (axe y Lighthouse, por pantalla e idioma): [docs/evidencias/accesibilidad](evidencias/accesibilidad/README.md).
+
 ### Prácticas ya presentes
 
 - Etiquetas en todos los campos (`<label for>`), `aria-label` en botones de solo ícono y `alt` en imágenes.

@@ -1,0 +1,8 @@
+Running 6 tests using 1 worker
+  ✓  1 [chromium] › e2e/accesibilidad/accesibilidad.spec.ts:29:7 › accesibilidad WCAG 2.1 AA (es) › sin violaciones en /login (1.3s)
+  ✓  2 [chromium] › e2e/accesibilidad/accesibilidad.spec.ts:29:7 › accesibilidad WCAG 2.1 AA (es) › sin violaciones en /registro (1.5s)
+  ✓  3 [chromium] › e2e/accesibilidad/accesibilidad.spec.ts:35:5 › accesibilidad WCAG 2.1 AA (es) › sin violaciones en las pantallas del cliente (12.4s)
+  ✓  4 [chromium] › e2e/accesibilidad/accesibilidad.spec.ts:29:7 › accesibilidad WCAG 2.1 AA (en) › sin violaciones en /login (1.4s)
+  ✓  5 [chromium] › e2e/accesibilidad/accesibilidad.spec.ts:29:7 › accesibilidad WCAG 2.1 AA (en) › sin violaciones en /registro (1.5s)
+  ✓  6 [chromium] › e2e/accesibilidad/accesibilidad.spec.ts:35:5 › accesibilidad WCAG 2.1 AA (en) › sin violaciones en las pantallas del cliente (12.2s)
+  6 passed (31.2s)
