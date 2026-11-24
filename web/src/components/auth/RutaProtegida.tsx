@@ -2,6 +2,8 @@ import { useEffect, useState, type ReactNode } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { obtenerPerfil } from "../../services/auth.service";
 
+import { t } from "../../i18n";
+
 type Props = { children: ReactNode; roles?: readonly string[] };
 
 function ComprobarAcceso({ children, roles }: Props) {
@@ -17,7 +19,7 @@ function ComprobarAcceso({ children, roles }: Props) {
     return () => { activo = false; };
   }, [roles]);
 
-  if (estado === "pendiente") return <p role="status">Verificando acceso…</p>;
+  if (estado === "pendiente") return <p role="status">{t("rutaProtegida.verificando_acceso")}</p>;
   if (estado === "sin-sesion") return <Navigate to="/login" replace />;
   if (estado === "denegado") {
     return <Navigate to="/home" state={{ accesoDenegado: true }} replace />;

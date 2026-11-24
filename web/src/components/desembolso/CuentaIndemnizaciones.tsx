@@ -8,6 +8,8 @@ import {
 } from "../../services/desembolsos.service";
 import "../../styles/desembolsos.css";
 
+import { t } from "../../i18n";
+
 /** Cuenta donde el cliente recibe sus indemnizaciones. Sin cuenta, se paga con código de retiro. */
 export default function CuentaIndemnizaciones() {
   const [cuenta, setCuenta] = useState<CuentaDesembolso | null | undefined>(undefined);
@@ -52,25 +54,24 @@ export default function CuentaIndemnizaciones() {
 
   return (
     <section className="home-panel cuenta-panel" aria-labelledby="titulo-cuenta">
-      <h2 id="titulo-cuenta">Cuenta para recibir indemnizaciones</h2>
+      <h2 id="titulo-cuenta">{t("cuentaIndemnizaciones.cuenta_para_recibir_indemnizaciones")}</h2>
       <p>
-        Cuando se aprueba un siniestro, transferimos el pago a esta cuenta. Si no registras una,
-        te damos un código de retiro.
+        {t("cuentaIndemnizaciones.cuando_se_aprueba_un_siniestro")}
       </p>
 
       {cuenta && !editando ? (
         <div className="cuenta-actual">
           <strong>
-            {cuenta.nombre_banco} · {cuenta.tipo_cuenta === "AHORROS" ? "Ahorros" : "Corriente"} · ****{cuenta.ultimos_digitos}
+            {cuenta.nombre_banco} · {cuenta.tipo_cuenta === "AHORROS" ? t("cuentaIndemnizaciones.ahorros") : t("cuentaIndemnizaciones.corriente")} · ****{cuenta.ultimos_digitos}
           </strong>
           <button type="button" className="cotizar-boton-secundario" onClick={() => setEditando(true)}>
-            Cambiar cuenta
+            {t("cuentaIndemnizaciones.cambiar_cuenta")}
           </button>
         </div>
       ) : (
         <div className="cuenta-form">
           <div className="cotizar-campo">
-            <label htmlFor="cuenta-banco">Banco</label>
+            <label htmlFor="cuenta-banco">{t("cuentaIndemnizaciones.banco")}</label>
             <select id="cuenta-banco" value={banco} onChange={(e) => setBanco(e.target.value)}>
               {Object.entries(BANCOS).map(([codigo, nombre]) => (
                 <option key={codigo} value={codigo}>{nombre}</option>
@@ -78,14 +79,14 @@ export default function CuentaIndemnizaciones() {
             </select>
           </div>
           <div className="cotizar-campo">
-            <label htmlFor="cuenta-tipo">Tipo</label>
+            <label htmlFor="cuenta-tipo">{t("cuentaIndemnizaciones.tipo")}</label>
             <select id="cuenta-tipo" value={tipo} onChange={(e) => setTipo(e.target.value as TipoCuenta)}>
-              <option value="AHORROS">Ahorros</option>
-              <option value="CORRIENTE">Corriente</option>
+              <option value="AHORROS">{t("cuentaIndemnizaciones.ahorros")}</option>
+              <option value="CORRIENTE">{t("cuentaIndemnizaciones.corriente")}</option>
             </select>
           </div>
           <div className="cotizar-campo">
-            <label htmlFor="cuenta-numero">Número de cuenta</label>
+            <label htmlFor="cuenta-numero">{t("cuentaIndemnizaciones.numero_de_cuenta")}</label>
             <input
               id="cuenta-numero"
               inputMode="numeric"
@@ -97,7 +98,7 @@ export default function CuentaIndemnizaciones() {
           <div className="cotizar-acciones" style={{ marginTop: 0 }}>
             {cuenta && (
               <button type="button" className="cotizar-boton-secundario" onClick={() => { setEditando(false); setNumero(""); }}>
-                Cancelar
+                {t("cuentaIndemnizaciones.cancelar")}
               </button>
             )}
             <button
@@ -106,7 +107,7 @@ export default function CuentaIndemnizaciones() {
               disabled={guardando || !numeroValido}
               onClick={() => void guardar()}
             >
-              {guardando ? "Guardando…" : "Guardar cuenta"}
+              {guardando ? t("cuentaIndemnizaciones.guardando") : t("cuentaIndemnizaciones.guardar_cuenta")}
             </button>
           </div>
         </div>

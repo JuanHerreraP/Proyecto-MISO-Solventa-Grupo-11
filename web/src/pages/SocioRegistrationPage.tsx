@@ -17,18 +17,20 @@ import type {
 } from "../types/socios";
 import "../styles/socios.css";
 
+import { t } from "../i18n";
+
 const INSURANCE_OPTIONS: Array<{
   value: TipoSeguro;
   label: string;
 }> = [
-  { value: "VIAJE", label: "Seguro de viaje" },
+  { value: "VIAJE", get label() { return t("socioRegistrationPage.seguro_de_viaje"); } },
   {
     value: "PROTECCION_DISPOSITIVOS",
-    label: "Protección de dispositivos",
+    get label() { return t("socioRegistrationPage.proteccion_de_dispositivos"); },
   },
-  { value: "MICROSEGURO_VIDA", label: "Microseguro de vida" },
-  { value: "PARAMETRICO", label: "Seguro paramétrico" },
-  { value: "PROTECCION_PAGOS", label: "Protección de pagos" },
+  { value: "MICROSEGURO_VIDA", get label() { return t("socioRegistrationPage.microseguro_de_vida"); } },
+  { value: "PARAMETRICO", get label() { return t("socioRegistrationPage.seguro_parametrico"); } },
+  { value: "PROTECCION_PAGOS", get label() { return t("socioRegistrationPage.proteccion_de_pagos"); } },
 ];
 
 const ENDPOINT_OPTIONS: Array<{
@@ -38,13 +40,13 @@ const ENDPOINT_OPTIONS: Array<{
 }> = [
   {
     value: "cotizaciones:crear",
-    label: "Cotizar póliza",
-    description: "Calcula una cotización con los datos y coberturas indicados.",
+    get label() { return t("socioRegistrationPage.cotizar_poliza"); },
+    get description() { return t("socioRegistrationPage.calcula_una_cotizacion_con_los"); },
   },
   {
     value: "polizas:emitir",
-    label: "Emitir póliza",
-    description: "Genera una póliza a partir de una cotización aceptada.",
+    get label() { return t("socioRegistrationPage.emitir_poliza"); },
+    get description() { return t("socioRegistrationPage.genera_una_poliza_a_partir"); },
   },
 ];
 
@@ -146,7 +148,7 @@ export default function SocioRegistrationPage() {
       setErrorCredenciales(
         credentialsError instanceof Error
           ? credentialsError.message
-          : "No fue posible generar las credenciales del socio.",
+          : t("socioRegistrationPage.no_fue_posible_generar_las"),
       );
     } finally {
       setGenerandoCredenciales(false);
@@ -166,12 +168,12 @@ export default function SocioRegistrationPage() {
     setErrorCredenciales("");
 
     if (form.tipos_seguros_autorizados.length === 0) {
-      setError("Selecciona al menos un tipo de seguro autorizado.");
+      setError(t("socioRegistrationPage.selecciona_al_menos_un_tipo"));
       return;
     }
 
     if (form.endpoints_autorizados.length === 0) {
-      setError("Selecciona al menos un permiso de API.");
+      setError(t("socioRegistrationPage.selecciona_al_menos_un_permiso"));
       return;
     }
 
@@ -198,7 +200,7 @@ export default function SocioRegistrationPage() {
       setError(
         submitError instanceof Error
           ? submitError.message
-          : "No fue posible registrar el socio.",
+          : t("socioRegistrationPage.no_fue_posible_registrar_el"),
       );
     } finally {
       setLoading(false);
@@ -223,7 +225,7 @@ export default function SocioRegistrationPage() {
           </span>
           <span>
             <strong>Solventa</strong>
-            <span className="socio-brand-section"> · Portal de socios</span>
+            <span className="socio-brand-section"> {t("socioRegistrationPage.portal_de_socios")}</span>
           </span>
         </Link>
 
@@ -231,17 +233,16 @@ export default function SocioRegistrationPage() {
           <span className="material-symbols-outlined" aria-hidden="true">
             logout
           </span>
-          Salir
+          {t("socioRegistrationPage.salir")}
         </Link>
       </header>
 
       <main className="socio-content">
         <div className="socio-title-row">
           <div>
-            <h1>Registrar nuevo socio</h1>
+            <h1>{t("socioRegistrationPage.registrar_nuevo_socio")}</h1>
             <p>
-              Configura la información técnica y los permisos que el socio
-              tendrá para integrar sus canales con Solventa.
+              {t("socioRegistrationPage.configura_la_informacion_tecnica_y")}
             </p>
           </div>
 
@@ -259,28 +260,27 @@ export default function SocioRegistrationPage() {
             </div>
 
             <div>
-              <span className="socio-eyebrow">Registro completado</span>
-              <h2>Socio registrado correctamente</h2>
+              <span className="socio-eyebrow">{t("socioRegistrationPage.registro_completado")}</span>
+              <h2>{t("socioRegistrationPage.socio_registrado_correctamente")}</h2>
               <p>
-                La ficha técnica fue creada y el espacio lógico del socio quedó
-                aprovisionado.
+                {t("socioRegistrationPage.la_ficha_tecnica_fue_creada")}
               </p>
 
               <dl className="socio-result-grid">
                 <div>
-                  <dt>Razón social</dt>
+                  <dt>{t("socioRegistrationPage.razon_social")}</dt>
                   <dd>{socioCreado.razon_social}</dd>
                 </div>
                 <div>
-                  <dt>Socio ID</dt>
+                  <dt>{t("socioRegistrationPage.socio_id")}</dt>
                   <dd>{socioCreado.socio_id}</dd>
                 </div>
                 <div>
-                  <dt>Tenant ID</dt>
+                  <dt>{t("socioRegistrationPage.tenant_id")}</dt>
                   <dd>{socioCreado.tenant_id}</dd>
                 </div>
                 <div>
-                  <dt>Estado</dt>
+                  <dt>{t("socioRegistrationPage.estado")}</dt>
                   <dd>
                     <span className="socio-status">
                       {socioCreado.estado}
@@ -291,7 +291,7 @@ export default function SocioRegistrationPage() {
 
               {generandoCredenciales && (
                 <div className="socio-credentials-loading" role="status">
-                  Generando credenciales de integración...
+                  {t("socioRegistrationPage.generando_credenciales_de_integracion")}
                 </div>
               )}
 
@@ -302,25 +302,24 @@ export default function SocioRegistrationPage() {
                       key
                     </span>
                     <div>
-                      <h3 id="credentials-title">Credenciales de integración</h3>
+                      <h3 id="credentials-title">{t("socioRegistrationPage.credenciales_de_integracion")}</h3>
                       <p>
-                        Guarda estas credenciales ahora. Por seguridad, el
-                        client secret no volverá a mostrarse.
+                        {t("socioRegistrationPage.guarda_estas_credenciales_ahora_por")}
                       </p>
                     </div>
                   </div>
 
                   <div className="socio-credentials-grid">
                     <div>
-                      <span>Client ID</span>
+                      <span>{t("socioRegistrationPage.client_id")}</span>
                       <div className="socio-credential-value">
                         <code>{credenciales.client_id}</code>
                         <button
                           type="button"
                           onClick={() =>
-                            copiarValor("Client ID", credenciales.client_id)
+                            copiarValor(t("socioRegistrationPage.client_id"), credenciales.client_id)
                           }
-                          aria-label="Copiar Client ID"
+                          aria-label={t("socioRegistrationPage.copiar_client_id")}
                         >
                           <span className="material-symbols-outlined" aria-hidden="true">
                             content_copy
@@ -330,18 +329,18 @@ export default function SocioRegistrationPage() {
                     </div>
 
                     <div>
-                      <span>Client secret</span>
+                      <span>{t("socioRegistrationPage.client_secret")}</span>
                       <div className="socio-credential-value">
                         <code>{credenciales.client_secret}</code>
                         <button
                           type="button"
                           onClick={() =>
                             copiarValor(
-                              "Client secret",
+                              t("socioRegistrationPage.client_secret"),
                               credenciales.client_secret,
                             )
                           }
-                          aria-label="Copiar Client secret"
+                          aria-label={t("socioRegistrationPage.copiar_client_secret")}
                         >
                           <span className="material-symbols-outlined" aria-hidden="true">
                             content_copy
@@ -353,7 +352,7 @@ export default function SocioRegistrationPage() {
 
                   {valorCopiado && (
                     <p className="socio-copy-confirmation" role="status">
-                      {valorCopiado} copiado.
+                      {t("socioRegistrationPage.valor_copiado", { valor: valorCopiado })}
                     </p>
                   )}
                 </section>
@@ -371,7 +370,7 @@ export default function SocioRegistrationPage() {
                       onClick={() => aprovisionarCredenciales(socioCreado.socio_id)}
                       disabled={generandoCredenciales}
                     >
-                      Reintentar generación
+                      {t("socioRegistrationPage.reintentar_generacion")}
                     </button>
                   </div>
                 </div>
@@ -383,7 +382,7 @@ export default function SocioRegistrationPage() {
                 onClick={resetForm}
                 disabled={generandoCredenciales}
               >
-                Registrar otro socio
+                {t("socioRegistrationPage.registrar_otro_socio")}
               </button>
             </div>
           </section>
@@ -395,8 +394,8 @@ export default function SocioRegistrationPage() {
                   domain
                 </span>
                 <div>
-                  <h2>Información de la organización</h2>
-                  <p>Datos legales y país desde el que operará el socio.</p>
+                  <h2>{t("socioRegistrationPage.informacion_de_la_organizacion")}</h2>
+                  <p>{t("socioRegistrationPage.datos_legales_y_pais_desde")}</p>
                 </div>
               </div>
 
@@ -418,16 +417,16 @@ export default function SocioRegistrationPage() {
                     }
                     required
                   />
-                  <small>Sin puntos ni separadores de miles.</small>
+                  <small>{t("socioRegistrationPage.sin_puntos_ni_separadores_de")}</small>
                 </label>
 
                 <label>
-                  Razón social
+                  {t("socioRegistrationPage.razon_social")}
                   <input
                     name="razon_social"
                     minLength={2}
                     maxLength={160}
-                    placeholder="Banco Andes S.A."
+                    placeholder={t("socioRegistrationPage.banco_andes_s_a")}
                     value={form.razon_social}
                     onChange={(event) =>
                       setForm((current) => ({
@@ -440,7 +439,7 @@ export default function SocioRegistrationPage() {
                 </label>
 
                 <label>
-                  País de operación
+                  {t("socioRegistrationPage.pais_de_operacion")}
                   <select
                     name="pais_operacion"
                     value={form.pais_operacion}
@@ -452,11 +451,11 @@ export default function SocioRegistrationPage() {
                     }
                     required
                   >
-                    <option value="CO">Colombia</option>
-                    <option value="MX">México</option>
-                    <option value="PE">Perú</option>
-                    <option value="CL">Chile</option>
-                    <option value="AR">Argentina</option>
+                    <option value="CO">{t("socioRegistrationPage.colombia")}</option>
+                    <option value="MX">{t("socioRegistrationPage.mexico")}</option>
+                    <option value="PE">{t("socioRegistrationPage.peru")}</option>
+                    <option value="CL">{t("socioRegistrationPage.chile")}</option>
+                    <option value="AR">{t("socioRegistrationPage.argentina")}</option>
                   </select>
                 </label>
               </div>
@@ -468,8 +467,8 @@ export default function SocioRegistrationPage() {
                   contact_support
                 </span>
                 <div>
-                  <h2>Contacto técnico</h2>
-                  <p>Persona responsable de acompañar la integración.</p>
+                  <h2>{t("socioRegistrationPage.contacto_tecnico")}</h2>
+                  <p>{t("socioRegistrationPage.persona_responsable_de_acompanar_la")}</p>
                 </div>
               </div>
 
@@ -478,12 +477,12 @@ export default function SocioRegistrationPage() {
                   <div className="socio-contact-row" key={`contact-${index}`}>
                     <div className="socio-form-grid socio-contact-grid">
                       <label>
-                        Nombre completo
+                        {t("socioRegistrationPage.nombre_completo")}
                         <input
                           name={`contacto_nombre_${index}`}
                           minLength={2}
                           maxLength={120}
-                          placeholder="María Torres"
+                          placeholder={t("socioRegistrationPage.maria_torres")}
                           value={contact.nombre}
                           onChange={(event) =>
                             updateContact(index, "nombre", event.target.value)
@@ -493,7 +492,7 @@ export default function SocioRegistrationPage() {
                       </label>
 
                       <label>
-                        Correo corporativo
+                        {t("socioRegistrationPage.correo_corporativo")}
                         <input
                           name={`contacto_correo_${index}`}
                           minLength={5}
@@ -510,7 +509,7 @@ export default function SocioRegistrationPage() {
 
                       <label>
                         <span>
-                          Teléfono <span className="socio-optional">(Opcional)</span>
+                          {t("socioRegistrationPage.telefono")} <span className="socio-optional">{t("socioRegistrationPage.opcional")}</span>
                         </span>
                         <input
                           name={`contacto_telefono_${index}`}
@@ -518,7 +517,7 @@ export default function SocioRegistrationPage() {
                           minLength={7}
                           maxLength={20}
                           pattern={String.raw`\+?[0-9][0-9 \(\)\-]{5,18}[0-9]`}
-                          title="Usa entre 7 y 20 caracteres: números, espacios, paréntesis o guiones; el + solo al inicio."
+                          title={t("socioRegistrationPage.usa_entre_7_y_20")}
                           placeholder="+57 300 123 4567"
                           value={contact.telefono}
                           onChange={(event) =>
@@ -537,7 +536,7 @@ export default function SocioRegistrationPage() {
                         <span className="material-symbols-outlined" aria-hidden="true">
                           delete
                         </span>
-                        Eliminar contacto
+                        {t("socioRegistrationPage.eliminar_contacto")}
                       </button>
                     )}
                   </div>
@@ -551,7 +550,7 @@ export default function SocioRegistrationPage() {
                   <span className="material-symbols-outlined" aria-hidden="true">
                     add
                   </span>
-                  Agregar otro contacto
+                  {t("socioRegistrationPage.agregar_otro_contacto")}
                 </button>
               </div>
             </section>
@@ -562,8 +561,8 @@ export default function SocioRegistrationPage() {
                   verified_user
                 </span>
                 <div>
-                  <h2>Seguros autorizados</h2>
-                  <p>Selecciona los productos que el socio podrá comercializar.</p>
+                  <h2>{t("socioRegistrationPage.seguros_autorizados")}</h2>
+                  <p>{t("socioRegistrationPage.selecciona_los_productos_que_el")}</p>
                 </div>
               </div>
 
@@ -589,10 +588,9 @@ export default function SocioRegistrationPage() {
                   api
                 </span>
                 <div>
-                  <h2>Permisos de API</h2>
+                  <h2>{t("socioRegistrationPage.permisos_de_api")}</h2>
                   <p>
-                    Asigna únicamente las operaciones necesarias para la
-                    integración.
+                    {t("socioRegistrationPage.asigna_unicamente_las_operaciones_necesarias")}
                   </p>
                 </div>
               </div>
@@ -625,8 +623,7 @@ export default function SocioRegistrationPage() {
 
             <div className="socio-submit-row">
               <p>
-                Al guardar, Solventa creará la ficha técnica y aprovisionará el
-                tenant lógico del socio.
+                {t("socioRegistrationPage.al_guardar_solventa_creara_la")}
               </p>
               <button
                 className="socio-primary-button"
@@ -636,7 +633,7 @@ export default function SocioRegistrationPage() {
                 <span className="material-symbols-outlined" aria-hidden="true">
                   add_business
                 </span>
-                {loading ? "Registrando..." : "Registrar socio"}
+                {loading ? t("socioRegistrationPage.registrando") : t("socioRegistrationPage.registrar_socio")}
               </button>
             </div>
           </form>

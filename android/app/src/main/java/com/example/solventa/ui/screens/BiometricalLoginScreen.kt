@@ -46,6 +46,7 @@ import com.example.solventa.ui.components.SolventaPrimaryButton
 import com.example.solventa.ui.components.SolventaSecondaryButton
 import com.example.solventa.ui.theme.Navegacion
 import com.example.solventa.ui.theme.SolventaTheme
+import com.example.solventa.i18n.tr
 
 @Composable
 fun BiometricalLoginScreen(
@@ -86,7 +87,7 @@ fun BiometricalLoginScreen(
                 ) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
-                        contentDescription = "Volver",
+                        contentDescription = tr(R.string.biometrical_login_volver),
                         tint = MaterialTheme.colorScheme.onSurface
                     )
                 }
@@ -95,7 +96,7 @@ fun BiometricalLoginScreen(
 
                 Image(
                     painter = painterResource(id = R.drawable.solventa_shield),
-                    contentDescription = "Escudo de Solventa",
+                    contentDescription = tr(R.string.biometrical_login_escudo_de_solventa),
                     modifier = Modifier.size(28.dp)
                 )
 
@@ -125,7 +126,7 @@ fun BiometricalLoginScreen(
                 ) {
                     Icon(
                         imageVector = Icons.Outlined.Fingerprint,
-                        contentDescription = "Huella dactilar",
+                        contentDescription = tr(R.string.biometrical_login_huella_dactilar),
                         modifier = Modifier.size(72.dp),
                         tint = Navegacion
                     )
@@ -135,7 +136,7 @@ fun BiometricalLoginScreen(
 
                 // Headline Title
                 Text(
-                    text = "Hola de nuevo",
+                    text = tr(R.string.biometrical_login_hola_de_nuevo),
                     style = MaterialTheme.typography.headlineLarge,
                     color = MaterialTheme.colorScheme.onBackground,
                     textAlign = TextAlign.Center
@@ -145,7 +146,7 @@ fun BiometricalLoginScreen(
 
                 // Subtitle Description
                 Text(
-                    text = "Usa la huella configurada en tu dispositivo para entrar de forma rápida y segura.",
+                    text = tr(R.string.biometrical_login_usa_la_huella_configurada_en),
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
                     textAlign = TextAlign.Center,
@@ -174,7 +175,7 @@ fun BiometricalLoginScreen(
                         Spacer(modifier = Modifier.width(12.dp))
 
                         Text(
-                            text = "La huella se valida en el dispositivo y no se almacena en Solventa.",
+                            text = tr(R.string.biometrical_login_la_huella_se_valida_en),
                             style = MaterialTheme.typography.labelMedium.copy(
                                 fontWeight = FontWeight.Normal,
                                 color = Color(0xFF137333)
@@ -200,19 +201,19 @@ fun BiometricalLoginScreen(
                             painterResource(id = R.drawable.ic_main_page)
                         },
                         centered = sesionCerrada,
-                        iconDescription = if (sesionCerrada) "Sesión cerrada" else null
+                        iconDescription = if (sesionCerrada) tr(R.string.biometrical_login_sesion_cerrada) else null
                     )
                 }
 
                 SolventaPrimaryButton(
-                    text = "Ingresar con biometría",
+                    text = tr(R.string.biometrical_login_ingresar_con_biometria),
                     onClick = onBiometricClick,
                     enabled = biometriaDisponible,
                     isLoading = cargando
                 )
 
                 SolventaSecondaryButton(
-                    text = "Usar correo y contraseña",
+                    text = tr(R.string.biometrical_login_usar_correo_y_contrasena),
                     onClick = onUseCredentialsClick
                 )
 
@@ -221,14 +222,14 @@ fun BiometricalLoginScreen(
                 // Inline Styled Link Text
                 Text(
                     text = buildAnnotatedString {
-                        append("¿Aún no tienes cuenta? ")
+                        append(tr(R.string.biometrical_login_aun_no_tienes_cuenta))
                         withStyle(
                             style = SpanStyle(
                                 color = Navegacion,
                                 fontWeight = FontWeight.Bold
                             )
                         ) {
-                            append("Crear una")
+                            append(tr(R.string.biometrical_login_crear_una))
                         }
                     },
                     style = MaterialTheme.typography.bodyMedium,

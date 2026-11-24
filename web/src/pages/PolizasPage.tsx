@@ -16,6 +16,8 @@ import {
   type ClienteDeAsesor,
 } from "../services/asesor.service";
 
+import { t, localeActual } from "../i18n";
+
 const ICONO_RAMO: Record<string, string> = {
   VIAJE: "flight_takeoff",
   PROTECCION_DISPOSITIVOS: "devices",
@@ -27,14 +29,14 @@ const ICONO_RAMO: Record<string, string> = {
 const RAMOS_RENOVABLES = new Set(["VIDA", "PROTECCION_DISPOSITIVOS", "PARAMETRICO"]);
 
 const ESTADOS: Record<string, string> = {
-  VIGENTE: "Vigente",
-  VENCIDA: "Vencida",
-  CANCELADA: "Cancelada",
+  get VIGENTE() { return t("polizasPage.vigente"); },
+  get VENCIDA() { return t("polizasPage.vencida"); },
+  get CANCELADA() { return t("polizasPage.cancelada"); },
 };
 
 function formatearFecha(iso: string): string {
   const [anio, mes, dia] = iso.split("-").map(Number);
-  return new Date(anio, mes - 1, dia).toLocaleDateString("es-CO", {
+  return new Date(anio, mes - 1, dia).toLocaleDateString(localeActual(), {
     day: "numeric",
     month: "long",
     year: "numeric",
@@ -42,7 +44,7 @@ function formatearFecha(iso: string): string {
 }
 
 function formatearMonto(monto: string, moneda: string): string {
-  return Number(monto).toLocaleString("es-CO", {
+  return Number(monto).toLocaleString(localeActual(), {
     style: "currency",
     currency: moneda,
     maximumFractionDigits: 0,
@@ -143,11 +145,11 @@ export default function PolizasPage() {
     <AppLayout activo="Mis pólizas" rol={rol}>
       <header className="home-header">
         <div>
-          <h1>{esAsesor ? "Pólizas de clientes" : "Mis pólizas"}</h1>
+          <h1>{esAsesor ? t("polizasPage.polizas_de_clientes") : t("polizasPage.mis_polizas")}</h1>
           <p>
             {esAsesor
-              ? "Selecciona un cliente para gestionar una cancelación asistida."
-              : "Consulta tus pólizas y el detalle de cada una."}
+              ? t("polizasPage.selecciona_un_cliente_para_gestionar")
+              : t("polizasPage.consulta_tus_polizas_y_el")}
           </p>
         </div>
       </header>
@@ -157,11 +159,11 @@ export default function PolizasPage() {
       {esAsesor && (
         <section className="home-panel asesor-polizas-selector" aria-labelledby="cliente-polizas">
           <div>
-            <h2 id="cliente-polizas">Cliente asegurado</h2>
-            <p>Solo podrás cancelar pólizas originadas en una venta asistida por ti.</p>
+            <h2 id="cliente-polizas">{t("polizasPage.cliente_asegurado")}</h2>
+            <p>{t("polizasPage.solo_podras_cancelar_polizas_originadas")}</p>
           </div>
           <div className="cotizar-campo">
-            <label htmlFor="cliente">Selecciona un cliente</label>
+            <label htmlFor="cliente">{t("polizasPage.selecciona_un_cliente")}</label>
             <select
               id="cliente"
               value={clienteId}
@@ -177,7 +179,7 @@ export default function PolizasPage() {
                 }
               }}
             >
-              <option value="">Selecciona una opción</option>
+              <option value="">{t("polizasPage.selecciona_una_opcion")}</option>
               {clientes.map((actual) => (
                 <option key={actual.cliente_id} value={actual.cliente_id}>
                   {actual.nombre} {actual.apellido} · {actual.email}
@@ -186,18 +188,18 @@ export default function PolizasPage() {
             </select>
           </div>
           {clientes.length === 0 && (
-            <p className="home-card-vacio">Aún no tienes clientes asociados.</p>
+            <p className="home-card-vacio">{t("polizasPage.aun_no_tienes_clientes_asociados")}</p>
           )}
         </section>
       )}
 
-      <section aria-label="Lista de pólizas" className="cotizaciones-lista">
+      <section aria-label={t("polizasPage.lista_de_polizas")} className="cotizaciones-lista">
         {polizas === null && !error && (!esAsesor || clienteId) && (
-          <p role="status" className="home-card-vacio">Cargando tus pólizas…</p>
+          <p role="status" className="home-card-vacio">{t("polizasPage.cargando_tus_polizas")}</p>
         )}
         {polizas?.length === 0 && (!esAsesor || Boolean(clienteId)) && (
           <div className="home-panel">
-            <p className="home-card-vacio">Aún no tienes pólizas.</p>
+            <p className="home-card-vacio">{t("polizasPage.aun_no_tienes_polizas")}</p>
           </div>
         )}
         {polizas?.map((poliza) => {
@@ -229,18 +231,18 @@ export default function PolizasPage() {
               {abierta && (
                 <div className="cotizacion-detalle">
                   <div className="cotizar-detalle">
-                    <span>Cobertura principal</span>
+                    <span>{t("polizasPage.cobertura_principal")}</span>
                     <strong>{poliza.cobertura_principal}</strong>
                     {cert && (
                       <small>
-                        Suma asegurada: {formatearMonto(cert.suma_asegurada, cert.moneda)}
+                        {t("polizasPage.suma_asegurada_formatearmonto", { formatearMonto: formatearMonto(cert.suma_asegurada, cert.moneda) })}
                       </small>
                     )}
                   </div>
 
                   <dl className="cotizacion-datos">
                     <div>
-                      <dt>Vigencia</dt>
+                      <dt>{t("polizasPage.vigencia")}</dt>
                       <dd>
                         {formatearFecha(poliza.fecha_inicio)} — {formatearFecha(poliza.fecha_fin)}
                       </dd>
@@ -248,21 +250,21 @@ export default function PolizasPage() {
                     {cert && (
                       <>
                         <div>
-                          <dt>Titular</dt>
+                          <dt>{t("polizasPage.titular")}</dt>
                           <dd>{cert.titular}</dd>
                         </div>
                         <div>
-                          <dt>Documento</dt>
+                          <dt>{t("polizasPage.documento")}</dt>
                           <dd>{cert.documento_titular}</dd>
                         </div>
                         <div>
-                          <dt>Prima total</dt>
+                          <dt>{t("polizasPage.prima_total")}</dt>
                           <dd>{formatearMonto(cert.prima_total, cert.moneda)}</dd>
                         </div>
                       </>
                     )}
                     <div>
-                      <dt>Número de póliza</dt>
+                      <dt>{t("polizasPage.numero_de_poliza")}</dt>
                       <dd>{poliza.numero_poliza}</dd>
                     </div>
                   </dl>
@@ -283,7 +285,7 @@ export default function PolizasPage() {
                             className="cotizar-boton-secundario"
                             onClick={() => navigate(`/polizas/${encodeURIComponent(poliza.poliza_id)}/modificar`)}
                           >
-                            Modificar coberturas y beneficiarios
+                            {t("polizasPage.modificar_coberturas_y_beneficiarios")}
                           </button>
                         )}
                         <button
@@ -294,7 +296,7 @@ export default function PolizasPage() {
                             { state: cliente ? { clienteNombre: `${cliente.nombre} ${cliente.apellido}` } : null },
                           )}
                         >
-                          Cancelar póliza
+                          {t("polizasPage.cancelar_poliza")}
                         </button>
                       </>
                     )}
@@ -304,7 +306,7 @@ export default function PolizasPage() {
                       onClick={() => navigate(`/polizas/${encodeURIComponent(poliza.poliza_id)}/historial`)}
                     >
                       <span className="material-symbols-outlined" aria-hidden="true">history</span>
-                      Ver historial
+                      {t("polizasPage.ver_historial")}
                     </button>
                     <button
                       type="button"
@@ -313,7 +315,7 @@ export default function PolizasPage() {
                       disabled={descargando === poliza.poliza_id}
                     >
                       <span className="material-symbols-outlined" aria-hidden="true">download</span>
-                      {descargando === poliza.poliza_id ? "Descargando…" : "Descargar póliza (PDF)"}
+                      {descargando === poliza.poliza_id ? t("polizasPage.descargando") : t("polizasPage.descargar_poliza_pdf")}
                     </button>
                   </div>
                   {errorDescarga[poliza.poliza_id] && (

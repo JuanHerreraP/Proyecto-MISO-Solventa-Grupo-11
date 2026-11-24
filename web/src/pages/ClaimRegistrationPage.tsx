@@ -12,6 +12,8 @@ import {
 } from "../services/asesor.service";
 import type { Siniestro } from "../types/siniestros";
 
+import { t, localeActual } from "../i18n";
+
 const ICONO_RAMO: Record<string, string> = {
   VIAJE: "flight_takeoff",
   PROTECCION_DISPOSITIVOS: "devices",
@@ -21,7 +23,7 @@ const ICONO_RAMO: Record<string, string> = {
 
 function formatearFecha(iso: string): string {
   const [anio, mes, dia] = iso.split("-").map(Number);
-  return new Date(anio, mes - 1, dia).toLocaleDateString("es-CO", {
+  return new Date(anio, mes - 1, dia).toLocaleDateString(localeActual(), {
     day: "numeric", month: "short", year: "numeric",
   });
 }
@@ -137,15 +139,15 @@ export default function ClaimRegistrationPage() {
       <AppLayout activo="Siniestros" rol={rol}>
         <header className="home-header">
           <div>
-            <h1>Siniestro registrado</h1>
+            <h1>{t("claimRegistrationPage.siniestro_registrado")}</h1>
             <p>
               {esAsesor
-                ? "La reclamación del cliente fue registrada correctamente."
-                : "Tu reclamación fue registrada correctamente."}
+                ? t("claimRegistrationPage.la_reclamacion_del_cliente_fue")
+                : t("claimRegistrationPage.tu_reclamacion_fue_registrada_correctamente")}
             </p>
           </div>
         </header>
-        <section className="home-panel cotizar-resultado" aria-label="Confirmación del siniestro">
+        <section className="home-panel cotizar-resultado" aria-label={t("claimRegistrationPage.confirmacion_del_siniestro")}>
           <div className="cotizar-resultado-encabezado">
             <span
               className="cotizar-ramo-icono material-symbols-outlined cotizar-pago-aprobado"
@@ -154,18 +156,18 @@ export default function ClaimRegistrationPage() {
               check_circle
             </span>
             <div>
-              <strong>Reclamación creada</strong>
-              <small>Guarda este número para hacer seguimiento.</small>
+              <strong>{t("claimRegistrationPage.reclamacion_creada")}</strong>
+              <small>{t("claimRegistrationPage.guarda_este_numero_para_hacer")}</small>
             </div>
           </div>
           <dl className="cotizar-resumen">
             <div>
-              <dt>Número de siniestro</dt>
+              <dt>{t("claimRegistrationPage.numero_de_siniestro")}</dt>
               <dd>{siniestro.siniestro_id}</dd>
             </div>
             <div className="cotizar-resumen-total">
-              <dt>Estado</dt>
-              <dd>Registrado</dd>
+              <dt>{t("claimRegistrationPage.estado")}</dt>
+              <dd>{t("claimRegistrationPage.registrado")}</dd>
             </div>
           </dl>
           <div className="cotizar-acciones">
@@ -174,14 +176,14 @@ export default function ClaimRegistrationPage() {
               className="cotizar-boton-secundario"
               onClick={() => navigate("/home")}
             >
-              Volver al inicio
+              {t("claimRegistrationPage.volver_al_inicio")}
             </button>
             <button
               type="button"
               className="cotizar-boton-primario"
               onClick={() => navigate("/siniestros")}
             >
-              Ver mis siniestros
+              {t("claimRegistrationPage.ver_mis_siniestros")}
             </button>
           </div>
         </section>
@@ -193,33 +195,33 @@ export default function ClaimRegistrationPage() {
     <AppLayout activo="Siniestros" rol={rol}>
       <header className="home-header">
         <div>
-          <h1>{esAsesor ? "Registrar un siniestro asistido" : "Reportar un siniestro"}</h1>
+          <h1>{esAsesor ? t("claimRegistrationPage.registrar_un_siniestro_asistido") : t("claimRegistrationPage.reportar_un_siniestro")}</h1>
           <p>
             {esAsesor
-              ? "Selecciona el cliente, su póliza afectada y describe lo ocurrido."
-              : "Selecciona la póliza afectada y describe lo ocurrido."}
+              ? t("claimRegistrationPage.selecciona_el_cliente_su_poliza")
+              : t("claimRegistrationPage.selecciona_la_poliza_afectada_y")}
           </p>
         </div>
       </header>
 
       {errorCarga && <p role="alert" className="home-aviso">{errorCarga}</p>}
 
-      <form onSubmit={enviar} className="home-panel cotizar-form-panel" aria-label="Registro de siniestro">
+      <form onSubmit={enviar} className="home-panel cotizar-form-panel" aria-label={t("claimRegistrationPage.registro_de_siniestro")}>
         {/* Bloque 0: selección de cliente (solo asesor) */}
         {esAsesor && (
           <>
-            <h2 className="cotizacion-subtitulo">Cliente</h2>
+            <h2 className="cotizacion-subtitulo">{t("claimRegistrationPage.cliente")}</h2>
             {clientes === null && !errorCarga && (
-              <p role="status" className="home-card-vacio">Cargando tus clientes…</p>
+              <p role="status" className="home-card-vacio">{t("claimRegistrationPage.cargando_tus_clientes")}</p>
             )}
             {clientes?.length === 0 && (
               <p className="home-card-vacio">
-                Aún no tienes clientes asociados. Asócialos desde tu página de inicio.
+                {t("claimRegistrationPage.aun_no_tienes_clientes_asociados")}
               </p>
             )}
             {clientes && clientes.length > 0 && (
               <div className="cotizar-campo cotizar-campo-ancho">
-                <label htmlFor="cliente">Cliente que atiendes</label>
+                <label htmlFor="cliente">{t("claimRegistrationPage.cliente_que_atiendes")}</label>
                 <select
                   id="cliente"
                   value={clienteId}
@@ -231,7 +233,7 @@ export default function ClaimRegistrationPage() {
                     setErrorCarga("");
                   }}
                 >
-                  <option value="">Selecciona un cliente…</option>
+                  <option value="">{t("claimRegistrationPage.selecciona_un_cliente")}</option>
                   {clientes.map((cliente) => (
                     <option key={cliente.cliente_id} value={cliente.cliente_id}>
                       {cliente.nombre} {cliente.apellido} · {cliente.email}
@@ -246,15 +248,15 @@ export default function ClaimRegistrationPage() {
         {/* Bloque 1: selección de póliza */}
         {(!esAsesor || clienteId !== "") && (
           <>
-            <h2 className="cotizacion-subtitulo">Póliza afectada</h2>
+            <h2 className="cotizacion-subtitulo">{t("claimRegistrationPage.poliza_afectada")}</h2>
             {polizas === null && !errorCarga && (
-              <p role="status" className="home-card-vacio">Cargando pólizas…</p>
+              <p role="status" className="home-card-vacio">{t("claimRegistrationPage.cargando_polizas")}</p>
             )}
             {polizas?.length === 0 && (
               <p className="home-card-vacio">
                 {esAsesor
-                  ? "El cliente no tiene pólizas vigentes para reportar un siniestro."
-                  : "No tienes pólizas vigentes para reportar un siniestro."}
+                  ? t("claimRegistrationPage.el_cliente_no_tiene_polizas")
+                  : t("claimRegistrationPage.no_tienes_polizas_vigentes_para")}
               </p>
             )}
             {polizas && polizas.length > 0 && (
@@ -277,8 +279,8 @@ export default function ClaimRegistrationPage() {
                     <span className="siniestro-poliza-texto">
                       <strong>{poliza.nombre_ramo}</strong>
                       <small>{poliza.numero_poliza}</small>
-                      <small>Cobertura: {poliza.cobertura_principal}</small>
-                      <small>Vigente hasta {formatearFecha(poliza.fecha_fin)}</small>
+                      <small>{t("claimRegistrationPage.cobertura_cobertura_principal", { cobertura_principal: poliza.cobertura_principal })}</small>
+                      <small>{t("claimRegistrationPage.vigente_hasta_formatearfecha", { formatearFecha: formatearFecha(poliza.fecha_fin) })}</small>
                     </span>
                   </label>
                 ))}
@@ -288,17 +290,17 @@ export default function ClaimRegistrationPage() {
         )}
 
         {/* Bloque 2: datos del evento */}
-        <h2 className="cotizacion-subtitulo">Datos del evento</h2>
+        <h2 className="cotizacion-subtitulo">{t("claimRegistrationPage.datos_del_evento")}</h2>
         {polizaSeleccionada && (
-          <div className="cotizar-detalle" aria-label="Póliza seleccionada">
-            <span>Póliza seleccionada</span>
+          <div className="cotizar-detalle" aria-label={t("claimRegistrationPage.poliza_seleccionada")}>
+            <span>{t("claimRegistrationPage.poliza_seleccionada")}</span>
             <strong>{polizaSeleccionada.nombre_ramo}</strong>
             <small>{polizaSeleccionada.numero_poliza}</small>
           </div>
         )}
         <div className="cotizar-form">
           <div className="cotizar-campo">
-            <label htmlFor="fecha-evento">Fecha del evento</label>
+            <label htmlFor="fecha-evento">{t("claimRegistrationPage.fecha_del_evento")}</label>
             <input
               id="fecha-evento"
               type="date"
@@ -309,7 +311,7 @@ export default function ClaimRegistrationPage() {
             />
           </div>
           <div className="cotizar-campo">
-            <label htmlFor="hora-evento">Hora del evento</label>
+            <label htmlFor="hora-evento">{t("claimRegistrationPage.hora_del_evento")}</label>
             <input
               id="hora-evento"
               type="time"
@@ -319,18 +321,18 @@ export default function ClaimRegistrationPage() {
             />
           </div>
           <div className="cotizar-campo cotizar-campo-ancho">
-            <label htmlFor="lugar">Lugar</label>
+            <label htmlFor="lugar">{t("claimRegistrationPage.lugar")}</label>
             <input
               id="lugar"
               type="text"
               value={lugar}
               required
-              placeholder="Ej. Aeropuerto Internacional El Dorado"
+              placeholder={t("claimRegistrationPage.ej_aeropuerto_internacional_el_dorado")}
               onChange={(e) => setLugar(e.target.value)}
             />
           </div>
           <div className="cotizar-campo cotizar-campo-ancho">
-            <label htmlFor="descripcion">Descripción detallada</label>
+            <label htmlFor="descripcion">{t("claimRegistrationPage.descripcion_detallada")}</label>
             <textarea
               id="descripcion"
               value={descripcion}
@@ -338,15 +340,15 @@ export default function ClaimRegistrationPage() {
               minLength={10}
               maxLength={2000}
               rows={4}
-              placeholder="Describe lo ocurrido con el mayor detalle posible."
+              placeholder={t("claimRegistrationPage.describe_lo_ocurrido_con_el")}
               onChange={(e) => setDescripcion(e.target.value)}
             />
             <small className="cotizar-ayuda">
-              Mínimo 10 caracteres ({descripcion.trim().length}/2000).
+              {t("claimRegistrationPage.minimo_10_caracteres_length_2000", { length: descripcion.trim().length })}
             </small>
           </div>
           <div className="cotizar-campo cotizar-campo-ancho">
-            <label htmlFor="estimacion">Estimación preliminar de daños (COP)</label>
+            <label htmlFor="estimacion">{t("claimRegistrationPage.estimacion_preliminar_de_danos_cop")}</label>
             <input
               id="estimacion"
               type="number"
@@ -359,7 +361,7 @@ export default function ClaimRegistrationPage() {
               onChange={(e) => setEstimacion(e.target.value)}
             />
             <small className="cotizar-ayuda">
-              Valor informativo; no representa el monto definitivo de indemnización.
+              {t("claimRegistrationPage.valor_informativo_no_representa_el")}
             </small>
           </div>
         </div>
@@ -368,10 +370,10 @@ export default function ClaimRegistrationPage() {
 
         <div className="cotizar-acciones">
           <button type="button" className="cotizar-boton-secundario" onClick={() => navigate("/home")}>
-            Cancelar
+            {t("claimRegistrationPage.cancelar")}
           </button>
           <button type="submit" className="cotizar-boton-primario" disabled={enviando || !puedeEnviar}>
-            {enviando ? "Registrando…" : "Registrar siniestro"}
+            {enviando ? t("claimRegistrationPage.registrando") : t("claimRegistrationPage.registrar_siniestro")}
           </button>
         </div>
       </form>

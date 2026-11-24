@@ -55,6 +55,7 @@ import com.example.solventa.ui.components.SolventaPrimaryButton
 import com.example.solventa.ui.components.SolventaSecondaryButton
 import com.example.solventa.ui.theme.Navegacion
 import com.example.solventa.ui.theme.SolventaTheme
+import com.example.solventa.i18n.tr
 
 private val FondoEncabezado = Color(0xFF0F1B2D)
 private val BordeTarjeta = Color(0xFFE2E8F0)
@@ -82,7 +83,7 @@ fun CertificateScreen(
 ) {
     Surface(modifier = modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surface) {
         Column(modifier = Modifier.fillMaxSize()) {
-            Encabezado(titulo = "Pólizas", onVolver = onVolver)
+            Encabezado(titulo = tr(R.string.cancel_polizas), onVolver = onVolver)
 
             when {
                 certificado == null && cargando -> Box(
@@ -91,7 +92,7 @@ fun CertificateScreen(
                 ) {
                     CircularProgressIndicator(
                         color = Navegacion,
-                        modifier = Modifier.semantics { contentDescription = "Cargando el certificado" }
+                        modifier = Modifier.semantics { contentDescription = tr(R.string.certificate_cargando_el_certificado) }
                     )
                 }
 
@@ -103,12 +104,12 @@ fun CertificateScreen(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        text = error ?: "No pudimos cargar el certificado.",
+                        text = error ?: tr(R.string.certificate_no_pudimos_cargar_el_certificado),
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Spacer(modifier = Modifier.size(16.dp))
-                    SolventaPrimaryButton(text = "Reintentar", onClick = onReintentar)
+                    SolventaPrimaryButton(text = tr(R.string.assistance_reintentar), onClick = onReintentar)
                 }
 
                 else -> Contenido(
@@ -153,7 +154,7 @@ private fun Contenido(
         TarjetaPrincipal(certificado)
 
         val condicion = CondicionParametrica.campos(certificado.descripcionCobertura)
-        TarjetaInformativa(titulo = "Coberturas", icono = Icons.Outlined.Shield) {
+        TarjetaInformativa(titulo = tr(R.string.certificate_coberturas), icono = Icons.Outlined.Shield) {
             val suma = Formatos.dinero(certificado.sumaAsegurada, certificado.moneda)
             Text(
                 text = "${certificado.coberturaPrincipal} · Suma asegurada $suma",
@@ -177,10 +178,10 @@ private fun Contenido(
             }
         }
 
-        TarjetaInformativa(titulo = "Exclusiones principales", icono = Icons.Outlined.Info) {
+        TarjetaInformativa(titulo = tr(R.string.certificate_exclusiones_principales), icono = Icons.Outlined.Info) {
             if (certificado.exclusionesPrincipales.isEmpty()) {
                 Text(
-                    text = "No se informan exclusiones principales para esta cobertura.",
+                    text = tr(R.string.certificate_no_se_informan_exclusiones_principales),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                 )
@@ -198,7 +199,7 @@ private fun Contenido(
         }
 
         BotonAccion(
-            texto = "Ver certificado y QR",
+            texto = tr(R.string.certificate_ver_certificado_y_qr),
             icono = Icons.Outlined.Description,
             primario = true,
             onClick = { verCertificado = !verCertificado }
@@ -214,7 +215,7 @@ private fun Contenido(
         }
 
         BotonAccion(
-            texto = "Consultar movimientos",
+            texto = tr(R.string.certificate_consultar_movimientos),
             icono = Icons.Outlined.History,
             onClick = onVerHistorial
         )
@@ -222,13 +223,13 @@ private fun Contenido(
         if (certificado.activa) {
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 BotonAccion(
-                    texto = "Renovar",
+                    texto = tr(R.string.certificate_renovar),
                     icono = Icons.Outlined.Autorenew,
                     onClick = onRenovar,
                     modifier = Modifier.weight(1f)
                 )
                 BotonAccion(
-                    texto = "Cancelar",
+                    texto = tr(R.string.assistance_cancelar),
                     icono = Icons.Outlined.Cancel,
                     cancelar = true,
                     onClick = onCancelar,
@@ -254,14 +255,14 @@ private fun TarjetaPrincipal(certificado: Certificado) {
                 color = Color.White
             )
             Text(
-                text = "Póliza ${certificado.numeroPoliza} · " +
+                text = tr(R.string.certificate_poliza, certificado.numeroPoliza) +
                     Formatos.vigencia(certificado.fechaInicio, certificado.fechaFin),
                 style = MaterialTheme.typography.bodyMedium,
                 color = Color.White.copy(alpha = 0.85f)
             )
             if (!certificado.activa) {
                 Text(
-                    text = "Esta póliza ya no está vigente. El certificado se conserva como constancia.",
+                    text = tr(R.string.certificate_esta_poliza_ya_no_esta),
                     style = MaterialTheme.typography.bodyMedium,
                     color = Color.White.copy(alpha = 0.7f)
                 )
@@ -350,32 +351,32 @@ private fun SeccionCertificado(
     onVerDocumento: () -> Unit,
     onCompartir: () -> Unit
 ) {
-    Seccion("Información de la póliza") {
-        Dato("Número de póliza", certificado.numeroPoliza)
-        Dato("Titular", certificado.titular)
-        Dato("Documento", certificado.documentoTitular)
-        Dato("Vigencia", Formatos.vigencia(certificado.fechaInicio, certificado.fechaFin))
+    Seccion(tr(R.string.certificate_informacion_de_la_poliza)) {
+        Dato(tr(R.string.certificate_numero_de_poliza), certificado.numeroPoliza)
+        Dato(tr(R.string.certificate_titular), certificado.titular)
+        Dato(tr(R.string.certificate_documento), certificado.documentoTitular)
+        Dato(tr(R.string.certificate_vigencia), Formatos.vigencia(certificado.fechaInicio, certificado.fechaFin))
         certificado.emitidaEn.takeIf { it.isNotBlank() }?.let {
-            Dato("Fecha de emisión", Formatos.fechaHora(it))
+            Dato(tr(R.string.certificate_fecha_de_emision), Formatos.fechaHora(it))
         }
         certificado.primaTotal.takeIf { it.isNotBlank() }?.let {
-            Dato("Prima total", Formatos.dinero(it, certificado.moneda))
+            Dato(tr(R.string.certificate_prima_total), Formatos.dinero(it, certificado.moneda))
         }
     }
 
     SolventaPrimaryButton(
-        text = "Ver documento PDF",
+        text = tr(R.string.certificate_ver_documento_pdf),
         onClick = onVerDocumento,
         isLoading = descargandoDocumento
     )
 
     SolventaSecondaryButton(
-        text = "Compartir certificado",
+        text = tr(R.string.certificate_compartir_certificado),
         onClick = onCompartir,
         isLoading = compartiendo
     )
     Text(
-        text = "Se genera un enlace temporal: quien lo reciba verá el certificado hasta que venza.",
+        text = tr(R.string.certificate_se_genera_un_enlace_temporal),
         style = MaterialTheme.typography.labelMedium,
         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
     )
@@ -386,13 +387,13 @@ private fun SeccionCertificado(
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         Text(
-            text = "Certificado digital",
+            text = tr(R.string.certificate_certificado_digital),
             style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
             color = MaterialTheme.colorScheme.onSurface
         )
         SolventaCodigoQr(
             contenido = certificado.contenidoQr,
-            descripcion = "Código QR de la póliza ${certificado.numeroPoliza}"
+            descripcion = tr(R.string.certificate_codigo_qr_de_la_poliza, certificado.numeroPoliza)
         )
     }
 }

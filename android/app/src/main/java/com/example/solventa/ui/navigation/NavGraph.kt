@@ -90,6 +90,8 @@ import com.example.solventa.ui.screens.WalletScreen
 import com.example.solventa.ui.screens.WelcomeScreen
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
+import com.example.solventa.R
+import com.example.solventa.i18n.tr
 
 @Composable
 fun NavGraph(
@@ -251,8 +253,8 @@ fun NavGraph(
                 onBiometricClick = {
                     if (viewModel.solicitarIngresoBiometrico()) {
                         autenticador.autenticar(
-                            titulo = "Ingresa a Solventa",
-                            subtitulo = "Usa la huella o el rostro configurados en tu dispositivo",
+                            titulo = tr(R.string.nav_graph_ingresa_a_solventa),
+                            subtitulo = tr(R.string.nav_graph_usa_la_huella_o_el),
                             alExito = viewModel::ingresarConBiometria,
                             alFallo = viewModel::falloBiometrico,
                             alNoCoincidir = viewModel::huellaNoReconocida
@@ -322,7 +324,7 @@ fun NavGraph(
                     viewModel.verificarExpiracion()
                 }
                 val aviso = estadoAsesor.clienteAsociado?.let {
-                    "Cliente ${it.nombre} ${it.apellido} asociado."
+                    tr(R.string.nav_graph_cliente_asociado, it.nombre, it.apellido)
                 }
                 AdvisorHomeScreen(
                     nombre = sesion.perfil.nombre,
@@ -381,8 +383,8 @@ fun NavGraph(
                     onActivarBiometria = {
                         viewModel.prepararActivacion()
                         autenticador.autenticar(
-                            titulo = "Activa el ingreso con huella",
-                            subtitulo = "Confirma con la huella o el rostro de tu dispositivo",
+                            titulo = tr(R.string.nav_graph_activa_el_ingreso_con_huella),
+                            subtitulo = tr(R.string.nav_graph_confirma_con_la_huella_o),
                             alExito = viewModel::activarBiometria,
                             alFallo = { fallo ->
                                 val cancelado = fallo is FalloBiometrico.Cancelado ||

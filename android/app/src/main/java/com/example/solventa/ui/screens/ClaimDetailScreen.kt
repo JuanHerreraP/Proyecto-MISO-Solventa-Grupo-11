@@ -44,6 +44,8 @@ import com.example.solventa.ui.components.SolventaPrimaryButton
 import com.example.solventa.ui.theme.Navegacion
 import com.example.solventa.ui.theme.Sincronizado
 import com.example.solventa.ui.theme.SolventaTheme
+import com.example.solventa.R
+import com.example.solventa.i18n.tr
 
 /** En qué punto está cada paso del caso. */
 internal enum class AvancePaso { HECHO, EN_CURSO, PENDIENTE, RECHAZADO }
@@ -72,43 +74,43 @@ internal fun pasosDelCaso(siniestro: Siniestro): List<PasoSiniestro> {
     val avanzado = siniestro.estado != EstadoSiniestro.REGISTRADO
 
     val primero = PasoSiniestro(
-        if (automatico) "Evento detectado" else "Reporte recibido",
+        if (automatico) tr(R.string.claim_detail_evento_detectado) else tr(R.string.claim_detail_reporte_recibido),
         registrado,
         AvancePaso.HECHO
     )
     val segundo = if (automatico) {
         PasoSiniestro(
-            "Evaluación automática",
-            if (avanzado) "Evaluado según las condiciones de tu póliza" else "Se evalúa en segundos",
+            tr(R.string.claim_detail_evaluacion_automatica),
+            if (avanzado) tr(R.string.claim_detail_evaluado_segun_las_condiciones_de) else tr(R.string.claim_detail_se_evalua_en_segundos),
             if (avanzado) AvancePaso.HECHO else AvancePaso.EN_CURSO
         )
     } else {
         PasoSiniestro(
-            "Evidencias validadas",
-            if (avanzado) "Revisión completada" else "Pendiente de revisión",
+            tr(R.string.claim_detail_evidencias_validadas),
+            if (avanzado) tr(R.string.claim_detail_revision_completada) else tr(R.string.claim_detail_pendiente_de_revision),
             if (avanzado) AvancePaso.HECHO else AvancePaso.EN_CURSO
         )
     }
     val tercero = when (siniestro.estado) {
         EstadoSiniestro.REGISTRADO -> PasoSiniestro(
-            "Evaluación", "Recibirás una notificación", AvancePaso.PENDIENTE
+            tr(R.string.claim_detail_evaluacion), tr(R.string.claim_detail_recibiras_una_notificacion), AvancePaso.PENDIENTE
         )
         EstadoSiniestro.EN_EVALUACION -> PasoSiniestro(
-            "Evaluación en curso", "Recibirás una notificación", AvancePaso.EN_CURSO
+            tr(R.string.claim_detail_evaluacion_en_curso), tr(R.string.claim_detail_recibiras_una_notificacion), AvancePaso.EN_CURSO
         )
         EstadoSiniestro.APROBADO -> PasoSiniestro(
-            if (automatico) "Pago aprobado" else "Siniestro aprobado",
+            if (automatico) tr(R.string.claim_detail_pago_aprobado) else tr(R.string.claim_detail_siniestro_aprobado),
             listOfNotNull(
                 siniestro.montoAprobado?.takeIf { it.isNotBlank() }
-                    ?.let { "Monto aprobado ${Formatos.dinero(it, siniestro.moneda)}" },
+                    ?.let { tr(R.string.claim_detail_monto_aprobado, Formatos.dinero(it, siniestro.moneda)) },
                 decidido
-            ).joinToString(" · ").ifBlank { "Aprobado" },
+            ).joinToString(" · ").ifBlank { tr(R.string.claim_detail_aprobado) },
             AvancePaso.HECHO
         )
         EstadoSiniestro.RECHAZADO -> PasoSiniestro(
-            "Siniestro rechazado",
+            tr(R.string.claim_detail_siniestro_rechazado),
             listOfNotNull(siniestro.motivoRechazo?.takeIf { it.isNotBlank() }, decidido)
-                .joinToString(" · ").ifBlank { "No pudimos aprobarlo" },
+                .joinToString(" · ").ifBlank { tr(R.string.claim_detail_no_pudimos_aprobarlo) },
             AvancePaso.RECHAZADO
         )
     }
@@ -131,7 +133,7 @@ fun ClaimDetailScreen(
     Surface(modifier = modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surface) {
         Column(modifier = Modifier.fillMaxSize()) {
             Encabezado(
-                titulo = siniestro?.let { "Siniestro ${it.siniestroId}" } ?: "Detalle del siniestro",
+                titulo = siniestro?.let { tr(R.string.claim_detail_siniestro, it.siniestroId) } ?: tr(R.string.claim_detail_detalle_del_siniestro),
                 onVolver = onVolver
             )
 
@@ -143,7 +145,7 @@ fun ClaimDetailScreen(
                     CircularProgressIndicator(
                         color = Navegacion,
                         modifier = Modifier.semantics {
-                            contentDescription = "Cargando el siniestro"
+                            contentDescription = tr(R.string.claim_detail_cargando_el_siniestro)
                         }
                     )
                 }
@@ -156,12 +158,12 @@ fun ClaimDetailScreen(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        text = error ?: "No encontramos ese siniestro en tu cuenta.",
+                        text = error ?: tr(R.string.claim_detail_no_encontramos_ese_siniestro_en),
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Spacer(modifier = Modifier.size(16.dp))
-                    SolventaPrimaryButton(text = "Reintentar", onClick = onReintentar)
+                    SolventaPrimaryButton(text = tr(R.string.assistance_reintentar), onClick = onReintentar)
                 }
 
                 else -> Contenido(siniestro = siniestro, error = error)
@@ -191,7 +193,7 @@ private fun Contenido(siniestro: Siniestro, error: String?) {
             color = MaterialTheme.colorScheme.onSurface
         )
         Text(
-            text = "Póliza ${siniestro.polizaId}",
+            text = tr(R.string.claim_detail_poliza, siniestro.polizaId),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
         )
@@ -206,7 +208,7 @@ private fun Contenido(siniestro: Siniestro, error: String?) {
 
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             Text(
-                text = "Progreso del caso",
+                text = tr(R.string.claim_detail_progreso_del_caso),
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
             )
@@ -222,7 +224,7 @@ private fun Contenido(siniestro: Siniestro, error: String?) {
             trackColor = Navegacion.copy(alpha = 0.15f),
             modifier = Modifier
                 .fillMaxWidth()
-                .semantics { contentDescription = "Progreso del caso, $porcentaje por ciento" }
+                .semantics { contentDescription = tr(R.string.claim_detail_progreso_del_caso_por_ciento, porcentaje) }
         )
 
         Spacer(modifier = Modifier.size(4.dp))
@@ -232,7 +234,7 @@ private fun Contenido(siniestro: Siniestro, error: String?) {
 
 private fun tituloDelCaso(siniestro: Siniestro): String =
     siniestro.tipoSiniestro?.etiqueta
-        ?: if (siniestro.origen == OrigenSiniestro.AUTOMATICO) "Siniestro paramétrico" else "Siniestro reportado"
+        ?: if (siniestro.origen == OrigenSiniestro.AUTOMATICO) tr(R.string.claim_detail_siniestro_parametrico) else tr(R.string.claim_detail_siniestro_reportado)
 
 @Composable
 private fun TarjetaPaso(paso: PasoSiniestro) {
@@ -244,10 +246,10 @@ private fun TarjetaPaso(paso: PasoSiniestro) {
         AvancePaso.RECHAZADO -> Icons.Outlined.Cancel to Color(0xFFB00020)
     }
     val estadoTexto = when (paso.avance) {
-        AvancePaso.HECHO -> "Completado"
-        AvancePaso.EN_CURSO -> "En curso"
-        AvancePaso.PENDIENTE -> "Pendiente"
-        AvancePaso.RECHAZADO -> "Rechazado"
+        AvancePaso.HECHO -> tr(R.string.claim_detail_completado)
+        AvancePaso.EN_CURSO -> tr(R.string.claim_detail_en_curso)
+        AvancePaso.PENDIENTE -> tr(R.string.claim_detail_pendiente)
+        AvancePaso.RECHAZADO -> tr(R.string.claim_detail_rechazado)
     }
     Surface(
         shape = RoundedCornerShape(16.dp),

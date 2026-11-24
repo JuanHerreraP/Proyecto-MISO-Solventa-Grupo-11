@@ -11,20 +11,22 @@ import {
   type ClienteDeAsesor,
 } from "../services/asesor.service";
 
+import { t, localeActual } from "../i18n";
+
 const ACCIONES = [
-  { icono: "error", titulo: "Reportar un siniestro", detalle: "Registra lo ocurrido", ruta: "/siniestros/nuevo" },
-  { icono: "schedule", titulo: "Consultar estado de siniestro", detalle: "Sigue tu reclamación", ruta: null },
-  { icono: "request_quote", titulo: "Cotizar un nuevo seguro", detalle: "Viaje, vida, dispositivos y más", ruta: "/cotizar" },
+  { icono: "error", get titulo() { return t("homePage.reportar_un_siniestro"); }, get detalle() { return t("homePage.registra_lo_ocurrido"); }, ruta: "/siniestros/nuevo" },
+  { icono: "schedule", get titulo() { return t("homePage.consultar_estado_de_siniestro"); }, get detalle() { return t("homePage.sigue_tu_reclamacion"); }, ruta: null },
+  { icono: "request_quote", get titulo() { return t("homePage.cotizar_un_nuevo_seguro"); }, get detalle() { return t("homePage.viaje_vida_dispositivos_y_mas"); }, ruta: "/cotizar" },
 ] as const;
 
 const MOVIMIENTO_NOMBRE: Record<TipoMovimiento, string> = {
-  EMISION: "Emisión de póliza",
-  PAGO_PRIMA_INICIAL: "Pago de prima inicial",
-  ENDOSO: "Modificación contractual",
-  RENOVACION: "Renovación",
-  CANCELACION: "Cancelación",
-  DESEMBOLSO_INDEMNIZACION: "Pago de indemnización",
-  REEMBOLSO: "Reembolso",
+  get EMISION() { return t("homePage.emision_de_poliza"); },
+  get PAGO_PRIMA_INICIAL() { return t("homePage.pago_de_prima_inicial"); },
+  get ENDOSO() { return t("homePage.modificacion_contractual"); },
+  get RENOVACION() { return t("homePage.renovacion"); },
+  get CANCELACION() { return t("homePage.cancelacion"); },
+  get DESEMBOLSO_INDEMNIZACION() { return t("homePage.pago_de_indemnizacion"); },
+  get REEMBOLSO() { return t("homePage.reembolso"); },
 };
 
 /** Movimiento del historial junto con la póliza a la que pertenece (vista de inicio, HU25). */
@@ -39,13 +41,13 @@ function iniciales(perfil: Perfil | null): string {
 
 function formatearFecha(iso: string): string {
   const [anio, mes, dia] = iso.split("-").map(Number);
-  return new Date(anio, mes - 1, dia).toLocaleDateString("es-CO", {
+  return new Date(anio, mes - 1, dia).toLocaleDateString(localeActual(), {
     day: "numeric", month: "short", year: "numeric",
   });
 }
 
 function formatearFechaMovimiento(iso: string): string {
-  return new Date(iso).toLocaleDateString("es-CO", {
+  return new Date(iso).toLocaleDateString(localeActual(), {
     day: "numeric", month: "short", year: "numeric",
   });
 }
@@ -53,7 +55,7 @@ function formatearFechaMovimiento(iso: string): string {
 /** Monto con signo según la perspectiva del cliente; "—" si el movimiento no tiene monto. */
 function montoConSigno(movimiento: MovimientoPoliza): string {
   if (movimiento.monto === null) return "—";
-  const valor = Number(movimiento.monto).toLocaleString("es-CO", {
+  const valor = Number(movimiento.monto).toLocaleString(localeActual(), {
     style: "currency",
     currency: movimiento.moneda ?? "COP",
     maximumFractionDigits: 0,
@@ -129,55 +131,55 @@ export default function HomePage() {
     <AppLayout activo="Inicio" rol={rol}>
         <header className="home-header">
           <div>
-            <h1>{perfil?.nombre ? `Hola, ${perfil.nombre}` : "Hola"}</h1>
-            <p>Este es el resumen de tu cuenta en Solventa.</p>
+            <h1>{perfil?.nombre ? t("homePage.hola_nombre", { nombre: perfil.nombre }) : t("homePage.hola")}</h1>
+            <p>{t("homePage.este_es_el_resumen_de")}</p>
           </div>
           <div className="home-user">
-            <span className="material-symbols-outlined" aria-label="Notificaciones" role="img">notifications</span>
+            <span className="material-symbols-outlined" aria-label={t("homePage.notificaciones")} role="img">notifications</span>
             <span className="home-avatar" aria-hidden="true">{iniciales(perfil)}</span>
           </div>
         </header>
 
         {location.state?.accesoDenegado && (
-          <p role="alert" className="home-aviso">No tienes permiso para acceder a esa página.</p>
+          <p role="alert" className="home-aviso">{t("homePage.no_tienes_permiso_para_acceder")}</p>
         )}
 
-        <section className="home-cards" aria-label="Resumen">
+        <section className="home-cards" aria-label={t("homePage.resumen")}>
           <article className="home-card">
-            <h2>Póliza activa</h2>
+            <h2>{t("homePage.poliza_activa")}</h2>
             {polizaActiva ? (
               <>
                 <p className="home-card-valor">{polizaActiva.nombre_ramo}</p>
                 <p className="home-card-detalle">{polizaActiva.numero_poliza}</p>
-                <span className="home-chip home-chip-verde">Vigente hasta {formatearFecha(polizaActiva.fecha_fin)}</span>
+                <span className="home-chip home-chip-verde">{t("homePage.vigente_hasta_formatearfecha", { formatearFecha: formatearFecha(polizaActiva.fecha_fin) })}</span>
               </>
             ) : (
-              <p className="home-card-vacio">Aún no tienes pólizas activas.</p>
+              <p className="home-card-vacio">{t("homePage.aun_no_tienes_polizas_activas")}</p>
             )}
           </article>
           <article className="home-card">
-            <h2>Próximo pago</h2>
-            <p className="home-card-vacio">Sin pagos programados.</p>
+            <h2>{t("homePage.proximo_pago")}</h2>
+            <p className="home-card-vacio">{t("homePage.sin_pagos_programados")}</p>
           </article>
           <article className="home-card">
-            <h2>Siniestros abiertos</h2>
-            <p className="home-card-vacio">No tienes siniestros en curso.</p>
+            <h2>{t("homePage.siniestros_abiertos")}</h2>
+            <p className="home-card-vacio">{t("homePage.no_tienes_siniestros_en_curso")}</p>
           </article>
         </section>
 
         <div className="home-grid">
           <section className="home-panel" aria-labelledby="historial">
-            <h2 id="historial">Historial reciente</h2>
+            <h2 id="historial">{t("homePage.historial_reciente")}</h2>
             <table>
               <thead>
-                <tr><th>Fecha</th><th>Movimiento</th><th>Monto</th><th>Estado</th></tr>
+                <tr><th>{t("homePage.fecha")}</th><th>{t("homePage.movimiento")}</th><th>{t("homePage.monto")}</th><th>{t("homePage.estado")}</th></tr>
               </thead>
               <tbody>
                 {movimientos === null && (
-                  <tr><td colSpan={4} className="home-card-vacio">Cargando movimientos…</td></tr>
+                  <tr><td colSpan={4} className="home-card-vacio">{t("homePage.cargando_movimientos")}</td></tr>
                 )}
                 {movimientos !== null && movimientos.length === 0 && (
-                  <tr><td colSpan={4} className="home-card-vacio">Todavía no hay movimientos.</td></tr>
+                  <tr><td colSpan={4} className="home-card-vacio">{t("homePage.todavia_no_hay_movimientos")}</td></tr>
                 )}
                 {movimientos?.map((movimiento) => (
                   <tr
@@ -185,7 +187,7 @@ export default function HomePage() {
                     className="home-fila-clic"
                     tabIndex={0}
                     role="button"
-                    aria-label={`Ver historial de ${movimiento.nombre_ramo}`}
+                    aria-label={t("homePage.ver_historial_de_nombre_ramo", { nombre_ramo: movimiento.nombre_ramo })}
                     onClick={() =>
                       navigate(`/polizas/${encodeURIComponent(movimiento.poliza_id)}/historial`)
                     }
@@ -214,7 +216,7 @@ export default function HomePage() {
           </section>
 
           <section aria-labelledby="acciones">
-            <h2 id="acciones" className="home-acciones-titulo">Acciones rápidas</h2>
+            <h2 id="acciones" className="home-acciones-titulo">{t("homePage.acciones_rapidas")}</h2>
             <div className="home-acciones">
               {ACCIONES.map(({ icono, titulo, detalle, ruta }) => (
                 <button
@@ -222,7 +224,7 @@ export default function HomePage() {
                   type="button"
                   className="home-accion"
                   disabled={ruta === null}
-                  title={ruta === null ? "Próximamente" : undefined}
+                  title={ruta === null ? t("homePage.proximamente") : undefined}
                   onClick={ruta ? () => navigate(ruta) : undefined}
                 >
                   <span className="home-accion-icono material-symbols-outlined" aria-hidden="true">{icono}</span>
@@ -267,7 +269,7 @@ function HomeAsesor({ perfil }: { perfil: Perfil | null }) {
     try {
       const cliente = await asociarCliente(email.trim());
       setClientes((previos) => [...(previos ?? []), cliente]);
-      setExito(`Cliente ${cliente.nombre} ${cliente.apellido} asociado.`);
+      setExito(t("homePage.cliente_nombre_apellido_asociado", { nombre: cliente.nombre, apellido: cliente.apellido }));
       setEmail("");
     } catch (fallo) {
       setErrorAsociar((fallo as Error).message);
@@ -280,24 +282,24 @@ function HomeAsesor({ perfil }: { perfil: Perfil | null }) {
     <AppLayout activo="Inicio" rol="ASESOR_VENTAS">
       <header className="home-header">
         <div>
-          <h1>{perfil?.nombre ? `Hola, ${perfil.nombre}` : "Hola"}</h1>
-          <p>Gestiona tus clientes y registra siniestros en su nombre.</p>
+          <h1>{perfil?.nombre ? t("homePage.hola_nombre", { nombre: perfil.nombre }) : t("homePage.hola")}</h1>
+          <p>{t("homePage.gestiona_tus_clientes_y_registra")}</p>
         </div>
         <div className="home-user">
-          <span className="material-symbols-outlined" aria-label="Notificaciones" role="img">notifications</span>
+          <span className="material-symbols-outlined" aria-label={t("homePage.notificaciones")} role="img">notifications</span>
           <span className="home-avatar" aria-hidden="true">{iniciales(perfil)}</span>
         </div>
       </header>
 
       <div className="home-grid">
         <section className="home-panel" aria-labelledby="mis-clientes">
-          <h2 id="mis-clientes">Mis clientes</h2>
+          <h2 id="mis-clientes">{t("homePage.mis_clientes")}</h2>
           {error && <p role="alert" className="home-aviso">{error}</p>}
           {clientes === null && !error && (
-            <p role="status" className="home-card-vacio">Cargando tus clientes…</p>
+            <p role="status" className="home-card-vacio">{t("homePage.cargando_tus_clientes")}</p>
           )}
           {clientes?.length === 0 && (
-            <p className="home-card-vacio">Aún no tienes clientes asociados.</p>
+            <p className="home-card-vacio">{t("homePage.aun_no_tienes_clientes_asociados")}</p>
           )}
           {clientes && clientes.length > 0 && (
             <ul className="home-clientes">
@@ -313,7 +315,7 @@ function HomeAsesor({ perfil }: { perfil: Perfil | null }) {
                     className="cotizar-boton-secundario"
                     onClick={() => navigate("/siniestros/nuevo")}
                   >
-                    Registrar siniestro
+                    {t("homePage.registrar_siniestro")}
                   </button>
                 </li>
               ))}
@@ -322,10 +324,10 @@ function HomeAsesor({ perfil }: { perfil: Perfil | null }) {
         </section>
 
         <section aria-labelledby="asociar">
-          <h2 id="asociar" className="home-acciones-titulo">Asociar un cliente</h2>
-          <form onSubmit={asociar} className="home-panel" aria-label="Asociar cliente">
+          <h2 id="asociar" className="home-acciones-titulo">{t("homePage.asociar_un_cliente")}</h2>
+          <form onSubmit={asociar} className="home-panel" aria-label={t("homePage.asociar_cliente")}>
             <div className="cotizar-campo cotizar-campo-ancho">
-              <label htmlFor="email-cliente">Correo del cliente</label>
+              <label htmlFor="email-cliente">{t("homePage.correo_del_cliente")}</label>
               <input
                 id="email-cliente"
                 type="email"
@@ -343,7 +345,7 @@ function HomeAsesor({ perfil }: { perfil: Perfil | null }) {
                 className="cotizar-boton-primario"
                 disabled={asociando || email.trim() === ""}
               >
-                {asociando ? "Asociando…" : "Asociar cliente"}
+                {asociando ? t("homePage.asociando") : t("homePage.asociar_cliente")}
               </button>
             </div>
           </form>

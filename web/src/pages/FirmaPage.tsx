@@ -13,14 +13,16 @@ import {
 import { descargarDocumentoPoliza } from "../services/poliza-documento.service";
 import "../styles/firma.css";
 
+import { localeActual, t } from "../i18n";
+
 function moneda(valor: string, codigo: string): string {
-  return Number(valor).toLocaleString("es-CO", {
+  return Number(valor).toLocaleString(localeActual(), {
     style: "currency", currency: codigo, maximumFractionDigits: 0,
   });
 }
 
 function fechaHora(iso: string): string {
-  return new Date(iso).toLocaleString("es-CO", {
+  return new Date(iso).toLocaleString(localeActual(), {
     day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit",
   });
 }
@@ -31,8 +33,8 @@ function etiqueta(campo: string): string {
 }
 
 function valorRiesgo(valor: unknown): string {
-  if (typeof valor === "number") return valor.toLocaleString("es-CO");
-  if (typeof valor === "boolean") return valor ? "Sí" : "No";
+  if (typeof valor === "number") return valor.toLocaleString(localeActual());
+  if (typeof valor === "boolean") return valor ? t("firmaPage.si") : t("firmaPage.no");
   if (valor === null || valor === undefined) return "—";
   return typeof valor === "object" ? JSON.stringify(valor) : String(valor);
 }
@@ -42,8 +44,8 @@ function segundosHasta(iso: string | null, ahora: number): number {
   return Math.max(0, Math.ceil((new Date(iso).getTime() - ahora) / 1000));
 }
 
-function Fila({ t, children }: { t: string; children: ReactNode }) {
-  return <div className="firma-fila"><dt>{t}</dt><dd>{children}</dd></div>;
+function Fila({ etiqueta, children }: { etiqueta: string; children: ReactNode }) {
+  return <div className="firma-fila"><dt>{etiqueta}</dt><dd>{children}</dd></div>;
 }
 
 function Contrato({ proceso }: { proceso: ProcesoFirma }) {
@@ -52,43 +54,43 @@ function Contrato({ proceso }: { proceso: ProcesoFirma }) {
   return (
     <article className="firma-documento" aria-labelledby="titulo-contrato">
       <header>
-        <h2 id="titulo-contrato">Contrato de seguro — condiciones particulares</h2>
-        <p>{contrato.nombre_ramo} · Cotización {contrato.cotizacion_id}</p>
+        <h2 id="titulo-contrato">{t("firmaPage.contrato_de_seguro_condiciones_particulares")}</h2>
+        <p>{t("firmaPage.nombre_ramo_cotizacion_cotizacion_id", { nombre_ramo: contrato.nombre_ramo, cotizacion_id: contrato.cotizacion_id })}</p>
       </header>
       <section>
-        <h3>Tomador y asegurado</h3>
+        <h3>{t("firmaPage.tomador_y_asegurado")}</h3>
         <dl>
-          <Fila t="Nombre">{contrato.titular.nombre_completo}</Fila>
-          <Fila t="Documento">{contrato.titular.tipo_documento} {contrato.titular.numero_documento}</Fila>
-          <Fila t="Correo">{contrato.titular.email}</Fila>
+          <Fila etiqueta={t("firmaPage.nombre")}>{contrato.titular.nombre_completo}</Fila>
+          <Fila etiqueta={t("firmaPage.documento")}>{contrato.titular.tipo_documento} {contrato.titular.numero_documento}</Fila>
+          <Fila etiqueta={t("firmaPage.correo")}>{contrato.titular.email}</Fila>
         </dl>
       </section>
       <section>
-        <h3>Cobertura</h3>
+        <h3>{t("firmaPage.cobertura")}</h3>
         <dl>
-          <Fila t="Amparo principal">{contrato.cobertura_principal.nombre}</Fila>
-          <Fila t="Suma asegurada">{moneda(contrato.cobertura_principal.suma_asegurada, contrato.moneda)}</Fila>
+          <Fila etiqueta={t("firmaPage.amparo_principal")}>{contrato.cobertura_principal.nombre}</Fila>
+          <Fila etiqueta={t("firmaPage.suma_asegurada")}>{moneda(contrato.cobertura_principal.suma_asegurada, contrato.moneda)}</Fila>
           {riesgo.map(([campo, valor]) => (
-            <Fila key={campo} t={etiqueta(campo)}>{valorRiesgo(valor)}</Fila>
+            <Fila key={campo} etiqueta={etiqueta(campo)}>{valorRiesgo(valor)}</Fila>
           ))}
         </dl>
       </section>
       <section>
-        <h3>Prima</h3>
+        <h3>{t("firmaPage.prima")}</h3>
         <dl>
-          <Fila t="Prima total">{moneda(contrato.prima_total, contrato.moneda)}</Fila>
-          <Fila t="Pagada el">{fechaHora(contrato.fecha_pago)}</Fila>
-          <Fila t="Referencia del pago">{contrato.referencia_pago ?? contrato.pago_id}</Fila>
+          <Fila etiqueta={t("firmaPage.prima_total")}>{moneda(contrato.prima_total, contrato.moneda)}</Fila>
+          <Fila etiqueta={t("firmaPage.pagada_el")}>{fechaHora(contrato.fecha_pago)}</Fila>
+          <Fila etiqueta={t("firmaPage.referencia_del_pago")}>{contrato.referencia_pago ?? contrato.pago_id}</Fila>
         </dl>
       </section>
       <section>
-        <h3>Cláusulas</h3>
+        <h3>{t("firmaPage.clausulas")}</h3>
         <ol className="firma-clausulas">
           {contrato.clausulas.map((clausula) => <li key={clausula}>{clausula}</li>)}
         </ol>
       </section>
       <footer className="firma-huella">
-        Huella del documento (SHA-256): <code>{proceso.huella_documento}</code>
+        {t("firmaPage.huella_del_documento_sha_256")} <code>{proceso.huella_documento}</code>
       </footer>
     </article>
   );
@@ -97,14 +99,14 @@ function Contrato({ proceso }: { proceso: ProcesoFirma }) {
 function Resumen({ proceso }: { proceso: ProcesoFirma }) {
   const { contrato } = proceso;
   return (
-    <aside className="firma-resumen" aria-label="Resumen">
-      <small>Resumen</small>
+    <aside className="firma-resumen" aria-label={t("firmaPage.resumen")}>
+      <small>{t("firmaPage.resumen")}</small>
       <strong>{contrato.nombre_ramo}</strong>
       <p className="firma-resumen-valor">{moneda(contrato.prima_total, contrato.moneda)}</p>
       <dl>
-        <Fila t="Suma asegurada">{moneda(contrato.cobertura_principal.suma_asegurada, contrato.moneda)}</Fila>
-        <Fila t="Pago"><span className="firma-ok">Aprobado</span></Fila>
-        <Fila t="Firma">{proceso.estado === "FIRMADA" ? "Firmada" : proceso.estado === "BLOQUEADA" ? "Bloqueada" : "Pendiente"}</Fila>
+        <Fila etiqueta={t("firmaPage.suma_asegurada")}>{moneda(contrato.cobertura_principal.suma_asegurada, contrato.moneda)}</Fila>
+        <Fila etiqueta={t("firmaPage.pago")}><span className="firma-ok">{t("firmaPage.aprobado")}</span></Fila>
+        <Fila etiqueta={t("firmaPage.firma")}>{proceso.estado === "FIRMADA" ? t("firmaPage.firmada") : proceso.estado === "BLOQUEADA" ? t("firmaPage.bloqueada") : t("firmaPage.pendiente")}</Fila>
       </dl>
     </aside>
   );
@@ -150,8 +152,8 @@ export default function FirmaPage() {
       <AppLayout activo="Pagos" rol={rol}>
         <header className="home-header firma-cabecera">
           <div>
-            <h1>No podemos mostrar el contrato</h1>
-            <p>Revisa el estado del pago antes de firmar.</p>
+            <h1>{t("firmaPage.no_podemos_mostrar_el_contrato")}</h1>
+            <p>{t("firmaPage.revisa_el_estado_del_pago")}</p>
           </div>
         </header>
         <section className="home-panel firma-panel">
@@ -163,7 +165,7 @@ export default function FirmaPage() {
   if (!proceso) {
     return (
       <AppLayout activo="Pagos" rol={rol}>
-        <p role="status" className="home-card-vacio">Cargando contrato…</p>
+        <p role="status" className="home-card-vacio">{t("firmaPage.cargando_contrato")}</p>
       </AppLayout>
     );
   }
@@ -225,7 +227,7 @@ export default function FirmaPage() {
           setProceso({ ...proceso!, intentos_restantes: fallo.intentosRestantes });
         }
         const restantes = fallo.codigo === "OTP_INCORRECTO" && fallo.intentosRestantes
-          ? ` Te quedan ${fallo.intentosRestantes} intentos.` : "";
+          ? t("firmaPage.te_quedan_intentosrestantes_intentos", { intentosRestantes: fallo.intentosRestantes }) : "";
         setAviso(error.message + restantes);
       } else {
         setAviso(error.message);
@@ -240,13 +242,13 @@ export default function FirmaPage() {
     <AppLayout activo="Pagos" rol={rol}>
       <header className="home-header firma-cabecera">
         <div>
-          <h1>{proceso.estado === "FIRMADA" ? "Contrato firmado" : "Firma tu contrato"}</h1>
+          <h1>{proceso.estado === "FIRMADA" ? t("firmaPage.contrato_firmado") : t("firmaPage.firma_tu_contrato")}</h1>
           <p>
             {proceso.estado === "FIRMADA"
               ? proceso.poliza_id
-                ? "Tu firma quedó registrada y tu póliza ya fue emitida."
-                : "Tu firma quedó registrada. Estamos emitiendo tu póliza."
-              : "Revisa las condiciones de tu seguro y fírmalas con el código que te enviamos."}
+                ? t("firmaPage.tu_firma_quedo_registrada_y")
+                : t("firmaPage.tu_firma_quedo_registrada_estamos")
+              : t("firmaPage.revisa_las_condiciones_de_tu")}
           </p>
         </div>
       </header>
@@ -255,29 +257,29 @@ export default function FirmaPage() {
 
           {!proceso.documento_integro && (
             <p role="alert" className="firma-alerta">
-              El contrato no coincide con su huella. No lo firmes y comunícate con tu asesor.
+              {t("firmaPage.el_contrato_no_coincide_con")}
             </p>
           )}
 
           <Contrato proceso={proceso} />
 
           {proceso.estado === "FIRMADA" && (
-            <section className="firma-tarjeta firma-exito" aria-label="Firma registrada">
+            <section className="firma-tarjeta firma-exito" aria-label={t("firmaPage.firma_registrada")}>
               <span className="material-symbols-outlined" aria-hidden="true">verified</span>
               <div>
-                <strong>Firmado el {fechaHora(proceso.firmado_en!)}</strong>
-                <small>Referencia de la firma: {proceso.referencia_proveedor}</small>
+                <strong>{t("firmaPage.firmado_el_fechahora", { fechaHora: fechaHora(proceso.firmado_en!) })}</strong>
+                <small>{t("firmaPage.referencia_de_la_firma_referencia", { referencia_proveedor: proceso.referencia_proveedor })}</small>
               </div>
             </section>
           )}
 
           {proceso.estado === "FIRMADA" && proceso.poliza_id && (
-            <section className="firma-tarjeta firma-exito firma-poliza" aria-label="Póliza emitida">
+            <section className="firma-tarjeta firma-exito firma-poliza" aria-label={t("firmaPage.poliza_emitida")}>
               <span className="material-symbols-outlined" aria-hidden="true">task_alt</span>
               <div>
-                <strong>¡Tu póliza fue emitida!</strong>
+                <strong>{t("firmaPage.tu_poliza_fue_emitida")}</strong>
                 <small>
-                  Te enviaremos un correo a {proceso.contrato.titular.email} con el documento adjunto.
+                  {t("firmaPage.te_enviaremos_un_correo_a", { email: proceso.contrato.titular.email })}
                 </small>
               </div>
               <div className="firma-poliza-acciones">
@@ -287,7 +289,7 @@ export default function FirmaPage() {
                   onClick={() => void descargarPoliza()}
                   disabled={descargando}
                 >
-                  {descargando ? "Descargando…" : "Descargar póliza (PDF)"}
+                  {descargando ? t("firmaPage.descargando") : t("firmaPage.descargar_poliza_pdf")}
                   <span className="material-symbols-outlined" aria-hidden="true">download</span>
                 </button>
                 <button
@@ -295,7 +297,7 @@ export default function FirmaPage() {
                   className="firma-boton-primario"
                   onClick={() => navigate("/polizas")}
                 >
-                  Finalizar e ir a mis pólizas
+                  {t("firmaPage.finalizar_e_ir_a_mis")}
                   <span className="material-symbols-outlined" aria-hidden="true">arrow_forward</span>
                 </button>
               </div>
@@ -303,14 +305,14 @@ export default function FirmaPage() {
           )}
 
           {proceso.estado === "FIRMADA" && !proceso.poliza_id && (
-            <section className="firma-tarjeta firma-poliza" aria-label="Póliza en preparación">
+            <section className="firma-tarjeta firma-poliza" aria-label={t("firmaPage.poliza_en_preparacion")}>
               <span className="material-symbols-outlined firma-icono" aria-hidden="true">hourglass_top</span>
               <div>
-                <strong>Estamos preparando tu póliza</strong>
-                <small>Puede tardar unos segundos.</small>
+                <strong>{t("firmaPage.estamos_preparando_tu_poliza")}</strong>
+                <small>{t("firmaPage.puede_tardar_unos_segundos")}</small>
               </div>
               <button type="button" className="firma-boton-secundario" onClick={() => void actualizarPoliza()}>
-                Actualizar
+                {t("firmaPage.actualizar")}
               </button>
             </section>
           )}
@@ -319,7 +321,7 @@ export default function FirmaPage() {
 
           {proceso.estado === "BLOQUEADA" && (
             <p role="alert" className="firma-alerta">
-              La firma se bloqueó por intentos fallidos. Comunícate con tu asesor para continuar.
+              {t("firmaPage.la_firma_se_bloqueo_por")}
             </p>
           )}
 
@@ -327,25 +329,25 @@ export default function FirmaPage() {
             <section className="firma-tarjeta" aria-labelledby="titulo-firma">
               <span className="material-symbols-outlined firma-icono" aria-hidden="true">signature</span>
               <div className="firma-tarjeta-cuerpo">
-                <h2 id="titulo-firma">Firma electrónica del contrato</h2>
+                <h2 id="titulo-firma">{t("firmaPage.firma_electronica_del_contrato")}</h2>
                 <label className="firma-autoriza">
                   <input
                     type="checkbox"
                     checked={autoriza}
                     onChange={(evento) => setAutoriza(evento.target.checked)}
                   />
-                  Leí el contrato y autorizo su firma electrónica, con validez legal equivalente a la firma manuscrita.
+                  {t("firmaPage.lei_el_contrato_y_autorizo")}
                 </label>
 
                 <fieldset className="firma-canal" disabled={!autoriza || enviando}>
-                  <legend>Enviar el código por</legend>
+                  <legend>{t("firmaPage.enviar_el_codigo_por")}</legend>
                   <label>
                     <input type="radio" name="canal" checked={canal === "SMS"} onChange={() => setCanal("SMS")} />
-                    SMS al celular
+                    {t("firmaPage.sms_al_celular")}
                   </label>
                   <label>
                     <input type="radio" name="canal" checked={canal === "EMAIL"} onChange={() => setCanal("EMAIL")} />
-                    Correo electrónico
+                    {t("firmaPage.correo_electronico")}
                   </label>
                   <button
                     type="button"
@@ -353,7 +355,7 @@ export default function FirmaPage() {
                     onClick={() => void enviarCodigo()}
                     disabled={espera > 0 || proceso.envios_restantes === 0}
                   >
-                    {proceso.otp_destino ? "Reenviar código" : "Enviar código"}
+                    {proceso.otp_destino ? t("firmaPage.reenviar_codigo") : t("firmaPage.enviar_codigo")}
                     {espera > 0 && ` (${espera} s)`}
                   </button>
                 </fieldset>
@@ -361,11 +363,13 @@ export default function FirmaPage() {
                 {codigoEnviado && (
                   <form className="firma-codigo" onSubmit={(evento) => void firmar(evento)}>
                     <p role="status">
-                      Enviamos un código a {proceso.otp_destino}.
-                      {proceso.otp_expira_en && ` Es válido hasta las ${new Date(proceso.otp_expira_en)
-                        .toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit" })}`}
+                      {t("firmaPage.enviamos_un_codigo", { otp_destino: proceso.otp_destino })}
+                      {proceso.otp_expira_en && t("firmaPage.valido_hasta", {
+                        hora: new Date(proceso.otp_expira_en)
+                          .toLocaleTimeString(localeActual(), { hour: "2-digit", minute: "2-digit" }),
+                      })}
                     </p>
-                    <label htmlFor="codigo-otp">Código de verificación</label>
+                    <label htmlFor="codigo-otp">{t("firmaPage.codigo_de_verificacion")}</label>
                     <input
                       id="codigo-otp"
                       inputMode="numeric"
@@ -379,7 +383,7 @@ export default function FirmaPage() {
                       className="firma-boton-primario"
                       disabled={codigo.length !== 6 || enviando || !proceso.documento_integro}
                     >
-                      Firmar contrato
+                      {t("firmaPage.firmar_contrato")}
                       <span className="material-symbols-outlined" aria-hidden="true">arrow_forward</span>
                     </button>
                   </form>

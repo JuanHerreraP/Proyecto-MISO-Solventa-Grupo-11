@@ -1,5 +1,7 @@
 import { fetchAutenticado } from "./session";
 
+import { t } from "../i18n";
+
 const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:8000";
 
 function nombreDeArchivo(respuesta: Response, polizaId: string): string {
@@ -21,7 +23,7 @@ export async function descargarDocumentoPoliza(polizaId: string): Promise<void> 
     const mensaje =
       detalle && typeof detalle === "object" && typeof detalle.mensaje === "string"
         ? detalle.mensaje
-        : "No fue posible descargar la póliza.";
+        : t("polizaDocumentoService.no_fue_posible_descargar_la");
     throw new Error(mensaje);
   }
 

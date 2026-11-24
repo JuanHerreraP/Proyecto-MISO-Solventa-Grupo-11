@@ -46,7 +46,9 @@ import com.example.solventa.ui.theme.Avance
 import com.example.solventa.ui.theme.Navegacion
 import com.example.solventa.ui.theme.SolventaTheme
 import java.text.NumberFormat
-import java.util.Locale
+import com.example.solventa.R
+import com.example.solventa.i18n.Idioma
+import com.example.solventa.i18n.tr
 
 @Composable
 fun QuotesScreen(
@@ -78,34 +80,34 @@ fun QuotesScreen(
         }
     ) { paddingValues ->
         Column(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
-            Encabezado(titulo = "Cotizaciones", onVolver = onVolver)
+            Encabezado(titulo = tr(R.string.quotes_cotizaciones), onVolver = onVolver)
             when {
                 cotizaciones.isEmpty() && cargando -> EstadoCentrado {
                     CircularProgressIndicator(
                         color = Navegacion,
                         modifier = Modifier.semantics {
-                            contentDescription = "Cargando tus cotizaciones"
+                            contentDescription = tr(R.string.quotes_cargando_tus_cotizaciones)
                         }
                     )
                 }
                 cotizaciones.isEmpty() && error != null -> EstadoCentrado {
                     Text(error, style = MaterialTheme.typography.bodyLarge)
                     Spacer(modifier = Modifier.size(16.dp))
-                    SolventaPrimaryButton(text = "Reintentar", onClick = onReintentar)
+                    SolventaPrimaryButton(text = tr(R.string.assistance_reintentar), onClick = onReintentar)
                 }
                 cotizaciones.isEmpty() -> EstadoCentrado {
                     Text(
-                        text = "Aún no tienes cotizaciones",
+                        text = tr(R.string.quotes_aun_no_tienes_cotizaciones),
                         style = MaterialTheme.typography.titleMedium
                     )
                     Spacer(modifier = Modifier.size(8.dp))
                     Text(
-                        text = "Las cotizaciones que calcules aparecerán aquí.",
+                        text = tr(R.string.quotes_las_cotizaciones_que_calcules_apareceran),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                     )
                     Spacer(modifier = Modifier.size(20.dp))
-                    SolventaPrimaryButton(text = "Crear cotización", onClick = onCrearCotizacion)
+                    SolventaPrimaryButton(text = tr(R.string.quotes_crear_cotizacion), onClick = onCrearCotizacion)
                 }
                 else -> ListaCotizaciones(cotizaciones, error, onVerCotizacion, onCrearCotizacion)
             }
@@ -126,9 +128,9 @@ private fun ListaCotizaciones(
     ) {
         item {
             Column(modifier = Modifier.padding(top = 12.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                SolventaPrimaryButton(text = "Crear cotización", onClick = onCrearCotizacion)
+                SolventaPrimaryButton(text = tr(R.string.quotes_crear_cotizacion), onClick = onCrearCotizacion)
                 Text(
-                    text = "Cotizaciones recientes",
+                    text = tr(R.string.quotes_cotizaciones_recientes),
                     style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                 )
@@ -151,7 +153,7 @@ private fun TarjetaCotizacion(cotizacion: ResultadoCotizacion, onClick: () -> Un
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f)),
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(role = Role.Button, onClickLabel = "Ver cotización", onClick = onClick)
+            .clickable(role = Role.Button, onClickLabel = tr(R.string.quotes_ver_cotizacion), onClick = onClick)
     ) {
         Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -175,7 +177,7 @@ private fun TarjetaCotizacion(cotizacion: ResultadoCotizacion, onClick: () -> Un
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                 )
                 Text(
-                    text = "Referencia ${cotizacion.cotizacionId}",
+                    text = tr(R.string.quotes_referencia, cotizacion.cotizacionId),
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f)
                 )
@@ -216,14 +218,14 @@ private fun EstadoCentrado(contenido: @Composable () -> Unit) {
 }
 
 private fun nombreRamo(ramo: RamoCotizacion): String = when (ramo) {
-    RamoCotizacion.VIAJE -> "Seguro de viaje"
-    RamoCotizacion.DISPOSITIVOS -> "Protección de dispositivos"
-    RamoCotizacion.VIDA -> "Seguro de vida"
-    RamoCotizacion.PARAMETRICO -> "Seguro paramétrico"
+    RamoCotizacion.VIAJE -> tr(R.string.quote_form_seguro_de_viaje)
+    RamoCotizacion.DISPOSITIVOS -> tr(R.string.quote_form_proteccion_de_dispositivos)
+    RamoCotizacion.VIDA -> tr(R.string.quote_form_seguro_de_vida)
+    RamoCotizacion.PARAMETRICO -> tr(R.string.quote_form_seguro_parametrico)
 }
 
 private fun moneda(cotizacion: ResultadoCotizacion): String {
-    val formato = NumberFormat.getCurrencyInstance(Locale.forLanguageTag("es-CO")).apply {
+    val formato = NumberFormat.getCurrencyInstance(Idioma.locale()).apply {
         maximumFractionDigits = 0
     }
     return "${formato.format(cotizacion.primaTotal)} ${cotizacion.moneda}"

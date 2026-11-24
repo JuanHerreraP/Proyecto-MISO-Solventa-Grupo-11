@@ -2,9 +2,11 @@ import type { Desembolso } from "../../services/desembolsos.service";
 import { ESTADOS_DESEMBOLSO, formatearMonto } from "./formato";
 import "../../styles/desembolsos.css";
 
+import { t } from "../../i18n";
+
 const MOTIVOS: Record<string, string> = {
-  RED_NO_DISPONIBLE: "La red de pagos no respondió; se reintentará.",
-  CUENTA_INEXISTENTE: "El banco rechazó la cuenta registrada.",
+  get RED_NO_DISPONIBLE() { return t("detalleDesembolso.la_red_de_pagos_no"); },
+  get CUENTA_INEXISTENTE() { return t("detalleDesembolso.el_banco_rechazo_la_cuenta"); },
 };
 
 type Props = { desembolso: Desembolso };
@@ -13,8 +15,8 @@ type Props = { desembolso: Desembolso };
 export default function DetalleDesembolso({ desembolso }: Props) {
   const porCodigo = desembolso.medio === "CODIGO_RETIRO";
   return (
-    <div className="cotizar-detalle" aria-label="Indemnización">
-      <span>Indemnización</span>
+    <div className="cotizar-detalle" aria-label={t("detalleDesembolso.indemnizacion")}>
+      <span>{t("detalleDesembolso.indemnizacion")}</span>
       <strong>
         {formatearMonto(desembolso.monto, desembolso.moneda)}{" "}
         <span className={`home-chip desembolso-chip-${desembolso.estado}`}>
@@ -22,13 +24,13 @@ export default function DetalleDesembolso({ desembolso }: Props) {
         </span>
       </strong>
       <small>
-        {porCodigo ? "Código de retiro" : `Transferencia a ${desembolso.destino ?? "tu cuenta"}`}
-        {desembolso.referencia_transaccion && ` · Transacción ${desembolso.referencia_transaccion}`}
+        {porCodigo ? t("detalleDesembolso.codigo_de_retiro") : t("detalleDesembolso.transferencia_a_valor", { valor: desembolso.destino ?? "tu cuenta" })}
+        {desembolso.referencia_transaccion && t("detalleDesembolso.transaccion_referencia_transaccion", { referencia_transaccion: desembolso.referencia_transaccion })}
       </small>
       {porCodigo && desembolso.codigo_retiro && desembolso.estado === "COMPLETADA" && (
         <>
-          <small>Retira el dinero con este código y tu documento:</small>
-          <strong className="desembolso-codigo" aria-label="Código de retiro">
+          <small>{t("detalleDesembolso.retira_el_dinero_con_este")}</small>
+          <strong className="desembolso-codigo" aria-label={t("detalleDesembolso.codigo_de_retiro")}>
             {desembolso.codigo_retiro}
           </strong>
         </>

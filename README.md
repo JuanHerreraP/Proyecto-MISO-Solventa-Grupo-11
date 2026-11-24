@@ -162,6 +162,7 @@ curl -X POST http://localhost:8004/simulate/flight-delay \
 
 ## Funcionalidades
 
+- [Internacionalización y localización: español e inglés en web y Android](docs/internacionalizacion.md)
 - [Registro, onboarding seguro y autenticación basada en tokens (HU19)](docs/identidad-autenticacion.md)
 - [Enriquecimiento del perfil con Open Finance y Open Data (HU10)](docs/enriquecimiento.md)
 - [Perfil de riesgo individualizado y pricing (HU11)](docs/perfil-de-riesgo.md)

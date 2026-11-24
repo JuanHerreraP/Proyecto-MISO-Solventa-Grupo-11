@@ -36,7 +36,13 @@ import AsesorRegistrationPage from "./pages/AsesorRegistrationPage";
 import AuditorRegistrationPage from "./pages/AuditorRegistrationPage";
 import ProfilePage from "./pages/ProfilePage";
 
+import { useTranslation } from "react-i18next";
+
+import { t } from "./i18n";
+
 function App() {
+  // Suscribe la aplicación al idioma activo: al cambiarlo, toda la interfaz se vuelve a pintar.
+  useTranslation();
   const navigate = useNavigate();
   const [sesionLista, setSesionLista] = useState(false);
   useEffect(() => {
@@ -53,7 +59,7 @@ function App() {
       window.removeEventListener("sesion-expirada", expirada);
     };
   }, [navigate]);
-  if (!sesionLista) return <p role="status">Cargando sesión…</p>;
+  if (!sesionLista) return <p role="status">{t("app.cargando_sesion")}</p>;
   return (
     <Routes>
       <Route

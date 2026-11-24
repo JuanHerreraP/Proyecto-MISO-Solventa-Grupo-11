@@ -1,3 +1,4 @@
+import { t } from "../i18n";
 const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:8000";
 
 // El navegador administra las cookies HttpOnly. JavaScript solo recibe el reto CSRF.
@@ -5,9 +6,9 @@ export async function postSesionWeb(operacion: "login" | "refresh" | "logout", d
   const reto = await fetch(`${API_URL}/api/v1/auth/web/csrf`, {
     credentials: "include", cache: "no-store",
   });
-  if (!reto.ok) throw new Error("No fue posible validar la sesión web.");
+  if (!reto.ok) throw new Error(t("webSession.no_fue_posible_validar_la"));
   const { csrf_token: csrf } = await reto.json();
-  if (typeof csrf !== "string" || !csrf) throw new Error("Reto CSRF inválido.");
+  if (typeof csrf !== "string" || !csrf) throw new Error(t("webSession.reto_csrf_invalido"));
   return fetch(`${API_URL}/api/v1/auth/web/${operacion}`, {
     method: "POST", credentials: "include", cache: "no-store",
     headers: { "Content-Type": "application/json", "X-CSRF-Token": csrf },

@@ -29,13 +29,15 @@ import com.example.solventa.ui.theme.Avance
 import com.example.solventa.ui.theme.Offline
 import com.example.solventa.ui.theme.Sincronizado
 import kotlinx.coroutines.delay
+import com.example.solventa.R
+import com.example.solventa.i18n.tr
 
 @Composable
 internal fun SyncStatusBanner(
     sinConexion: Boolean,
     ultimaSincronizacionMs: Long?,
-    textoSinConexion: String = "Datos disponibles sin conexión",
-    textoSincronizado: String = "Actualizado",
+    textoSinConexion: String = tr(R.string.sync_status_banner_datos_disponibles_sin_conexion),
+    textoSincronizado: String = tr(R.string.sync_status_banner_actualizado),
     modifier: Modifier = Modifier
 ) {
     if (!sinConexion && ultimaSincronizacionMs == null) return
@@ -85,9 +87,9 @@ internal fun InlineSyncStatus(
     val ahoraMs = rememberAhoraSincronizacion(ultimaSincronizacionMs)
     val color = if (sinConexion) Atencion else Avance
     val texto = if (sinConexion) {
-        "Sin conexión · Mostrando datos guardados"
+        tr(R.string.sync_status_banner_sin_conexion_mostrando_datos_guardados)
     } else {
-        "Actualizado ${tiempoTranscurrido(ultimaSincronizacionMs!!, ahoraMs)}"
+        tr(R.string.sync_status_banner_actualizado_2, tiempoTranscurrido(ultimaSincronizacionMs!!, ahoraMs))
     }
 
     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -123,11 +125,11 @@ internal fun tiempoTranscurrido(
 ): String {
     val minutos = ((ahoraMs - instanteMs).coerceAtLeast(0L) / 60_000L)
     return when {
-        minutos < 1 -> "ahora"
-        minutos < 60 -> "hace $minutos min"
-        minutos < 120 -> "hace 1 h"
-        minutos < 1_440 -> "hace ${minutos / 60} h"
-        minutos < 2_880 -> "hace 1 día"
-        else -> "hace ${minutos / 1_440} días"
+        minutos < 1 -> tr(R.string.sync_status_banner_ahora)
+        minutos < 60 -> tr(R.string.sync_status_banner_hace_min, minutos)
+        minutos < 120 -> tr(R.string.sync_status_banner_hace_1_h)
+        minutos < 1_440 -> tr(R.string.sync_status_banner_hace_h, minutos / 60)
+        minutos < 2_880 -> tr(R.string.sync_status_banner_hace_1_dia)
+        else -> tr(R.string.sync_status_banner_hace_dias, minutos / 1_440)
     }
 }

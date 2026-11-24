@@ -38,6 +38,8 @@ import com.example.solventa.ui.components.SolventaSecondaryButton
 import com.example.solventa.ui.theme.Atencion
 import com.example.solventa.ui.theme.Navegacion
 import com.example.solventa.ui.theme.SolventaTheme
+import com.example.solventa.R
+import com.example.solventa.i18n.tr
 
 /** Renovación de una póliza: nueva vigencia, coberturas y prima recalculada (HU22 / BPM-35). */
 @Composable
@@ -54,7 +56,7 @@ fun RenewalScreen(
 ) {
     Surface(modifier = modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surface) {
         Column(modifier = Modifier.fillMaxSize()) {
-            Encabezado(titulo = "Pólizas", onVolver = onVolver)
+            Encabezado(titulo = tr(R.string.cancel_polizas), onVolver = onVolver)
 
             when {
                 propuesta == null && cargando -> Box(
@@ -64,7 +66,7 @@ fun RenewalScreen(
                     CircularProgressIndicator(
                         color = Navegacion,
                         modifier = Modifier.semantics {
-                            contentDescription = "Cargando las condiciones de la renovación"
+                            contentDescription = tr(R.string.renewal_cargando_las_condiciones_de_la)
                         }
                     )
                 }
@@ -77,12 +79,12 @@ fun RenewalScreen(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        text = error ?: "No pudimos cargar la renovación.",
+                        text = error ?: tr(R.string.renewal_no_pudimos_cargar_la_renovacion),
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Spacer(modifier = Modifier.size(16.dp))
-                    SolventaPrimaryButton(text = "Reintentar", onClick = onReintentar)
+                    SolventaPrimaryButton(text = tr(R.string.assistance_reintentar), onClick = onReintentar)
                 }
 
                 else -> Contenido(
@@ -115,12 +117,12 @@ private fun Contenido(
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Text(
-                text = "Continúa protegido",
+                text = tr(R.string.renewal_continua_protegido),
                 style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
                 color = MaterialTheme.colorScheme.onSurface
             )
             Text(
-                text = "Revisa las condiciones de la nueva vigencia.",
+                text = tr(R.string.renewal_revisa_las_condiciones_de_la),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
             )
@@ -138,10 +140,10 @@ private fun Contenido(
                     modifier = Modifier.padding(16.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Titulo("Nueva vigencia")
+                    Titulo(tr(R.string.renewal_nueva_vigencia))
                     Detalle(Formatos.vigencia(vigencia.inicio, vigencia.fin))
                     Spacer(modifier = Modifier.size(2.dp))
-                    Titulo("Coberturas")
+                    Titulo(tr(R.string.certificate_coberturas))
                     Detalle(propuesta.coberturas.joinToString(", ") { it.nombre })
                 }
             }
@@ -157,7 +159,7 @@ private fun Contenido(
                         verticalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
                         Text(
-                            text = "Prima de renovación",
+                            text = tr(R.string.renewal_prima_de_renovacion),
                             style = MaterialTheme.typography.labelMedium,
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                         )
@@ -182,9 +184,9 @@ private fun Contenido(
                     modifier = Modifier.padding(16.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Titulo("Esta póliza no se puede renovar todavía")
+                    Titulo(tr(R.string.renewal_esta_poliza_no_se_puede))
                     propuesta.bloqueos.ifEmpty {
-                        listOf(BloqueoRenovacion("", "No se puede renovar en este momento."))
+                        listOf(BloqueoRenovacion("", tr(R.string.renewal_no_se_puede_renovar_en)))
                     }.forEach { Detalle(it.mensaje) }
                 }
             }
@@ -200,13 +202,13 @@ private fun Contenido(
 
         if (propuesta.renovable) {
             SolventaPrimaryButton(
-                text = "Confirmar y pagar",
+                text = tr(R.string.renewal_confirmar_y_pagar),
                 onClick = onConfirmar,
                 isLoading = iniciando
             )
         }
         SolventaSecondaryButton(
-            text = "Ahora no",
+            text = tr(R.string.home_ahora_no),
             onClick = onAhoraNo,
             enabled = !iniciando,
             icon = rememberVectorPainter(Icons.AutoMirrored.Filled.ArrowForward),

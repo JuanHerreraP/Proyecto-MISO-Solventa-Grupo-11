@@ -47,6 +47,8 @@ import com.example.solventa.ui.validation.TipoDocumento
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
+import com.example.solventa.R
+import com.example.solventa.i18n.tr
 
 /**
  * Alta de un analista de cumplimiento (HU25), accesible solo para un manager (SERVICIO_INTERNO).
@@ -64,7 +66,7 @@ fun CreateAuditorScreen(
 ) {
     Surface(modifier = modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surface) {
         Column(modifier = Modifier.fillMaxSize()) {
-            Encabezado(titulo = "Crear analista de cumplimiento", onVolver = onVolver)
+            Encabezado(titulo = tr(R.string.create_auditor_crear_analista_de_cumplimiento), onVolver = onVolver)
 
             if (creadoNombre != null) {
                 ConfirmacionAnalista(nombre = creadoNombre, onHecho = onHecho)
@@ -105,8 +107,8 @@ private fun FormularioAnalista(
         verticalArrangement = Arrangement.spacedBy(14.dp)
     ) {
         Text(
-            text = "Con su cuenta podrá consultar el historial contractual de cualquier póliza " +
-                "para auditoría.",
+            text = tr(R.string.create_auditor_con_su_cuenta_podra_consultar) +
+                tr(R.string.create_auditor_para_auditoria),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
         )
@@ -114,8 +116,8 @@ private fun FormularioAnalista(
         SolventaTextField(
             value = nombre,
             onValueChange = { nombre = it.take(100) },
-            label = "Nombres",
-            placeholder = "Nombres del analista",
+            label = tr(R.string.create_advisor_nombres),
+            placeholder = tr(R.string.create_auditor_nombres_del_analista),
             keyboardOptions = KeyboardOptions(
                 capitalization = KeyboardCapitalization.Words,
                 imeAction = ImeAction.Next
@@ -124,8 +126,8 @@ private fun FormularioAnalista(
         SolventaTextField(
             value = apellido,
             onValueChange = { apellido = it.take(100) },
-            label = "Apellidos",
-            placeholder = "Apellidos del analista",
+            label = tr(R.string.create_advisor_apellidos),
+            placeholder = tr(R.string.create_auditor_apellidos_del_analista),
             keyboardOptions = KeyboardOptions(
                 capitalization = KeyboardCapitalization.Words,
                 imeAction = ImeAction.Next
@@ -136,11 +138,11 @@ private fun FormularioAnalista(
             SolventaTextField(
                 value = TipoDocumento.desdeCodigo(tipoDocumento)?.etiqueta.orEmpty(),
                 onValueChange = {},
-                label = "Tipo de documento",
-                placeholder = "Selecciona una opción",
+                label = tr(R.string.create_advisor_tipo_de_documento),
+                placeholder = tr(R.string.create_advisor_selecciona_una_opcion),
                 readOnly = true,
                 trailingIcon = {
-                    Icon(Icons.Filled.ArrowDropDown, contentDescription = "Abrir lista")
+                    Icon(Icons.Filled.ArrowDropDown, contentDescription = tr(R.string.create_advisor_abrir_lista))
                 }
             )
             Box(
@@ -171,8 +173,8 @@ private fun FormularioAnalista(
                     nuevo.filter { it.isDigit() }.take(12)
                 }
             },
-            label = "Número de documento",
-            placeholder = "Documento del analista",
+            label = tr(R.string.create_advisor_numero_de_documento),
+            placeholder = tr(R.string.create_auditor_documento_del_analista),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Next)
         )
 
@@ -180,11 +182,11 @@ private fun FormularioAnalista(
             SolventaTextField(
                 value = fechaNacimiento,
                 onValueChange = {},
-                label = "Fecha de nacimiento",
+                label = tr(R.string.create_advisor_fecha_de_nacimiento),
                 placeholder = "AAAA-MM-DD",
                 readOnly = true,
                 trailingIcon = {
-                    Icon(Icons.Filled.DateRange, contentDescription = "Seleccionar fecha")
+                    Icon(Icons.Filled.DateRange, contentDescription = tr(R.string.create_advisor_seleccionar_fecha))
                 }
             )
             Box(
@@ -199,23 +201,23 @@ private fun FormularioAnalista(
         SolventaTextField(
             value = email,
             onValueChange = { email = it.trim().take(254) },
-            label = "Correo corporativo",
+            label = tr(R.string.create_advisor_correo_corporativo),
             placeholder = "analista@solventa.com",
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Next)
         )
         SolventaTextField(
             value = password,
             onValueChange = { password = it.take(128) },
-            label = "Contraseña",
-            placeholder = "Mínimo 8 caracteres",
+            label = tr(R.string.create_advisor_contrasena),
+            placeholder = tr(R.string.create_advisor_minimo_8_caracteres),
             visualTransformation = PasswordVisualTransformation(),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Next)
         )
         SolventaTextField(
             value = confirmar,
             onValueChange = { confirmar = it.take(128) },
-            label = "Confirmar contraseña",
-            placeholder = "Repite la contraseña",
+            label = tr(R.string.create_advisor_confirmar_contrasena),
+            placeholder = tr(R.string.create_advisor_repite_la_contrasena),
             visualTransformation = PasswordVisualTransformation(),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done)
         )
@@ -227,11 +229,11 @@ private fun FormularioAnalista(
 
         Spacer(modifier = Modifier.size(4.dp))
         SolventaPrimaryButton(
-            text = "Crear analista",
+            text = tr(R.string.create_auditor_crear_analista),
             onClick = {
                 errorLocal = when {
-                    password.length < 8 -> "La contraseña debe tener mínimo 8 caracteres."
-                    password != confirmar -> "Las contraseñas no coinciden."
+                    password.length < 8 -> tr(R.string.create_advisor_la_contrasena_debe_tener_minimo)
+                    password != confirmar -> tr(R.string.create_advisor_las_contrasenas_no_coinciden)
                     else -> null
                 }
                 if (errorLocal == null && puedeEnviar) {
@@ -272,18 +274,18 @@ private fun ConfirmacionAnalista(nombre: String, onHecho: () -> Unit) {
         )
         Spacer(modifier = Modifier.size(16.dp))
         Text(
-            text = "Analista creado",
+            text = tr(R.string.create_auditor_analista_creado),
             style = MaterialTheme.typography.titleLarge,
             color = MaterialTheme.colorScheme.onSurface
         )
         Spacer(modifier = Modifier.size(8.dp))
         Text(
-            text = "$nombre ya puede iniciar sesión como analista de cumplimiento.",
+            text = tr(R.string.create_auditor_ya_puede_iniciar_sesion_como, nombre),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
         )
         Spacer(modifier = Modifier.size(24.dp))
-        SolventaPrimaryButton(text = "Volver al inicio", onClick = onHecho)
+        SolventaPrimaryButton(text = tr(R.string.assistance_volver_al_inicio), onClick = onHecho)
     }
 }
 

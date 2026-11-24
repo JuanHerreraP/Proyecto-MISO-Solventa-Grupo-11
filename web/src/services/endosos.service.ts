@@ -1,5 +1,7 @@
 import { fetchAutenticado } from "./session";
 
+import { t } from "../i18n";
+
 const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:8000";
 
 export type ConceptoAjuste = "COBRO" | "DEVOLUCION" | "SIN_AJUSTE";
@@ -112,7 +114,7 @@ async function procesar<T>(respuesta: Response, mensaje: string): Promise<T> {
   }
   // 422 de validación de FastAPI: lista de errores por campo.
   if (Array.isArray(detalle)) {
-    throw new ErrorEndoso("Revisa los datos ingresados.", "DATOS_INVALIDOS", respuesta.status);
+    throw new ErrorEndoso(t("endososService.revisa_los_datos_ingresados"), "DATOS_INVALIDOS", respuesta.status);
   }
   throw new ErrorEndoso(mensaje, "ERROR", respuesta.status);
 }
@@ -132,7 +134,7 @@ function post(url: string, cuerpo: unknown, cabeceras: Record<string, string> = 
 export async function obtenerOpciones(polizaId: string): Promise<OpcionesModificacion> {
   return procesar(
     await fetchAutenticado(ruta(polizaId, "/opciones")),
-    "No fue posible consultar la póliza.",
+    t("endososService.no_fue_posible_consultar_la"),
   );
 }
 
@@ -141,7 +143,7 @@ export async function simularEndoso(
 ): Promise<PropuestaEndoso> {
   return procesar(
     await post(ruta(polizaId, "/simulacion"), solicitud),
-    "No fue posible calcular el ajuste.",
+    t("endososService.no_fue_posible_calcular_el"),
   );
 }
 
@@ -158,14 +160,14 @@ export async function confirmarEndoso(
       { ...solicitud, acepta_condiciones: true },
       { "Idempotency-Key": claveIdempotencia },
     ),
-    "No fue posible emitir el endoso.",
+    t("endososService.no_fue_posible_emitir_el"),
   );
 }
 
 export async function listarEndosos(polizaId: string): Promise<Endoso[]> {
   const historial = await procesar<{ endosos: Endoso[] }>(
     await fetchAutenticado(ruta(polizaId)),
-    "No fue posible consultar los endosos.",
+    t("endososService.no_fue_posible_consultar_los"),
   );
   return historial.endosos;
 }
@@ -181,7 +183,7 @@ export async function descargarEndoso(polizaId: string, endosoId: string): Promi
     ruta(polizaId, `/${encodeURIComponent(endosoId)}/documento`),
   );
   if (!respuesta.ok) {
-    await procesar(respuesta, "No fue posible descargar el endoso.");
+    await procesar(respuesta, t("endososService.no_fue_posible_descargar_el"));
   }
   const url = URL.createObjectURL(await respuesta.blob());
   try {

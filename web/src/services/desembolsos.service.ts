@@ -1,6 +1,8 @@
 import { fetchAutenticado } from "./session";
 import type { EstadoSiniestro, OrigenSiniestro } from "../types/siniestros";
 
+import { t } from "../i18n";
+
 const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:8000";
 
 export type TipoCuenta = "AHORROS" | "CORRIENTE";
@@ -87,7 +89,7 @@ async function procesar<T>(respuesta: Response, mensaje: string): Promise<T> {
     );
   }
   if (Array.isArray(detalle)) {
-    throw new ErrorDesembolso("Revisa los datos ingresados.", "DATOS_INVALIDOS", respuesta.status);
+    throw new ErrorDesembolso(t("desembolsosService.revisa_los_datos_ingresados"), "DATOS_INVALIDOS", respuesta.status);
   }
   throw new ErrorDesembolso(mensaje, "ERROR", respuesta.status);
 }
@@ -105,7 +107,7 @@ function enviar(url: string, metodo: "POST" | "PUT", cuerpo?: unknown): Promise<
 export async function obtenerCuenta(): Promise<CuentaDesembolso | null> {
   return procesar(
     await fetchAutenticado(`${API_URL}/api/v1/desembolsos/cuenta`),
-    "No fue posible consultar tu cuenta.",
+    t("desembolsosService.no_fue_posible_consultar_tu"),
   );
 }
 
@@ -117,14 +119,14 @@ export async function registrarCuenta(datos: {
 }): Promise<CuentaDesembolso> {
   return procesar(
     await enviar(`${API_URL}/api/v1/desembolsos/cuenta`, "PUT", datos),
-    "No fue posible registrar la cuenta.",
+    t("desembolsosService.no_fue_posible_registrar_la"),
   );
 }
 
 export async function listarDesembolsos(): Promise<Desembolso[]> {
   return procesar(
     await fetchAutenticado(`${API_URL}/api/v1/desembolsos`),
-    "No fue posible consultar tus indemnizaciones.",
+    t("desembolsosService.no_fue_posible_consultar_tus"),
   );
 }
 
@@ -136,7 +138,7 @@ export async function obtenerBandeja(estado?: EstadoSiniestro): Promise<Siniestr
   const filtro = estado ? `?estado=${encodeURIComponent(estado)}` : "";
   return procesar(
     await fetchAutenticado(`${BANDEJA}${filtro}`),
-    "No fue posible consultar la bandeja de siniestros.",
+    t("desembolsosService.no_fue_posible_consultar_la"),
   );
 }
 
@@ -146,7 +148,7 @@ export async function aprobarSiniestro(
   const cuerpo = montoAprobado ? { monto_aprobado: montoAprobado } : {};
   return procesar(
     await enviar(`${BANDEJA}/${encodeURIComponent(siniestroId)}/aprobacion`, "POST", cuerpo),
-    "No fue posible aprobar el siniestro.",
+    t("desembolsosService.no_fue_posible_aprobar_el"),
   );
 }
 
@@ -155,13 +157,13 @@ export async function rechazarSiniestro(
 ): Promise<SiniestroBandeja> {
   return procesar(
     await enviar(`${BANDEJA}/${encodeURIComponent(siniestroId)}/rechazo`, "POST", { motivo }),
-    "No fue posible rechazar el siniestro.",
+    t("desembolsosService.no_fue_posible_rechazar_el"),
   );
 }
 
 export async function reintentarDesembolso(siniestroId: string): Promise<Desembolso> {
   return procesar(
     await enviar(`${BANDEJA}/${encodeURIComponent(siniestroId)}/desembolso/reintento`, "POST"),
-    "No fue posible reintentar el desembolso.",
+    t("desembolsosService.no_fue_posible_reintentar_el"),
   );
 }

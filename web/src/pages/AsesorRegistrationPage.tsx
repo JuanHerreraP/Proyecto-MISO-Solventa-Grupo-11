@@ -4,6 +4,8 @@ import { Link } from "react-router-dom";
 import { crearAsesorVentas, type SolicitudCrearAsesor } from "../services/asesor.service";
 import "../styles/socios.css";
 
+import { t } from "../i18n";
+
 const INITIAL_FORM: SolicitudCrearAsesor = {
   nombre: "",
   apellido: "",
@@ -36,11 +38,11 @@ export default function AsesorRegistrationPage() {
     setError("");
 
     if (form.password.length < 8) {
-      setError("La contraseña debe tener mínimo 8 caracteres.");
+      setError(t("asesorRegistrationPage.la_contrasena_debe_tener_minimo"));
       return;
     }
     if (form.password !== confirmarPassword) {
-      setError("Las contraseñas no coinciden.");
+      setError(t("asesorRegistrationPage.las_contrasenas_no_coinciden"));
       return;
     }
 
@@ -56,7 +58,7 @@ export default function AsesorRegistrationPage() {
       });
       setCreado({ nombre: asesor.nombre, apellido: asesor.apellido, email: asesor.email });
     } catch (fallo) {
-      setError(fallo instanceof Error ? fallo.message : "No fue posible crear el asesor.");
+      setError(fallo instanceof Error ? fallo.message : t("asesorRegistrationPage.no_fue_posible_crear_el"));
     } finally {
       setLoading(false);
     }
@@ -76,22 +78,21 @@ export default function AsesorRegistrationPage() {
           <span className="material-symbols-outlined" aria-hidden="true">shield</span>
           <span>
             <strong>Solventa</strong>
-            <span className="socio-brand-section"> · Administración</span>
+            <span className="socio-brand-section"> {t("asesorRegistrationPage.administracion")}</span>
           </span>
         </Link>
         <Link className="socio-exit" to="/home">
           <span className="material-symbols-outlined" aria-hidden="true">logout</span>
-          Salir
+          {t("asesorRegistrationPage.salir")}
         </Link>
       </header>
 
       <main className="socio-content">
         <div className="socio-title-row">
           <div>
-            <h1>Crear asesor de ventas</h1>
+            <h1>{t("asesorRegistrationPage.crear_asesor_de_ventas")}</h1>
             <p>
-              Registra un asesor de ventas. Con su cuenta podrá asociar clientes y
-              registrar siniestros en su nombre.
+              {t("asesorRegistrationPage.registra_un_asesor_de_ventas")}
             </p>
           </div>
           <div className="socio-title-icon" aria-hidden="true">
@@ -105,25 +106,25 @@ export default function AsesorRegistrationPage() {
               <span className="material-symbols-outlined" aria-hidden="true">check_circle</span>
             </div>
             <div>
-              <span className="socio-eyebrow">Alta completada</span>
-              <h2>Asesor creado correctamente</h2>
-              <p>El asesor ya puede iniciar sesión con las credenciales configuradas.</p>
+              <span className="socio-eyebrow">{t("asesorRegistrationPage.alta_completada")}</span>
+              <h2>{t("asesorRegistrationPage.asesor_creado_correctamente")}</h2>
+              <p>{t("asesorRegistrationPage.el_asesor_ya_puede_iniciar")}</p>
               <dl className="socio-result-grid">
                 <div>
-                  <dt>Nombre</dt>
+                  <dt>{t("asesorRegistrationPage.nombre")}</dt>
                   <dd>{creado.nombre} {creado.apellido}</dd>
                 </div>
                 <div>
-                  <dt>Correo</dt>
+                  <dt>{t("asesorRegistrationPage.correo")}</dt>
                   <dd>{creado.email}</dd>
                 </div>
                 <div>
-                  <dt>Rol</dt>
+                  <dt>{t("asesorRegistrationPage.rol")}</dt>
                   <dd><span className="socio-status">ASESOR_VENTAS</span></dd>
                 </div>
               </dl>
               <button className="socio-secondary-button" type="button" onClick={reiniciar}>
-                Crear otro asesor
+                {t("asesorRegistrationPage.crear_otro_asesor")}
               </button>
             </div>
           </section>
@@ -133,19 +134,19 @@ export default function AsesorRegistrationPage() {
               <div className="socio-section-heading">
                 <span className="material-symbols-outlined" aria-hidden="true">badge</span>
                 <div>
-                  <h2>Datos del asesor</h2>
-                  <p>Información personal y documento de identidad.</p>
+                  <h2>{t("asesorRegistrationPage.datos_del_asesor")}</h2>
+                  <p>{t("asesorRegistrationPage.informacion_personal_y_documento_de")}</p>
                 </div>
               </div>
 
               <div className="socio-form-grid">
                 <label>
-                  Nombre
+                  {t("asesorRegistrationPage.nombre")}
                   <input
                     name="nombre"
                     minLength={2}
                     maxLength={100}
-                    placeholder="María"
+                    placeholder={t("asesorRegistrationPage.maria")}
                     value={form.nombre}
                     onChange={(e) => actualizar("nombre", e.target.value)}
                     required
@@ -153,12 +154,12 @@ export default function AsesorRegistrationPage() {
                 </label>
 
                 <label>
-                  Apellido
+                  {t("asesorRegistrationPage.apellido")}
                   <input
                     name="apellido"
                     minLength={2}
                     maxLength={100}
-                    placeholder="Torres"
+                    placeholder={t("asesorRegistrationPage.torres")}
                     value={form.apellido}
                     onChange={(e) => actualizar("apellido", e.target.value)}
                     required
@@ -166,21 +167,21 @@ export default function AsesorRegistrationPage() {
                 </label>
 
                 <label>
-                  Tipo de documento
+                  {t("asesorRegistrationPage.tipo_de_documento")}
                   <select
                     name="tipo_documento"
                     value={form.tipo_documento}
                     onChange={(e) => actualizar("tipo_documento", e.target.value)}
                     required
                   >
-                    <option value="CC">Cédula de ciudadanía</option>
-                    <option value="CE">Cédula de extranjería</option>
-                    <option value="PA">Pasaporte</option>
+                    <option value="CC">{t("asesorRegistrationPage.cedula_de_ciudadania")}</option>
+                    <option value="CE">{t("asesorRegistrationPage.cedula_de_extranjeria")}</option>
+                    <option value="PA">{t("asesorRegistrationPage.pasaporte")}</option>
                   </select>
                 </label>
 
                 <label>
-                  Número de documento
+                  {t("asesorRegistrationPage.numero_de_documento")}
                   <input
                     name="numero_documento"
                     minLength={3}
@@ -193,7 +194,7 @@ export default function AsesorRegistrationPage() {
                 </label>
 
                 <label>
-                  Fecha de nacimiento
+                  {t("asesorRegistrationPage.fecha_de_nacimiento")}
                   <input
                     name="fecha_nacimiento"
                     type="date"
@@ -209,14 +210,14 @@ export default function AsesorRegistrationPage() {
               <div className="socio-section-heading">
                 <span className="material-symbols-outlined" aria-hidden="true">lock</span>
                 <div>
-                  <h2>Credenciales de acceso</h2>
-                  <p>Correo y contraseña con los que el asesor iniciará sesión.</p>
+                  <h2>{t("asesorRegistrationPage.credenciales_de_acceso")}</h2>
+                  <p>{t("asesorRegistrationPage.correo_y_contrasena_con_los")}</p>
                 </div>
               </div>
 
               <div className="socio-form-grid">
                 <label>
-                  Correo corporativo
+                  {t("asesorRegistrationPage.correo_corporativo")}
                   <input
                     name="email"
                     type="email"
@@ -230,13 +231,13 @@ export default function AsesorRegistrationPage() {
                 </label>
 
                 <label>
-                  Contraseña
+                  {t("asesorRegistrationPage.contrasena")}
                   <input
                     name="password"
                     type="password"
                     minLength={8}
                     maxLength={128}
-                    placeholder="Mínimo 8 caracteres"
+                    placeholder={t("asesorRegistrationPage.minimo_8_caracteres")}
                     value={form.password}
                     onChange={(e) => actualizar("password", e.target.value)}
                     required
@@ -244,13 +245,13 @@ export default function AsesorRegistrationPage() {
                 </label>
 
                 <label>
-                  Confirmar contraseña
+                  {t("asesorRegistrationPage.confirmar_contrasena")}
                   <input
                     name="confirmar_password"
                     type="password"
                     minLength={8}
                     maxLength={128}
-                    placeholder="Repite la contraseña"
+                    placeholder={t("asesorRegistrationPage.repite_la_contrasena")}
                     value={confirmarPassword}
                     onChange={(e) => setConfirmarPassword(e.target.value)}
                     required
@@ -267,10 +268,10 @@ export default function AsesorRegistrationPage() {
             )}
 
             <div className="socio-submit-row">
-              <p>Al guardar, Solventa creará la cuenta del asesor con el rol ASESOR_VENTAS.</p>
+              <p>{t("asesorRegistrationPage.al_guardar_solventa_creara_la")}</p>
               <button className="socio-primary-button" type="submit" disabled={loading}>
                 <span className="material-symbols-outlined" aria-hidden="true">person_add</span>
-                {loading ? "Creando..." : "Crear asesor"}
+                {loading ? t("asesorRegistrationPage.creando") : t("asesorRegistrationPage.crear_asesor")}
               </button>
             </div>
           </form>

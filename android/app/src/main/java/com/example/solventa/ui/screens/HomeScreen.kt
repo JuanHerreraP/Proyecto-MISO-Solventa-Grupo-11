@@ -56,6 +56,7 @@ import com.example.solventa.ui.components.SolventaBottomNavigation
 import com.example.solventa.ui.theme.Navegacion
 import com.example.solventa.ui.theme.Noche
 import com.example.solventa.ui.theme.SolventaTheme
+import com.example.solventa.i18n.tr
 
 /** Inicio privado del cliente. Conserva las funciones de sesión y billetera. */
 @Composable
@@ -94,15 +95,15 @@ fun HomeScreen(
     if (ofrecerActivarBiometria) {
         AlertDialog(
             onDismissRequest = onDescartarActivacion,
-            title = { Text("¿Activar ingreso con huella?") },
+            title = { Text(tr(R.string.home_activar_ingreso_con_huella)) },
             text = {
                 Text(
-                    "La próxima vez podrás entrar con la huella o el rostro configurados en tu dispositivo. " +
-                        "Tu biometría no sale del teléfono."
+                    tr(R.string.home_la_proxima_vez_podras_entrar) +
+                        tr(R.string.home_tu_biometria_no_sale_del)
                 )
             },
-            confirmButton = { TextButton(onClick = onActivarBiometria) { Text("Activar") } },
-            dismissButton = { TextButton(onClick = onDescartarActivacion) { Text("Ahora no") } }
+            confirmButton = { TextButton(onClick = onActivarBiometria) { Text(tr(R.string.home_activar)) } },
+            dismissButton = { TextButton(onClick = onDescartarActivacion) { Text(tr(R.string.home_ahora_no)) } }
         )
     }
 
@@ -130,12 +131,12 @@ fun HomeScreen(
             EncabezadoInicio(notificacionesSinLeer, onVerNotificaciones, onVerPerfil)
 
             Text(
-                text = "Hola, ${perfil.nombre}",
+                text = tr(R.string.advisor_home_hola, perfil.nombre),
                 style = MaterialTheme.typography.headlineLarge,
                 color = MaterialTheme.colorScheme.onBackground
             )
             Text(
-                text = "Todo lo importante de tu protección, en un solo lugar.",
+                text = tr(R.string.home_todo_lo_importante_de_tu),
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.65f)
             )
@@ -173,7 +174,7 @@ fun HomeScreen(
                         Icon(Icons.Outlined.PersonAddAlt, contentDescription = null, tint = Navegacion)
                         Spacer(modifier = Modifier.width(12.dp))
                         Text(
-                            text = "Crear un asesor de ventas",
+                            text = tr(R.string.advisor_home_crear_un_asesor_de_ventas),
                             style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
                             color = MaterialTheme.colorScheme.onSurface
                         )
@@ -196,7 +197,7 @@ fun HomeScreen(
                         Icon(Icons.AutoMirrored.Outlined.ManageSearch, contentDescription = null, tint = Navegacion)
                         Spacer(modifier = Modifier.width(12.dp))
                         Text(
-                            text = "Crear un analista de cumplimiento",
+                            text = tr(R.string.home_crear_un_analista_de_cumplimiento),
                             style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
                             color = MaterialTheme.colorScheme.onSurface
                         )
@@ -213,7 +214,7 @@ fun HomeScreen(
 
             if (!biometriaActivada && biometriaDisponible) {
                 TextButton(onClick = onSolicitarActivacion) {
-                    Text("Activar ingreso con huella", color = Navegacion)
+                    Text(tr(R.string.home_activar_ingreso_con_huella_2), color = Navegacion)
                 }
             }
 
@@ -235,7 +236,7 @@ private fun EncabezadoInicio(
         Row(verticalAlignment = Alignment.CenterVertically) {
             Image(
                 painter = painterResource(id = R.drawable.solventa_shield),
-                contentDescription = "Escudo de Solventa",
+                contentDescription = tr(R.string.biometrical_login_escudo_de_solventa),
                 modifier = Modifier.size(28.dp)
             )
             Spacer(modifier = Modifier.width(8.dp))
@@ -257,9 +258,9 @@ private fun EncabezadoInicio(
                     Icon(
                         imageVector = Icons.Outlined.NotificationsNone,
                         contentDescription = if (sinLeer > 0) {
-                            "Notificaciones, $sinLeer sin leer"
+                            tr(R.string.home_notificaciones_sin_leer, sinLeer)
                         } else {
-                            "Notificaciones"
+                            tr(R.string.home_notificaciones)
                         },
                         tint = MaterialTheme.colorScheme.onSurface
                     )
@@ -268,7 +269,7 @@ private fun EncabezadoInicio(
             IconButton(onClick = { onVerPerfil?.invoke() }, enabled = onVerPerfil != null) {
                 Icon(
                     imageVector = Icons.Outlined.PersonOutline,
-                    contentDescription = "Perfil",
+                    contentDescription = tr(R.string.home_perfil),
                     tint = MaterialTheme.colorScheme.onSurface
                 )
             }
@@ -292,14 +293,14 @@ private fun TarjetaBilletera(
             .then(
                 if (onVerBilletera == null) Modifier else Modifier.clickable(
                     role = Role.Button,
-                    onClickLabel = "Ver mi billetera",
+                    onClickLabel = tr(R.string.home_ver_mi_billetera),
                     onClick = onVerBilletera
                 )
             )
     ) {
         Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(
-                text = "Billetera de pólizas",
+                text = tr(R.string.home_billetera_de_polizas),
                 style = MaterialTheme.typography.bodyMedium,
                 color = Color.White.copy(alpha = 0.7f)
             )
@@ -314,7 +315,7 @@ private fun TarjetaBilletera(
             )
             if (onVerBilletera != null) {
                 Text(
-                    text = "Ver mi billetera",
+                    text = tr(R.string.home_ver_mi_billetera),
                     style = MaterialTheme.typography.labelMedium,
                     color = Color.White.copy(alpha = 0.75f)
                 )
@@ -326,7 +327,7 @@ private fun TarjetaBilletera(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Cotizar un nuevo seguro",
+                    text = tr(R.string.home_cotizar_un_nuevo_seguro),
                     style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
                     color = Color.White
                 )
@@ -343,9 +344,9 @@ private fun TarjetaBilletera(
 }
 
 private fun textoPolizas(cantidad: Int?): String = when (cantidad) {
-    null -> "Consulta tus pólizas"
-    1 -> "1 póliza activa"
-    else -> "$cantidad pólizas activas"
+    null -> tr(R.string.home_consulta_tus_polizas)
+    1 -> tr(R.string.home_1_poliza_activa)
+    else -> tr(R.string.home_polizas_activas, cantidad)
 }
 
 @Composable
@@ -364,18 +365,18 @@ private fun HistorialReciente(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Text(
-                text = "Historial reciente",
+                text = tr(R.string.home_historial_reciente),
                 style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                 color = MaterialTheme.colorScheme.onSurface
             )
             when {
                 cargando -> Text(
-                    text = "Cargando movimientos…",
+                    text = tr(R.string.home_cargando_movimientos),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.65f)
                 )
                 movimientos.isEmpty() -> Text(
-                    text = "Aún no tienes movimientos registrados.",
+                    text = tr(R.string.home_aun_no_tienes_movimientos_registrados),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.65f)
                 )
@@ -469,7 +470,7 @@ private fun BotonAsistencia(onClick: () -> Unit) {
                 )
             }
             Text(
-                text = "Asistencia en sitio",
+                text = tr(R.string.assistance_asistencia_en_sitio),
                 style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
                 color = MaterialTheme.colorScheme.onSurface
             )
@@ -478,13 +479,13 @@ private fun BotonAsistencia(onClick: () -> Unit) {
 }
 
 private fun TipoMovimiento.tituloCorto(): String = when (this) {
-    TipoMovimiento.EMISION -> "Emisión de póliza"
-    TipoMovimiento.PAGO_PRIMA_INICIAL -> "Pago de prima inicial"
-    TipoMovimiento.ENDOSO -> "Modificación contractual"
-    TipoMovimiento.RENOVACION -> "Renovación"
-    TipoMovimiento.CANCELACION -> "Cancelación"
-    TipoMovimiento.DESEMBOLSO_INDEMNIZACION -> "Pago de indemnización"
-    TipoMovimiento.REEMBOLSO -> "Reembolso"
+    TipoMovimiento.EMISION -> tr(R.string.home_emision_de_poliza)
+    TipoMovimiento.PAGO_PRIMA_INICIAL -> tr(R.string.home_pago_de_prima_inicial)
+    TipoMovimiento.ENDOSO -> tr(R.string.home_modificacion_contractual)
+    TipoMovimiento.RENOVACION -> tr(R.string.home_renovacion)
+    TipoMovimiento.CANCELACION -> tr(R.string.home_cancelacion)
+    TipoMovimiento.DESEMBOLSO_INDEMNIZACION -> tr(R.string.home_pago_de_indemnizacion)
+    TipoMovimiento.REEMBOLSO -> tr(R.string.home_reembolso)
 }
 
 private fun montoMovimiento(monto: String, moneda: String?, naturaleza: NaturalezaMonto?): String {

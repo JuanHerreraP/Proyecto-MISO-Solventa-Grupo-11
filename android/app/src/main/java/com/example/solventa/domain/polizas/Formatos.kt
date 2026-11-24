@@ -14,6 +14,20 @@ object Formatos {
     private val MESES = listOf(
         "ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"
     )
+    private val MESES_EN = listOf(
+        "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+    )
+
+    /**
+     * Formatos en inglés (en-US) en lugar de español de Colombia. Lo ajusta la capa de UI
+     * (i18n.Idioma) al cambiar el idioma de la app; el dominio no depende de Android.
+     */
+    @Volatile
+    var ingles: Boolean = false
+
+    /** "1 oct 2026" en español; "Oct 1, 2026" en inglés. */
+    private fun diaMesAnio(dia: Int, mes: Int, anio: Int): String =
+        if (ingles) "${MESES_EN[mes]} $dia, $anio" else "$dia ${MESES[mes]} $anio"
 
     /** "2026-10-01" → "1 oct 2026". Si no es una fecha ISO, la devuelve igual. */
     fun fecha(iso: String): String {
@@ -23,7 +37,7 @@ object Formatos {
         val mes = partes[1].toIntOrNull()
         val dia = partes[2].toIntOrNull()
         if (anio == null || mes == null || dia == null || mes !in 1..12 || dia !in 1..31) return iso
-        return "$dia ${MESES[mes - 1]} $anio"
+        return diaMesAnio(dia, mes - 1, anio)
     }
 
     fun vigencia(inicio: String, fin: String): String = "${fecha(inicio)} – ${fecha(fin)}"
@@ -49,18 +63,18 @@ object Formatos {
     fun fechaHora(instanteMs: Long, zona: TimeZone = TimeZone.getDefault()): String {
         val calendario = java.util.Calendar.getInstance(zona).apply { timeInMillis = instanteMs }
         val dia = calendario.get(java.util.Calendar.DAY_OF_MONTH)
-        val mes = MESES[calendario.get(java.util.Calendar.MONTH)]
+        val mes = calendario.get(java.util.Calendar.MONTH)
         val anio = calendario.get(java.util.Calendar.YEAR)
         val hora = calendario.get(java.util.Calendar.HOUR_OF_DAY).toString().padStart(2, '0')
         val minuto = calendario.get(java.util.Calendar.MINUTE).toString().padStart(2, '0')
-        return "$dia $mes $anio, $hora:$minuto"
+        return "${diaMesAnio(dia, mes, anio)}, $hora:$minuto"
     }
 
     /** Epoch milliseconds → "22 oct 2026, 10:00 AM" en la zona del dispositivo. */
     fun fechaHoraDoceHoras(instanteMs: Long, zona: TimeZone = TimeZone.getDefault()): String {
         val calendario = java.util.Calendar.getInstance(zona).apply { timeInMillis = instanteMs }
         val dia = calendario.get(java.util.Calendar.DAY_OF_MONTH)
-        val mes = MESES[calendario.get(java.util.Calendar.MONTH)]
+        val mes = calendario.get(java.util.Calendar.MONTH)
         val anio = calendario.get(java.util.Calendar.YEAR)
         val hora24 = calendario.get(java.util.Calendar.HOUR_OF_DAY)
         val hora12 = when (val hora = hora24 % 12) {
@@ -69,7 +83,7 @@ object Formatos {
         }
         val minuto = calendario.get(java.util.Calendar.MINUTE).toString().padStart(2, '0')
         val periodo = if (hora24 < 12) "AM" else "PM"
-        return "$dia $mes $anio, $hora12:$minuto $periodo"
+        return "${diaMesAnio(dia, mes, anio)}, $hora12:$minuto $periodo"
     }
 
     /** "40000000.00" con COP → "$40.000.000"; con centavos, "$1.234,50". */
@@ -77,18 +91,20 @@ object Formatos {
         val numero = valor.toBigDecimalOrNull() ?: return "$moneda $valor"
         val redondeado = numero.setScale(2, RoundingMode.HALF_UP)
         val entero = redondeado.toBigInteger().abs().toString()
-        val agrupado = entero.reversed().chunked(3).joinToString(".").reversed()
+        // Separadores: es-CO usa punto de miles y coma decimal; en-US, al revés.
+        val (miles, decimal) = if (ingles) "," to "." else "." to ","
+        val agrupado = entero.reversed().chunked(3).joinToString(miles).reversed()
         val centavos = redondeado.remainder(BigDecimal.ONE).abs().movePointRight(2).toInt()
         val signo = if (redondeado.signum() < 0) "-" else ""
         val simbolo = if (moneda == "COP" || moneda == "USD") "$" else "$moneda "
-        val decimales = if (centavos == 0) "" else ",${centavos.toString().padStart(2, '0')}"
+        val decimales = if (centavos == 0) "" else "$decimal${centavos.toString().padStart(2, '0')}"
         return "$signo$simbolo$agrupado$decimales"
     }
 
     fun estado(estado: EstadoPoliza): String = when (estado) {
-        EstadoPoliza.VIGENTE -> "Vigente"
-        EstadoPoliza.VENCIDA -> "Vencida"
-        EstadoPoliza.CANCELADA -> "Cancelada"
+        EstadoPoliza.VIGENTE -> if (ingles) "Active" else "Vigente"
+        EstadoPoliza.VENCIDA -> if (ingles) "Expired" else "Vencida"
+        EstadoPoliza.CANCELADA -> if (ingles) "Cancelled" else "Cancelada"
     }
 
     private fun normalizarIso(iso: String): String? {

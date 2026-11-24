@@ -6,6 +6,12 @@ Documentos que acompañan la implementación de Solventa: comportamiento, flujos
 contratos de API, permisos, configuración y pruebas. La arquitectura y las entregas
 se mantienen en la [wiki del proyecto](https://github.com/JuanHerreraP/Proyecto-MISO-Solventa-Grupo-11/wiki).
 
+## Transversales
+
+| Documento | Contenido |
+| --- | --- |
+| [Internacionalización y localización](internacionalizacion.md) | Español e inglés en web y Android: catálogos, selector de idioma, formatos por locale, pruebas y cómo agregar textos |
+
 ## Identidad, sesión y control de acceso
 
 | Documento | Contenido |

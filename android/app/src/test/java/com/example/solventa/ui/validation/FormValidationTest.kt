@@ -6,7 +6,11 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.util.Calendar
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
 
+// Robolectric: los mensajes salen de strings.xml (i18n) y necesitan los recursos de Android.
+@RunWith(RobolectricTestRunner::class)
 class FormValidationTest {
     private fun registrationIsValid(
         email: String = "user@example.com",

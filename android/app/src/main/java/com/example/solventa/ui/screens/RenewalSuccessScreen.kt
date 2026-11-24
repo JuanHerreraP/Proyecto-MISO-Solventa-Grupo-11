@@ -30,6 +30,8 @@ import androidx.compose.ui.unit.dp
 import com.example.solventa.ui.components.SolventaBottomNavigation
 import com.example.solventa.ui.components.SolventaPrimaryButton
 import com.example.solventa.ui.theme.SolventaTheme
+import com.example.solventa.R
+import com.example.solventa.i18n.tr
 
 /** Confirmación tras pagar la renovación: la póliza ya tiene la nueva vigencia (HU22). */
 @Composable
@@ -48,7 +50,7 @@ fun RenewalSuccessScreen(
         bottomBar = { SolventaBottomNavigation(onInicio = onInicio, onPolizas = onVerBilletera) }
     ) { padding ->
         Column(modifier = Modifier.fillMaxSize().padding(padding)) {
-            Encabezado(titulo = "Pólizas", onVolver = onVolver)
+            Encabezado(titulo = tr(R.string.cancel_polizas), onVolver = onVolver)
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -71,20 +73,20 @@ fun RenewalSuccessScreen(
                     )
                 }
                 Text(
-                    text = "Póliza renovada",
+                    text = tr(R.string.renewal_success_poliza_renovada),
                     style = MaterialTheme.typography.headlineLarge.copy(fontWeight = FontWeight.Bold),
                     color = MaterialTheme.colorScheme.onSurface,
                     textAlign = TextAlign.Center
                 )
                 Text(
-                    text = "Actualizamos la vigencia y el documento ya está disponible.",
+                    text = tr(R.string.renewal_success_actualizamos_la_vigencia_y_el),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
                     textAlign = TextAlign.Center
                 )
                 comprobanteNumero?.let {
                     Text(
-                        text = "Comprobante $it",
+                        text = tr(R.string.payment_result_comprobante, it),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
                         textAlign = TextAlign.Center
@@ -92,7 +94,7 @@ fun RenewalSuccessScreen(
                 }
                 Spacer(modifier = Modifier.size(4.dp))
                 SolventaPrimaryButton(
-                    text = "Ver póliza renovada",
+                    text = tr(R.string.renewal_success_ver_poliza_renovada),
                     onClick = onVerPoliza,
                     icon = rememberVectorPainter(Icons.Outlined.Shield)
                 )

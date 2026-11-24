@@ -47,6 +47,8 @@ import com.example.solventa.ui.theme.Navegacion
 import com.example.solventa.ui.theme.Offline
 import com.example.solventa.ui.theme.Sincronizado
 import com.example.solventa.ui.theme.SolventaTheme
+import com.example.solventa.R
+import com.example.solventa.i18n.tr
 
 /** Billetera digital de pólizas (HU07 / BPM-31). Solo se compone con una sesión activa. */
 @Composable
@@ -66,7 +68,7 @@ fun WalletScreen(
     Surface(modifier = modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surface) {
         Column(modifier = Modifier.fillMaxSize()) {
             Encabezado(
-                titulo = "Pólizas",
+                titulo = tr(R.string.cancel_polizas),
                 onVolver = onVolver,
                 accion = { IndicadorConexion(sinConexion = sinConexion) }
             )
@@ -81,7 +83,7 @@ fun WalletScreen(
                 billetera == null && cargando -> Centrado {
                     CircularProgressIndicator(
                         color = Navegacion,
-                        modifier = Modifier.semantics { contentDescription = "Cargando tus pólizas" }
+                        modifier = Modifier.semantics { contentDescription = tr(R.string.wallet_cargando_tus_polizas) }
                     )
                 }
 
@@ -92,18 +94,18 @@ fun WalletScreen(
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Spacer(modifier = Modifier.size(16.dp))
-                    SolventaPrimaryButton(text = "Reintentar", onClick = onReintentar)
+                    SolventaPrimaryButton(text = tr(R.string.assistance_reintentar), onClick = onReintentar)
                 }
 
                 billetera == null || billetera.vacia -> Centrado {
                     Text(
-                        text = "Aún no tienes pólizas",
+                        text = tr(R.string.wallet_aun_no_tienes_polizas),
                         style = MaterialTheme.typography.titleMedium,
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Spacer(modifier = Modifier.size(8.dp))
                     Text(
-                        text = "Cuando compres un seguro, su certificado aparecerá aquí.",
+                        text = tr(R.string.wallet_cuando_compres_un_seguro_su),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                     )
@@ -124,10 +126,10 @@ private fun EstadoSincronizacion(
 ) {
     val mensajes = buildList {
         if (datosAntiguos) {
-            add("Estos datos tienen más de 30 días y podrían no estar actualizados." to Atencion)
+            add(tr(R.string.wallet_estos_datos_tienen_mas_de) to Atencion)
         }
         if (falloPersistente) {
-            add("No pudimos actualizar tus pólizas. Volveremos a intentarlo." to Atencion)
+            add(tr(R.string.wallet_no_pudimos_actualizar_tus_polizas) to Atencion)
         }
     }
     Column(
@@ -138,8 +140,8 @@ private fun EstadoSincronizacion(
             sinConexion = sinConexion,
             ultimaSincronizacionMs = ultimaSincronizacionMs,
             textoSinConexion = ultimaSincronizacionMs?.let {
-                "Sin conexión · Última actualización: ${Formatos.fechaHoraDoceHoras(it)}."
-            } ?: "Sin conexión · Mostrando datos guardados."
+                tr(R.string.wallet_sin_conexion_ultima_actualizacion, Formatos.fechaHoraDoceHoras(it))
+            } ?: tr(R.string.wallet_sin_conexion_mostrando_datos_guardados)
         )
         mensajes.forEach { (texto, color) ->
             Surface(shape = RoundedCornerShape(12.dp), color = color.copy(alpha = 0.14f)) {
@@ -161,7 +163,7 @@ private fun IndicadorConexion(sinConexion: Boolean) {
     val color = if (sinConexion) Offline else Sincronizado
     Icon(
         imageVector = if (sinConexion) Icons.Outlined.CloudOff else Icons.Outlined.CloudDone,
-        contentDescription = if (sinConexion) "Sin conexión" else "Datos actualizados",
+        contentDescription = if (sinConexion) tr(R.string.wallet_sin_conexion) else tr(R.string.wallet_datos_actualizados),
         tint = color,
         modifier = Modifier
             .padding(end = 12.dp)
@@ -199,7 +201,7 @@ private fun TarjetaPoliza(poliza: PolizaResumen, onClick: () -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .alpha(if (poliza.activa) 1f else 0.6f)
-            .clickable(role = Role.Button, onClickLabel = "Ver certificado", onClick = onClick)
+            .clickable(role = Role.Button, onClickLabel = tr(R.string.wallet_ver_certificado), onClick = onClick)
     ) {
         Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -214,7 +216,7 @@ private fun TarjetaPoliza(poliza: PolizaResumen, onClick: () -> Unit) {
                     EtiquetaEstado(estado = poliza.estado)
                 }
                 Text(
-                    text = "Póliza ${poliza.numeroPoliza}",
+                    text = tr(R.string.claim_detail_poliza, poliza.numeroPoliza),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                 )
@@ -273,7 +275,7 @@ internal fun Encabezado(
         IconButton(onClick = onVolver) {
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                contentDescription = "Volver",
+                contentDescription = tr(R.string.biometrical_login_volver),
                 tint = MaterialTheme.colorScheme.onSurface
             )
         }

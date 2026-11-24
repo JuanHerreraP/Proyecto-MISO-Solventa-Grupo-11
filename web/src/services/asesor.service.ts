@@ -2,6 +2,8 @@ import { fetchAutenticado } from "./session";
 import type { Billetera } from "./billetera.service";
 import type { Siniestro, SolicitudSiniestro } from "../types/siniestros";
 
+import { t } from "../i18n";
+
 const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:8000";
 
 /** Cliente atendido por un asesor de ventas (HU20). */
@@ -53,23 +55,23 @@ export async function crearAsesorVentas(solicitud: SolicitudCrearAsesor): Promis
 
 async function mensajeErrorCrearAsesor(response: Response): Promise<string> {
   const porCodigo: Record<string, string> = {
-    EMAIL_ALREADY_EXISTS: "Ya existe un usuario con ese correo.",
-    DOCUMENT_ALREADY_EXISTS: "Ya existe una cuenta con ese tipo y número de documento.",
-    KYC_REJECTED: "La validación de identidad no fue aprobada.",
-    KYC_PENDING: "La validación de identidad quedó pendiente de revisión.",
-    KYC_PROVIDER_UNAVAILABLE: "El servicio de validación de identidad no está disponible.",
+    EMAIL_ALREADY_EXISTS: t("asesorService.ya_existe_un_usuario_con"),
+    DOCUMENT_ALREADY_EXISTS: t("asesorService.ya_existe_una_cuenta_con"),
+    KYC_REJECTED: t("asesorService.la_validacion_de_identidad_no"),
+    KYC_PENDING: t("asesorService.la_validacion_de_identidad_quedo"),
+    KYC_PROVIDER_UNAVAILABLE: t("asesorService.el_servicio_de_validacion_de"),
   };
   try {
     const body = await response.json();
     const codigo = body?.detail?.codigo;
     if (codigo && porCodigo[codigo]) return porCodigo[codigo];
     if (body?.detail?.mensaje) return body.detail.mensaje;
-    if (response.status === 403) return "No tienes permisos para crear asesores.";
-    if (response.status === 422) return "Revisa los datos del asesor e inténtalo de nuevo.";
+    if (response.status === 403) return t("asesorService.no_tienes_permisos_para_crear");
+    if (response.status === 422) return t("asesorService.revisa_los_datos_del_asesor");
   } catch {
     // Sin cuerpo legible: cae al genérico.
   }
-  return "No fue posible crear el asesor. Inténtalo de nuevo.";
+  return t("asesorService.no_fue_posible_crear_el");
 }
 
 /** Registro de siniestro asistido: el asesor indica a qué cliente pertenece. */
@@ -80,7 +82,7 @@ export interface SolicitudSiniestroAsesor extends SolicitudSiniestro {
 /** Lista los clientes asociados al asesor autenticado. */
 export async function listarClientesDeAsesor(): Promise<ClienteDeAsesor[]> {
   const response = await fetchAutenticado(`${API_URL}/api/v1/asesor/clientes`);
-  if (!response.ok) throw new Error("No fue posible consultar tus clientes.");
+  if (!response.ok) throw new Error(t("asesorService.no_fue_posible_consultar_tus"));
   return response.json();
 }
 
@@ -102,7 +104,7 @@ export async function obtenerPolizasDeCliente(clienteId: string): Promise<Billet
   const response = await fetchAutenticado(
     `${API_URL}/api/v1/asesor/clientes/${encodeURIComponent(clienteId)}/polizas`,
   );
-  if (!response.ok) throw new Error("No fue posible consultar las pólizas del cliente.");
+  if (!response.ok) throw new Error(t("asesorService.no_fue_posible_consultar_las"));
   return response.json();
 }
 
@@ -123,8 +125,8 @@ export async function crearSiniestroAsistido(
 
 async function mensajeErrorAsociacion(response: Response): Promise<string> {
   const porCodigo: Record<string, string> = {
-    CLIENTE_NO_ENCONTRADO: "No existe un cliente con ese correo.",
-    CLIENTE_YA_ASOCIADO: "Ese cliente ya está asociado a tu cuenta.",
+    CLIENTE_NO_ENCONTRADO: t("asesorService.no_existe_un_cliente_con"),
+    CLIENTE_YA_ASOCIADO: t("asesorService.ese_cliente_ya_esta_asociado"),
   };
   try {
     const body = await response.json();
@@ -133,26 +135,26 @@ async function mensajeErrorAsociacion(response: Response): Promise<string> {
   } catch {
     // Sin cuerpo legible: cae al genérico.
   }
-  return "No fue posible asociar al cliente. Inténtalo de nuevo.";
+  return t("asesorService.no_fue_posible_asociar_al");
 }
 
 async function mensajeErrorSiniestro(response: Response): Promise<string> {
   const porCodigo: Record<string, string> = {
-    CLIENTE_NO_ASOCIADO: "El cliente no está asociado a tu cuenta.",
-    POLIZA_NO_ENCONTRADA: "No encontramos la póliza seleccionada.",
-    POLIZA_AJENA: "La póliza no pertenece al cliente seleccionado.",
-    POLIZA_NO_VIGENTE: "La póliza no está vigente; no es posible registrar el siniestro.",
-    FECHA_FUTURA: "La fecha del evento no puede estar en el futuro.",
-    FECHA_FUERA_DE_VIGENCIA: "La fecha del evento está fuera del periodo cubierto por la póliza.",
+    CLIENTE_NO_ASOCIADO: t("asesorService.el_cliente_no_esta_asociado"),
+    POLIZA_NO_ENCONTRADA: t("asesorService.no_encontramos_la_poliza_seleccionada"),
+    POLIZA_AJENA: t("asesorService.la_poliza_no_pertenece_al"),
+    POLIZA_NO_VIGENTE: t("asesorService.la_poliza_no_esta_vigente"),
+    FECHA_FUTURA: t("asesorService.la_fecha_del_evento_no"),
+    FECHA_FUERA_DE_VIGENCIA: t("asesorService.la_fecha_del_evento_esta"),
   };
   try {
     const body = await response.json();
     const codigo = body?.detail?.codigo;
     if (codigo && porCodigo[codigo]) return porCodigo[codigo];
-    if (response.status === 422) return "Revisa los datos del evento e inténtalo de nuevo.";
-    if (response.status === 401) return "Tu sesión expiró. Vuelve a iniciar sesión.";
+    if (response.status === 422) return t("asesorService.revisa_los_datos_del_evento");
+    if (response.status === 401) return t("asesorService.tu_sesion_expiro_vuelve_a");
   } catch {
     // Sin cuerpo legible: cae al genérico.
   }
-  return "No fue posible registrar el siniestro. Inténtalo de nuevo.";
+  return t("asesorService.no_fue_posible_registrar_el");
 }

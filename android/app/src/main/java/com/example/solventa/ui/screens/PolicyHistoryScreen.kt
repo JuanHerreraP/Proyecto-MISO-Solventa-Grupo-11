@@ -34,6 +34,8 @@ import com.example.solventa.domain.polizas.TipoMovimiento
 import com.example.solventa.ui.components.SolventaPrimaryButton
 import com.example.solventa.ui.theme.Navegacion
 import com.example.solventa.ui.theme.SolventaTheme
+import com.example.solventa.R
+import com.example.solventa.i18n.tr
 
 /**
  * Historial detallado de movimientos de una póliza contratada (HU25).
@@ -53,7 +55,7 @@ fun PolicyHistoryScreen(
 ) {
     Surface(modifier = modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surface) {
         Column(modifier = Modifier.fillMaxSize()) {
-            Encabezado(titulo = "Historial de la póliza", onVolver = onVolver)
+            Encabezado(titulo = tr(R.string.policy_history_historial_de_la_poliza), onVolver = onVolver)
 
             Column(
                 modifier = Modifier
@@ -71,7 +73,7 @@ fun PolicyHistoryScreen(
                     )
                     if (numeroPoliza.isNotBlank()) {
                         Text(
-                            text = "Póliza $numeroPoliza",
+                            text = tr(R.string.claim_detail_poliza, numeroPoliza),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                         )
@@ -86,7 +88,7 @@ fun PolicyHistoryScreen(
                         CircularProgressIndicator(
                             color = Navegacion,
                             modifier = Modifier.semantics {
-                                contentDescription = "Cargando movimientos"
+                                contentDescription = tr(R.string.policy_history_cargando_movimientos)
                             }
                         )
                     }
@@ -101,11 +103,11 @@ fun PolicyHistoryScreen(
                             style = MaterialTheme.typography.bodyLarge,
                             color = MaterialTheme.colorScheme.error
                         )
-                        SolventaPrimaryButton(text = "Reintentar", onClick = onReintentar)
+                        SolventaPrimaryButton(text = tr(R.string.assistance_reintentar), onClick = onReintentar)
                     }
 
                     historial?.movimientos.isNullOrEmpty() -> Text(
-                        text = "Esta póliza no tiene movimientos registrados.",
+                        text = tr(R.string.policy_history_esta_poliza_no_tiene_movimientos),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                     )
@@ -194,13 +196,13 @@ private fun ChipEstado(estado: String) {
 
 /** Título legible por tipo de movimiento, igual que la web (HU25). */
 private fun TipoMovimiento.titulo(): String = when (this) {
-    TipoMovimiento.EMISION -> "Emisión de póliza"
-    TipoMovimiento.PAGO_PRIMA_INICIAL -> "Pago de prima inicial"
-    TipoMovimiento.ENDOSO -> "Modificación contractual"
-    TipoMovimiento.RENOVACION -> "Renovación"
-    TipoMovimiento.CANCELACION -> "Cancelación"
-    TipoMovimiento.DESEMBOLSO_INDEMNIZACION -> "Pago de indemnización"
-    TipoMovimiento.REEMBOLSO -> "Reembolso"
+    TipoMovimiento.EMISION -> tr(R.string.home_emision_de_poliza)
+    TipoMovimiento.PAGO_PRIMA_INICIAL -> tr(R.string.home_pago_de_prima_inicial)
+    TipoMovimiento.ENDOSO -> tr(R.string.home_modificacion_contractual)
+    TipoMovimiento.RENOVACION -> tr(R.string.home_renovacion)
+    TipoMovimiento.CANCELACION -> tr(R.string.home_cancelacion)
+    TipoMovimiento.DESEMBOLSO_INDEMNIZACION -> tr(R.string.home_pago_de_indemnizacion)
+    TipoMovimiento.REEMBOLSO -> tr(R.string.home_reembolso)
 }
 
 /**

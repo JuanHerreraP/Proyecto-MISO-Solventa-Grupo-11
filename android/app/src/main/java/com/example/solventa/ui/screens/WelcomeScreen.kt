@@ -35,6 +35,7 @@ import com.example.solventa.ui.theme.Navegacion
 import com.example.solventa.ui.theme.Noche
 import com.example.solventa.ui.theme.Offline
 import com.example.solventa.ui.theme.SolventaTheme
+import com.example.solventa.i18n.tr
 
 @Composable
 fun WelcomeScreen(
@@ -62,7 +63,7 @@ fun WelcomeScreen(
             ) {
                 Image(
                     painter = painterResource(id = R.drawable.solventa_shield),
-                    contentDescription = "Icono de Solventa",
+                    contentDescription = tr(R.string.welcome_icono_de_solventa),
                     modifier = Modifier.size(72.dp)
                 )
             }
@@ -83,7 +84,7 @@ fun WelcomeScreen(
 
             // 3. Main Headline
             Text(
-                text = "Tu seguro, cuando lo\nnecesitas.",
+                text = tr(R.string.welcome_tu_seguro_cuando_lo_necesitas),
                 style = MaterialTheme.typography.headlineLarge,
                 color = MaterialTheme.colorScheme.onBackground,
                 textAlign = TextAlign.Center
@@ -93,7 +94,7 @@ fun WelcomeScreen(
 
             // 4. Description Body Text
             Text(
-                text = "Protección clara para cotizar, comprar y gestionar\ntus seguros desde el celular.",
+                text = tr(R.string.welcome_proteccion_clara_para_cotizar_comprar),
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
                 textAlign = TextAlign.Center
@@ -113,13 +114,13 @@ fun WelcomeScreen(
                 ) {
                     Icon(
                         painter = painterResource(id = R.drawable.ic_shield_person),
-                        contentDescription = "Identidad verificada",
+                        contentDescription = tr(R.string.welcome_identidad_verificada),
                         modifier = Modifier.size(16.dp),
                         tint = Offline
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "Identidad verificada y datos protegidos",
+                        text = tr(R.string.welcome_identidad_verificada_y_datos_protegidos),
                         style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
                         color = Offline
                     )
@@ -135,14 +136,14 @@ fun WelcomeScreen(
             ) {
                 // Primary Action Button (Ingresar)
                 SolventaPrimaryButton(
-                    text = "Ingresar",
+                    text = tr(R.string.credentials_login_ingresar),
                     onClick = onLoginClick,
                     modifier = Modifier.fillMaxWidth()
                 )
 
                 // Secondary Action Button (Crear una cuenta)
                 SolventaSecondaryButton(
-                    text = "Crear una cuenta",
+                    text = tr(R.string.welcome_crear_una_cuenta),
                     onClick = onRegisterClick,
                     modifier = Modifier.fillMaxWidth()
                 )

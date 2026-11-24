@@ -1,3 +1,4 @@
+import { t } from "../i18n";
 /**
  * La condición paramétrica de una póliza llega en `descripcion_cobertura` como pares
  * `clave=valor` separados por `;`, por ejemplo:
@@ -15,22 +16,23 @@ export interface CampoParametrico {
 }
 
 // `tipo_evento` no se muestra: ya se refleja en el nombre de la cobertura.
-const ETIQUETAS: Array<[string, string]> = [
-  ["numero_vuelo", "Número de vuelo"],
-  ["ubicacion", "Ubicación"],
-  ["parametro", "Parámetro"],
-  ["umbral_disparo", "Umbral de activación"],
-  ["unidad", "Unidad"],
-  ["valor_asegurado", "Valor asegurado"],
+// La etiqueta se traduce al construir las filas, para respetar el idioma activo.
+const ETIQUETAS: Array<[string, () => string]> = [
+  ["numero_vuelo", () => t("condicionParametrica.numero_de_vuelo")],
+  ["ubicacion", () => t("condicionParametrica.ubicacion")],
+  ["parametro", () => t("condicionParametrica.parametro")],
+  ["umbral_disparo", () => t("condicionParametrica.umbral_de_activacion")],
+  ["unidad", () => t("condicionParametrica.unidad")],
+  ["valor_asegurado", () => t("condicionParametrica.valor_asegurado")],
 ];
 
 const MONEDA = new Set(["valor_asegurado"]);
 
 const VALORES: Record<string, string> = {
-  RETRASO_VUELO: "Retraso de vuelo",
-  EVENTO_CLIMATICO: "Evento climático",
-  PRECIPITACION: "Precipitación",
-  MINUTOS: "minutos",
+  get RETRASO_VUELO() { return t("condicionParametrica.retraso_de_vuelo"); },
+  get EVENTO_CLIMATICO() { return t("condicionParametrica.evento_climatico"); },
+  get PRECIPITACION() { return t("condicionParametrica.precipitacion"); },
+  get MINUTOS() { return t("condicionParametrica.minutos"); },
   MM: "mm",
 };
 
@@ -71,7 +73,7 @@ export function camposCondicionParametrica(
     const valor = crudos.get(clave);
     if (valor === undefined) continue;
     crudos.delete(clave);
-    filas.push({ etiqueta, valor: humanizarValor(valor), esMoneda: MONEDA.has(clave) });
+    filas.push({ etiqueta: etiqueta(), valor: humanizarValor(valor), esMoneda: MONEDA.has(clave) });
   }
   for (const [clave, valor] of crudos) {
     filas.push({ etiqueta: humanizarClave(clave), valor: humanizarValor(valor), esMoneda: false });

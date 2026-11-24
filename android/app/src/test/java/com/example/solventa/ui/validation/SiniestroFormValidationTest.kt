@@ -6,8 +6,12 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
 
 /** HU20: validación del formulario de registro manual de siniestros. */
+// Robolectric: los mensajes salen de strings.xml (i18n) y necesitan los recursos de Android.
+@RunWith(RobolectricTestRunner::class)
 class SiniestroFormValidationTest {
 
     private fun hoy(anio: Int, mes1a12: Int, dia: Int): Calendar =

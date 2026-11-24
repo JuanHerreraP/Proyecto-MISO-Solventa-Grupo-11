@@ -1,0 +1,579 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- English texts. Must define every string in values/strings.xml. -->
+<resources>
+
+    <!-- advisor_home -->
+    <string name="advisor_home_solventa_asesor">Solventa · Advisor</string>
+    <string name="advisor_home_hola">Hello, %1$s</string>
+    <string name="advisor_home_gestiona_tus_clientes_y_registra">Manage your clients and register claims on their behalf.</string>
+    <string name="advisor_home_crear_un_asesor_de_ventas">Create a sales advisor</string>
+    <string name="advisor_home_asociar_un_cliente">Link a client</string>
+    <string name="advisor_home_correo_del_cliente">Client\'s email</string>
+    <string name="advisor_home_asociar_cliente">Link client</string>
+    <string name="advisor_home_mis_clientes">My clients</string>
+    <string name="advisor_home_cargando_tus_clientes">Loading your clients</string>
+    <string name="advisor_home_aun_no_tienes_clientes_asociados">You don\'t have any linked clients yet.</string>
+    <string name="advisor_home_cerrando_sesion">Signing out…</string>
+    <string name="advisor_home_cerrar_sesion">Sign out</string>
+    <string name="advisor_home_registrar_siniestro">Register claim</string>
+
+    <!-- assistance -->
+    <string name="assistance_mis_asistencias">My assistance requests</string>
+    <string name="assistance_asistencia_en_sitio">On-site assistance</string>
+    <string name="assistance_que_asistencia_necesitas">What assistance do you need?</string>
+    <string name="assistance_tu_ubicacion">Your location</string>
+    <string name="assistance_prestadores_cercanos">Nearby providers</string>
+    <string name="assistance_confirmar_asistencia">Confirm assistance</string>
+    <string name="assistance_asistencia_solicitada">Assistance requested</string>
+    <string name="assistance_selecciona_una_poliza">Select a policy</string>
+    <string name="assistance_solo_aparecen_tus_polizas_vigentes">Only your active policies with assistance services are shown.</string>
+    <string name="assistance_no_tienes_polizas_vigentes_con">You don\'t have active policies with assistance available.</string>
+    <string name="assistance_seleccionar">Select</string>
+    <string name="assistance_cargando_servicios">Loading services</string>
+    <string name="assistance_esta_poliza_no_ofrece_servicios">This policy doesn\'t offer assistance services.</string>
+    <string name="assistance_necesitamos_tu_ubicacion_para_encontrar">"We need your location to find nearby providers. "</string>
+    <string name="assistance_puedes_habilitarla_desde_los_permisos">You can turn it on in Solventa\'s permissions.</string>
+    <string name="assistance_reintentar">Retry</string>
+    <string name="assistance_asistencia_necesita_tu_ubicacion_para">Assistance needs your location to show nearby providers.</string>
+    <string name="assistance_buscar_prestadores_cercanos">Search for nearby providers</string>
+    <string name="assistance_permitir_ubicacion">Allow location</string>
+    <string name="assistance_buscando_prestadores">Searching for providers</string>
+    <string name="assistance_no_encontramos_prestadores_disponibles_dentro">"We couldn\'t find available providers within "</string>
+    <string name="assistance_ampliar_a_50_km">Expand to 50 km</string>
+    <string name="assistance_poliza">Policy</string>
+    <string name="assistance_servicio">Service</string>
+    <string name="assistance_prestador">Provider</string>
+    <string name="assistance_distancia">Distance</string>
+    <string name="assistance_ubicacion_de_atencion">Service location</string>
+    <string name="assistance_ubicacion_actual">Current location</string>
+    <string name="assistance_observaciones_opcional">Notes (optional)</string>
+    <string name="assistance_solicitando_asistencia">Requesting assistance…</string>
+    <string name="assistance_solicitar_asistencia">Request assistance</string>
+    <string name="assistance_cancelar">Cancel</string>
+    <string name="assistance_tu_solicitud_fue_registrada_correctamente">Your request was registered successfully.</string>
+    <string name="assistance_solicitud">Request</string>
+    <string name="assistance_estado">Status</string>
+    <string name="assistance_ver_mis_asistencias">View my assistance requests</string>
+    <string name="assistance_volver_al_inicio">Back to home</string>
+    <string name="assistance_cargando_tus_asistencias">Loading your assistance requests</string>
+    <string name="assistance_aun_no_tienes_asistencias_solicitadas">You haven\'t requested any assistance yet.</string>
+    <string name="assistance_nueva_solicitud">New request</string>
+    <string name="assistance_cancelando">Cancelling…</string>
+    <string name="assistance_cancelar_asistencia">Cancel assistance</string>
+    <string name="assistance_esperando_aceptacion_del_prestador">Waiting for the provider to accept.</string>
+    <string name="assistance_el_prestador_acepto_tu_solicitud">The provider accepted your request.</string>
+    <string name="assistance_tiempo_estimado_de_llegada">Estimated arrival time</string>
+    <string name="assistance_aun_no_disponible">Not available yet</string>
+
+    <!-- biometrical_login -->
+    <string name="biometrical_login_volver">Back</string>
+    <string name="biometrical_login_escudo_de_solventa">Solventa shield</string>
+    <string name="biometrical_login_huella_dactilar">Fingerprint</string>
+    <string name="biometrical_login_hola_de_nuevo">Welcome back</string>
+    <string name="biometrical_login_usa_la_huella_configurada_en">Use the fingerprint set up on your device to sign in quickly and securely.</string>
+    <string name="biometrical_login_la_huella_se_valida_en">Your fingerprint is verified on the device and is not stored by Solventa.</string>
+    <string name="biometrical_login_sesion_cerrada">Signed out</string>
+    <string name="biometrical_login_ingresar_con_biometria">Sign in with biometrics</string>
+    <string name="biometrical_login_usar_correo_y_contrasena">Use email and password</string>
+    <string name="biometrical_login_aun_no_tienes_cuenta">"Don\'t have an account yet? "</string>
+    <string name="biometrical_login_crear_una">Create one</string>
+
+    <!-- cancel -->
+    <string name="cancel_polizas">Policies</string>
+    <string name="cancel_cargando_las_condiciones_de_la">Loading the cancellation terms</string>
+    <string name="cancel_no_pudimos_cargar_la_cancelacion">We couldn\'t load the cancellation.</string>
+    <string name="cancel_confirma_tu_decision">Confirm your decision</string>
+    <string name="cancel_la_cobertura_y_los_cobros">Coverage and scheduled charges will end when the cancellation is processed.</string>
+    <string name="cancel_perderas_la_proteccion_asociada_a">You will lose the protection of policy %1$s.</string>
+    <string name="cancel_saldo_estimado_a_favor">Estimated balance in your favor</string>
+    <string name="cancel_no_se_puede_cancelar_en">It can\'t be cancelled right now.</string>
+    <string name="cancel_cancelando_la_poliza">Cancelling the policy</string>
+    <string name="cancel_confirmar_cancelacion">Confirm cancellation</string>
+    <string name="cancel_conservar_mi_poliza">Keep my policy</string>
+    <string name="cancel_elegir_el_motivo_de_cancelacion">Choose the cancellation reason</string>
+    <string name="cancel_motivo_de_cancelacion">Cancellation reason</string>
+
+    <!-- cancel_success -->
+    <string name="cancel_success_poliza_cancelada">Policy cancelled</string>
+    <string name="cancel_success_suspendimos_la_cobertura_y_los">"We suspended the coverage and future charges. "</string>
+    <string name="cancel_success_la_poliza_seguira_disponible_en">The policy will remain available in your history.</string>
+    <string name="cancel_success_volver_a_mis_polizas">Back to my policies</string>
+
+    <!-- captura_evidencias -->
+    <string name="captura_evidencias_no_encontramos_una_app_de">We couldn\'t find a camera app on the device.</string>
+
+    <!-- certificate -->
+    <string name="certificate_cargando_el_certificado">Loading the certificate</string>
+    <string name="certificate_no_pudimos_cargar_el_certificado">We couldn\'t load the certificate.</string>
+    <string name="certificate_coberturas">Coverages</string>
+    <string name="certificate_exclusiones_principales">Main exclusions</string>
+    <string name="certificate_no_se_informan_exclusiones_principales">No main exclusions are reported for this coverage.</string>
+    <string name="certificate_ver_certificado_y_qr">View certificate and QR</string>
+    <string name="certificate_consultar_movimientos">View transactions</string>
+    <string name="certificate_renovar">Renew</string>
+    <string name="certificate_poliza">"Policy %1$s · "</string>
+    <string name="certificate_esta_poliza_ya_no_esta">This policy is no longer active. The certificate is kept as a record.</string>
+    <string name="certificate_informacion_de_la_poliza">Policy information</string>
+    <string name="certificate_numero_de_poliza">Policy number</string>
+    <string name="certificate_titular">Holder</string>
+    <string name="certificate_documento">Document</string>
+    <string name="certificate_vigencia">Coverage period</string>
+    <string name="certificate_fecha_de_emision">Issue date</string>
+    <string name="certificate_prima_total">Total premium</string>
+    <string name="certificate_ver_documento_pdf">View PDF document</string>
+    <string name="certificate_compartir_certificado">Share certificate</string>
+    <string name="certificate_se_genera_un_enlace_temporal">A temporary link is created: whoever receives it will see the certificate until it expires.</string>
+    <string name="certificate_certificado_digital">Digital certificate</string>
+    <string name="certificate_codigo_qr_de_la_poliza">QR code for policy %1$s</string>
+
+    <!-- claim_detail -->
+    <string name="claim_detail_evento_detectado">Event detected</string>
+    <string name="claim_detail_reporte_recibido">Report received</string>
+    <string name="claim_detail_evaluacion_automatica">Automatic review</string>
+    <string name="claim_detail_evaluado_segun_las_condiciones_de">Reviewed according to your policy terms</string>
+    <string name="claim_detail_se_evalua_en_segundos">Reviewed in seconds</string>
+    <string name="claim_detail_evidencias_validadas">Evidence validated</string>
+    <string name="claim_detail_revision_completada">Review completed</string>
+    <string name="claim_detail_pendiente_de_revision">Pending review</string>
+    <string name="claim_detail_evaluacion">Review</string>
+    <string name="claim_detail_recibiras_una_notificacion">You will receive a notification</string>
+    <string name="claim_detail_evaluacion_en_curso">Review in progress</string>
+    <string name="claim_detail_pago_aprobado">Payment approved</string>
+    <string name="claim_detail_siniestro_aprobado">Claim approved</string>
+    <string name="claim_detail_monto_aprobado">Approved amount %1$s</string>
+    <string name="claim_detail_aprobado">Approved</string>
+    <string name="claim_detail_siniestro_rechazado">Claim rejected</string>
+    <string name="claim_detail_no_pudimos_aprobarlo">We couldn\'t approve it</string>
+    <string name="claim_detail_siniestro">Claim %1$s</string>
+    <string name="claim_detail_detalle_del_siniestro">Claim details</string>
+    <string name="claim_detail_cargando_el_siniestro">Loading the claim</string>
+    <string name="claim_detail_no_encontramos_ese_siniestro_en">We couldn\'t find that claim in your account.</string>
+    <string name="claim_detail_poliza">Policy %1$s</string>
+    <string name="claim_detail_progreso_del_caso">Case progress</string>
+    <string name="claim_detail_progreso_del_caso_por_ciento">Case progress, %1$s percent</string>
+    <string name="claim_detail_siniestro_parametrico">Parametric claim</string>
+    <string name="claim_detail_siniestro_reportado">Claim reported</string>
+    <string name="claim_detail_completado">Completed</string>
+    <string name="claim_detail_en_curso">In progress</string>
+    <string name="claim_detail_pendiente">Pending</string>
+    <string name="claim_detail_rechazado">Rejected</string>
+
+    <!-- claim_form -->
+    <string name="claim_form_reportar_siniestro">Report claim</string>
+    <string name="claim_form_tu_siniestro_ya_quedo_registrado">"Your claim has been registered. You just need to send "</string>
+    <string name="claim_form_retomaste_un_reporte_guardado_como">You resumed a report saved as a draft.</string>
+    <string name="claim_form_descartar">Discard</string>
+    <string name="claim_form_cargando_las_polizas_del_cliente">Loading the client\'s policies…</string>
+    <string name="claim_form_el_cliente_no_tiene_polizas">The client has no active policies to report a claim.</string>
+    <string name="claim_form_numero_o_identificador_de_la">Policy number or ID</string>
+    <string name="claim_form_fecha_del_evento">Event date</string>
+    <string name="claim_form_selecciona_la_fecha">Select the date</string>
+    <string name="claim_form_hora_del_evento">Event time</string>
+    <string name="claim_form_selecciona_la_hora">Select the time</string>
+    <string name="claim_form_lugar">Place</string>
+    <string name="claim_form_donde_ocurrio">Where did it happen?</string>
+    <string name="claim_form_descripcion">Description</string>
+    <string name="claim_form_cuentanos_que_paso">Tell us what happened</string>
+    <string name="claim_form_estimacion_del_dano_cop">Damage estimate (COP)</string>
+    <string name="claim_form_ej_850000">E.g. 850000</string>
+    <string name="claim_form_enviar_evidencias_pendientes">Send pending evidence</string>
+    <string name="claim_form_selecciona_que_ocurrio">Select what happened</string>
+    <string name="claim_form_elegir_tipo_de_siniestro">Choose claim type</string>
+    <string name="claim_form_adjunta_fotos_o_videos_del">"Attach photos or videos of the event. If you allow location, each capture "</string>
+    <string name="claim_form_queda_con_el_lugar_la">is tagged with the place, date and time.</string>
+    <string name="claim_form_foto">Photo</string>
+    <string name="claim_form_video">Video</string>
+    <string name="claim_form_galeria">Gallery</string>
+    <string name="claim_form_con_ubicacion">with location</string>
+    <string name="claim_form_sin_ubicacion">without location</string>
+    <string name="claim_form_enviada">Sent · %1$s</string>
+    <string name="claim_form_pendiente">Pending · %1$s</string>
+    <string name="claim_form_enviada_2">Sent</string>
+    <string name="claim_form_quitar_evidencia">Remove evidence %1$s</string>
+    <string name="claim_form_aceptar">Accept</string>
+    <string name="claim_form_elegir_poliza">Choose policy</string>
+
+    <!-- claims -->
+    <string name="claims_mis_siniestros">My claims</string>
+    <string name="claims_cargando_tus_siniestros">Loading your claims</string>
+    <string name="claims_aun_no_tienes_siniestros">You don\'t have any claims yet</string>
+    <string name="claims_aqui_veras_los_siniestros_que">Here you\'ll see the claims you report and the ones Solventa detects automatically.</string>
+    <string name="claims_en_total_automaticos">%1$s in total · %2$s automatic</string>
+    <string name="claims_ver_detalle">View details</string>
+    <string name="claims_evento">Event: %1$s</string>
+    <string name="claims_estimacion">Estimate: %1$s</string>
+    <string name="claims_automatico">Automatic</string>
+    <string name="claims_manual">Manual</string>
+    <string name="claims_registrado">Registered</string>
+    <string name="claims_en_evaluacion">Under review</string>
+
+    <!-- compartir -->
+    <string name="compartir_valido_hasta_el">" (valid until %1$s)"</string>
+    <string name="compartir_certificado_de_mi_poliza_en">Certificate of my policy%1$s at Solventa: %2$s%3$s</string>
+
+    <!-- create_advisor -->
+    <string name="create_advisor_crear_asesor_de_ventas">Create sales advisor</string>
+    <string name="create_advisor_con_su_cuenta_podra_asociar">With their account they can link clients and register claims on their behalf.</string>
+    <string name="create_advisor_nombres">First names</string>
+    <string name="create_advisor_nombres_del_asesor">Advisor\'s first names</string>
+    <string name="create_advisor_apellidos">Last names</string>
+    <string name="create_advisor_apellidos_del_asesor">Advisor\'s last names</string>
+    <string name="create_advisor_tipo_de_documento">Document type</string>
+    <string name="create_advisor_selecciona_una_opcion">Select an option</string>
+    <string name="create_advisor_abrir_lista">Open list</string>
+    <string name="create_advisor_numero_de_documento">Document number</string>
+    <string name="create_advisor_documento_del_asesor">Advisor\'s document</string>
+    <string name="create_advisor_fecha_de_nacimiento">Date of birth</string>
+    <string name="create_advisor_seleccionar_fecha">Select date</string>
+    <string name="create_advisor_correo_corporativo">Corporate email</string>
+    <string name="create_advisor_contrasena">Password</string>
+    <string name="create_advisor_minimo_8_caracteres">At least 8 characters</string>
+    <string name="create_advisor_confirmar_contrasena">Confirm password</string>
+    <string name="create_advisor_repite_la_contrasena">Repeat the password</string>
+    <string name="create_advisor_crear_asesor">Create advisor</string>
+    <string name="create_advisor_la_contrasena_debe_tener_minimo">The password must be at least 8 characters long.</string>
+    <string name="create_advisor_las_contrasenas_no_coinciden">Passwords do not match.</string>
+    <string name="create_advisor_asesor_creado">Advisor created</string>
+    <string name="create_advisor_ya_puede_iniciar_sesion_como">%1$s can now sign in as a sales advisor.</string>
+
+    <!-- create_auditor -->
+    <string name="create_auditor_crear_analista_de_cumplimiento">Create compliance analyst</string>
+    <string name="create_auditor_con_su_cuenta_podra_consultar">"With their account they can review the contract history of any policy "</string>
+    <string name="create_auditor_para_auditoria">for auditing.</string>
+    <string name="create_auditor_nombres_del_analista">Analyst\'s first names</string>
+    <string name="create_auditor_apellidos_del_analista">Analyst\'s last names</string>
+    <string name="create_auditor_documento_del_analista">Analyst\'s document</string>
+    <string name="create_auditor_crear_analista">Create analyst</string>
+    <string name="create_auditor_analista_creado">Analyst created</string>
+    <string name="create_auditor_ya_puede_iniciar_sesion_como">%1$s can now sign in as a compliance analyst.</string>
+
+    <!-- credentials_login -->
+    <string name="credentials_login_ingresar">Sign in</string>
+    <string name="credentials_login_accede_a_tu_cuenta">Sign in to your account</string>
+    <string name="credentials_login_esta_alternativa_esta_disponible_cuando">This option is available when you can\'t use biometrics.</string>
+    <string name="credentials_login_correo_electronico">Email</string>
+    <string name="credentials_login_olvidaste_tu_contrasena">Forgot your password?</string>
+    <string name="credentials_login_usar_ingreso_biometrico">Use biometric sign-in</string>
+    <string name="credentials_login_nunca_compartas_tu_contrasena_ni">Never share your password or verification codes.</string>
+
+    <!-- form -->
+    <string name="form_validation_ingresa_tus">Enter your %1$s.</string>
+    <string name="form_validation_debe_tener_al_menos_2">It must have at least 2 letters.</string>
+    <string name="form_validation_maximo_100_caracteres">Maximum 100 characters.</string>
+    <string name="form_validation_solo_letras_espacios_guion_o">Only letters, spaces, hyphens or apostrophes.</string>
+    <string name="form_validation_selecciona_un_tipo_de_documento">Select a document type.</string>
+    <string name="form_validation_primero_selecciona_el_tipo_de">First select the document type.</string>
+    <string name="form_validation_ingresa_el_numero_de_documento">Enter the document number.</string>
+    <string name="form_validation_solo_numeros_entre_5_y">Numbers only, between 5 and 12 digits.</string>
+    <string name="form_validation_solo_letras_y_numeros_entre">Letters and numbers only, between 6 and 12 characters.</string>
+    <string name="form_validation_ingresa_tu_correo_electronico">Enter your email.</string>
+    <string name="form_validation_ingresa_un_correo_electronico_valido">Enter a valid email.</string>
+    <string name="form_validation_ingresa_tu_numero_de_celular">Enter your mobile number.</string>
+    <string name="form_validation_debe_tener_10_digitos_y">It must have 10 digits and start with 3.</string>
+    <string name="form_validation_crea_una_contrasena">Create a password.</string>
+    <string name="form_validation_debe_tener_al_menos_8">It must be at least 8 characters long.</string>
+    <string name="form_validation_maximo_128_caracteres">Maximum 128 characters.</string>
+    <string name="form_validation_debe_incluir_al_menos_una">It must include at least one letter.</string>
+    <string name="form_validation_debe_incluir_al_menos_un">It must include at least one number.</string>
+    <string name="form_validation_selecciona_tu_fecha_de_nacimiento">Select your date of birth.</string>
+    <string name="form_validation_usa_el_formato_aaaa_mm">Use the YYYY-MM-DD format.</string>
+    <string name="form_validation_fecha_no_valida">Invalid date.</string>
+    <string name="form_validation_la_fecha_no_puede_ser">The date can\'t be in the future.</string>
+    <string name="form_validation_debes_ser_mayor_de_anos">You must be over %1$s years old.</string>
+    <string name="form_validation_cedula_de_ciudadania">Citizenship ID</string>
+    <string name="form_validation_cedula_de_extranjeria">Foreigner ID</string>
+    <string name="form_validation_tarjeta_de_identidad">Identity card</string>
+
+    <!-- home -->
+    <string name="home_activar_ingreso_con_huella">Turn on fingerprint sign-in?</string>
+    <string name="home_la_proxima_vez_podras_entrar">"Next time you can sign in with the fingerprint or face set up on your device. "</string>
+    <string name="home_tu_biometria_no_sale_del">Your biometrics never leave your phone.</string>
+    <string name="home_activar">Turn on</string>
+    <string name="home_ahora_no">Not now</string>
+    <string name="home_todo_lo_importante_de_tu">Everything important about your protection, in one place.</string>
+    <string name="home_crear_un_analista_de_cumplimiento">Create a compliance analyst</string>
+    <string name="home_activar_ingreso_con_huella_2">Turn on fingerprint sign-in</string>
+    <string name="home_notificaciones_sin_leer">Notifications, %1$s unread</string>
+    <string name="home_notificaciones">Notifications</string>
+    <string name="home_perfil">Profile</string>
+    <string name="home_ver_mi_billetera">View my wallet</string>
+    <string name="home_billetera_de_polizas">Policy wallet</string>
+    <string name="home_cotizar_un_nuevo_seguro">Quote a new insurance</string>
+    <string name="home_consulta_tus_polizas">View your policies</string>
+    <string name="home_1_poliza_activa">1 active policy</string>
+    <string name="home_polizas_activas">%1$s active policies</string>
+    <string name="home_historial_reciente">Recent history</string>
+    <string name="home_cargando_movimientos">Loading transactions…</string>
+    <string name="home_aun_no_tienes_movimientos_registrados">You don\'t have any recorded transactions yet.</string>
+    <string name="home_emision_de_poliza">Policy issuance</string>
+    <string name="home_pago_de_prima_inicial">Initial premium payment</string>
+    <string name="home_modificacion_contractual">Contract change</string>
+    <string name="home_renovacion">Renewal</string>
+    <string name="home_cancelacion">Cancellation</string>
+    <string name="home_pago_de_indemnizacion">Claim payout</string>
+    <string name="home_reembolso">Refund</string>
+
+    <!-- idioma -->
+    <string name="idioma_espanol">Español (Colombia)</string>
+    <string name="idioma_ingles">English</string>
+
+    <!-- mapa_prestadores -->
+    <string name="mapa_prestadores_mi_ubicacion">My location</string>
+
+    <!-- nav_graph -->
+    <string name="nav_graph_ingresa_a_solventa">Sign in to Solventa</string>
+    <string name="nav_graph_usa_la_huella_o_el">Use the fingerprint or face set up on your device</string>
+    <string name="nav_graph_cliente_asociado">Client %1$s %2$s linked.</string>
+    <string name="nav_graph_activa_el_ingreso_con_huella">Turn on fingerprint sign-in</string>
+    <string name="nav_graph_confirma_con_la_huella_o">Confirm with the fingerprint or face set up on your device</string>
+
+    <!-- new_quote -->
+    <string name="new_quote_viaje">Travel</string>
+    <string name="new_quote_cobertura_durante_tu_recorrido">Coverage during your trip</string>
+    <string name="new_quote_dispositivos">Devices</string>
+    <string name="new_quote_protege_celular_o_portatil">Protect your phone or laptop</string>
+    <string name="new_quote_vida">Life</string>
+    <string name="new_quote_proteccion_para_ti_y_tu">Protection for you and your family</string>
+    <string name="new_quote_parametrico">Parametric</string>
+    <string name="new_quote_respuesta_ante_eventos_definidos">Response to defined events</string>
+    <string name="new_quote_que_quieres_proteger">What do you want to protect?</string>
+    <string name="new_quote_elige_un_tipo_de_seguro">Choose a type of insurance to show only the details you need.</string>
+    <string name="new_quote_nueva_cotizacion">New quote</string>
+
+    <!-- notifications -->
+    <string name="notifications_cargando_tus_notificaciones">Loading your notifications</string>
+    <string name="notifications_aun_no_tienes_notificaciones">You don\'t have any notifications yet</string>
+    <string name="notifications_aqui_veras_los_avisos_sobre">Here you\'ll see notices about your payments, claims and expirations.</string>
+    <string name="notifications_estas_al_dia">You\'re all caught up</string>
+    <string name="notifications_sin_leer">%1$s unread</string>
+    <string name="notifications_sin_leer_2">Unread</string>
+    <string name="notifications_abrir_notificacion">Open notification</string>
+
+    <!-- payment -->
+    <string name="payment_como_quieres_pagar">How do you want to pay?</string>
+    <string name="payment_tarjeta_de_credito_o_debito">Credit or debit card</string>
+    <string name="payment_pse_debito_bancario">PSE (bank debit)</string>
+    <string name="payment_numero_de_tarjeta">Card number</string>
+    <string name="payment_revisa_los_datos_de_la">Check the card details.</string>
+    <string name="payment_vencimiento">Expiration</string>
+    <string name="payment_tus_datos_se_tokenizan_en">Your data is tokenized on the device; we never send the card number.</string>
+    <string name="payment_selecciona_tu_banco">Select your bank.</string>
+    <string name="payment_pagar_prima">Pay premium</string>
+    <string name="payment_banco">Bank</string>
+    <string name="payment_selecciona_tu_banco_2">Select your bank</string>
+    <string name="payment_pagar_la_prima">Pay the premium</string>
+
+    <!-- payment_result -->
+    <string name="payment_result_pago_exitoso">Payment successful!</string>
+    <string name="payment_result_pago_pendiente">Pending payment</string>
+    <string name="payment_result_pago_rechazado">Payment declined</string>
+    <string name="payment_result_reintentar_pago">Retry payment</string>
+    <string name="payment_result_cerrar">Close</string>
+    <string name="payment_result_comprobante">Receipt %1$s</string>
+    <string name="payment_result_el_pago_de_se_realizo">"The payment of %1$s was completed successfully. "</string>
+    <string name="payment_result_para_emitir_tu_poliza_firma">To issue your policy, sign your contract on the web portal.</string>
+    <string name="payment_result_tu_pago_esta_pendiente_de">Your payment is pending confirmation with your bank.</string>
+    <string name="payment_result_tu_pago_fue_rechazado">"Your payment was declined%1$s. "</string>
+    <string name="payment_result_no_se_genero_ninguna_poliza">No policy was created. You can try again.</string>
+
+    <!-- payments -->
+    <string name="payments_pagos">Payments</string>
+    <string name="payments_todavia_no_tienes_pagos">You don\'t have any payments yet</string>
+    <string name="payments_los_pagos_de_tus_primas">Your premium payments will appear here.</string>
+    <string name="payments_pendientes_de_pago">Pending payment</string>
+    <string name="payments_historial_de_pagos">Payment history</string>
+    <string name="payments_fecha_limite">Deadline: %1$s</string>
+    <string name="payments_pagar">Pay</string>
+    <string name="payments_firma_tu_contrato_en_el">Sign your contract on the web portal to issue your policy.</string>
+    <string name="payments_renovacion_poliza">Renewal — policy %1$s</string>
+    <string name="payments_cotizacion">%1$s — quote %2$s</string>
+    <string name="payments_contrato_por_firmar">%1$s — contract to sign</string>
+    <string name="payments_prima">Premium</string>
+    <string name="payments_ver_comprobante">View receipt</string>
+    <string name="payments_comprobante_de_pago">Payment receipt</string>
+    <string name="payments_comprobante">Receipt</string>
+    <string name="payments_concepto">Concept</string>
+    <string name="payments_valor_pagado">Amount paid</string>
+    <string name="payments_medio_de_pago">Payment method</string>
+    <string name="payments_fecha_de_pago">Payment date</string>
+    <string name="payments_referencia">Reference</string>
+    <string name="payments_cargando_el_comprobante">Loading the receipt</string>
+    <string name="payments_pagado">Paid</string>
+    <string name="payments_tarjeta">Card</string>
+
+    <!-- policy_history -->
+    <string name="policy_history_historial_de_la_poliza">Policy history</string>
+    <string name="policy_history_cargando_movimientos">Loading transactions</string>
+    <string name="policy_history_esta_poliza_no_tiene_movimientos">This policy has no recorded transactions.</string>
+
+    <!-- profile -->
+    <string name="profile_datos_personales">Personal details</string>
+    <string name="profile_documento_correo_y_celular">Document, email and mobile</string>
+    <string name="profile_seguridad_y_privacidad">Security and privacy</string>
+    <string name="profile_idioma_y_moneda">Language and currency</string>
+    <string name="profile_abrir">Open %1$s</string>
+    <string name="profile_volver_al_perfil">Back to profile</string>
+    <string name="profile_nombre_completo">Full name</string>
+    <string name="profile_documento_de_identidad">Identity document</string>
+    <string name="profile_telefono">Phone</string>
+    <string name="profile_no_disponible">Not available</string>
+    <string name="profile_acceso_biometrico">Biometric access</string>
+    <string name="profile_activado">On</string>
+    <string name="profile_no_activado">Off</string>
+    <string name="profile_datos_de_polizas">Policy data</string>
+    <string name="profile_disponibles_sin_conexion">Available offline</string>
+    <string name="profile_copia_local_cifrada">Encrypted local copy</string>
+    <string name="profile_idioma">Language</string>
+    <string name="profile_moneda">Currency</string>
+    <string name="profile_peso_colombiano_cop">Colombian peso (COP)</string>
+    <string name="profile_recibir_notificaciones_push">Receive push notifications</string>
+    <string name="profile_avisos_de_pagos_de_tu">"Notices about payments of your parametric insurance, policy expirations and changes "</string>
+    <string name="profile_en_tus_siniestros_siempre_los">to your claims. You\'ll always see them in the app too.</string>
+    <string name="profile_las_notificaciones_estan_bloqueadas_en">"Notifications are blocked on your phone. Allow them to receive "</string>
+    <string name="profile_los_avisos_como_notificacion">the notices as notifications.</string>
+    <string name="profile_permitir">Allow</string>
+    <string name="profile_abrir_ajustes">Open settings</string>
+    <string name="profile_disponible_proximamente">Coming soon</string>
+    <string name="profile_avisos_de_pagos_siniestros_y">Notices about payments, claims and expirations</string>
+    <string name="profile_notificaciones_push_activadas">Push notifications on</string>
+    <string name="profile_push_desactivado_los_avisos_se">Push off · notices are shown in the app</string>
+    <string name="profile_idioma_resumen">%1$s · Colombian peso (COP)</string>
+    <string name="profile_seguridad_resumen">%1$s · %2$s</string>
+    <string name="profile_biometria_activa">Biometrics on</string>
+    <string name="profile_biometria_no_activada">Biometrics off</string>
+    <string name="profile_datos_offline_disponibles">offline data available</string>
+    <string name="profile_datos_offline_cifrados">encrypted offline data</string>
+
+    <!-- pse_portal -->
+    <string name="pse_portal_pago_con_pse">Pay with PSE</string>
+
+    <!-- quote_form -->
+    <string name="quote_form_este_campo_es_obligatorio">This field is required.</string>
+    <string name="quote_form_usaremos_unicamente_los_datos_financieros">We will only use the financial data you authorized to personalize the price.</string>
+    <string name="quote_form_proteccion_de_datos_financieros">Financial data protection</string>
+    <string name="quote_form_calcular_cotizacion">Calculate quote</string>
+    <string name="quote_form_abrir_calendario">Open calendar</string>
+    <string name="quote_form_selecciona_una_fecha">Select a date</string>
+    <string name="quote_form_si">Yes</string>
+    <string name="quote_form_no">No</string>
+    <string name="quote_form_opcional">%1$s (Optional)</string>
+    <string name="quote_form_ingresa_un_numero">Enter a number</string>
+    <string name="quote_form_seguro_de_viaje">Travel insurance</string>
+    <string name="quote_form_proteccion_de_dispositivos">Device protection</string>
+    <string name="quote_form_seguro_de_vida">Life insurance</string>
+    <string name="quote_form_seguro_parametrico">Parametric insurance</string>
+
+    <!-- quote_result -->
+    <string name="quote_result_cotizacion_vigente_durante_las_proximas">Quote valid for the next 24 hours.</string>
+    <string name="quote_result_precio_personalizado_con_la_informacion">Personalized price based on the information you authorized.</string>
+    <string name="quote_result_aceptar_y_continuar">Accept and continue</string>
+    <string name="quote_result_crear_otra_cotizacion">Create another quote</string>
+    <string name="quote_result_tu_cotizacion">Your quote</string>
+    <string name="quote_result_cobertura_principal">Main coverage</string>
+    <string name="quote_result_suma_asegurada">Sum insured: %1$s</string>
+    <string name="quote_result_datos_de_la_solicitud">Request details</string>
+    <string name="quote_result_proteccion_para_tu_viaje">Protection for your trip</string>
+    <string name="quote_result_proteccion_para_tu_dispositivo">Protection for your device</string>
+    <string name="quote_result_proteccion_para_tu_vida">Protection for your life</string>
+    <string name="quote_result_proteccion_ante_eventos">Protection against events</string>
+
+    <!-- quotes -->
+    <string name="quotes_cotizaciones">Quotes</string>
+    <string name="quotes_cargando_tus_cotizaciones">Loading your quotes</string>
+    <string name="quotes_aun_no_tienes_cotizaciones">You don\'t have any quotes yet</string>
+    <string name="quotes_las_cotizaciones_que_calcules_apareceran">The quotes you calculate will appear here.</string>
+    <string name="quotes_crear_cotizacion">Create quote</string>
+    <string name="quotes_cotizaciones_recientes">Recent quotes</string>
+    <string name="quotes_ver_cotizacion">View quote</string>
+    <string name="quotes_referencia">Reference %1$s</string>
+
+    <!-- register -->
+    <string name="register_no_se_capturo_la_selfie">The selfie wasn\'t captured. Please try again.</string>
+    <string name="register_crear_cuenta">Create account</string>
+    <string name="register_cuentanos_sobre_ti">Tell us about yourself</string>
+    <string name="register_completa_tus_datos_y_toma">Fill in your details and take a selfie to send the verification.</string>
+    <string name="register_tus_nombres">Your first names</string>
+    <string name="register_tus_apellidos">Your last names</string>
+    <string name="register_abrir_lista_de_tipos_de">Open list of document types</string>
+    <string name="register_pasaporte">Passport</string>
+    <string name="register_solo_numeros">Numbers only</string>
+    <string name="register_celular">Mobile</string>
+    <string name="register_minimo_8_caracteres_letras_y">At least 8 characters, letters and numbers</string>
+    <string name="register_acepto_los_terminos_la_politica">I accept the terms, the privacy policy and identity verification.</string>
+    <string name="register_vista_previa_de_la_selfie">Selfie preview</string>
+    <string name="register_tomar_selfie">Take selfie</string>
+    <string name="register_tomar_otra_selfie">Take another selfie</string>
+    <string name="register_completa_todos_los_campos_usa">Fill in all the fields, correct the highlighted ones (over 18 years old, 10-digit mobile number, password with letters and numbers) and accept the terms.</string>
+    <string name="register_validar_identidad_y_crear_cuenta">Verify identity and create account</string>
+    <string name="register_ya_tienes_cuenta_iniciar_sesion">Already have an account? Sign in</string>
+    <string name="register_no_se_pudo_codificar_la">The captured selfie couldn\'t be encoded.</string>
+    <string name="register_campo_nombres">first names</string>
+    <string name="register_campo_apellidos">last names</string>
+
+    <!-- renewal -->
+    <string name="renewal_cargando_las_condiciones_de_la">Loading the renewal terms</string>
+    <string name="renewal_no_pudimos_cargar_la_renovacion">We couldn\'t load the renewal.</string>
+    <string name="renewal_continua_protegido">Stay protected</string>
+    <string name="renewal_revisa_las_condiciones_de_la">Review the terms of the new coverage period.</string>
+    <string name="renewal_nueva_vigencia">New coverage period</string>
+    <string name="renewal_prima_de_renovacion">Renewal premium</string>
+    <string name="renewal_esta_poliza_no_se_puede">This policy can\'t be renewed yet</string>
+    <string name="renewal_no_se_puede_renovar_en">It can\'t be renewed right now.</string>
+    <string name="renewal_confirmar_y_pagar">Confirm and pay</string>
+
+    <!-- renewal_success -->
+    <string name="renewal_success_poliza_renovada">Policy renewed</string>
+    <string name="renewal_success_actualizamos_la_vigencia_y_el">We updated the coverage period and the document is now available.</string>
+    <string name="renewal_success_ver_poliza_renovada">View renewed policy</string>
+
+    <!-- siniestro -->
+    <string name="siniestro_form_validation_selecciona_o_ingresa_la_poliza">Select or enter the affected policy.</string>
+    <string name="siniestro_form_validation_ingresa_el_lugar_del_evento">Enter where the event happened.</string>
+    <string name="siniestro_form_validation_maximo_200_caracteres">Maximum 200 characters.</string>
+    <string name="siniestro_form_validation_describe_lo_que_paso">Describe what happened.</string>
+    <string name="siniestro_form_validation_cuentanos_un_poco_mas_al">Tell us a bit more (at least 10 characters).</string>
+    <string name="siniestro_form_validation_maximo_2000_caracteres">Maximum 2000 characters.</string>
+    <string name="siniestro_form_validation_ingresa_una_estimacion_del_dano">Enter a damage estimate.</string>
+    <string name="siniestro_form_validation_usa_solo_numeros_maximo_2">Use numbers only (up to 2 decimals).</string>
+    <string name="siniestro_form_validation_ingresa_la_hora_del_evento">Enter the time of the event.</string>
+    <string name="siniestro_form_validation_usa_el_formato_hh_mm">Use the HH:MM format (24 hours).</string>
+    <string name="siniestro_form_validation_selecciona_la_fecha_del_evento">Select the date of the event.</string>
+    <string name="siniestro_form_validation_la_fecha_no_puede_estar">The date can\'t be in the future.</string>
+    <string name="siniestro_form_validation_selecciona_el_tipo_de_siniestro">Select the claim type</string>
+
+    <!-- solventa_bottom_navigation -->
+    <string name="solventa_bottom_navigation_inicio">Home</string>
+    <string name="solventa_bottom_navigation_siniestros">Claims</string>
+
+    <!-- sync_status_banner -->
+    <string name="sync_status_banner_datos_disponibles_sin_conexion">Data available offline</string>
+    <string name="sync_status_banner_actualizado">Updated</string>
+    <string name="sync_status_banner_sin_conexion_mostrando_datos_guardados">Offline · Showing saved data</string>
+    <string name="sync_status_banner_actualizado_2">Updated %1$s</string>
+    <string name="sync_status_banner_hace_min">%1$s min ago</string>
+    <string name="sync_status_banner_hace_1_h">1 h ago</string>
+    <string name="sync_status_banner_hace_h">%1$s h ago</string>
+    <string name="sync_status_banner_hace_1_dia">1 day ago</string>
+    <string name="sync_status_banner_hace_dias">%1$s days ago</string>
+    <string name="sync_status_banner_ahora">just now</string>
+
+    <!-- wallet -->
+    <string name="wallet_cargando_tus_polizas">Loading your policies</string>
+    <string name="wallet_aun_no_tienes_polizas">You don\'t have any policies yet</string>
+    <string name="wallet_cuando_compres_un_seguro_su">When you buy insurance, its certificate will appear here.</string>
+    <string name="wallet_estos_datos_tienen_mas_de">This data is more than 30 days old and may be out of date.</string>
+    <string name="wallet_no_pudimos_actualizar_tus_polizas">We couldn\'t update your policies. We\'ll try again.</string>
+    <string name="wallet_sin_conexion_ultima_actualizacion">Offline · Last update: %1$s.</string>
+    <string name="wallet_sin_conexion_mostrando_datos_guardados">Offline · Showing saved data.</string>
+    <string name="wallet_sin_conexion">Offline</string>
+    <string name="wallet_datos_actualizados">Data updated</string>
+    <string name="wallet_ver_certificado">View certificate</string>
+
+    <!-- welcome -->
+    <string name="welcome_icono_de_solventa">Solventa icon</string>
+    <string name="welcome_tu_seguro_cuando_lo_necesitas">Your insurance, when you\nneed it.</string>
+    <string name="welcome_proteccion_clara_para_cotizar_comprar">Clear protection to quote, buy and manage\nyour insurance from your phone.</string>
+    <string name="welcome_identidad_verificada">Verified identity</string>
+    <string name="welcome_identidad_verificada_y_datos_protegidos">Verified identity and protected data</string>
+    <string name="welcome_crear_una_cuenta">Create an account</string>
+</resources>

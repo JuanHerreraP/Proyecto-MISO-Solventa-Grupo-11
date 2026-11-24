@@ -11,6 +11,8 @@ import type {
   TipoMovimiento,
 } from "../types/historial";
 
+import { t, localeActual } from "../i18n";
+
 const ICONO_TIPO: Record<TipoMovimiento, string> = {
   EMISION: "verified",
   PAGO_PRIMA_INICIAL: "payments",
@@ -22,24 +24,24 @@ const ICONO_TIPO: Record<TipoMovimiento, string> = {
 };
 
 const TITULO_TIPO: Record<TipoMovimiento, string> = {
-  EMISION: "Emisión de póliza",
-  PAGO_PRIMA_INICIAL: "Pago de prima inicial",
-  ENDOSO: "Modificación contractual",
-  RENOVACION: "Renovación",
-  CANCELACION: "Cancelación",
-  DESEMBOLSO_INDEMNIZACION: "Pago de indemnización",
-  REEMBOLSO: "Reembolso",
+  get EMISION() { return t("historialPolizaPage.emision_de_poliza"); },
+  get PAGO_PRIMA_INICIAL() { return t("historialPolizaPage.pago_de_prima_inicial"); },
+  get ENDOSO() { return t("historialPolizaPage.modificacion_contractual"); },
+  get RENOVACION() { return t("historialPolizaPage.renovacion"); },
+  get CANCELACION() { return t("historialPolizaPage.cancelacion"); },
+  get DESEMBOLSO_INDEMNIZACION() { return t("historialPolizaPage.pago_de_indemnizacion"); },
+  get REEMBOLSO() { return t("historialPolizaPage.reembolso"); },
 };
 
 const ETIQUETA_CATEGORIA: Record<CategoriaMovimiento, string> = {
-  FINANCIERO: "Movimiento financiero",
-  CONTRACTUAL: "Movimiento contractual",
-  POLIZA: "Póliza",
+  get FINANCIERO() { return t("historialPolizaPage.movimiento_financiero"); },
+  get CONTRACTUAL() { return t("historialPolizaPage.movimiento_contractual"); },
+  get POLIZA() { return t("historialPolizaPage.poliza"); },
 };
 
 function formatearFechaHora(iso: string): string {
   const fecha = new Date(iso);
-  return fecha.toLocaleString("es-CO", {
+  return fecha.toLocaleString(localeActual(), {
     day: "numeric",
     month: "long",
     year: "numeric",
@@ -50,7 +52,7 @@ function formatearFechaHora(iso: string): string {
 
 /** El monto siempre es positivo; el signo mostrado depende de la naturaleza del movimiento. */
 function formatearMonto(monto: string, moneda: string | null, naturaleza: NaturalezaMonto | null): string {
-  const valor = Number(monto).toLocaleString("es-CO", {
+  const valor = Number(monto).toLocaleString(localeActual(), {
     style: "currency",
     currency: moneda ?? "COP",
     maximumFractionDigits: 0,
@@ -104,11 +106,11 @@ export default function HistorialPolizaPage() {
     <AppLayout activo="Mis pólizas" rol={rol}>
       <header className="home-header">
         <div>
-          <h1>Historial de movimientos</h1>
+          <h1>{t("historialPolizaPage.historial_de_movimientos")}</h1>
           {historial && <p>{historial.numero_poliza}</p>}
         </div>
         <button type="button" className="cotizar-boton-secundario" onClick={() => navigate("/polizas")}>
-          Volver a mis pólizas
+          {t("historialPolizaPage.volver_a_mis_polizas")}
         </button>
       </header>
 
@@ -116,25 +118,25 @@ export default function HistorialPolizaPage() {
         <div className="home-panel">
           <p role="alert" className="home-aviso">{error}</p>
           <button type="button" className="cotizar-boton-primario" onClick={() => reintentar()}>
-            Reintentar
+            {t("historialPolizaPage.reintentar")}
           </button>
         </div>
       )}
 
       {cargando && !error && (
-        <p role="status" className="home-card-vacio">Cargando historial…</p>
+        <p role="status" className="home-card-vacio">{t("historialPolizaPage.cargando_historial")}</p>
       )}
 
       {!cargando && !error && movimientos.length === 0 && (
         <div className="home-panel">
           <p className="home-card-vacio">
-            Todavía no hay movimientos registrados para esta póliza.
+            {t("historialPolizaPage.todavia_no_hay_movimientos_registrados")}
           </p>
         </div>
       )}
 
       {!cargando && !error && movimientos.length > 0 && (
-        <section aria-label="Historial de movimientos" className="cotizaciones-lista">
+        <section aria-label={t("historialPolizaPage.historial_de_movimientos")} className="cotizaciones-lista">
           {movimientos.map((movimiento) => (
             <TarjetaMovimiento
               key={movimiento.movimiento_id}
@@ -186,20 +188,20 @@ function TarjetaMovimiento({
         <dl className="cotizacion-datos">
           {movimiento.monto !== null && (
             <div>
-              <dt>{movimiento.naturaleza_monto === "AJUSTE" ? "Ajuste de prima" : "Monto"}</dt>
+              <dt>{movimiento.naturaleza_monto === "AJUSTE" ? t("historialPolizaPage.ajuste_de_prima") : t("historialPolizaPage.monto")}</dt>
               <dd>{formatearMonto(movimiento.monto, movimiento.moneda, movimiento.naturaleza_monto)}</dd>
             </div>
           )}
           {movimiento.referencia && (
             <div>
-              <dt>Referencia</dt>
+              <dt>{t("historialPolizaPage.referencia")}</dt>
               <dd>{movimiento.referencia}</dd>
             </div>
           )}
           {movimiento.categoria === "FINANCIERO" && (
             <div>
-              <dt>Referencia de pasarela</dt>
-              <dd>{movimiento.referencia_externa ?? "Sin referencia externa"}</dd>
+              <dt>{t("historialPolizaPage.referencia_de_pasarela")}</dt>
+              <dd>{movimiento.referencia_externa ?? t("historialPolizaPage.sin_referencia_externa")}</dd>
             </div>
           )}
         </dl>
@@ -207,7 +209,7 @@ function TarjetaMovimiento({
         {movimiento.consentimiento?.explicito && (
           <p className="historial-consentimiento">
             <span className="material-symbols-outlined" aria-hidden="true">check_circle</span>
-            Consentimiento: confirmado por el cliente
+            {t("historialPolizaPage.consentimiento_confirmado_por_el_cliente")}
           </p>
         )}
 
@@ -218,19 +220,19 @@ function TarjetaMovimiento({
             aria-expanded={abierto}
             onClick={onAlternar}
           >
-            {abierto ? "Ocultar detalle" : "Ver detalle"}
+            {abierto ? t("historialPolizaPage.ocultar_detalle") : t("historialPolizaPage.ver_detalle")}
           </button>
         )}
 
         {abierto && movimiento.cambios.length > 0 && (
           <div className="historial-cambios">
-            <h3 className="cotizacion-subtitulo">Cambios</h3>
+            <h3 className="cotizacion-subtitulo">{t("historialPolizaPage.cambios")}</h3>
             {movimiento.cambios.map((cambio, indice) => (
               <div key={`${movimiento.movimiento_id}-${indice}`} className="historial-cambio">
                 <strong>{cambio.descripcion}</strong>
                 <div className="historial-linaje">
                   <div>
-                    <span className="historial-linaje-rotulo">Antes</span>
+                    <span className="historial-linaje-rotulo">{t("historialPolizaPage.antes")}</span>
                     {entradasLinaje(cambio.antes).length === 0 ? (
                       <small>—</small>
                     ) : (
@@ -240,7 +242,7 @@ function TarjetaMovimiento({
                     )}
                   </div>
                   <div>
-                    <span className="historial-linaje-rotulo">Después</span>
+                    <span className="historial-linaje-rotulo">{t("historialPolizaPage.despues")}</span>
                     {entradasLinaje(cambio.despues).length === 0 ? (
                       <small>—</small>
                     ) : (

@@ -44,6 +44,8 @@ import com.example.solventa.ui.components.SolventaSecondaryButton
 import com.example.solventa.ui.theme.Atencion
 import com.example.solventa.ui.theme.Avance
 import com.example.solventa.ui.theme.Navegacion
+import com.example.solventa.R
+import com.example.solventa.i18n.tr
 
 /** Una póliza elegible para asistencia (vigente y de un ramo con servicios). */
 data class PolizaAsistenciaElegible(
@@ -80,7 +82,7 @@ fun AssistanceScreen(
                 accion = {
                     if (estado.paso != PasoAsistencia.MIS_ASISTENCIAS) {
                         Text(
-                            text = "Mis asistencias",
+                            text = tr(R.string.assistance_mis_asistencias),
                             style = MaterialTheme.typography.labelMedium,
                             color = Navegacion,
                             modifier = Modifier
@@ -145,13 +147,13 @@ fun AssistanceScreen(
 }
 
 private fun tituloPaso(paso: PasoAsistencia): String = when (paso) {
-    PasoAsistencia.SELECCION_POLIZA -> "Asistencia en sitio"
-    PasoAsistencia.SELECCION_SERVICIO -> "¿Qué asistencia necesitas?"
-    PasoAsistencia.PERMISO_UBICACION -> "Tu ubicación"
-    PasoAsistencia.PRESTADORES -> "Prestadores cercanos"
-    PasoAsistencia.CONFIRMACION -> "Confirmar asistencia"
-    PasoAsistencia.EXITO -> "Asistencia solicitada"
-    PasoAsistencia.MIS_ASISTENCIAS -> "Mis asistencias"
+    PasoAsistencia.SELECCION_POLIZA -> tr(R.string.assistance_asistencia_en_sitio)
+    PasoAsistencia.SELECCION_SERVICIO -> tr(R.string.assistance_que_asistencia_necesitas)
+    PasoAsistencia.PERMISO_UBICACION -> tr(R.string.assistance_tu_ubicacion)
+    PasoAsistencia.PRESTADORES -> tr(R.string.assistance_prestadores_cercanos)
+    PasoAsistencia.CONFIRMACION -> tr(R.string.assistance_confirmar_asistencia)
+    PasoAsistencia.EXITO -> tr(R.string.assistance_asistencia_solicitada)
+    PasoAsistencia.MIS_ASISTENCIAS -> tr(R.string.assistance_mis_asistencias)
 }
 
 @Composable
@@ -161,18 +163,18 @@ private fun PasoSeleccionPoliza(
 ) {
     ColumnaConScroll {
         Text(
-            text = "Selecciona una póliza",
+            text = tr(R.string.assistance_selecciona_una_poliza),
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.onSurface
         )
         Text(
-            text = "Solo aparecen tus pólizas vigentes con servicios de asistencia.",
+            text = tr(R.string.assistance_solo_aparecen_tus_polizas_vigentes),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
         )
         if (polizas.isEmpty()) {
             Text(
-                text = "No tienes pólizas vigentes con asistencia disponible.",
+                text = tr(R.string.assistance_no_tienes_polizas_vigentes_con),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
             )
@@ -187,7 +189,7 @@ private fun PasoSeleccionPoliza(
                     )
                     Spacer(modifier = Modifier.size(8.dp))
                     SolventaPrimaryButton(
-                        text = "Seleccionar",
+                        text = tr(R.string.assistance_seleccionar),
                         onClick = { onSeleccionar(poliza) }
                     )
                 }
@@ -210,9 +212,9 @@ private fun PasoSeleccionServicio(
             )
         }
         when {
-            estado.cargando -> Cargando("Cargando servicios")
+            estado.cargando -> Cargando(tr(R.string.assistance_cargando_servicios))
             estado.servicios.isEmpty() -> Text(
-                text = "Esta póliza no ofrece servicios de asistencia.",
+                text = tr(R.string.assistance_esta_poliza_no_ofrece_servicios),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
             )
@@ -255,22 +257,22 @@ private fun PasoPermisoUbicacion(
     ColumnaConScroll {
         if (estado.permisoDenegado) {
             Text(
-                text = "Necesitamos tu ubicación para encontrar prestadores cercanos. " +
-                    "Puedes habilitarla desde los permisos de Solventa.",
+                text = tr(R.string.assistance_necesitamos_tu_ubicacion_para_encontrar) +
+                    tr(R.string.assistance_puedes_habilitarla_desde_los_permisos),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.85f)
             )
-            SolventaPrimaryButton(text = "Reintentar", onClick = onSolicitarPermiso)
+            SolventaPrimaryButton(text = tr(R.string.assistance_reintentar), onClick = onSolicitarPermiso)
         } else {
             Text(
-                text = "Asistencia necesita tu ubicación para mostrar prestadores cercanos.",
+                text = tr(R.string.assistance_asistencia_necesita_tu_ubicacion_para),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.85f)
             )
             if (tienePermiso) {
-                SolventaPrimaryButton(text = "Buscar prestadores cercanos", onClick = onBuscar)
+                SolventaPrimaryButton(text = tr(R.string.assistance_buscar_prestadores_cercanos), onClick = onBuscar)
             } else {
-                SolventaPrimaryButton(text = "Permitir ubicación", onClick = onSolicitarPermiso)
+                SolventaPrimaryButton(text = tr(R.string.assistance_permitir_ubicacion), onClick = onSolicitarPermiso)
             }
         }
     }
@@ -285,23 +287,23 @@ private fun PasoPrestadores(
 ) {
     ColumnaConScroll {
         when {
-            estado.cargando -> Cargando("Buscando prestadores")
+            estado.cargando -> Cargando(tr(R.string.assistance_buscando_prestadores))
             estado.prestadores.isEmpty() -> {
                 Text(
-                    text = "No encontramos prestadores disponibles dentro de " +
+                    text = tr(R.string.assistance_no_encontramos_prestadores_disponibles_dentro) +
                         "${estado.radioKm.toInt()} km.",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.85f)
                 )
-                SolventaPrimaryButton(text = "Reintentar", onClick = onReintentar)
+                SolventaPrimaryButton(text = tr(R.string.assistance_reintentar), onClick = onReintentar)
                 if (estado.radioKm < 50.0) {
-                    SolventaSecondaryButton(text = "Ampliar a 50 km", onClick = onAmpliarRadio)
+                    SolventaSecondaryButton(text = tr(R.string.assistance_ampliar_a_50_km), onClick = onAmpliarRadio)
                 }
             }
             else -> {
                 MapaPrestadores(estado = estado, modifier = Modifier.fillMaxWidth().height(220.dp))
                 Text(
-                    text = "Prestadores cercanos",
+                    text = tr(R.string.assistance_prestadores_cercanos),
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onSurface
                 )
@@ -339,7 +341,7 @@ private fun TarjetaPrestador(
             }
             Spacer(modifier = Modifier.size(4.dp))
             SolventaPrimaryButton(
-                text = "Seleccionar",
+                text = tr(R.string.assistance_seleccionar),
                 onClick = { onSeleccionar(prestador) }
             )
         }
@@ -355,28 +357,28 @@ private fun PasoConfirmacion(
     var observaciones by rememberSaveable { mutableStateOf("") }
     val prestador = estado.prestadorSeleccionado
     ColumnaConScroll {
-        FilaDato("Póliza", estado.polizaSeleccionadaEtiqueta ?: "—")
-        FilaDato("Servicio", estado.servicioSeleccionado?.nombre ?: "—")
-        FilaDato("Prestador", prestador?.nombre ?: "—")
+        FilaDato(tr(R.string.assistance_poliza), estado.polizaSeleccionadaEtiqueta ?: "—")
+        FilaDato(tr(R.string.assistance_servicio), estado.servicioSeleccionado?.nombre ?: "—")
+        FilaDato(tr(R.string.assistance_prestador), prestador?.nombre ?: "—")
         if (prestador != null) {
-            FilaDato("Distancia", formatoKm(prestador.distanciaKm))
+            FilaDato(tr(R.string.assistance_distancia), formatoKm(prestador.distanciaKm))
         }
-        FilaDato("Ubicación de atención", "Ubicación actual")
+        FilaDato(tr(R.string.assistance_ubicacion_de_atencion), tr(R.string.assistance_ubicacion_actual))
         OutlinedTextField(
             value = observaciones,
             onValueChange = { if (it.length <= 500) observaciones = it },
-            label = { Text("Observaciones (opcional)") },
+            label = { Text(tr(R.string.assistance_observaciones_opcional)) },
             modifier = Modifier.fillMaxWidth().heightIn(min = 96.dp),
             supportingText = { Text("${observaciones.length}/500") }
         )
         SolventaPrimaryButton(
-            text = if (estado.solicitando) "Solicitando asistencia…" else "Solicitar asistencia",
+            text = if (estado.solicitando) tr(R.string.assistance_solicitando_asistencia) else tr(R.string.assistance_solicitar_asistencia),
             onClick = { onConfirmar(observaciones.ifBlank { null }) },
             enabled = !estado.solicitando,
             isLoading = estado.solicitando
         )
         SolventaSecondaryButton(
-            text = "Cancelar",
+            text = tr(R.string.assistance_cancelar),
             onClick = onCancelar,
             enabled = !estado.solicitando
         )
@@ -392,18 +394,18 @@ private fun PasoExito(
     val asistencia = estado.asistenciaCreada
     ColumnaConScroll {
         Text(
-            text = "Tu solicitud fue registrada correctamente.",
+            text = tr(R.string.assistance_tu_solicitud_fue_registrada_correctamente),
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurface
         )
         if (asistencia != null) {
-            FilaDato("Solicitud", asistencia.asistenciaId)
-            FilaDato("Prestador", asistencia.prestador.nombre)
-            FilaDato("Servicio", asistencia.servicio.etiqueta)
-            FilaDato("Estado", asistencia.estado.etiqueta)
+            FilaDato(tr(R.string.assistance_solicitud), asistencia.asistenciaId)
+            FilaDato(tr(R.string.assistance_prestador), asistencia.prestador.nombre)
+            FilaDato(tr(R.string.assistance_servicio), asistencia.servicio.etiqueta)
+            FilaDato(tr(R.string.assistance_estado), asistencia.estado.etiqueta)
         }
-        SolventaPrimaryButton(text = "Ver mis asistencias", onClick = onVerMisAsistencias)
-        SolventaSecondaryButton(text = "Volver al inicio", onClick = onVolverAlInicio)
+        SolventaPrimaryButton(text = tr(R.string.assistance_ver_mis_asistencias), onClick = onVerMisAsistencias)
+        SolventaSecondaryButton(text = tr(R.string.assistance_volver_al_inicio), onClick = onVolverAlInicio)
     }
 }
 
@@ -415,9 +417,9 @@ private fun PasoMisAsistencias(
 ) {
     ColumnaConScroll {
         when {
-            estado.cargandoAsistencias -> Cargando("Cargando tus asistencias")
+            estado.cargandoAsistencias -> Cargando(tr(R.string.assistance_cargando_tus_asistencias))
             estado.asistencias.isEmpty() -> Text(
-                text = "Aún no tienes asistencias solicitadas.",
+                text = tr(R.string.assistance_aun_no_tienes_asistencias_solicitadas),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
             )
@@ -429,7 +431,7 @@ private fun PasoMisAsistencias(
                 )
             }
         }
-        SolventaSecondaryButton(text = "Nueva solicitud", onClick = onNueva)
+        SolventaSecondaryButton(text = tr(R.string.assistance_nueva_solicitud), onClick = onNueva)
     }
 }
 
@@ -456,7 +458,7 @@ private fun TarjetaAsistencia(
             if (asistencia.cancelable) {
                 Spacer(modifier = Modifier.size(4.dp))
                 SolventaSecondaryButton(
-                    text = if (cancelando) "Cancelando…" else "Cancelar asistencia",
+                    text = if (cancelando) tr(R.string.assistance_cancelando) else tr(R.string.assistance_cancelar_asistencia),
                     onClick = onCancelar,
                     enabled = !cancelando,
                     isLoading = cancelando
@@ -476,22 +478,22 @@ private fun TarjetaAsistencia(
 private fun SeguimientoAsistencia(asistencia: Asistencia) {
     when (asistencia.estado) {
         EstadoAsistencia.SOLICITADA -> Text(
-            text = "Esperando aceptación del prestador.",
+            text = tr(R.string.assistance_esperando_aceptacion_del_prestador),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
         )
 
         EstadoAsistencia.ACEPTADA -> {
             Text(
-                text = "El prestador aceptó tu solicitud.",
+                text = tr(R.string.assistance_el_prestador_acepto_tu_solicitud),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
             )
             FilaDato(
-                etiqueta = "Tiempo estimado de llegada",
+                etiqueta = tr(R.string.assistance_tiempo_estimado_de_llegada),
                 valor = asistencia.tiempoEstimadoLlegadaMinutos
                     ?.let { "$it min" }
-                    ?: "Aún no disponible"
+                    ?: tr(R.string.assistance_aun_no_disponible)
             )
         }
 

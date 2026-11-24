@@ -14,23 +14,25 @@ import {
 import type { EstadoSiniestro } from "../types/siniestros";
 import "../styles/desembolsos.css";
 
+import { t, localeActual } from "../i18n";
+
 const FILTROS: { etiqueta: string; estado?: EstadoSiniestro }[] = [
-  { etiqueta: "Por evaluar", estado: "REGISTRADO" },
-  { etiqueta: "Aprobados", estado: "APROBADO" },
-  { etiqueta: "Rechazados", estado: "RECHAZADO" },
-  { etiqueta: "Todos" },
+  { get etiqueta() { return t("bandejaSiniestrosPage.por_evaluar"); }, estado: "REGISTRADO" },
+  { get etiqueta() { return t("bandejaSiniestrosPage.aprobados"); }, estado: "APROBADO" },
+  { get etiqueta() { return t("bandejaSiniestrosPage.rechazados"); }, estado: "RECHAZADO" },
+  { get etiqueta() { return t("bandejaSiniestrosPage.todos"); } },
 ];
 
 const ESTADOS: Record<string, string> = {
-  REGISTRADO: "Por evaluar",
-  EN_EVALUACION: "En evaluación",
-  APROBADO: "Aprobado",
-  RECHAZADO: "Rechazado",
+  get REGISTRADO() { return t("bandejaSiniestrosPage.por_evaluar"); },
+  get EN_EVALUACION() { return t("bandejaSiniestrosPage.en_evaluacion"); },
+  get APROBADO() { return t("bandejaSiniestrosPage.aprobado"); },
+  get RECHAZADO() { return t("bandejaSiniestrosPage.rechazado"); },
 };
 
 function formatearFecha(iso: string): string {
   const [anio, mes, dia] = iso.slice(0, 10).split("-").map(Number);
-  return new Date(anio, mes - 1, dia).toLocaleDateString("es-CO", {
+  return new Date(anio, mes - 1, dia).toLocaleDateString(localeActual(), {
     day: "numeric", month: "long", year: "numeric",
   });
 }
@@ -92,12 +94,12 @@ export default function BandejaSiniestrosPage() {
     <AppLayout activo="Bandeja de siniestros" rol={perfil?.rol ?? null}>
       <header className="home-header">
         <div>
-          <h1>Bandeja de siniestros</h1>
-          <p>Evalúa las reclamaciones. Al aprobar, la indemnización se desembolsa de inmediato.</p>
+          <h1>{t("bandejaSiniestrosPage.bandeja_de_siniestros")}</h1>
+          <p>{t("bandejaSiniestrosPage.evalua_las_reclamaciones_al_aprobar")}</p>
         </div>
       </header>
 
-      <div className="bandeja-filtros" role="group" aria-label="Filtrar por estado">
+      <div className="bandeja-filtros" role="group" aria-label={t("bandejaSiniestrosPage.filtrar_por_estado")}>
         {FILTROS.map(({ etiqueta, estado }) => (
           <button
             key={etiqueta}
@@ -114,12 +116,12 @@ export default function BandejaSiniestrosPage() {
       {aviso && <p role="status" className="cotizar-mensaje-ok">{aviso}</p>}
       {error && <p role="alert" className="home-aviso">{error}</p>}
 
-      <section aria-label="Siniestros" className="cotizaciones-lista">
+      <section aria-label={t("bandejaSiniestrosPage.siniestros")} className="cotizaciones-lista">
         {siniestros === null && !error && (
-          <p role="status" className="home-card-vacio">Cargando la bandeja…</p>
+          <p role="status" className="home-card-vacio">{t("bandejaSiniestrosPage.cargando_la_bandeja")}</p>
         )}
         {siniestros?.length === 0 && (
-          <div className="home-panel"><p className="home-card-vacio">No hay siniestros en esta vista.</p></div>
+          <div className="home-panel"><p className="home-card-vacio">{t("bandejaSiniestrosPage.no_hay_siniestros_en_esta")}</p></div>
         )}
         {siniestros?.map((s) => {
           const esAbierto = abierto === s.siniestro_id;
@@ -141,7 +143,7 @@ export default function BandejaSiniestrosPage() {
                 <span className="cotizacion-cabecera-texto">
                   <strong>{formatearMonto(s.estimacion_danos, s.moneda)} · {s.lugar}</strong>
                   <small>
-                    {s.origen === "AUTOMATICO" ? "Paramétrico" : "Manual"} · {formatearFecha(s.fecha_evento)} · {s.poliza_id}
+                    {s.origen === "AUTOMATICO" ? t("bandejaSiniestrosPage.parametrico") : t("bandejaSiniestrosPage.manual")} · {formatearFecha(s.fecha_evento)} · {s.poliza_id}
                   </small>
                 </span>
                 <span className="home-chip cotizacion-estado">{ESTADOS[s.estado] ?? s.estado}</span>
@@ -152,19 +154,19 @@ export default function BandejaSiniestrosPage() {
 
               {esAbierto && (
                 <div className="cotizacion-detalle">
-                  <h3 className="cotizacion-subtitulo">Descripción</h3>
+                  <h3 className="cotizacion-subtitulo">{t("bandejaSiniestrosPage.descripcion")}</h3>
                   <p className="siniestro-descripcion">{s.descripcion}</p>
                   <dl className="cotizacion-datos">
-                    <div><dt>Siniestro</dt><dd>{s.siniestro_id}</dd></div>
-                    <div><dt>Registrado</dt><dd>{formatearFecha(s.registrado_en)}</dd></div>
+                    <div><dt>{t("bandejaSiniestrosPage.siniestro")}</dt><dd>{s.siniestro_id}</dd></div>
+                    <div><dt>{t("bandejaSiniestrosPage.registrado")}</dt><dd>{formatearFecha(s.registrado_en)}</dd></div>
                     {s.monto_aprobado && (
-                      <div><dt>Monto aprobado</dt><dd>{formatearMonto(s.monto_aprobado, s.moneda)}</dd></div>
+                      <div><dt>{t("bandejaSiniestrosPage.monto_aprobado")}</dt><dd>{formatearMonto(s.monto_aprobado, s.moneda)}</dd></div>
                     )}
                     {s.evaluado_por && (
-                      <div><dt>Evaluado por</dt><dd>{s.evaluado_por === "SISTEMA" ? "Aprobación automática" : s.evaluado_por}</dd></div>
+                      <div><dt>{t("bandejaSiniestrosPage.evaluado_por")}</dt><dd>{s.evaluado_por === "SISTEMA" ? t("bandejaSiniestrosPage.aprobacion_automatica") : s.evaluado_por}</dd></div>
                     )}
                     {s.motivo_rechazo && (
-                      <div><dt>Motivo del rechazo</dt><dd>{s.motivo_rechazo}</dd></div>
+                      <div><dt>{t("bandejaSiniestrosPage.motivo_del_rechazo")}</dt><dd>{s.motivo_rechazo}</dd></div>
                     )}
                   </dl>
 
@@ -173,9 +175,9 @@ export default function BandejaSiniestrosPage() {
                   {porEvaluar && (
                     <div className="bandeja-decision">
                       <div>
-                        <h4>Aprobar</h4>
+                        <h4>{t("bandejaSiniestrosPage.aprobar")}</h4>
                         <div className="cotizar-campo">
-                          <label htmlFor={`monto-${s.siniestro_id}`}>Monto a indemnizar</label>
+                          <label htmlFor={`monto-${s.siniestro_id}`}>{t("bandejaSiniestrosPage.monto_a_indemnizar")}</label>
                           <input
                             id={`monto-${s.siniestro_id}`}
                             type="number"
@@ -184,7 +186,7 @@ export default function BandejaSiniestrosPage() {
                             value={monto}
                             onChange={(e) => setMonto(e.target.value)}
                           />
-                          <span className="cotizar-ayuda">Tope: la suma asegurada de la póliza.</span>
+                          <span className="cotizar-ayuda">{t("bandejaSiniestrosPage.tope_la_suma_asegurada_de")}</span>
                         </div>
                         <button
                           type="button"
@@ -193,16 +195,16 @@ export default function BandejaSiniestrosPage() {
                           onClick={() => void ejecutar(
                             s.siniestro_id,
                             () => aprobarSiniestro(s.siniestro_id, monto),
-                            "Siniestro aprobado. Se ordenó el desembolso.",
+                            t("bandejaSiniestrosPage.siniestro_aprobado_se_ordeno_el"),
                           )}
                         >
-                          {ocupado ? "Procesando…" : "Aprobar y desembolsar"}
+                          {ocupado ? t("bandejaSiniestrosPage.procesando") : t("bandejaSiniestrosPage.aprobar_y_desembolsar")}
                         </button>
                       </div>
                       <div>
-                        <h4>Rechazar</h4>
+                        <h4>{t("bandejaSiniestrosPage.rechazar")}</h4>
                         <div className="cotizar-campo">
-                          <label htmlFor={`motivo-${s.siniestro_id}`}>Motivo</label>
+                          <label htmlFor={`motivo-${s.siniestro_id}`}>{t("bandejaSiniestrosPage.motivo")}</label>
                           <textarea
                             id={`motivo-${s.siniestro_id}`}
                             rows={3}
@@ -218,10 +220,10 @@ export default function BandejaSiniestrosPage() {
                           onClick={() => void ejecutar(
                             s.siniestro_id,
                             () => rechazarSiniestro(s.siniestro_id, motivo.trim()),
-                            "Siniestro rechazado.",
+                            t("bandejaSiniestrosPage.siniestro_rechazado"),
                           )}
                         >
-                          Rechazar siniestro
+                          {t("bandejaSiniestrosPage.rechazar_siniestro")}
                         </button>
                       </div>
                     </div>
@@ -236,10 +238,10 @@ export default function BandejaSiniestrosPage() {
                         onClick={() => void ejecutar(
                           s.siniestro_id,
                           () => reintentarDesembolso(s.siniestro_id),
-                          "Se reintentó el desembolso.",
+                          t("bandejaSiniestrosPage.se_reintento_el_desembolso"),
                         )}
                       >
-                        {ocupado ? "Reintentando…" : "Reintentar desembolso"}
+                        {ocupado ? t("bandejaSiniestrosPage.reintentando") : t("bandejaSiniestrosPage.reintentar_desembolso")}
                       </button>
                     </div>
                   )}

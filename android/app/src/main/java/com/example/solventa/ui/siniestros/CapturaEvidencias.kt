@@ -19,6 +19,8 @@ import com.example.solventa.domain.siniestros.EvidenciaImportada
 import com.example.solventa.domain.siniestros.TipoEvidencia
 import java.io.File
 import kotlinx.coroutines.launch
+import com.example.solventa.R
+import com.example.solventa.i18n.tr
 
 /** Lo que el formulario puede pedir: abrir la cámara, grabar video o elegir de la galería. */
 class AccionesEvidencia(
@@ -27,7 +29,6 @@ class AccionesEvidencia(
     val elegirArchivo: () -> Unit
 )
 
-private const val SIN_CAMARA = "No encontramos una app de cámara en el dispositivo."
 
 /**
  * Conecta el formulario de siniestro con la cámara, la galería y la ubicación (HU04).
@@ -108,7 +109,7 @@ fun rememberCapturaEvidencias(
             archivoPendiente = null
             tipoPendiente = null
             archivo.delete()
-            alRecibir(EvidenciaImportada.Rechazada(SIN_CAMARA), false)
+            alRecibir(EvidenciaImportada.Rechazada(tr(R.string.captura_evidencias_no_encontramos_una_app_de)), false)
         }
     }
 

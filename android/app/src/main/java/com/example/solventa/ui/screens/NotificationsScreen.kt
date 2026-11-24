@@ -45,6 +45,8 @@ import com.example.solventa.ui.components.SolventaPrimaryButton
 import com.example.solventa.ui.theme.Atencion
 import com.example.solventa.ui.theme.Navegacion
 import com.example.solventa.ui.theme.SolventaTheme
+import com.example.solventa.R
+import com.example.solventa.i18n.tr
 
 /**
  * Bandeja de notificaciones (HU05): todos los eventos registrados, también los que llegaron con el
@@ -62,14 +64,14 @@ fun NotificationsScreen(
 ) {
     Surface(modifier = modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surface) {
         Column(modifier = Modifier.fillMaxSize()) {
-            Encabezado(titulo = "Notificaciones", onVolver = onVolver)
+            Encabezado(titulo = tr(R.string.home_notificaciones), onVolver = onVolver)
 
             when {
                 bandeja == null && cargando -> Centrado {
                     CircularProgressIndicator(
                         color = Navegacion,
                         modifier = Modifier.semantics {
-                            contentDescription = "Cargando tus notificaciones"
+                            contentDescription = tr(R.string.notifications_cargando_tus_notificaciones)
                         }
                     )
                 }
@@ -81,18 +83,18 @@ fun NotificationsScreen(
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Spacer(modifier = Modifier.size(16.dp))
-                    SolventaPrimaryButton(text = "Reintentar", onClick = onReintentar)
+                    SolventaPrimaryButton(text = tr(R.string.assistance_reintentar), onClick = onReintentar)
                 }
 
                 bandeja == null || bandeja.vacia -> Centrado {
                     Text(
-                        text = "Aún no tienes notificaciones",
+                        text = tr(R.string.notifications_aun_no_tienes_notificaciones),
                         style = MaterialTheme.typography.titleMedium,
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Spacer(modifier = Modifier.size(8.dp))
                     Text(
-                        text = "Aquí verás los avisos sobre tus pagos, siniestros y vencimientos.",
+                        text = tr(R.string.notifications_aqui_veras_los_avisos_sobre),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                     )
@@ -120,9 +122,9 @@ private fun ListaNotificaciones(
         item {
             Text(
                 text = if (bandeja.noLeidas == 0) {
-                    "Estás al día"
+                    tr(R.string.notifications_estas_al_dia)
                 } else {
-                    "${bandeja.noLeidas} sin leer"
+                    tr(R.string.notifications_sin_leer, bandeja.noLeidas)
                 },
                 style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
@@ -143,8 +145,8 @@ private fun TarjetaNotificacion(notificacion: Notificacion, onClick: () -> Unit)
         else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.04f),
         modifier = Modifier
             .fillMaxWidth()
-            .semantics { if (sinLeer) stateDescription = "Sin leer" }
-            .clickable(role = Role.Button, onClickLabel = "Abrir notificación", onClick = onClick)
+            .semantics { if (sinLeer) stateDescription = tr(R.string.notifications_sin_leer_2) }
+            .clickable(role = Role.Button, onClickLabel = tr(R.string.notifications_abrir_notificacion), onClick = onClick)
     ) {
         Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.Top) {
             Surface(shape = RoundedCornerShape(12.dp), color = Navegacion.copy(alpha = 0.12f)) {

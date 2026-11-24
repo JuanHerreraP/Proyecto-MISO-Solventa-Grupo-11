@@ -1,3 +1,580 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Textos de la app en español de Colombia (idioma predeterminado). Agrupados por pantalla o componente. -->
 <resources>
-    <string name="app_name">Solventa</string>
+    <string name="app_name" translatable="false">Solventa</string>
+
+    <!-- advisor_home -->
+    <string name="advisor_home_solventa_asesor">Solventa · Asesor</string>
+    <string name="advisor_home_hola">Hola, %1$s</string>
+    <string name="advisor_home_gestiona_tus_clientes_y_registra">Gestiona tus clientes y registra siniestros en su nombre.</string>
+    <string name="advisor_home_crear_un_asesor_de_ventas">Crear un asesor de ventas</string>
+    <string name="advisor_home_asociar_un_cliente">Asociar un cliente</string>
+    <string name="advisor_home_correo_del_cliente">Correo del cliente</string>
+    <string name="advisor_home_asociar_cliente">Asociar cliente</string>
+    <string name="advisor_home_mis_clientes">Mis clientes</string>
+    <string name="advisor_home_cargando_tus_clientes">Cargando tus clientes</string>
+    <string name="advisor_home_aun_no_tienes_clientes_asociados">Aún no tienes clientes asociados.</string>
+    <string name="advisor_home_cerrando_sesion">Cerrando sesión…</string>
+    <string name="advisor_home_cerrar_sesion">Cerrar sesión</string>
+    <string name="advisor_home_registrar_siniestro">Registrar siniestro</string>
+
+    <!-- assistance -->
+    <string name="assistance_mis_asistencias">Mis asistencias</string>
+    <string name="assistance_asistencia_en_sitio">Asistencia en sitio</string>
+    <string name="assistance_que_asistencia_necesitas">¿Qué asistencia necesitas?</string>
+    <string name="assistance_tu_ubicacion">Tu ubicación</string>
+    <string name="assistance_prestadores_cercanos">Prestadores cercanos</string>
+    <string name="assistance_confirmar_asistencia">Confirmar asistencia</string>
+    <string name="assistance_asistencia_solicitada">Asistencia solicitada</string>
+    <string name="assistance_selecciona_una_poliza">Selecciona una póliza</string>
+    <string name="assistance_solo_aparecen_tus_polizas_vigentes">Solo aparecen tus pólizas vigentes con servicios de asistencia.</string>
+    <string name="assistance_no_tienes_polizas_vigentes_con">No tienes pólizas vigentes con asistencia disponible.</string>
+    <string name="assistance_seleccionar">Seleccionar</string>
+    <string name="assistance_cargando_servicios">Cargando servicios</string>
+    <string name="assistance_esta_poliza_no_ofrece_servicios">Esta póliza no ofrece servicios de asistencia.</string>
+    <string name="assistance_necesitamos_tu_ubicacion_para_encontrar">"Necesitamos tu ubicación para encontrar prestadores cercanos. "</string>
+    <string name="assistance_puedes_habilitarla_desde_los_permisos">Puedes habilitarla desde los permisos de Solventa.</string>
+    <string name="assistance_reintentar">Reintentar</string>
+    <string name="assistance_asistencia_necesita_tu_ubicacion_para">Asistencia necesita tu ubicación para mostrar prestadores cercanos.</string>
+    <string name="assistance_buscar_prestadores_cercanos">Buscar prestadores cercanos</string>
+    <string name="assistance_permitir_ubicacion">Permitir ubicación</string>
+    <string name="assistance_buscando_prestadores">Buscando prestadores</string>
+    <string name="assistance_no_encontramos_prestadores_disponibles_dentro">"No encontramos prestadores disponibles dentro de "</string>
+    <string name="assistance_ampliar_a_50_km">Ampliar a 50 km</string>
+    <string name="assistance_poliza">Póliza</string>
+    <string name="assistance_servicio">Servicio</string>
+    <string name="assistance_prestador">Prestador</string>
+    <string name="assistance_distancia">Distancia</string>
+    <string name="assistance_ubicacion_de_atencion">Ubicación de atención</string>
+    <string name="assistance_ubicacion_actual">Ubicación actual</string>
+    <string name="assistance_observaciones_opcional">Observaciones (opcional)</string>
+    <string name="assistance_solicitando_asistencia">Solicitando asistencia…</string>
+    <string name="assistance_solicitar_asistencia">Solicitar asistencia</string>
+    <string name="assistance_cancelar">Cancelar</string>
+    <string name="assistance_tu_solicitud_fue_registrada_correctamente">Tu solicitud fue registrada correctamente.</string>
+    <string name="assistance_solicitud">Solicitud</string>
+    <string name="assistance_estado">Estado</string>
+    <string name="assistance_ver_mis_asistencias">Ver mis asistencias</string>
+    <string name="assistance_volver_al_inicio">Volver al inicio</string>
+    <string name="assistance_cargando_tus_asistencias">Cargando tus asistencias</string>
+    <string name="assistance_aun_no_tienes_asistencias_solicitadas">Aún no tienes asistencias solicitadas.</string>
+    <string name="assistance_nueva_solicitud">Nueva solicitud</string>
+    <string name="assistance_cancelando">Cancelando…</string>
+    <string name="assistance_cancelar_asistencia">Cancelar asistencia</string>
+    <string name="assistance_esperando_aceptacion_del_prestador">Esperando aceptación del prestador.</string>
+    <string name="assistance_el_prestador_acepto_tu_solicitud">El prestador aceptó tu solicitud.</string>
+    <string name="assistance_tiempo_estimado_de_llegada">Tiempo estimado de llegada</string>
+    <string name="assistance_aun_no_disponible">Aún no disponible</string>
+
+    <!-- biometrical_login -->
+    <string name="biometrical_login_volver">Volver</string>
+    <string name="biometrical_login_escudo_de_solventa">Escudo de Solventa</string>
+    <string name="biometrical_login_huella_dactilar">Huella dactilar</string>
+    <string name="biometrical_login_hola_de_nuevo">Hola de nuevo</string>
+    <string name="biometrical_login_usa_la_huella_configurada_en">Usa la huella configurada en tu dispositivo para entrar de forma rápida y segura.</string>
+    <string name="biometrical_login_la_huella_se_valida_en">La huella se valida en el dispositivo y no se almacena en Solventa.</string>
+    <string name="biometrical_login_sesion_cerrada">Sesión cerrada</string>
+    <string name="biometrical_login_ingresar_con_biometria">Ingresar con biometría</string>
+    <string name="biometrical_login_usar_correo_y_contrasena">Usar correo y contraseña</string>
+    <string name="biometrical_login_aun_no_tienes_cuenta">"¿Aún no tienes cuenta? "</string>
+    <string name="biometrical_login_crear_una">Crear una</string>
+
+    <!-- cancel -->
+    <string name="cancel_polizas">Pólizas</string>
+    <string name="cancel_cargando_las_condiciones_de_la">Cargando las condiciones de la cancelación</string>
+    <string name="cancel_no_pudimos_cargar_la_cancelacion">No pudimos cargar la cancelación.</string>
+    <string name="cancel_confirma_tu_decision">Confirma tu decisión</string>
+    <string name="cancel_la_cobertura_y_los_cobros">La cobertura y los cobros programados terminarán al procesar la cancelación.</string>
+    <string name="cancel_perderas_la_proteccion_asociada_a">Perderás la protección asociada a la póliza %1$s.</string>
+    <string name="cancel_saldo_estimado_a_favor">Saldo estimado a favor</string>
+    <string name="cancel_no_se_puede_cancelar_en">No se puede cancelar en este momento.</string>
+    <string name="cancel_cancelando_la_poliza">Cancelando la póliza</string>
+    <string name="cancel_confirmar_cancelacion">Confirmar cancelación</string>
+    <string name="cancel_conservar_mi_poliza">Conservar mi póliza</string>
+    <string name="cancel_elegir_el_motivo_de_cancelacion">Elegir el motivo de cancelación</string>
+    <string name="cancel_motivo_de_cancelacion">Motivo de cancelación</string>
+
+    <!-- cancel_success -->
+    <string name="cancel_success_poliza_cancelada">Póliza cancelada</string>
+    <string name="cancel_success_suspendimos_la_cobertura_y_los">"Suspendimos la cobertura y los cobros futuros. "</string>
+    <string name="cancel_success_la_poliza_seguira_disponible_en">La póliza seguirá disponible en tu historial.</string>
+    <string name="cancel_success_volver_a_mis_polizas">Volver a mis pólizas</string>
+
+    <!-- captura_evidencias -->
+    <string name="captura_evidencias_no_encontramos_una_app_de">No encontramos una app de cámara en el dispositivo.</string>
+
+    <!-- certificate -->
+    <string name="certificate_cargando_el_certificado">Cargando el certificado</string>
+    <string name="certificate_no_pudimos_cargar_el_certificado">No pudimos cargar el certificado.</string>
+    <string name="certificate_coberturas">Coberturas</string>
+    <string name="certificate_exclusiones_principales">Exclusiones principales</string>
+    <string name="certificate_no_se_informan_exclusiones_principales">No se informan exclusiones principales para esta cobertura.</string>
+    <string name="certificate_ver_certificado_y_qr">Ver certificado y QR</string>
+    <string name="certificate_consultar_movimientos">Consultar movimientos</string>
+    <string name="certificate_renovar">Renovar</string>
+    <string name="certificate_poliza">"Póliza %1$s · "</string>
+    <string name="certificate_esta_poliza_ya_no_esta">Esta póliza ya no está vigente. El certificado se conserva como constancia.</string>
+    <string name="certificate_informacion_de_la_poliza">Información de la póliza</string>
+    <string name="certificate_numero_de_poliza">Número de póliza</string>
+    <string name="certificate_titular">Titular</string>
+    <string name="certificate_documento">Documento</string>
+    <string name="certificate_vigencia">Vigencia</string>
+    <string name="certificate_fecha_de_emision">Fecha de emisión</string>
+    <string name="certificate_prima_total">Prima total</string>
+    <string name="certificate_ver_documento_pdf">Ver documento PDF</string>
+    <string name="certificate_compartir_certificado">Compartir certificado</string>
+    <string name="certificate_se_genera_un_enlace_temporal">Se genera un enlace temporal: quien lo reciba verá el certificado hasta que venza.</string>
+    <string name="certificate_certificado_digital">Certificado digital</string>
+    <string name="certificate_codigo_qr_de_la_poliza">Código QR de la póliza %1$s</string>
+
+    <!-- claim_detail -->
+    <string name="claim_detail_evento_detectado">Evento detectado</string>
+    <string name="claim_detail_reporte_recibido">Reporte recibido</string>
+    <string name="claim_detail_evaluacion_automatica">Evaluación automática</string>
+    <string name="claim_detail_evaluado_segun_las_condiciones_de">Evaluado según las condiciones de tu póliza</string>
+    <string name="claim_detail_se_evalua_en_segundos">Se evalúa en segundos</string>
+    <string name="claim_detail_evidencias_validadas">Evidencias validadas</string>
+    <string name="claim_detail_revision_completada">Revisión completada</string>
+    <string name="claim_detail_pendiente_de_revision">Pendiente de revisión</string>
+    <string name="claim_detail_evaluacion">Evaluación</string>
+    <string name="claim_detail_recibiras_una_notificacion">Recibirás una notificación</string>
+    <string name="claim_detail_evaluacion_en_curso">Evaluación en curso</string>
+    <string name="claim_detail_pago_aprobado">Pago aprobado</string>
+    <string name="claim_detail_siniestro_aprobado">Siniestro aprobado</string>
+    <string name="claim_detail_monto_aprobado">Monto aprobado %1$s</string>
+    <string name="claim_detail_aprobado">Aprobado</string>
+    <string name="claim_detail_siniestro_rechazado">Siniestro rechazado</string>
+    <string name="claim_detail_no_pudimos_aprobarlo">No pudimos aprobarlo</string>
+    <string name="claim_detail_siniestro">Siniestro %1$s</string>
+    <string name="claim_detail_detalle_del_siniestro">Detalle del siniestro</string>
+    <string name="claim_detail_cargando_el_siniestro">Cargando el siniestro</string>
+    <string name="claim_detail_no_encontramos_ese_siniestro_en">No encontramos ese siniestro en tu cuenta.</string>
+    <string name="claim_detail_poliza">Póliza %1$s</string>
+    <string name="claim_detail_progreso_del_caso">Progreso del caso</string>
+    <string name="claim_detail_progreso_del_caso_por_ciento">Progreso del caso, %1$s por ciento</string>
+    <string name="claim_detail_siniestro_parametrico">Siniestro paramétrico</string>
+    <string name="claim_detail_siniestro_reportado">Siniestro reportado</string>
+    <string name="claim_detail_completado">Completado</string>
+    <string name="claim_detail_en_curso">En curso</string>
+    <string name="claim_detail_pendiente">Pendiente</string>
+    <string name="claim_detail_rechazado">Rechazado</string>
+
+    <!-- claim_form -->
+    <string name="claim_form_reportar_siniestro">Reportar siniestro</string>
+    <string name="claim_form_tu_siniestro_ya_quedo_registrado">"Tu siniestro ya quedó registrado. Solo falta enviar "</string>
+    <string name="claim_form_retomaste_un_reporte_guardado_como">Retomaste un reporte guardado como borrador.</string>
+    <string name="claim_form_descartar">Descartar</string>
+    <string name="claim_form_cargando_las_polizas_del_cliente">Cargando las pólizas del cliente…</string>
+    <string name="claim_form_el_cliente_no_tiene_polizas">El cliente no tiene pólizas vigentes para reportar un siniestro.</string>
+    <string name="claim_form_numero_o_identificador_de_la">Número o identificador de la póliza</string>
+    <string name="claim_form_fecha_del_evento">Fecha del evento</string>
+    <string name="claim_form_selecciona_la_fecha">Selecciona la fecha</string>
+    <string name="claim_form_hora_del_evento">Hora del evento</string>
+    <string name="claim_form_selecciona_la_hora">Selecciona la hora</string>
+    <string name="claim_form_lugar">Lugar</string>
+    <string name="claim_form_donde_ocurrio">¿Dónde ocurrió?</string>
+    <string name="claim_form_descripcion">Descripción</string>
+    <string name="claim_form_cuentanos_que_paso">Cuéntanos qué pasó</string>
+    <string name="claim_form_estimacion_del_dano_cop">Estimación del daño (COP)</string>
+    <string name="claim_form_ej_850000">Ej. 850000</string>
+    <string name="claim_form_enviar_evidencias_pendientes">Enviar evidencias pendientes</string>
+    <string name="claim_form_selecciona_que_ocurrio">Selecciona qué ocurrió</string>
+    <string name="claim_form_elegir_tipo_de_siniestro">Elegir tipo de siniestro</string>
+    <string name="claim_form_adjunta_fotos_o_videos_del">"Adjunta fotos o videos del evento. Si autorizas la ubicación, cada captura "</string>
+    <string name="claim_form_queda_con_el_lugar_la">queda con el lugar, la fecha y la hora.</string>
+    <string name="claim_form_foto">Foto</string>
+    <string name="claim_form_video">Video</string>
+    <string name="claim_form_galeria">Galería</string>
+    <string name="claim_form_con_ubicacion">con ubicación</string>
+    <string name="claim_form_sin_ubicacion">sin ubicación</string>
+    <string name="claim_form_enviada">Enviada · %1$s</string>
+    <string name="claim_form_pendiente">Pendiente · %1$s</string>
+    <string name="claim_form_enviada_2">Enviada</string>
+    <string name="claim_form_quitar_evidencia">Quitar evidencia %1$s</string>
+    <string name="claim_form_aceptar">Aceptar</string>
+    <string name="claim_form_elegir_poliza">Elegir póliza</string>
+
+    <!-- claims -->
+    <string name="claims_mis_siniestros">Mis siniestros</string>
+    <string name="claims_cargando_tus_siniestros">Cargando tus siniestros</string>
+    <string name="claims_aun_no_tienes_siniestros">Aún no tienes siniestros</string>
+    <string name="claims_aqui_veras_los_siniestros_que">Aquí verás los siniestros que reportes y los que Solventa detecte automáticamente.</string>
+    <string name="claims_en_total_automaticos">%1$s en total · %2$s automáticos</string>
+    <string name="claims_ver_detalle">Ver detalle</string>
+    <string name="claims_evento">Evento: %1$s</string>
+    <string name="claims_estimacion">Estimación: %1$s</string>
+    <string name="claims_automatico">Automático</string>
+    <string name="claims_manual">Manual</string>
+    <string name="claims_registrado">Registrado</string>
+    <string name="claims_en_evaluacion">En evaluación</string>
+
+    <!-- compartir -->
+    <string name="compartir_valido_hasta_el">" (válido hasta el %1$s)"</string>
+    <string name="compartir_certificado_de_mi_poliza_en">Certificado de mi póliza%1$s en Solventa: %2$s%3$s</string>
+
+    <!-- create_advisor -->
+    <string name="create_advisor_crear_asesor_de_ventas">Crear asesor de ventas</string>
+    <string name="create_advisor_con_su_cuenta_podra_asociar">Con su cuenta podrá asociar clientes y registrar siniestros en su nombre.</string>
+    <string name="create_advisor_nombres">Nombres</string>
+    <string name="create_advisor_nombres_del_asesor">Nombres del asesor</string>
+    <string name="create_advisor_apellidos">Apellidos</string>
+    <string name="create_advisor_apellidos_del_asesor">Apellidos del asesor</string>
+    <string name="create_advisor_tipo_de_documento">Tipo de documento</string>
+    <string name="create_advisor_selecciona_una_opcion">Selecciona una opción</string>
+    <string name="create_advisor_abrir_lista">Abrir lista</string>
+    <string name="create_advisor_numero_de_documento">Número de documento</string>
+    <string name="create_advisor_documento_del_asesor">Documento del asesor</string>
+    <string name="create_advisor_fecha_de_nacimiento">Fecha de nacimiento</string>
+    <string name="create_advisor_seleccionar_fecha">Seleccionar fecha</string>
+    <string name="create_advisor_correo_corporativo">Correo corporativo</string>
+    <string name="create_advisor_contrasena">Contraseña</string>
+    <string name="create_advisor_minimo_8_caracteres">Mínimo 8 caracteres</string>
+    <string name="create_advisor_confirmar_contrasena">Confirmar contraseña</string>
+    <string name="create_advisor_repite_la_contrasena">Repite la contraseña</string>
+    <string name="create_advisor_crear_asesor">Crear asesor</string>
+    <string name="create_advisor_la_contrasena_debe_tener_minimo">La contraseña debe tener mínimo 8 caracteres.</string>
+    <string name="create_advisor_las_contrasenas_no_coinciden">Las contraseñas no coinciden.</string>
+    <string name="create_advisor_asesor_creado">Asesor creado</string>
+    <string name="create_advisor_ya_puede_iniciar_sesion_como">%1$s ya puede iniciar sesión como asesor de ventas.</string>
+
+    <!-- create_auditor -->
+    <string name="create_auditor_crear_analista_de_cumplimiento">Crear analista de cumplimiento</string>
+    <string name="create_auditor_con_su_cuenta_podra_consultar">"Con su cuenta podrá consultar el historial contractual de cualquier póliza "</string>
+    <string name="create_auditor_para_auditoria">para auditoría.</string>
+    <string name="create_auditor_nombres_del_analista">Nombres del analista</string>
+    <string name="create_auditor_apellidos_del_analista">Apellidos del analista</string>
+    <string name="create_auditor_documento_del_analista">Documento del analista</string>
+    <string name="create_auditor_crear_analista">Crear analista</string>
+    <string name="create_auditor_analista_creado">Analista creado</string>
+    <string name="create_auditor_ya_puede_iniciar_sesion_como">%1$s ya puede iniciar sesión como analista de cumplimiento.</string>
+
+    <!-- credentials_login -->
+    <string name="credentials_login_ingresar">Ingresar</string>
+    <string name="credentials_login_accede_a_tu_cuenta">Accede a tu cuenta</string>
+    <string name="credentials_login_esta_alternativa_esta_disponible_cuando">Esta alternativa está disponible cuando no puedes utilizar la biometría.</string>
+    <string name="credentials_login_correo_electronico">Correo electrónico</string>
+    <string name="credentials_login_olvidaste_tu_contrasena">¿Olvidaste tu contraseña?</string>
+    <string name="credentials_login_usar_ingreso_biometrico">Usar ingreso biométrico</string>
+    <string name="credentials_login_nunca_compartas_tu_contrasena_ni">Nunca compartas tu contraseña ni códigos de verificación.</string>
+
+    <!-- form -->
+    <string name="form_validation_ingresa_tus">Ingresa tus %1$s.</string>
+    <string name="form_validation_debe_tener_al_menos_2">Debe tener al menos 2 letras.</string>
+    <string name="form_validation_maximo_100_caracteres">Máximo 100 caracteres.</string>
+    <string name="form_validation_solo_letras_espacios_guion_o">Solo letras, espacios, guion o apóstrofe.</string>
+    <string name="form_validation_selecciona_un_tipo_de_documento">Selecciona un tipo de documento.</string>
+    <string name="form_validation_primero_selecciona_el_tipo_de">Primero selecciona el tipo de documento.</string>
+    <string name="form_validation_ingresa_el_numero_de_documento">Ingresa el número de documento.</string>
+    <string name="form_validation_solo_numeros_entre_5_y">Solo números, entre 5 y 12 dígitos.</string>
+    <string name="form_validation_solo_letras_y_numeros_entre">Solo letras y números, entre 6 y 12 caracteres.</string>
+    <string name="form_validation_ingresa_tu_correo_electronico">Ingresa tu correo electrónico.</string>
+    <string name="form_validation_ingresa_un_correo_electronico_valido">Ingresa un correo electrónico válido.</string>
+    <string name="form_validation_ingresa_tu_numero_de_celular">Ingresa tu número de celular.</string>
+    <string name="form_validation_debe_tener_10_digitos_y">Debe tener 10 dígitos y empezar por 3.</string>
+    <string name="form_validation_crea_una_contrasena">Crea una contraseña.</string>
+    <string name="form_validation_debe_tener_al_menos_8">Debe tener al menos 8 caracteres.</string>
+    <string name="form_validation_maximo_128_caracteres">Máximo 128 caracteres.</string>
+    <string name="form_validation_debe_incluir_al_menos_una">Debe incluir al menos una letra.</string>
+    <string name="form_validation_debe_incluir_al_menos_un">Debe incluir al menos un número.</string>
+    <string name="form_validation_selecciona_tu_fecha_de_nacimiento">Selecciona tu fecha de nacimiento.</string>
+    <string name="form_validation_usa_el_formato_aaaa_mm">Usa el formato AAAA-MM-DD.</string>
+    <string name="form_validation_fecha_no_valida">Fecha no válida.</string>
+    <string name="form_validation_la_fecha_no_puede_ser">La fecha no puede ser futura.</string>
+    <string name="form_validation_debes_ser_mayor_de_anos">Debes ser mayor de %1$s años.</string>
+    <string name="form_validation_cedula_de_ciudadania">Cédula de ciudadanía</string>
+    <string name="form_validation_cedula_de_extranjeria">Cédula de extranjería</string>
+    <string name="form_validation_tarjeta_de_identidad">Tarjeta de identidad</string>
+
+    <!-- home -->
+    <string name="home_activar_ingreso_con_huella">¿Activar ingreso con huella?</string>
+    <string name="home_la_proxima_vez_podras_entrar">"La próxima vez podrás entrar con la huella o el rostro configurados en tu dispositivo. "</string>
+    <string name="home_tu_biometria_no_sale_del">Tu biometría no sale del teléfono.</string>
+    <string name="home_activar">Activar</string>
+    <string name="home_ahora_no">Ahora no</string>
+    <string name="home_todo_lo_importante_de_tu">Todo lo importante de tu protección, en un solo lugar.</string>
+    <string name="home_crear_un_analista_de_cumplimiento">Crear un analista de cumplimiento</string>
+    <string name="home_activar_ingreso_con_huella_2">Activar ingreso con huella</string>
+    <string name="home_notificaciones_sin_leer">Notificaciones, %1$s sin leer</string>
+    <string name="home_notificaciones">Notificaciones</string>
+    <string name="home_perfil">Perfil</string>
+    <string name="home_ver_mi_billetera">Ver mi billetera</string>
+    <string name="home_billetera_de_polizas">Billetera de pólizas</string>
+    <string name="home_cotizar_un_nuevo_seguro">Cotizar un nuevo seguro</string>
+    <string name="home_consulta_tus_polizas">Consulta tus pólizas</string>
+    <string name="home_1_poliza_activa">1 póliza activa</string>
+    <string name="home_polizas_activas">%1$s pólizas activas</string>
+    <string name="home_historial_reciente">Historial reciente</string>
+    <string name="home_cargando_movimientos">Cargando movimientos…</string>
+    <string name="home_aun_no_tienes_movimientos_registrados">Aún no tienes movimientos registrados.</string>
+    <string name="home_emision_de_poliza">Emisión de póliza</string>
+    <string name="home_pago_de_prima_inicial">Pago de prima inicial</string>
+    <string name="home_modificacion_contractual">Modificación contractual</string>
+    <string name="home_renovacion">Renovación</string>
+    <string name="home_cancelacion">Cancelación</string>
+    <string name="home_pago_de_indemnizacion">Pago de indemnización</string>
+    <string name="home_reembolso">Reembolso</string>
+
+    <!-- idioma -->
+    <string name="idioma_espanol">Español (Colombia)</string>
+    <string name="idioma_ingles">English</string>
+
+    <!-- mapa_prestadores -->
+    <string name="mapa_prestadores_mi_ubicacion">Mi ubicación</string>
+
+    <!-- nav_graph -->
+    <string name="nav_graph_ingresa_a_solventa">Ingresa a Solventa</string>
+    <string name="nav_graph_usa_la_huella_o_el">Usa la huella o el rostro configurados en tu dispositivo</string>
+    <string name="nav_graph_cliente_asociado">Cliente %1$s %2$s asociado.</string>
+    <string name="nav_graph_activa_el_ingreso_con_huella">Activa el ingreso con huella</string>
+    <string name="nav_graph_confirma_con_la_huella_o">Confirma con la huella o el rostro de tu dispositivo</string>
+
+    <!-- new_quote -->
+    <string name="new_quote_viaje">Viaje</string>
+    <string name="new_quote_cobertura_durante_tu_recorrido">Cobertura durante tu recorrido</string>
+    <string name="new_quote_dispositivos">Dispositivos</string>
+    <string name="new_quote_protege_celular_o_portatil">Protege celular o portátil</string>
+    <string name="new_quote_vida">Vida</string>
+    <string name="new_quote_proteccion_para_ti_y_tu">Protección para ti y tu familia</string>
+    <string name="new_quote_parametrico">Paramétrico</string>
+    <string name="new_quote_respuesta_ante_eventos_definidos">Respuesta ante eventos definidos</string>
+    <string name="new_quote_que_quieres_proteger">¿Qué quieres proteger?</string>
+    <string name="new_quote_elige_un_tipo_de_seguro">Elige un tipo de seguro para mostrar únicamente los datos necesarios.</string>
+    <string name="new_quote_nueva_cotizacion">Nueva cotización</string>
+
+    <!-- notifications -->
+    <string name="notifications_cargando_tus_notificaciones">Cargando tus notificaciones</string>
+    <string name="notifications_aun_no_tienes_notificaciones">Aún no tienes notificaciones</string>
+    <string name="notifications_aqui_veras_los_avisos_sobre">Aquí verás los avisos sobre tus pagos, siniestros y vencimientos.</string>
+    <string name="notifications_estas_al_dia">Estás al día</string>
+    <string name="notifications_sin_leer">%1$s sin leer</string>
+    <string name="notifications_sin_leer_2">Sin leer</string>
+    <string name="notifications_abrir_notificacion">Abrir notificación</string>
+
+    <!-- payment -->
+    <string name="payment_como_quieres_pagar">¿Cómo quieres pagar?</string>
+    <string name="payment_tarjeta_de_credito_o_debito">Tarjeta de crédito o débito</string>
+    <string name="payment_pse_debito_bancario">PSE (débito bancario)</string>
+    <string name="payment_numero_de_tarjeta">Número de tarjeta</string>
+    <string name="payment_revisa_los_datos_de_la">Revisa los datos de la tarjeta.</string>
+    <string name="payment_vencimiento">Vencimiento</string>
+    <string name="payment_tus_datos_se_tokenizan_en">Tus datos se tokenizan en el dispositivo; nunca enviamos el número de la tarjeta.</string>
+    <string name="payment_selecciona_tu_banco">Selecciona tu banco.</string>
+    <string name="payment_pagar_prima">Pagar prima</string>
+    <string name="payment_banco">Banco</string>
+    <string name="payment_selecciona_tu_banco_2">Selecciona tu banco</string>
+    <string name="payment_pagar_la_prima">Pagar la prima</string>
+
+    <!-- payment_result -->
+    <string name="payment_result_pago_exitoso">¡Pago exitoso!</string>
+    <string name="payment_result_pago_pendiente">Pago pendiente</string>
+    <string name="payment_result_pago_rechazado">Pago rechazado</string>
+    <string name="payment_result_reintentar_pago">Reintentar pago</string>
+    <string name="payment_result_cerrar">Cerrar</string>
+    <string name="payment_result_comprobante">Comprobante %1$s</string>
+    <string name="payment_result_el_pago_de_se_realizo">"El pago de %1$s se realizó de forma satisfactoria. "</string>
+    <string name="payment_result_para_emitir_tu_poliza_firma">Para emitir tu póliza, firma tu contrato en el portal web.</string>
+    <string name="payment_result_tu_pago_esta_pendiente_de">Tu pago está pendiente de confirmación con tu banco.</string>
+    <string name="payment_result_tu_pago_fue_rechazado">"Tu pago fue rechazado%1$s. "</string>
+    <string name="payment_result_no_se_genero_ninguna_poliza">No se generó ninguna póliza. Puedes intentarlo de nuevo.</string>
+
+    <!-- payments -->
+    <string name="payments_pagos">Pagos</string>
+    <string name="payments_todavia_no_tienes_pagos">Todavía no tienes pagos</string>
+    <string name="payments_los_pagos_de_tus_primas">Los pagos de tus primas aparecerán aquí.</string>
+    <string name="payments_pendientes_de_pago">Pendientes de pago</string>
+    <string name="payments_historial_de_pagos">Historial de pagos</string>
+    <string name="payments_fecha_limite">Fecha límite: %1$s</string>
+    <string name="payments_pagar">Pagar</string>
+    <string name="payments_firma_tu_contrato_en_el">Firma tu contrato en el portal web para emitir tu póliza.</string>
+    <string name="payments_renovacion_poliza">Renovación — póliza %1$s</string>
+    <string name="payments_cotizacion">%1$s — cotización %2$s</string>
+    <string name="payments_contrato_por_firmar">%1$s — contrato por firmar</string>
+    <string name="payments_prima">Prima</string>
+    <string name="payments_ver_comprobante">Ver comprobante</string>
+    <string name="payments_comprobante_de_pago">Comprobante de pago</string>
+    <string name="payments_comprobante">Comprobante</string>
+    <string name="payments_concepto">Concepto</string>
+    <string name="payments_valor_pagado">Valor pagado</string>
+    <string name="payments_medio_de_pago">Medio de pago</string>
+    <string name="payments_fecha_de_pago">Fecha de pago</string>
+    <string name="payments_referencia">Referencia</string>
+    <string name="payments_cargando_el_comprobante">Cargando el comprobante</string>
+    <string name="payments_pagado">Pagado</string>
+    <string name="payments_tarjeta">Tarjeta</string>
+
+    <!-- policy_history -->
+    <string name="policy_history_historial_de_la_poliza">Historial de la póliza</string>
+    <string name="policy_history_cargando_movimientos">Cargando movimientos</string>
+    <string name="policy_history_esta_poliza_no_tiene_movimientos">Esta póliza no tiene movimientos registrados.</string>
+
+    <!-- profile -->
+    <string name="profile_datos_personales">Datos personales</string>
+    <string name="profile_documento_correo_y_celular">Documento, correo y celular</string>
+    <string name="profile_seguridad_y_privacidad">Seguridad y privacidad</string>
+    <string name="profile_idioma_y_moneda">Idioma y moneda</string>
+    <string name="profile_abrir">Abrir %1$s</string>
+    <string name="profile_volver_al_perfil">Volver al perfil</string>
+    <string name="profile_nombre_completo">Nombre completo</string>
+    <string name="profile_documento_de_identidad">Documento de identidad</string>
+    <string name="profile_telefono">Teléfono</string>
+    <string name="profile_no_disponible">No disponible</string>
+    <string name="profile_acceso_biometrico">Acceso biométrico</string>
+    <string name="profile_activado">Activado</string>
+    <string name="profile_no_activado">No activado</string>
+    <string name="profile_datos_de_polizas">Datos de pólizas</string>
+    <string name="profile_disponibles_sin_conexion">Disponibles sin conexión</string>
+    <string name="profile_copia_local_cifrada">Copia local cifrada</string>
+    <string name="profile_idioma">Idioma</string>
+    <string name="profile_moneda">Moneda</string>
+    <string name="profile_peso_colombiano_cop">Peso colombiano (COP)</string>
+    <string name="profile_recibir_notificaciones_push">Recibir notificaciones push</string>
+    <string name="profile_avisos_de_pagos_de_tu">"Avisos de pagos de tu seguro paramétrico, vencimientos de pólizas y cambios "</string>
+    <string name="profile_en_tus_siniestros_siempre_los">en tus siniestros. Siempre los verás también dentro de la app.</string>
+    <string name="profile_las_notificaciones_estan_bloqueadas_en">"Las notificaciones están bloqueadas en tu teléfono. Permítelas para recibir "</string>
+    <string name="profile_los_avisos_como_notificacion">los avisos como notificación.</string>
+    <string name="profile_permitir">Permitir</string>
+    <string name="profile_abrir_ajustes">Abrir ajustes</string>
+    <string name="profile_disponible_proximamente">Disponible próximamente</string>
+    <string name="profile_avisos_de_pagos_siniestros_y">Avisos de pagos, siniestros y vencimientos</string>
+    <string name="profile_notificaciones_push_activadas">Notificaciones push activadas</string>
+    <string name="profile_push_desactivado_los_avisos_se">Push desactivado · los avisos se ven en la app</string>
+    <string name="profile_idioma_resumen">%1$s · Peso colombiano (COP)</string>
+    <string name="profile_seguridad_resumen">%1$s · %2$s</string>
+    <string name="profile_biometria_activa">Biometría activa</string>
+    <string name="profile_biometria_no_activada">Biometría no activada</string>
+    <string name="profile_datos_offline_disponibles">datos offline disponibles</string>
+    <string name="profile_datos_offline_cifrados">datos offline cifrados</string>
+
+    <!-- pse_portal -->
+    <string name="pse_portal_pago_con_pse">Pago con PSE</string>
+
+    <!-- quote_form -->
+    <string name="quote_form_este_campo_es_obligatorio">Este campo es obligatorio.</string>
+    <string name="quote_form_usaremos_unicamente_los_datos_financieros">Usaremos únicamente los datos financieros que autorizaste para personalizar el precio.</string>
+    <string name="quote_form_proteccion_de_datos_financieros">Protección de datos financieros</string>
+    <string name="quote_form_calcular_cotizacion">Calcular cotización</string>
+    <string name="quote_form_abrir_calendario">Abrir calendario</string>
+    <string name="quote_form_selecciona_una_fecha">Selecciona una fecha</string>
+    <string name="quote_form_si">Sí</string>
+    <string name="quote_form_no">No</string>
+    <string name="quote_form_opcional">%1$s (Opcional)</string>
+    <string name="quote_form_ingresa_un_numero">Ingresa un número</string>
+    <string name="quote_form_seguro_de_viaje">Seguro de viaje</string>
+    <string name="quote_form_proteccion_de_dispositivos">Protección de dispositivos</string>
+    <string name="quote_form_seguro_de_vida">Seguro de vida</string>
+    <string name="quote_form_seguro_parametrico">Seguro paramétrico</string>
+
+    <!-- quote_result -->
+    <string name="quote_result_cotizacion_vigente_durante_las_proximas">Cotización vigente durante las próximas 24 horas.</string>
+    <string name="quote_result_precio_personalizado_con_la_informacion">Precio personalizado con la información que autorizaste.</string>
+    <string name="quote_result_aceptar_y_continuar">Aceptar y continuar</string>
+    <string name="quote_result_crear_otra_cotizacion">Crear otra cotización</string>
+    <string name="quote_result_tu_cotizacion">Tu cotización</string>
+    <string name="quote_result_cobertura_principal">Cobertura principal</string>
+    <string name="quote_result_suma_asegurada">Suma asegurada: %1$s</string>
+    <string name="quote_result_datos_de_la_solicitud">Datos de la solicitud</string>
+    <string name="quote_result_proteccion_para_tu_viaje">Protección para tu viaje</string>
+    <string name="quote_result_proteccion_para_tu_dispositivo">Protección para tu dispositivo</string>
+    <string name="quote_result_proteccion_para_tu_vida">Protección para tu vida</string>
+    <string name="quote_result_proteccion_ante_eventos">Protección ante eventos</string>
+
+    <!-- quotes -->
+    <string name="quotes_cotizaciones">Cotizaciones</string>
+    <string name="quotes_cargando_tus_cotizaciones">Cargando tus cotizaciones</string>
+    <string name="quotes_aun_no_tienes_cotizaciones">Aún no tienes cotizaciones</string>
+    <string name="quotes_las_cotizaciones_que_calcules_apareceran">Las cotizaciones que calcules aparecerán aquí.</string>
+    <string name="quotes_crear_cotizacion">Crear cotización</string>
+    <string name="quotes_cotizaciones_recientes">Cotizaciones recientes</string>
+    <string name="quotes_ver_cotizacion">Ver cotización</string>
+    <string name="quotes_referencia">Referencia %1$s</string>
+
+    <!-- register -->
+    <string name="register_no_se_capturo_la_selfie">No se capturó la selfie. Inténtalo de nuevo.</string>
+    <string name="register_crear_cuenta">Crear cuenta</string>
+    <string name="register_cuentanos_sobre_ti">Cuéntanos sobre ti</string>
+    <string name="register_completa_tus_datos_y_toma">Completa tus datos y toma una selfie para enviar la verificación.</string>
+    <string name="register_tus_nombres">Tus nombres</string>
+    <string name="register_tus_apellidos">Tus apellidos</string>
+    <string name="register_abrir_lista_de_tipos_de">Abrir lista de tipos de documento</string>
+    <string name="register_pasaporte">Pasaporte</string>
+    <string name="register_solo_numeros">Solo números</string>
+    <string name="register_celular">Celular</string>
+    <string name="register_minimo_8_caracteres_letras_y">Mínimo 8 caracteres, letras y números</string>
+    <string name="register_acepto_los_terminos_la_politica">Acepto los términos, la política de privacidad y la validación de identidad.</string>
+    <string name="register_vista_previa_de_la_selfie">Vista previa de la selfie</string>
+    <string name="register_tomar_selfie">Tomar selfie</string>
+    <string name="register_tomar_otra_selfie">Tomar otra selfie</string>
+    <string name="register_completa_todos_los_campos_usa">Completa todos los campos, usa corrige los campos marcados (mayor de 18 años, celular de 10 dígitos, contraseña con letras y números) y acepta los términos.</string>
+    <string name="register_validar_identidad_y_crear_cuenta">Validar identidad y crear cuenta</string>
+    <string name="register_ya_tienes_cuenta_iniciar_sesion">¿Ya tienes cuenta? Iniciar sesión</string>
+    <string name="register_no_se_pudo_codificar_la">No se pudo codificar la selfie capturada.</string>
+    <string name="register_campo_nombres">nombres</string>
+    <string name="register_campo_apellidos">apellidos</string>
+
+    <!-- renewal -->
+    <string name="renewal_cargando_las_condiciones_de_la">Cargando las condiciones de la renovación</string>
+    <string name="renewal_no_pudimos_cargar_la_renovacion">No pudimos cargar la renovación.</string>
+    <string name="renewal_continua_protegido">Continúa protegido</string>
+    <string name="renewal_revisa_las_condiciones_de_la">Revisa las condiciones de la nueva vigencia.</string>
+    <string name="renewal_nueva_vigencia">Nueva vigencia</string>
+    <string name="renewal_prima_de_renovacion">Prima de renovación</string>
+    <string name="renewal_esta_poliza_no_se_puede">Esta póliza no se puede renovar todavía</string>
+    <string name="renewal_no_se_puede_renovar_en">No se puede renovar en este momento.</string>
+    <string name="renewal_confirmar_y_pagar">Confirmar y pagar</string>
+
+    <!-- renewal_success -->
+    <string name="renewal_success_poliza_renovada">Póliza renovada</string>
+    <string name="renewal_success_actualizamos_la_vigencia_y_el">Actualizamos la vigencia y el documento ya está disponible.</string>
+    <string name="renewal_success_ver_poliza_renovada">Ver póliza renovada</string>
+
+    <!-- siniestro -->
+    <string name="siniestro_form_validation_selecciona_o_ingresa_la_poliza">Selecciona o ingresa la póliza afectada.</string>
+    <string name="siniestro_form_validation_ingresa_el_lugar_del_evento">Ingresa el lugar del evento.</string>
+    <string name="siniestro_form_validation_maximo_200_caracteres">Máximo 200 caracteres.</string>
+    <string name="siniestro_form_validation_describe_lo_que_paso">Describe lo que pasó.</string>
+    <string name="siniestro_form_validation_cuentanos_un_poco_mas_al">Cuéntanos un poco más (al menos 10 caracteres).</string>
+    <string name="siniestro_form_validation_maximo_2000_caracteres">Máximo 2000 caracteres.</string>
+    <string name="siniestro_form_validation_ingresa_una_estimacion_del_dano">Ingresa una estimación del daño.</string>
+    <string name="siniestro_form_validation_usa_solo_numeros_maximo_2">Usa solo números (máximo 2 decimales).</string>
+    <string name="siniestro_form_validation_ingresa_la_hora_del_evento">Ingresa la hora del evento.</string>
+    <string name="siniestro_form_validation_usa_el_formato_hh_mm">Usa el formato HH:MM (24 horas).</string>
+    <string name="siniestro_form_validation_selecciona_la_fecha_del_evento">Selecciona la fecha del evento.</string>
+    <string name="siniestro_form_validation_la_fecha_no_puede_estar">La fecha no puede estar en el futuro.</string>
+    <string name="siniestro_form_validation_selecciona_el_tipo_de_siniestro">Selecciona el tipo de siniestro</string>
+
+    <!-- solventa_bottom_navigation -->
+    <string name="solventa_bottom_navigation_inicio">Inicio</string>
+    <string name="solventa_bottom_navigation_siniestros">Siniestros</string>
+
+    <!-- sync_status_banner -->
+    <string name="sync_status_banner_datos_disponibles_sin_conexion">Datos disponibles sin conexión</string>
+    <string name="sync_status_banner_actualizado">Actualizado</string>
+    <string name="sync_status_banner_sin_conexion_mostrando_datos_guardados">Sin conexión · Mostrando datos guardados</string>
+    <string name="sync_status_banner_actualizado_2">Actualizado %1$s</string>
+    <string name="sync_status_banner_hace_min">hace %1$s min</string>
+    <string name="sync_status_banner_hace_1_h">hace 1 h</string>
+    <string name="sync_status_banner_hace_h">hace %1$s h</string>
+    <string name="sync_status_banner_hace_1_dia">hace 1 día</string>
+    <string name="sync_status_banner_hace_dias">hace %1$s días</string>
+    <string name="sync_status_banner_ahora">ahora</string>
+
+    <!-- wallet -->
+    <string name="wallet_cargando_tus_polizas">Cargando tus pólizas</string>
+    <string name="wallet_aun_no_tienes_polizas">Aún no tienes pólizas</string>
+    <string name="wallet_cuando_compres_un_seguro_su">Cuando compres un seguro, su certificado aparecerá aquí.</string>
+    <string name="wallet_estos_datos_tienen_mas_de">Estos datos tienen más de 30 días y podrían no estar actualizados.</string>
+    <string name="wallet_no_pudimos_actualizar_tus_polizas">No pudimos actualizar tus pólizas. Volveremos a intentarlo.</string>
+    <string name="wallet_sin_conexion_ultima_actualizacion">Sin conexión · Última actualización: %1$s.</string>
+    <string name="wallet_sin_conexion_mostrando_datos_guardados">Sin conexión · Mostrando datos guardados.</string>
+    <string name="wallet_sin_conexion">Sin conexión</string>
+    <string name="wallet_datos_actualizados">Datos actualizados</string>
+    <string name="wallet_ver_certificado">Ver certificado</string>
+
+    <!-- welcome -->
+    <string name="welcome_icono_de_solventa">Icono de Solventa</string>
+    <string name="welcome_tu_seguro_cuando_lo_necesitas">Tu seguro, cuando lo\nnecesitas.</string>
+    <string name="welcome_proteccion_clara_para_cotizar_comprar">Protección clara para cotizar, comprar y gestionar\ntus seguros desde el celular.</string>
+    <string name="welcome_identidad_verificada">Identidad verificada</string>
+    <string name="welcome_identidad_verificada_y_datos_protegidos">Identidad verificada y datos protegidos</string>
+    <string name="welcome_crear_una_cuenta">Crear una cuenta</string>
 </resources>

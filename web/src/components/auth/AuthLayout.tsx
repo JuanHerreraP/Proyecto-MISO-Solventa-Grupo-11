@@ -2,6 +2,9 @@ import type { ReactNode } from "react";
 
 import "../../styles/auth.css";
 
+import { t } from "../../i18n";
+import SelectorIdioma from "../../i18n/SelectorIdioma";
+
 interface AuthLayoutProps {
   children: ReactNode;
   title?: string;
@@ -11,13 +14,13 @@ interface AuthLayoutProps {
 
 export default function AuthLayout({
   children,
-  title = "Seguros que se ajustan a tu vida",
+  title = t("authLayout.seguros_que_se_ajustan_a"),
   description =
-    "Cotiza, contrata y gestiona tu protección desde un solo lugar, con la información de tu perfil financiero trabajando a tu favor.",
+    t("authLayout.cotiza_contrata_y_gestiona_tu"),
   benefits = [
-    "Cotización personalizada en minutos",
-    "Autorización de datos 100% transparente",
-    "Emisión y firma electrónica del contrato",
+    t("authLayout.cotizacion_personalizada_en_minutos"),
+    t("authLayout.autorizacion_de_datos_100_transparente"),
+    t("authLayout.emision_y_firma_electronica_del"),
   ],
 }: AuthLayoutProps) {
   return (
@@ -46,11 +49,12 @@ export default function AuthLayout({
         </div>
 
         <footer className="brand-footer">
-          © 2026 Solventa S.A. Todos los derechos reservados.
+          {t("authLayout.2026_solventa_s_a_todos")}
         </footer>
       </section>
 
       <section className="auth-content">
+        <SelectorIdioma className="auth-selector-idioma" />
         {children}
       </section>
     </main>

@@ -5,6 +5,8 @@ import type {
   SolicitudCotizacion,
 } from "../types/cotizaciones";
 
+import { t } from "../i18n";
+
 const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:8000";
 
 async function mensajeError(response: Response, porDefecto: string): Promise<string> {
@@ -21,7 +23,7 @@ async function mensajeError(response: Response, porDefecto: string): Promise<str
 /** Ramos disponibles y los datos de riesgo que requiere cada uno. */
 export async function obtenerRamos(): Promise<DefinicionRamo[]> {
   const response = await fetchAutenticado(`${API_URL}/api/v1/cotizaciones/ramos`);
-  if (!response.ok) throw new Error("No fue posible consultar los ramos disponibles.");
+  if (!response.ok) throw new Error(t("cotizacionesService.no_fue_posible_consultar_los"));
   return response.json();
 }
 
@@ -35,7 +37,7 @@ export async function crearCotizacion(
     body: JSON.stringify(solicitud),
   });
   if (!response.ok) {
-    throw new Error(await mensajeError(response, "No fue posible crear la cotización."));
+    throw new Error(await mensajeError(response, t("cotizacionesService.no_fue_posible_crear_la")));
   }
   return response.json();
 }
@@ -45,7 +47,7 @@ export async function listarCotizaciones(clienteId: string): Promise<Cotizacion[
   const response = await fetchAutenticado(
     `${API_URL}/api/v1/cotizaciones?cliente_id=${encodeURIComponent(clienteId)}`,
   );
-  if (!response.ok) throw new Error("No fue posible consultar tus cotizaciones.");
+  if (!response.ok) throw new Error(t("cotizacionesService.no_fue_posible_consultar_tus"));
   return response.json();
 }
 
@@ -54,6 +56,6 @@ export async function obtenerCotizacion(cotizacionId: string): Promise<Cotizacio
   const response = await fetchAutenticado(
     `${API_URL}/api/v1/cotizaciones/${encodeURIComponent(cotizacionId)}`,
   );
-  if (!response.ok) throw new Error("No fue posible consultar la cotización.");
+  if (!response.ok) throw new Error(t("cotizacionesService.no_fue_posible_consultar_la"));
   return response.json();
 }

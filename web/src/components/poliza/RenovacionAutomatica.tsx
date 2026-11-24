@@ -15,6 +15,8 @@ import {
 } from "../../services/tokenizacion";
 import "../../styles/renovacion-automatica.css";
 
+import { t, localeActual } from "../../i18n";
+
 interface Props {
   polizaId: string;
   /** Solo el cliente titular registra o quita su tarjeta; el asesor solo activa o desactiva. */
@@ -23,7 +25,7 @@ interface Props {
 
 function formatearFecha(iso: string): string {
   const [anio, mes, dia] = iso.slice(0, 10).split("-").map(Number);
-  return new Date(anio, mes - 1, dia).toLocaleDateString("es-CO", {
+  return new Date(anio, mes - 1, dia).toLocaleDateString(localeActual(), {
     day: "numeric",
     month: "long",
     year: "numeric",
@@ -31,7 +33,7 @@ function formatearFecha(iso: string): string {
 }
 
 function formatearMonto(monto: string, moneda: string): string {
-  return Number(monto).toLocaleString("es-CO", {
+  return Number(monto).toLocaleString(localeActual(), {
     style: "currency",
     currency: moneda,
     maximumFractionDigits: 0,
@@ -43,23 +45,23 @@ function describirCiclo(ciclo: CicloRenovacion): string {
   switch (ciclo.estado) {
     case "PREAVISADA":
       return ciclo.prima_avisada && ciclo.moneda
-        ? `Te enviamos el preaviso: la renovación costará ${formatearMonto(ciclo.prima_avisada, ciclo.moneda)}.`
-        : "Te enviamos el preaviso de la renovación.";
+        ? t("renovacionAutomatica.te_enviamos_el_preaviso_la", { formatearMonto: formatearMonto(ciclo.prima_avisada, ciclo.moneda) })
+        : t("renovacionAutomatica.te_enviamos_el_preaviso_de");
     case "RENOVADA":
-      return `Tu póliza se renovó automáticamente al terminar la vigencia del ${vence}.`;
+      return t("renovacionAutomatica.tu_poliza_se_renovo_automaticamente", { vence: vence });
     case "DESACTIVADA":
-      return `No se renovó el ${vence} porque la renovación automática estaba desactivada.`;
+      return t("renovacionAutomatica.no_se_renovo_el_vence", { vence: vence });
     case "SIN_MEDIO_DE_PAGO":
-      return "No pudimos renovarla: no había una tarjeta registrada. Registra una o paga la renovación en Pagos.";
+      return t("renovacionAutomatica.no_pudimos_renovarla_no_habia");
     case "COBRO_RECHAZADO":
-      return "La tarjeta fue rechazada. Registra otra tarjeta o paga la renovación en Pagos.";
+      return t("renovacionAutomatica.la_tarjeta_fue_rechazada_registra");
     case "COBRO_PENDIENTE":
-      return "Estamos esperando la confirmación del pago de la renovación.";
+      return t("renovacionAutomatica.estamos_esperando_la_confirmacion_del");
     case "NO_PAGADA":
-      return "La renovación venció sin un pago aprobado.";
+      return t("renovacionAutomatica.la_renovacion_vencio_sin_un");
     case "NO_RENOVABLE":
     case "NO_APLICADA":
-      return ciclo.motivo ?? "La póliza no se pudo renovar automáticamente.";
+      return ciclo.motivo ?? t("renovacionAutomatica.la_poliza_no_se_pudo");
   }
 }
 
@@ -106,7 +108,7 @@ export default function RenovacionAutomatica({ polizaId, puedeRegistrarTarjeta }
         activa: estado.activa,
         tarjeta: { token_tarjeta: tokenizarTarjeta(numero), ultimos_digitos: ultimosDigitos(numero) },
       },
-      "Guardamos tu tarjeta para la renovación automática.",
+      t("renovacionAutomatica.guardamos_tu_tarjeta_para_la"),
     );
     if (ok) {
       setEditandoTarjeta(false);
@@ -128,7 +130,7 @@ export default function RenovacionAutomatica({ polizaId, puedeRegistrarTarjeta }
   if (!estado) {
     return error
       ? <p role="alert" className="home-aviso">{error}</p>
-      : <p role="status" className="home-card-vacio">Cargando renovación automática…</p>;
+      : <p role="status" className="home-card-vacio">{t("renovacionAutomatica.cargando_renovacion_automatica")}</p>;
   }
   if (!estado.disponible) return null;
 
@@ -141,11 +143,11 @@ export default function RenovacionAutomatica({ polizaId, puedeRegistrarTarjeta }
       <div className="renovacion-auto-cabecera">
         <span className="material-symbols-outlined renovacion-auto-icono" aria-hidden="true">autorenew</span>
         <div>
-          <h3 id={tituloId}>Renovación automática</h3>
+          <h3 id={tituloId}>{t("renovacionAutomatica.renovacion_automatica")}</h3>
           <p>
             {estado.activa
-              ? `Tu póliza se renovará el ${formatearFecha(estado.cobro_programado_para)} con la tarjeta registrada. Te avisaremos el precio desde el ${formatearFecha(estado.preaviso_desde)}.`
-              : "Está desactivada: cuando se acerque el vencimiento deberás renovar tu póliza manualmente."}
+              ? t("renovacionAutomatica.tu_poliza_se_renovara_el", { formatearFecha: formatearFecha(estado.cobro_programado_para), formatearFecha2: formatearFecha(estado.preaviso_desde) })
+              : t("renovacionAutomatica.esta_desactivada_cuando_se_acerque")}
           </p>
         </div>
         <label className="renovacion-auto-interruptor">
@@ -154,12 +156,12 @@ export default function RenovacionAutomatica({ polizaId, puedeRegistrarTarjeta }
             role="switch"
             checked={estado.activa}
             disabled={guardando}
-            aria-label="Renovar automáticamente"
+            aria-label={t("renovacionAutomatica.renovar_automaticamente")}
             onChange={(evento) => {
               const activa = evento.target.checked;
               void guardar(
                 { activa },
-                activa ? "Activaste la renovación automática." : "Desactivaste la renovación automática.",
+                activa ? t("renovacionAutomatica.activaste_la_renovacion_automatica") : t("renovacionAutomatica.desactivaste_la_renovacion_automatica"),
               );
             }}
           />
@@ -169,22 +171,22 @@ export default function RenovacionAutomatica({ polizaId, puedeRegistrarTarjeta }
 
       <dl className="cotizacion-datos">
         <div>
-          <dt>Tarjeta para el cobro</dt>
+          <dt>{t("renovacionAutomatica.tarjeta_para_el_cobro")}</dt>
           <dd>
             {tarjeta
-              ? `Terminada en ${tarjeta.ultimos_digitos ?? "****"}`
-              : "Sin tarjeta registrada"}
+              ? t("renovacionAutomatica.terminada_en_valor", { valor: tarjeta.ultimos_digitos ?? "****" })
+              : t("renovacionAutomatica.sin_tarjeta_registrada")}
           </dd>
         </div>
         <div>
-          <dt>Cobro programado</dt>
+          <dt>{t("renovacionAutomatica.cobro_programado")}</dt>
           <dd>{formatearFecha(estado.cobro_programado_para)}</dd>
         </div>
       </dl>
 
       {estado.activa && !tarjeta && (
         <p className="renovacion-auto-alerta">
-          Registra una tarjeta para que podamos renovar tu póliza sin que tengas que hacer nada.
+          {t("renovacionAutomatica.registra_una_tarjeta_para_que")}
         </p>
       )}
 
@@ -196,7 +198,7 @@ export default function RenovacionAutomatica({ polizaId, puedeRegistrarTarjeta }
             onClick={() => setEditandoTarjeta(true)}
           >
             <span className="material-symbols-outlined" aria-hidden="true">credit_card</span>
-            {tarjeta ? "Cambiar tarjeta" : "Registrar tarjeta"}
+            {tarjeta ? t("renovacionAutomatica.cambiar_tarjeta") : t("renovacionAutomatica.registrar_tarjeta")}
           </button>
           {tarjeta && (
             <button
@@ -205,10 +207,10 @@ export default function RenovacionAutomatica({ polizaId, puedeRegistrarTarjeta }
               disabled={guardando}
               onClick={() => void guardar(
                 { activa: estado.activa, quitar_tarjeta: true },
-                "Quitamos la tarjeta registrada.",
+                t("renovacionAutomatica.quitamos_la_tarjeta_registrada"),
               )}
             >
-              Quitar tarjeta
+              {t("renovacionAutomatica.quitar_tarjeta")}
             </button>
           )}
         </div>
@@ -217,7 +219,7 @@ export default function RenovacionAutomatica({ polizaId, puedeRegistrarTarjeta }
       {puedeRegistrarTarjeta && editandoTarjeta && (
         <form className="renovacion-auto-tarjeta" onSubmit={(evento) => void registrarTarjeta(evento)}>
           <div className="cotizar-campo cotizar-campo-ancho">
-            <label htmlFor={`numero-${polizaId}`}>Número de tarjeta</label>
+            <label htmlFor={`numero-${polizaId}`}>{t("renovacionAutomatica.numero_de_tarjeta")}</label>
             <input
               id={`numero-${polizaId}`}
               type="text"
@@ -230,11 +232,11 @@ export default function RenovacionAutomatica({ polizaId, puedeRegistrarTarjeta }
               onChange={(evento) => setNumero(formatearNumeroTarjeta(evento.target.value))}
             />
             <small className="cotizar-ayuda">
-              Los datos de la tarjeta se tokenizan y no se envían al servidor.
+              {t("renovacionAutomatica.los_datos_de_la_tarjeta")}
             </small>
           </div>
           <div className="cotizar-campo">
-            <label htmlFor={`vencimiento-${polizaId}`}>Vencimiento (MM/AA)</label>
+            <label htmlFor={`vencimiento-${polizaId}`}>{t("renovacionAutomatica.vencimiento_mm_aa")}</label>
             <input
               id={`vencimiento-${polizaId}`}
               type="text"
@@ -262,14 +264,14 @@ export default function RenovacionAutomatica({ polizaId, puedeRegistrarTarjeta }
           </div>
           <div className="poliza-acciones">
             <button type="submit" className="cotizar-boton-primario" disabled={guardando}>
-              {guardando ? "Guardando…" : "Guardar tarjeta"}
+              {guardando ? t("renovacionAutomatica.guardando") : t("renovacionAutomatica.guardar_tarjeta")}
             </button>
             <button
               type="button"
               className="cotizar-boton-secundario"
               onClick={() => setEditandoTarjeta(false)}
             >
-              Cancelar
+              {t("renovacionAutomatica.cancelar")}
             </button>
           </div>
         </form>
@@ -285,7 +287,7 @@ export default function RenovacionAutomatica({ polizaId, puedeRegistrarTarjeta }
               onClick={() => void descargar(ciclo.renovacion_id as string)}
             >
               <span className="material-symbols-outlined" aria-hidden="true">download</span>
-              Descargar renovación (PDF)
+              {t("renovacionAutomatica.descargar_renovacion_pdf")}
             </button>
           )}
         </div>

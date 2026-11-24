@@ -78,6 +78,8 @@ import java.io.ByteArrayOutputStream
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
+import com.example.solventa.R
+import com.example.solventa.i18n.tr
 
 @Composable
 fun RegisterScreen(
@@ -106,7 +108,7 @@ fun RegisterScreen(
         contract = ActivityResultContracts.TakePicturePreview()
     ) { imagen ->
         selfie = imagen
-        errorCaptura = if (imagen == null) "No se capturó la selfie. Inténtalo de nuevo." else null
+        errorCaptura = if (imagen == null) tr(R.string.register_no_se_capturo_la_selfie) else null
     }
 
     val formularioValido = esFormularioRegistroValido(
@@ -158,24 +160,24 @@ fun RegisterScreen(
                 ) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
-                        contentDescription = "Volver",
+                        contentDescription = tr(R.string.biometrical_login_volver),
                         tint = MaterialTheme.colorScheme.onSurface
                     )
                 }
                 Text(
-                    text = "Crear cuenta",
+                    text = tr(R.string.register_crear_cuenta),
                     modifier = Modifier.padding(start = 12.dp),
                     style = MaterialTheme.typography.titleLarge
                 )
             }
 
             Text(
-                text = "Cuéntanos sobre ti",
+                text = tr(R.string.register_cuentanos_sobre_ti),
                 style = MaterialTheme.typography.headlineLarge,
                 color = MaterialTheme.colorScheme.onBackground
             )
             Text(
-                text = "Completa tus datos y toma una selfie para enviar la verificación.",
+                text = tr(R.string.register_completa_tus_datos_y_toma),
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.65f)
             )
@@ -183,37 +185,37 @@ fun RegisterScreen(
             SolventaTextField(
                 value = nombre,
                 onValueChange = { nombre = it.take(100) },
-                label = "Nombres",
-                placeholder = "Tus nombres",
+                label = tr(R.string.create_advisor_nombres),
+                placeholder = tr(R.string.register_tus_nombres),
                 keyboardOptions = KeyboardOptions(
                     capitalization = KeyboardCapitalization.Words,
                     imeAction = ImeAction.Next
                 ),
-                error = errorNombre(nombre, "nombres").takeIf { nombre.isNotBlank() }
+                error = errorNombre(nombre, tr(R.string.register_campo_nombres)).takeIf { nombre.isNotBlank() }
             )
             SolventaTextField(
                 value = apellido,
                 onValueChange = { apellido = it.take(100) },
-                label = "Apellidos",
-                placeholder = "Tus apellidos",
+                label = tr(R.string.create_advisor_apellidos),
+                placeholder = tr(R.string.register_tus_apellidos),
                 keyboardOptions = KeyboardOptions(
                     capitalization = KeyboardCapitalization.Words,
                     imeAction = ImeAction.Next
                 ),
-                error = errorNombre(apellido, "apellidos").takeIf { apellido.isNotBlank() }
+                error = errorNombre(apellido, tr(R.string.register_campo_apellidos)).takeIf { apellido.isNotBlank() }
             )
 
             Box {
                 SolventaTextField(
                     value = TipoDocumento.desdeCodigo(tipoDocumento)?.etiqueta.orEmpty(),
                     onValueChange = {},
-                    label = "Tipo de documento",
-                    placeholder = "Selecciona una opción",
+                    label = tr(R.string.create_advisor_tipo_de_documento),
+                    placeholder = tr(R.string.create_advisor_selecciona_una_opcion),
                     readOnly = true,
                     trailingIcon = {
                         Icon(
                             imageVector = Icons.Filled.ArrowDropDown,
-                            contentDescription = "Abrir lista de tipos de documento"
+                            contentDescription = tr(R.string.register_abrir_lista_de_tipos_de)
                         )
                     }
                 )
@@ -248,8 +250,8 @@ fun RegisterScreen(
                         nuevo.filter { it.isDigit() }.take(12)
                     }
                 },
-                label = "Número de documento",
-                placeholder = if (tipoDocumento == TipoDocumento.PAS.codigo) "Pasaporte" else "Solo números",
+                label = tr(R.string.create_advisor_numero_de_documento),
+                placeholder = if (tipoDocumento == TipoDocumento.PAS.codigo) tr(R.string.register_pasaporte) else tr(R.string.register_solo_numeros),
                 keyboardOptions = KeyboardOptions(
                     keyboardType = if (tipoDocumento == TipoDocumento.PAS.codigo) {
                         KeyboardType.Ascii
@@ -269,13 +271,13 @@ fun RegisterScreen(
                 SolventaTextField(
                     value = fechaNacimiento,
                     onValueChange = {},
-                    label = "Fecha de nacimiento",
+                    label = tr(R.string.create_advisor_fecha_de_nacimiento),
                     placeholder = "AAAA-MM-DD",
                     readOnly = true,
                     trailingIcon = {
                         Icon(
                             imageVector = Icons.Filled.DateRange,
-                            contentDescription = "Seleccionar fecha"
+                            contentDescription = tr(R.string.create_advisor_seleccionar_fecha)
                         )
                     },
                     error = errorFechaNacimiento(fechaNacimiento).takeIf { fechaNacimiento.isNotEmpty() }
@@ -292,7 +294,7 @@ fun RegisterScreen(
             SolventaTextField(
                 value = email,
                 onValueChange = { email = it.trim().take(254) },
-                label = "Correo electrónico",
+                label = tr(R.string.credentials_login_correo_electronico),
                 placeholder = "tu.correo@ejemplo.com",
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Email,
@@ -303,7 +305,7 @@ fun RegisterScreen(
             SolventaTextField(
                 value = celular,
                 onValueChange = { celular = it.filter { c -> c.isDigit() }.take(10) },
-                label = "Celular",
+                label = tr(R.string.register_celular),
                 placeholder = "3001234567",
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Phone,
@@ -314,8 +316,8 @@ fun RegisterScreen(
             SolventaTextField(
                 value = password,
                 onValueChange = { password = it.take(128) },
-                label = "Contraseña",
-                placeholder = "Mínimo 8 caracteres, letras y números",
+                label = tr(R.string.create_advisor_contrasena),
+                placeholder = tr(R.string.register_minimo_8_caracteres_letras_y),
                 visualTransformation = PasswordVisualTransformation(),
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Password,
@@ -338,7 +340,7 @@ fun RegisterScreen(
                         colors = CheckboxDefaults.colors(checkedColor = Navegacion)
                     )
                     Text(
-                        text = "Acepto los términos, la política de privacidad y la validación de identidad.",
+                        text = tr(R.string.register_acepto_los_terminos_la_politica),
                         style = MaterialTheme.typography.labelMedium.copy(fontSize = 11.sp)
                     )
                 }
@@ -347,7 +349,7 @@ fun RegisterScreen(
             if (selfie != null) {
                 Image(
                     bitmap = selfie!!.asImageBitmap(),
-                    contentDescription = "Vista previa de la selfie",
+                    contentDescription = tr(R.string.register_vista_previa_de_la_selfie),
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(220.dp)
@@ -360,7 +362,7 @@ fun RegisterScreen(
                 enabled = formularioValido && !cargando,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text(if (selfie == null) "Tomar selfie" else "Tomar otra selfie")
+                Text(if (selfie == null) tr(R.string.register_tomar_selfie) else tr(R.string.register_tomar_otra_selfie))
             }
 
             if (errorCaptura != null || mensaje != null) {
@@ -371,14 +373,14 @@ fun RegisterScreen(
                 )
             } else if (!formularioValido) {
                 Text(
-                    text = "Completa todos los campos, usa corrige los campos marcados (mayor de 18 años, celular de 10 dígitos, contraseña con letras y números) y acepta los términos.",
+                    text = tr(R.string.register_completa_todos_los_campos_usa),
                     color = Atencion,
                     style = MaterialTheme.typography.bodySmall
                 )
             }
 
             SolventaPrimaryButton(
-                text = "Validar identidad y crear cuenta",
+                text = tr(R.string.register_validar_identidad_y_crear_cuenta),
                 enabled = puedeRegistrar,
                 isLoading = cargando,
                 onClick = {
@@ -400,7 +402,7 @@ fun RegisterScreen(
             )
 
             Text(
-                text = "¿Ya tienes cuenta? Iniciar sesión",
+                text = tr(R.string.register_ya_tienes_cuenta_iniciar_sesion),
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(bottom = 16.dp)
@@ -444,7 +446,7 @@ private fun mostrarSelectorFecha(
 private fun Bitmap.aBase64Jpeg(): String {
     val salida = ByteArrayOutputStream()
     check(compress(Bitmap.CompressFormat.JPEG, 75, salida)) {
-        "No se pudo codificar la selfie capturada."
+        tr(R.string.register_no_se_pudo_codificar_la)
     }
     return Base64.encodeToString(salida.toByteArray(), Base64.NO_WRAP)
 }
