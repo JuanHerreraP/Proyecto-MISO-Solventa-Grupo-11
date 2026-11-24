@@ -48,7 +48,7 @@ El evento se marca como procesado **solo después de pagar**:
 
 ## Reintentos y cola de fallidos
 
-El worker borra un mensaje **solo si lo procesó bien**. Los demás vuelven a la cola al vencer el tiempo de visibilidad (120 s) y, tras 5 intentos, SQS los envía a la DLQ. Una alarma de CloudWatch (`PagosDlqAlarm`) pasa a `ALARM` cuando hay mensajes en la DLQ, y se ve en la consola de CloudWatch. No envía notificaciones: no hay un destino de avisos configurado. Es el momento de que Operaciones revise esos siniestros, desde `POST /api/v1/operaciones/siniestros/{id}/desembolso/reintento`.
+El worker borra un mensaje **solo si lo procesó bien**. Los demás vuelven a la cola al vencer el tiempo de visibilidad (120 s) y, tras 5 intentos, SQS los envía a la DLQ. Una alarma de CloudWatch (`PagosDlqAlarm`) pasa a `ALARM` cuando hay mensajes en la DLQ, y se ve en la consola de CloudWatch. Además publica en el tópico de alertas (`AlertasTopic`), al que se suscribe un correo con el parámetro `AlertasEmail` (ver [Caché y alta disponibilidad](alta-disponibilidad.md)). Es el momento de que Operaciones revise esos siniestros, desde `POST /api/v1/operaciones/siniestros/{id}/desembolso/reintento`.
 
 ## Barrido de pendientes
 

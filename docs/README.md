@@ -52,6 +52,7 @@ se mantienen en la [wiki del proyecto](https://github.com/JuanHerreraP/Proyecto-
 | [Siniestros: registro manual y detección paramétrica](siniestros.md) | HU20: registro manual, telemetría externa que empuja eventos y creación automática del siniestro |
 | [Reporte de siniestro con evidencias](siniestros-evidencias.md) | HU04 y EC10: tipo de siniestro, fotos y videos con huella y ubicación, borrador sin conexión, integridad y auditoría de las evidencias |
 | [Notificaciones push](notificaciones.md) | HU05: avisos de pagos paramétricos, cambios de estado de siniestros y vencimientos de pólizas; bandeja, agrupación diaria, preferencia de push, FCM y job diario |
+| [Caché Redis y alta disponibilidad](alta-disponibilidad.md) | Cache-Aside con Redis, base y caché Multi-AZ, backend con dos o más tareas, autoescalado, alertas e infraestructura |
 | [Pago paramétrico por eventos](mensajeria-pagos.md) | Patrón de mensajería: evento de pago en SNS, cola SQS con su DLQ, consumidor idempotente, barrido de pendientes e infraestructura |
 | [Desembolso de indemnizaciones](desembolsos.md) | HU15: aprobación o rechazo desde la bandeja de Operaciones, pago automático e idempotente a cuenta tokenizada o código de retiro, reintentos |
 
