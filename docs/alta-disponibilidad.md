@@ -43,7 +43,7 @@ Un fallo de Redis **nunca rompe una operación**. La lectura devuelve "no hay da
 
 | Componente | Configuración |
 |---|---|
-| Base de datos | RDS PostgreSQL **Multi-AZ**: una réplica síncrona en la otra zona y cambio automático si falla la principal. Respaldos de 7 días |
+| Base de datos | RDS PostgreSQL **Multi-AZ**: una réplica síncrona en la otra zona y cambio automático si falla la principal. Respaldo de 1 día (el máximo de una cuenta de plan gratuito) |
 | Caché | ElastiCache Redis con un nodo principal y una réplica en zonas distintas, **failover automático**, cifrado en reposo y en tránsito (`rediss://`) |
 | Backend | `BackendDesiredCount` tareas (2 por defecto) repartidas en las dos subredes privadas. Despliegue gradual: nunca menos del 50 % en servicio |
 | Autoescalado del backend | Entre `BackendDesiredCount` y `BackendMaxCount` (4). Mantiene el uso de CPU en 60 % y 200 solicitudes por tarea |
@@ -66,7 +66,7 @@ Se usa RDS PostgreSQL Multi-AZ y no Aurora: es el mismo motor que el resto del s
 | Recurso | Para qué |
 |---|---|
 | `Cache`, `CacheSubnets` y `CacheSg` | Grupo de replicación de Redis, sus subredes privadas y su grupo de seguridad (solo las tareas llegan al puerto 6379) |
-| `Database` | `MultiAZ` activado y respaldos de 7 días |
+| `Database` | `MultiAZ` activado |
 | `Service` | `DesiredCount` según `BackendDesiredCount` |
 | `BackendScalableTarget`, `BackendCpuPolicy` y `BackendRequestsPolicy` | Autoescalado del backend |
 | `WorkerScalableTarget`, `WorkerScaleOutPolicy`, `WorkerScaleInPolicy`, `WorkerBacklogAlarm` y `WorkerIdleAlarm` | Autoescalado del worker de telemetría (solo con `EscalarWorkers=true`) |
