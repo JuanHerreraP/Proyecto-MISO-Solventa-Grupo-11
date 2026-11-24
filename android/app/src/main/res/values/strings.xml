@@ -372,7 +372,8 @@
     <string name="payment_result_cerrar">Cerrar</string>
     <string name="payment_result_comprobante">Comprobante %1$s</string>
     <string name="payment_result_el_pago_de_se_realizo">"El pago de %1$s se realizó de forma satisfactoria. "</string>
-    <string name="payment_result_para_emitir_tu_poliza_firma">Para emitir tu póliza, firma tu contrato en el portal web.</string>
+    <string name="payment_result_para_emitir_tu_poliza_firma">El siguiente paso es firmar tu contrato para emitir la póliza.</string>
+    <string name="payment_result_firmar_contrato">Firmar contrato</string>
     <string name="payment_result_tu_pago_esta_pendiente_de">Tu pago está pendiente de confirmación con tu banco.</string>
     <string name="payment_result_tu_pago_fue_rechazado">"Tu pago fue rechazado%1$s. "</string>
     <string name="payment_result_no_se_genero_ninguna_poliza">No se generó ninguna póliza. Puedes intentarlo de nuevo.</string>
@@ -385,7 +386,9 @@
     <string name="payments_historial_de_pagos">Historial de pagos</string>
     <string name="payments_fecha_limite">Fecha límite: %1$s</string>
     <string name="payments_pagar">Pagar</string>
-    <string name="payments_firma_tu_contrato_en_el">Firma tu contrato en el portal web para emitir tu póliza.</string>
+    <string name="payments_firma_tu_contrato_en_el">Tu pago fue aprobado. Firma el contrato para emitir la póliza.</string>
+    <string name="payments_pago_solo_al_crear">El pago solo está disponible en el momento de crear la cotización.</string>
+    <string name="payments_firmar_contrato">Firmar contrato</string>
     <string name="payments_renovacion_poliza">Renovación — póliza %1$s</string>
     <string name="payments_cotizacion">%1$s — cotización %2$s</string>
     <string name="payments_contrato_por_firmar">%1$s — contrato por firmar</string>
@@ -401,6 +404,32 @@
     <string name="payments_cargando_el_comprobante">Cargando el comprobante</string>
     <string name="payments_pagado">Pagado</string>
     <string name="payments_tarjeta">Tarjeta</string>
+
+    <!-- signature -->
+    <string name="signature_cargando_tu_contrato">Cargando tu contrato…</string>
+    <string name="signature_firma_electronica">Firma electrónica</string>
+    <string name="signature_revisa_las_condiciones">Revisa las condiciones de tu contrato. Para firmarlo, te enviaremos un código seguro por SMS.</string>
+    <string name="signature_condiciones">Condiciones</string>
+    <string name="signature_huella_documento">Huella del documento: %1$s…</string>
+    <string name="signature_enviando_codigo">Enviando código…</string>
+    <string name="signature_enviar_codigo_sms">Enviar código por SMS</string>
+    <string name="signature_codigo_enviado_a">Código enviado a %1$s</string>
+    <string name="signature_codigo_seis_digitos">Código de seis dígitos</string>
+    <string name="signature_acepto_condiciones">Acepto las condiciones y firmo electrónicamente este contrato.</string>
+    <string name="signature_firmando">Firmando…</string>
+    <string name="signature_firmar_y_emitir">Firmar y emitir póliza</string>
+    <string name="signature_reenviar_codigo">Reenviar código</string>
+    <string name="signature_contrato_de">Contrato de %1$s</string>
+    <string name="signature_suma_asegurada">Suma asegurada: %1$s</string>
+    <string name="signature_prima_pagada">Prima pagada: %1$s</string>
+    <string name="signature_contrato_firmado">¡Contrato firmado!</string>
+    <string name="signature_poliza_emitida">Tu póliza fue emitida correctamente.</string>
+    <string name="signature_ver_poliza">Ver póliza</string>
+    <string name="signature_error_sin_conexion">No pudimos conectarnos con Solventa. Revisa tu conexión e inténtalo de nuevo.</string>
+    <string name="signature_error_codigo_invalido">Ingresa el código de seis dígitos que recibiste.</string>
+    <string name="signature_error_sesion_vencida">Tu sesión expiró. Vuelve a ingresar.</string>
+    <string name="signature_error_contrato_no_disponible">No pudimos cargar el contrato para firmar.</string>
+    <string name="signature_error_generico">No pudimos completar la firma. Inténtalo de nuevo.</string>
 
     <!-- policy_history -->
     <string name="policy_history_historial_de_la_poliza">Historial de la póliza</string>

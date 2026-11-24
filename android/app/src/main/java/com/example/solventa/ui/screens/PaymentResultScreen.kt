@@ -45,7 +45,8 @@ fun PaymentResultScreen(
     modifier: Modifier = Modifier,
     onInicio: () -> Unit = {},
     onVerBilletera: (() -> Unit)? = null,
-    comprobante: ComprobantePago? = null
+    comprobante: ComprobantePago? = null,
+    onFirmar: (() -> Unit)? = null
 ) {
     val verde = Color(0xFF1B8A4A)
     val naranja = Color(0xFFB36B00)
@@ -92,6 +93,9 @@ fun PaymentResultScreen(
             if (pago.estado == EstadoPago.RECHAZADO) {
                 SolventaPrimaryButton(text = tr(R.string.payment_result_reintentar_pago), onClick = onReintentar)
                 SolventaSecondaryButton(text = tr(R.string.assistance_cancelar), onClick = onCerrar)
+            } else if (pago.estado == EstadoPago.APROBADO && onFirmar != null) {
+                SolventaPrimaryButton(text = tr(R.string.payment_result_firmar_contrato), onClick = onFirmar)
+                SolventaSecondaryButton(text = tr(R.string.payment_result_cerrar), onClick = onCerrar)
             } else {
                 SolventaPrimaryButton(text = tr(R.string.payment_result_cerrar), onClick = onCerrar)
             }

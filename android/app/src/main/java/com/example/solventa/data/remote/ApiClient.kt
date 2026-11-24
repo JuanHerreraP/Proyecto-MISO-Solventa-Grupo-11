@@ -26,6 +26,10 @@ object ApiClient {
     fun crearPagosApi(urlBase: String = BuildConfig.API_BASE_URL): PagosApi =
         retrofit(urlBase).create(PagosApi::class.java)
 
+    /** Firma electrónica del contrato ya pagado. */
+    fun crearFirmasApi(urlBase: String = BuildConfig.API_BASE_URL): FirmasApi =
+        retrofit(urlBase).create(FirmasApi::class.java)
+
     /** Siniestros del cliente (HU20): manuales y automáticos de telemetría. */
     fun crearSiniestrosApi(urlBase: String = BuildConfig.API_BASE_URL): SiniestrosApi =
         retrofit(urlBase).create(SiniestrosApi::class.java)

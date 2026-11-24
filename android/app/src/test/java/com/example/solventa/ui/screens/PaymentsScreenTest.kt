@@ -48,6 +48,7 @@ class PaymentsScreenTest {
                     pendientes = pendientes,
                     errorPendientes = errorPendientes,
                     onPagar = { eventos += "pagar:${it.cotizacionId}" },
+                    onFirmar = { eventos += "firmar:${it.cotizacionId}" },
                     onVerComprobante = { eventos += "comprobante:${it.pagoId}" },
                     comprobanteVisible = comprobanteVisible,
                     comprobante = comprobante,
@@ -59,7 +60,7 @@ class PaymentsScreenTest {
     }
 
     @Test
-    fun muestraLosPagosPendientesConValorFechaLimiteYPuedePagarlos() {
+    fun permitePagarCotizacionesYRenovacionesPendientes() {
         mostrar(pendientes = listOf(renovacion(), cotizacion()))
 
         compose.onNodeWithText("Pendientes de pago").assertIsDisplayed()
@@ -75,13 +76,15 @@ class PaymentsScreenTest {
     }
 
     @Test
-    fun lasFirmasPendientesSoloAvisanYNoSePagan() {
+    fun lasFirmasPendientesSeCompletanEnLaAppYNoSePagan() {
         mostrar(pendientes = listOf(firmaPendiente()))
 
         compose.onNodeWithText("Microseguro de vida — contrato por firmar").assertIsDisplayed()
-        compose.onNodeWithText("Firma tu contrato en el portal web para emitir tu póliza.")
+        compose.onNodeWithText("Tu pago fue aprobado. Firma el contrato para emitir la póliza.")
             .assertIsDisplayed()
         compose.onNodeWithText("Pagar").assertDoesNotExist()
+        compose.onNodeWithText("Firmar contrato").performClick()
+        assertEquals(listOf("firmar:COT-F"), eventos)
     }
 
     @Test

@@ -73,6 +73,7 @@ fun PaymentsScreen(
     pendientes: List<PrimaPendiente> = emptyList(),
     errorPendientes: String? = null,
     onPagar: (PrimaPendiente) -> Unit = {},
+    onFirmar: (PrimaPendiente) -> Unit = {},
     onVerComprobante: (Pago) -> Unit = {},
     comprobanteVisible: Boolean = false,
     comprobante: ComprobantePago? = null,
@@ -134,7 +135,7 @@ fun PaymentsScreen(
                     if (pendientes.isNotEmpty()) {
                         item { TituloSeccion(tr(R.string.payments_pendientes_de_pago)) }
                         items(pendientes, key = { "${it.tipo}-${it.referenciaId}" }) { prima ->
-                            TarjetaPendiente(prima, onPagar)
+                            TarjetaPendiente(prima, onPagar, onFirmar)
                         }
                     }
                     if (pagos.isNotEmpty()) {
@@ -168,7 +169,11 @@ private fun TituloSeccion(texto: String) {
 }
 
 @Composable
-private fun TarjetaPendiente(prima: PrimaPendiente, onPagar: (PrimaPendiente) -> Unit) {
+private fun TarjetaPendiente(
+    prima: PrimaPendiente,
+    onPagar: (PrimaPendiente) -> Unit,
+    onFirmar: (PrimaPendiente) -> Unit
+) {
     Surface(
         shape = RoundedCornerShape(16.dp),
         color = MaterialTheme.colorScheme.surface,
@@ -197,7 +202,6 @@ private fun TarjetaPendiente(prima: PrimaPendiente, onPagar: (PrimaPendiente) ->
                 Spacer(modifier = Modifier.size(4.dp))
                 SolventaPrimaryButton(text = tr(R.string.payments_pagar), onClick = { onPagar(prima) }, height = 44.dp)
             } else {
-                // La firma del contrato aún no está en la app: se hace en el portal web.
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -209,9 +213,21 @@ private fun TarjetaPendiente(prima: PrimaPendiente, onPagar: (PrimaPendiente) ->
                         modifier = Modifier.size(20.dp)
                     )
                     Text(
-                        text = prima.mensaje ?: tr(R.string.payments_firma_tu_contrato_en_el),
+                        text = when (prima.tipo) {
+                            TipoPrimaPendiente.COTIZACION -> tr(R.string.payments_pago_solo_al_crear)
+                            TipoPrimaPendiente.FIRMA_PENDIENTE -> tr(R.string.payments_firma_tu_contrato_en_el)
+                            TipoPrimaPendiente.RENOVACION -> ""
+                        },
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
+                    )
+                }
+                if (prima.tipo == TipoPrimaPendiente.FIRMA_PENDIENTE) {
+                    Spacer(modifier = Modifier.size(4.dp))
+                    SolventaPrimaryButton(
+                        text = tr(R.string.payments_firmar_contrato),
+                        onClick = { onFirmar(prima) },
+                        height = 44.dp
                     )
                 }
             }

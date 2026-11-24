@@ -70,6 +70,12 @@ sealed class ScreenRoute(val route: String) {
     }
     object PsePortal : ScreenRoute("pse_portal_screen")
     object PaymentResult : ScreenRoute("payment_result_screen")
+    object Signature : ScreenRoute("signature_screen/{cotizacionId}") {
+        const val ARGUMENTO = "cotizacionId"
+        fun ruta(cotizacionId: String): String {
+            return "signature_screen/${URLEncoder.encode(cotizacionId, "UTF-8")}"
+        }
+    }
     object Payments : ScreenRoute("payments_screen")
     object Claims : ScreenRoute("claims_screen?desdeNavbar={desdeNavbar}") {
         const val ORIGEN_NAVBAR = "desdeNavbar"
@@ -127,6 +133,7 @@ sealed class ScreenRoute(val route: String) {
                 Payment.route,
                 PsePortal.route,
                 PaymentResult.route,
+                Signature.route,
                 Payments.route,
                 Claims.route,
                 ClaimForm.route,

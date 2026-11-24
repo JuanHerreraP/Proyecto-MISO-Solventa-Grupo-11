@@ -42,12 +42,21 @@ class PaymentResultScreenTest {
     }
 
     @Test
-    fun elPagoAprobadoMuestraElComprobanteYPideFirmarEnElPortalWeb() {
-        mostrar(EstadoPago.APROBADO, comprobante())
+    fun elPagoAprobadoMuestraElComprobanteYPermiteFirmarEnLaApp() {
+        compose.setContent {
+            SolventaTheme {
+                PaymentResultScreen(
+                    pago = Pago("PAG-1", "COT-1", MetodoPago.TARJETA, BigDecimal("45000.00"), "COP", EstadoPago.APROBADO),
+                    onReintentar = {},
+                    onCerrar = {},
+                    comprobante = comprobante(),
+                    onFirmar = {}
+                )
+            }
+        }
 
         compose.onNodeWithText("¡Pago exitoso!").assertIsDisplayed()
-        compose.onNodeWithText("firma tu contrato en el portal web", substring = true)
-            .assertIsDisplayed()
+        compose.onNodeWithText("Firmar contrato").assertIsDisplayed()
         compose.onNodeWithText("Comprobante CP-20261210-ABCD1234").assertIsDisplayed()
         compose.onNodeWithText("Prima de Seguro de viaje").assertIsDisplayed()
     }
