@@ -273,16 +273,47 @@ jobs:
 
       # ECS lee los secretos solo al iniciar cada tarea: si el valor cambió y el stack no, las
       # tareas en ejecución seguirían con el valor anterior hasta reiniciarse.
-      - name: Reiniciar el servicio para tomar el secreto nuevo
+      - name: Reiniciar los servicios para tomar el secreto nuevo
         if: ${{ env.SECRETO_CAMBIO == 'true' }}
         run: |
           CLUSTER=$(aws cloudformation describe-stacks --stack-name "$STACK" \
             --query "Stacks[0].Outputs[?OutputKey=='Cluster'].OutputValue" --output text)
-          SERVICE=$(aws cloudformation describe-stacks --stack-name "$STACK" \
-            --query "Stacks[0].Outputs[?OutputKey=='Service'].OutputValue" --output text)
-          aws ecs update-service --cluster "$CLUSTER" --service "$SERVICE" \
-            --force-new-deployment >/dev/null
-          aws ecs wait services-stable --cluster "$CLUSTER" --services "$SERVICE"
+          # La API y los dos workers (telemetría y pagos) leen los secretos al iniciar.
+          SERVICIOS=""
+          for SALIDA in Service WorkerService PagosWorkerService; do
+            NOMBRE=$(aws cloudformation describe-stacks --stack-name "$STACK" \
+              --query "Stacks[0].Outputs[?OutputKey=='$SALIDA'].OutputValue" --output text)
+            if [ -z "$NOMBRE" ] || [ "$NOMBRE" = "None" ]; then continue; fi
+            aws ecs update-service --cluster "$CLUSTER" --service "$NOMBRE" \
+              --force-new-deployment >/dev/null
+            SERVICIOS="$SERVICIOS $NOMBRE"
+          done
+          aws ecs wait services-stable --cluster "$CLUSTER" --services $SERVICIOS
+
+      # Patrón de mensajería: el tópico debe repartir a la cola de pagos y su worker debe estar vivo.
+      - name: Verificar la mensajería de pagos
+        run: |
+          SALIDAS() {
+            aws cloudformation describe-stacks --stack-name "$STACK" \
+              --query "Stacks[0].Outputs[?OutputKey=='$1'].OutputValue" --output text
+          }
+          TOPICO=$(SALIDAS EventosTopicArn)
+          SUSCRIPCIONES=$(aws sns list-subscriptions-by-topic --topic-arn "$TOPICO" \
+            --query "length(Subscriptions[?Protocol=='sqs' && SubscriptionArn!='PendingConfirmation'])" \
+            --output text)
+          if [ "$SUSCRIPCIONES" != "1" ]; then
+            echo "::error::El tópico $TOPICO debería tener 1 suscripción confirmada a la cola de pagos y tiene $SUSCRIPCIONES."
+            exit 1
+          fi
+          echo "El tópico de eventos reparte a la cola de pagos."
+          CLUSTER=$(SALIDAS Cluster)
+          PAGOS=$(SALIDAS PagosWorkerService)
+          EN_EJECUCION=$(aws ecs describe-services --cluster "$CLUSTER" --services "$PAGOS" \
+            --query "services[0].runningCount" --output text)
+          echo "Worker de pagos: $EN_EJECUCION tarea(s) en ejecución."
+          if [ "$EN_EJECUCION" = "0" ]; then
+            echo "::warning::El worker de pagos no tiene tareas en ejecución: los pagos paramétricos se acumularán en la cola."
+          fi
 
       - name: Mostrar logs si el despliegue falló
         if: failure()
@@ -365,11 +396,45 @@ jobs:
             --query "Stacks[0].Outputs[?OutputKey=='BackendUri'].OutputValue" --output text 2>/dev/null || true)
           [ "$BACKEND_REPO" = "None" ] && BACKEND_REPO=""
           echo "ECR_REPO_NAME=${BACKEND_REPO#*/}" >> "$GITHUB_ENV"
+          # La mensajería (tópico SNS y colas SQS) se borra con el stack; se anota su identidad
+          # ahora porque después de borrarlo ya no se puede consultar.
+          for PAR in EventosTopicArn:TOPIC_ARN PagosQueueUrl:PAGOS_QUEUE_URL \
+              PagosDlqUrl:PAGOS_DLQ_URL QueueUrl:TELEMETRIA_QUEUE_URL DlqUrl:TELEMETRIA_DLQ_URL; do
+            SALIDA="${PAR%%:*}"
+            VARIABLE="${PAR##*:}"
+            VALOR=$(aws cloudformation describe-stacks --stack-name "$STACK" \
+              --query "Stacks[0].Outputs[?OutputKey=='$SALIDA'].OutputValue" --output text 2>/dev/null || true)
+            if [ "$VALOR" = "None" ]; then VALOR=""; fi
+            echo "$VARIABLE=$VALOR" >> "$GITHUB_ENV"
+          done
 
       - name: Eliminar stack solventa-mvp
         run: |
           aws cloudformation delete-stack --stack-name "$STACK"
           aws cloudformation wait stack-delete-complete --stack-name "$STACK"
+
+      # Si el borrado del stack se interrumpió, o alguien recreó estos recursos a mano, la
+      # mensajería puede quedar viva (y facturando). Se comprueba y, si existe, se elimina.
+      - name: Comprobar que la mensajería y sus alarmas quedaron eliminadas
+        run: |
+          if [ -n "$TOPIC_ARN" ] && aws sns get-topic-attributes --topic-arn "$TOPIC_ARN" >/dev/null 2>&1; then
+            echo "El tópico $TOPIC_ARN sigue existiendo; se elimina."
+            aws sns delete-topic --topic-arn "$TOPIC_ARN"
+          fi
+          for COLA in "$PAGOS_QUEUE_URL" "$PAGOS_DLQ_URL" "$TELEMETRIA_QUEUE_URL" "$TELEMETRIA_DLQ_URL"; do
+            if [ -z "$COLA" ]; then continue; fi
+            if aws sqs get-queue-attributes --queue-url "$COLA" --attribute-names QueueArn >/dev/null 2>&1; then
+              echo "La cola $COLA sigue existiendo; se elimina."
+              aws sqs delete-queue --queue-url "$COLA"
+            fi
+          done
+          ALARMAS=$(aws cloudwatch describe-alarms --alarm-name-prefix "${STACK}-PagosDlqAlarm" \
+            --query "MetricAlarms[].AlarmName" --output text)
+          if [ -n "$ALARMAS" ]; then
+            echo "Alarma(s) sin eliminar: $ALARMAS; se eliminan."
+            aws cloudwatch delete-alarms --alarm-names $ALARMAS
+          fi
+          echo "Mensajería y alarmas eliminadas."
 
       # Ambos buckets son versionados y de política Retain: hay que borrar todas las
       # versiones y los marcadores de eliminación antes de poder eliminar el bucket.

@@ -260,6 +260,21 @@ aws cloudformation wait stack-delete-complete --stack-name solventa-mvp
 > con la acción `eliminar` ya vacía (todas las versiones) y borra ambos buckets, el ECR y
 > los dos secretos.
 >
+> **Mensajería (SNS y SQS).** El tópico de eventos, las colas de telemetría y de pagos con
+> sus colas de fallidos, la suscripción, los servicios de los dos workers y la alarma de la
+> cola de fallidos **no tienen política de retención**: se borran con el stack. El workflow
+> con la acción `eliminar` anota el tópico y las colas antes de borrar el stack y, después,
+> comprueba que no quede ninguno (borra los que hayan sobrevivido a un borrado interrumpido).
+> A mano, se puede comprobar con:
+>
+> ```bash
+> aws sns list-topics --query "Topics[?contains(TopicArn,'solventa-mvp')]"
+> aws sqs list-queues --queue-name-prefix solventa-mvp
+> aws cloudwatch describe-alarms --alarm-name-prefix solventa-mvp-PagosDlqAlarm
+> ```
+>
+> Las tres consultas deben devolver una lista vacía.
+>
 > **Los PDF de pólizas son documentos de clientes:** por eso su bucket sobrevive a un
 > `delete-stack` manual. Si se borra solo el stack, el bucket queda huérfano con los
 > documentos, y un despliegue nuevo crea otro bucket vacío.
