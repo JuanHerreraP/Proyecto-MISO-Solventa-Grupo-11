@@ -48,6 +48,7 @@ from app.api import (
 )
 from app.asistencias import modelos_db as modelos_db_asistencias  # noqa: F401
 from app.desembolsos import modelos_db as modelos_db_desembolsos  # noqa: F401
+from app.eventos import procesados as modelos_db_eventos  # noqa: F401
 from app.firmas import modelos_db as modelos_db_firmas  # noqa: F401
 from app.identidad import (
     asociacion_db,  # noqa: F401

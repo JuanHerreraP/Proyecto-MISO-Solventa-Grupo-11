@@ -24,8 +24,12 @@ def main() -> None:
             ruta.touch(mode=0o600)
             ruta.write_text(valor)
             os.environ[f"JWT_{tipo}_KEY_PATH"] = str(ruta)
-    if os.environ.get("SOLVENTA_ROL", "api").strip().lower() == "worker":
+    rol = os.environ.get("SOLVENTA_ROL", "api").strip().lower()
+    if rol == "worker":
         _arrancar_worker()
+        return
+    if rol == "worker-pagos":
+        _arrancar_worker_pagos()
         return
     os.execvp(
         "uvicorn",
@@ -46,6 +50,16 @@ def _arrancar_worker() -> None:
     import logging
 
     from app.siniestros.worker import ejecutar
+
+    logging.basicConfig(level=logging.INFO)
+    ejecutar()
+
+
+def _arrancar_worker_pagos() -> None:
+    """Modo worker de pagos (SOLVENTA_ROL=worker-pagos): consume la cola de pagos automáticos."""
+    import logging
+
+    from app.desembolsos.worker import ejecutar
 
     logging.basicConfig(level=logging.INFO)
     ejecutar()

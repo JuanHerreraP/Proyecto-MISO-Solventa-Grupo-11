@@ -31,6 +31,7 @@ from app.desembolsos.servicio import (
     DesembolsoNoReintentable,
     ServicioDesembolsos,
 )
+from app.eventos.publicador import publicador_negocio
 from app.identidad.modelos import Rol
 from app.infraestructura.database import get_db
 from app.notificaciones.composicion import crear_servicio_notificaciones
@@ -75,6 +76,8 @@ def construir_evaluacion(db: Session, red=None) -> ServicioEvaluacion:
         desembolsos=construir_desembolsos(db, red),
         # Avisa al cliente la decisión y los pagos paramétricos (HU05).
         notificaciones=crear_servicio_notificaciones(db),
+        # Con SNS_TOPIC_ARN, el pago paramétrico se publica como evento en vez de ordenarse aquí.
+        publicador=publicador_negocio(),
     )
 
 

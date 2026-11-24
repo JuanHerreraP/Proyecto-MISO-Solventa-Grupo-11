@@ -14,7 +14,10 @@ Desembolso configurable (`EC_ORDENAR_DESEMBOLSO`, por defecto `false`):
 - `false`: el worker procesa con `al_crear=None`. Crea el siniestro paramétrico pero NO ordena el
   desembolso ni marca pago ejecutado. Pensado para el MVP de contrapresión, donde el pago se
   decide en otro paso.
-- `true`: usa `construir_evaluacion(db).aprobar_automatico`, replicando el flujo síncrono (HU15).
+- `true`: usa `construir_evaluacion(db).aprobar_automatico`: aprueba el siniestro y avisa al
+  cliente. Sin `SNS_TOPIC_ARN` ordena además el desembolso en el mismo proceso (el flujo
+  síncrono de HU15). Con `SNS_TOPIC_ARN` publica el evento de pago en SNS y lo ordena el worker
+  de pagos (`app/desembolsos/worker.py`).
 
 El loop es robusto: una excepción en un mensaje se registra y no mata el worker.
 """
