@@ -382,7 +382,7 @@
         ],
         "StorageEncrypted": true,
         "BackupRetentionPeriod": 1,
-        "MultiAZ": true,
+        "MultiAZ": false,
         "PubliclyAccessible": false,
         "DeletionProtection": false
       }
