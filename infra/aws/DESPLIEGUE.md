@@ -22,8 +22,8 @@ Necesitas:
 - **Python 3** y **OpenSSL** para generar las llaves.
 - **Git** (se usa el hash del commit para etiquetar la imagen).
 
-> Esto crea recursos **facturables** (2 NAT Gateway, RDS `db.t3.micro`, ALB,
-> Fargate), no capa gratuita. Al terminar la demo, retirar el stack (ver el
+> Esto crea recursos **facturables** (2 NAT Gateway, RDS `db.t3.micro` Multi-AZ, ALB,
+> Redis con dos nodos, Fargate con 2 o más tareas del backend), no capa gratuita. Al terminar la demo, retirar el stack (ver el
 > final de esta guía).
 
 Fija la región una vez por terminal:
@@ -282,6 +282,21 @@ aws cloudformation wait stack-delete-complete --stack-name solventa-mvp
 > aws sns list-topics --query "Topics[?contains(TopicArn,'solventa-mvp')]"
 > aws sqs list-queues --queue-name-prefix solventa-mvp
 > aws cloudwatch describe-alarms --alarm-name-prefix solventa-mvp-PagosDlqAlarm
+> ```
+>
+> Las tres consultas deben devolver una lista vacía.
+>
+> **Caché, base y alertas.** El grupo de replicación de Redis, la base Multi-AZ, el tópico
+> de alertas, el autoescalado y sus alarmas tampoco tienen política de retención: se borran
+> con el stack. El workflow con la acción `eliminar` anota el grupo de Redis, la base y el
+> tópico de alertas antes de borrar el stack y, después, comprueba que no quede ninguno
+> (y borra todas las alarmas `solventa-mvp-*` y `TargetTracking-service/solventa-mvp-*`).
+> A mano, se puede comprobar con:
+>
+> ```bash
+> aws elasticache describe-replication-groups --query "ReplicationGroups[?starts_with(ReplicationGroupId,'solventa')]"
+> aws rds describe-db-instances --query "DBInstances[?starts_with(DBInstanceIdentifier,'solventa')]"
+> aws cloudwatch describe-alarms --alarm-name-prefix solventa-mvp- --query "MetricAlarms[].AlarmName"
 > ```
 >
 > Las tres consultas deben devolver una lista vacía.
