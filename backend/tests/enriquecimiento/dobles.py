@@ -49,11 +49,17 @@ class FuenteDoble:
 
 
 class Escenario:
-    def __init__(self, tiempo_limite: float = 0.2):
+    def __init__(
+        self,
+        tiempo_limite: float = 0.2,
+        cache=None,
+        ultimos=None,
+        frescura: timedelta = timedelta(0),
+    ):
         self.reloj = Reloj()
         self.open_finance = FuenteDoble(TipoFuente.OPEN_FINANCE, FINANZAS)
         self.open_data = FuenteDoble(TipoFuente.OPEN_DATA, ENTORNO)
-        self.cache = CacheSenalesEnMemoria(reloj=self.reloj)
+        self.cache = cache or CacheSenalesEnMemoria(reloj=self.reloj)
         self.consentimientos = RepositorioConsentimientosEnMemoria()
         self.servicio = ServicioEnriquecimiento(
             fuentes=[self.open_finance, self.open_data],
@@ -61,6 +67,8 @@ class Escenario:
             consentimientos=self.consentimientos,
             tiempo_limite=tiempo_limite,
             reloj=self.reloj,
+            ultimos=ultimos,
+            frescura=frescura,
         )
 
     def con_consentimiento(self, cliente_id: str = "CLI-001", dias: int = 30) -> "Escenario":

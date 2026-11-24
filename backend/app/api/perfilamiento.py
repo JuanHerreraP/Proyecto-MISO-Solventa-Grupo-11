@@ -6,8 +6,13 @@ from fastapi import APIRouter, Depends, HTTPException, status
 
 from app.api.seguridad import requiere_roles, verificar_propietario
 from app.identidad.modelos import Rol
+from app.infraestructura.redis_cliente import AlmacenRedis, cliente_redis
 from app.perfilamiento.dominio.modelos import OfertaCliente, PerfilRiesgo, SenalesPerfilamiento
-from app.perfilamiento.repositorio import RepositorioPerfilesEnMemoria
+from app.perfilamiento.repositorio import (
+    RepositorioPerfiles,
+    RepositorioPerfilesEnMemoria,
+    RepositorioPerfilesRedis,
+)
 from app.perfilamiento.servicio import (
     ConsentimientoNoVigente,
     ServicioPerfilamiento,
@@ -31,7 +36,11 @@ lector_oferta_actual = requiere_roles(
 
 
 @lru_cache
-def obtener_repositorio() -> RepositorioPerfilesEnMemoria:
+def obtener_repositorio() -> RepositorioPerfiles:
+    # Con REDIS_URL los perfiles se comparten entre réplicas; sin ella, memoria del proceso.
+    redis = cliente_redis()
+    if redis is not None:
+        return RepositorioPerfilesRedis(AlmacenRedis(redis, "perfil"))
     return RepositorioPerfilesEnMemoria()
 
 

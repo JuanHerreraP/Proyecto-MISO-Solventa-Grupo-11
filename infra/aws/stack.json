@@ -53,6 +53,44 @@
       "Default": 1,
       "MinValue": 0,
       "Description": "HU20 contrapresion: numero de tareas del WorkerService. 0 detiene el drenaje (la cola crece); subirlo acelera el vaciado."
+    },
+    "PagosWorkerDesiredCount": {
+      "Type": "Number",
+      "Default": 1,
+      "MinValue": 0,
+      "Description": "Patrón de mensajería: número de tareas del PagosWorkerService, que ordena los desembolsos de los siniestros paramétricos. 0 detiene los pagos (la cola de pagos crece)."
+    },
+    "PagosWorkerConcurrencia": {
+      "Type": "Number",
+      "Default": 4,
+      "MinValue": 1,
+      "Description": "Patrón de mensajería: pagos que cada tarea del worker procesa en paralelo (PAGOS_WORKER_CONCURRENCIA)."
+    },
+    "BackendDesiredCount": {
+      "Type": "Number",
+      "Default": 2,
+      "MinValue": 1,
+      "Description": "Tareas del backend en funcionamiento (alta disponibilidad: 2 o más, repartidas en las dos zonas). Es también el mínimo del autoescalado."
+    },
+    "BackendMaxCount": {
+      "Type": "Number",
+      "Default": 4,
+      "MinValue": 1,
+      "Description": "Máximo de tareas del backend al escalar por carga."
+    },
+    "EscalarWorkers": {
+      "Type": "String",
+      "Default": "false",
+      "AllowedValues": [
+        "true",
+        "false"
+      ],
+      "Description": "true escala el worker de telemetría según la cola. Con false la cola crece sin que el worker escale (necesario para demostrar la contrapresión de EC04)."
+    },
+    "AlertasEmail": {
+      "Type": "String",
+      "Default": "",
+      "Description": "Correo que recibe las alarmas (opcional). La suscripción queda pendiente hasta confirmarla desde ese correo."
     }
   },
   "Conditions": {
@@ -74,6 +112,26 @@
           "Ref": "AvisosVencimientoActivos"
         },
         "true"
+      ]
+    },
+    "EscalarTelemetria": {
+      "Fn::Equals": [
+        {
+          "Ref": "EscalarWorkers"
+        },
+        "true"
+      ]
+    },
+    "HayAlertasEmail": {
+      "Fn::Not": [
+        {
+          "Fn::Equals": [
+            {
+              "Ref": "AlertasEmail"
+            },
+            ""
+          ]
+        }
       ]
     }
   },
@@ -324,7 +382,7 @@
         ],
         "StorageEncrypted": true,
         "BackupRetentionPeriod": 1,
-        "MultiAZ": false,
+        "MultiAZ": true,
         "PubliclyAccessible": false,
         "DeletionProtection": false
       }
@@ -486,6 +544,21 @@
                 }
               ]
             }
+          },
+          {
+            "PolicyName": "PublicarEventosNegocio",
+            "PolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Action": "sns:Publish",
+                  "Resource": {
+                    "Ref": "EventosNegocioTopic"
+                  }
+                }
+              ]
+            }
           }
         ]
       }
@@ -533,6 +606,21 @@
                     "StringEquals": {
                       "cloudwatch:namespace": "Solventa/Telemetria"
                     }
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "PolicyName": "PublicarEventosNegocio",
+            "PolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Action": "sns:Publish",
+                  "Resource": {
+                    "Ref": "EventosNegocioTopic"
                   }
                 }
               ]
@@ -1105,6 +1193,26 @@
                 "Value": {
                   "Ref": "TelemetriaQueue"
                 }
+              },
+              {
+                "Name": "SNS_TOPIC_ARN",
+                "Value": {
+                  "Ref": "EventosNegocioTopic"
+                }
+              },
+              {
+                "Name": "REDIS_URL",
+                "Value": {
+                  "Fn::Sub": "rediss://${Cache.PrimaryEndPoint.Address}:${Cache.PrimaryEndPoint.Port}"
+                }
+              },
+              {
+                "Name": "CONSENTIMIENTOS_EN_BD",
+                "Value": "true"
+              },
+              {
+                "Name": "ALMACEN_SOLO_S3",
+                "Value": "true"
               }
             ],
             "Secrets": [
@@ -1202,13 +1310,15 @@
         "TaskDefinition": {
           "Ref": "Task"
         },
-        "DesiredCount": 1,
+        "DesiredCount": {
+          "Ref": "BackendDesiredCount"
+        },
         "LaunchType": "FARGATE",
         "PlatformVersion": "1.4.0",
         "HealthCheckGracePeriodSeconds": 180,
         "DeploymentConfiguration": {
-          "MinimumHealthyPercent": 0,
-          "MaximumPercent": 100,
+          "MinimumHealthyPercent": 50,
+          "MaximumPercent": 200,
           "DeploymentCircuitBreaker": {
             "Enable": true,
             "Rollback": true
@@ -1248,7 +1358,8 @@
         "AppDefaultRoute0",
         "AppDefaultRoute1",
         "AppSubnetRoute0",
-        "AppSubnetRoute1"
+        "AppSubnetRoute1",
+        "Cache"
       ]
     },
     "WorkerTask": {
@@ -1321,12 +1432,18 @@
               },
               {
                 "Name": "EC_ORDENAR_DESEMBOLSO",
-                "Value": "false"
+                "Value": "true"
               },
               {
                 "Name": "POLIZAS_S3_BUCKET",
                 "Value": {
                   "Ref": "PolizasBucket"
+                }
+              },
+              {
+                "Name": "SNS_TOPIC_ARN",
+                "Value": {
+                  "Ref": "EventosNegocioTopic"
                 }
               }
             ],
@@ -1927,6 +2044,649 @@
           }
         ]
       }
+    },
+    "EventosNegocioTopic": {
+      "Type": "AWS::SNS::Topic",
+      "Properties": {
+        "DisplayName": "Eventos de negocio de Solventa"
+      }
+    },
+    "PagosDlq": {
+      "Type": "AWS::SQS::Queue",
+      "Properties": {
+        "MessageRetentionPeriod": 1209600,
+        "SqsManagedSseEnabled": true
+      }
+    },
+    "PagosQueue": {
+      "Type": "AWS::SQS::Queue",
+      "Properties": {
+        "VisibilityTimeout": 120,
+        "MessageRetentionPeriod": 345600,
+        "ReceiveMessageWaitTimeSeconds": 20,
+        "RedrivePolicy": {
+          "deadLetterTargetArn": {
+            "Fn::GetAtt": [
+              "PagosDlq",
+              "Arn"
+            ]
+          },
+          "maxReceiveCount": 5
+        },
+        "SqsManagedSseEnabled": true
+      }
+    },
+    "PagosQueuePolicy": {
+      "Type": "AWS::SQS::QueuePolicy",
+      "Properties": {
+        "Queues": [
+          {
+            "Ref": "PagosQueue"
+          }
+        ],
+        "PolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "sns.amazonaws.com"
+              },
+              "Action": "sqs:SendMessage",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "PagosQueue",
+                  "Arn"
+                ]
+              },
+              "Condition": {
+                "ArnEquals": {
+                  "aws:SourceArn": {
+                    "Ref": "EventosNegocioTopic"
+                  }
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    "PagosSubscription": {
+      "Type": "AWS::SNS::Subscription",
+      "DependsOn": [
+        "PagosQueuePolicy"
+      ],
+      "Properties": {
+        "TopicArn": {
+          "Ref": "EventosNegocioTopic"
+        },
+        "Protocol": "sqs",
+        "Endpoint": {
+          "Fn::GetAtt": [
+            "PagosQueue",
+            "Arn"
+          ]
+        },
+        "RawMessageDelivery": true,
+        "FilterPolicy": {
+          "tipo": [
+            "SINIESTRO_PARAMETRICO_APROBADO"
+          ]
+        }
+      }
+    },
+    "PagosDlqAlarm": {
+      "Type": "AWS::CloudWatch::Alarm",
+      "Properties": {
+        "AlarmDescription": "Hay pagos paramétricos en la cola de mensajes fallidos: se agotaron los reintentos y Operaciones debe revisarlos.",
+        "Namespace": "AWS/SQS",
+        "MetricName": "ApproximateNumberOfMessagesVisible",
+        "Dimensions": [
+          {
+            "Name": "QueueName",
+            "Value": {
+              "Fn::GetAtt": [
+                "PagosDlq",
+                "QueueName"
+              ]
+            }
+          }
+        ],
+        "Statistic": "Maximum",
+        "Period": 300,
+        "EvaluationPeriods": 1,
+        "Threshold": 0,
+        "ComparisonOperator": "GreaterThanThreshold",
+        "TreatMissingData": "notBreaching",
+        "AlarmActions": [
+          {
+            "Ref": "AlertasTopic"
+          }
+        ]
+      }
+    },
+    "PagosWorkerTaskRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "ecs-tasks.amazonaws.com"
+              },
+              "Action": "sts:AssumeRole"
+            }
+          ]
+        },
+        "Policies": [
+          {
+            "PolicyName": "ConsumirPagos",
+            "PolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Action": [
+                    "sqs:ReceiveMessage",
+                    "sqs:DeleteMessage",
+                    "sqs:GetQueueAttributes",
+                    "sqs:ChangeMessageVisibility"
+                  ],
+                  "Resource": {
+                    "Fn::GetAtt": [
+                      "PagosQueue",
+                      "Arn"
+                    ]
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "PolicyName": "PublicarEventosNegocio",
+            "PolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Action": "sns:Publish",
+                  "Resource": {
+                    "Ref": "EventosNegocioTopic"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "PagosWorkerLogs": {
+      "Type": "AWS::Logs::LogGroup",
+      "Properties": {
+        "RetentionInDays": 14
+      }
+    },
+    "PagosWorkerTask": {
+      "Type": "AWS::ECS::TaskDefinition",
+      "Properties": {
+        "RequiresCompatibilities": [
+          "FARGATE"
+        ],
+        "NetworkMode": "awsvpc",
+        "Cpu": "256",
+        "Memory": "512",
+        "RuntimePlatform": {
+          "CpuArchitecture": "X86_64",
+          "OperatingSystemFamily": "LINUX"
+        },
+        "ExecutionRoleArn": {
+          "Fn::GetAtt": [
+            "ExecutionRole",
+            "Arn"
+          ]
+        },
+        "TaskRoleArn": {
+          "Fn::GetAtt": [
+            "PagosWorkerTaskRole",
+            "Arn"
+          ]
+        },
+        "ContainerDefinitions": [
+          {
+            "Name": "pagos-worker",
+            "Image": {
+              "Ref": "BackendImage"
+            },
+            "Essential": true,
+            "Environment": [
+              {
+                "Name": "APP_ENV",
+                "Value": "production"
+              },
+              {
+                "Name": "SOLVENTA_ROL",
+                "Value": "worker-pagos"
+              },
+              {
+                "Name": "DB_HOST",
+                "Value": {
+                  "Fn::GetAtt": [
+                    "Database",
+                    "Endpoint.Address"
+                  ]
+                }
+              },
+              {
+                "Name": "AWS_DEFAULT_REGION",
+                "Value": {
+                  "Ref": "AWS::Region"
+                }
+              },
+              {
+                "Name": "SQS_PAGOS_QUEUE_URL",
+                "Value": {
+                  "Ref": "PagosQueue"
+                }
+              },
+              {
+                "Name": "SNS_TOPIC_ARN",
+                "Value": {
+                  "Ref": "EventosNegocioTopic"
+                }
+              },
+              {
+                "Name": "PAGOS_WORKER_CONCURRENCIA",
+                "Value": {
+                  "Ref": "PagosWorkerConcurrencia"
+                }
+              }
+            ],
+            "Secrets": [
+              {
+                "Name": "DB_PASSWORD",
+                "ValueFrom": {
+                  "Fn::Sub": "${DbSecret}:password::"
+                }
+              },
+              {
+                "Name": "JWT_PRIVATE_KEY_PEM",
+                "ValueFrom": {
+                  "Fn::Sub": "${JwtSecretArn}:private_key::"
+                }
+              },
+              {
+                "Name": "JWT_PUBLIC_KEY_PEM",
+                "ValueFrom": {
+                  "Fn::Sub": "${JwtSecretArn}:public_key::"
+                }
+              }
+            ],
+            "LogConfiguration": {
+              "LogDriver": "awslogs",
+              "Options": {
+                "awslogs-group": {
+                  "Ref": "PagosWorkerLogs"
+                },
+                "awslogs-region": {
+                  "Ref": "AWS::Region"
+                },
+                "awslogs-stream-prefix": "pagos-worker"
+              }
+            }
+          }
+        ]
+      }
+    },
+    "PagosWorkerService": {
+      "Type": "AWS::ECS::Service",
+      "Properties": {
+        "Cluster": {
+          "Ref": "Cluster"
+        },
+        "TaskDefinition": {
+          "Ref": "PagosWorkerTask"
+        },
+        "DesiredCount": {
+          "Ref": "PagosWorkerDesiredCount"
+        },
+        "LaunchType": "FARGATE",
+        "PlatformVersion": "1.4.0",
+        "DeploymentConfiguration": {
+          "MinimumHealthyPercent": 0,
+          "MaximumPercent": 100,
+          "DeploymentCircuitBreaker": {
+            "Enable": true,
+            "Rollback": true
+          }
+        },
+        "NetworkConfiguration": {
+          "AwsvpcConfiguration": {
+            "AssignPublicIp": "DISABLED",
+            "Subnets": [
+              {
+                "Ref": "AppSubnet0"
+              },
+              {
+                "Ref": "AppSubnet1"
+              }
+            ],
+            "SecurityGroups": [
+              {
+                "Ref": "TaskSg"
+              }
+            ]
+          }
+        }
+      },
+      "DependsOn": [
+        "Database",
+        "AppDefaultRoute0",
+        "AppDefaultRoute1",
+        "AppSubnetRoute0",
+        "AppSubnetRoute1"
+      ]
+    },
+    "CacheSg": {
+      "Type": "AWS::EC2::SecurityGroup",
+      "Properties": {
+        "VpcId": {
+          "Ref": "Vpc"
+        },
+        "GroupDescription": "Only ECS tasks can reach Redis",
+        "SecurityGroupIngress": [
+          {
+            "IpProtocol": "tcp",
+            "FromPort": 6379,
+            "ToPort": 6379,
+            "SourceSecurityGroupId": {
+              "Ref": "TaskSg"
+            }
+          }
+        ]
+      }
+    },
+    "CacheSubnets": {
+      "Type": "AWS::ElastiCache::SubnetGroup",
+      "Properties": {
+        "Description": "Isolated Redis subnets",
+        "SubnetIds": [
+          {
+            "Ref": "PrivateSubnet0"
+          },
+          {
+            "Ref": "PrivateSubnet1"
+          }
+        ]
+      }
+    },
+    "Cache": {
+      "Type": "AWS::ElastiCache::ReplicationGroup",
+      "DeletionPolicy": "Delete",
+      "UpdateReplacePolicy": "Delete",
+      "Properties": {
+        "ReplicationGroupDescription": "Cache compartida de Solventa (perfiles, senales y ultimos resultados)",
+        "Engine": "redis",
+        "EngineVersion": "7.1",
+        "CacheNodeType": "cache.t3.micro",
+        "NumCacheClusters": 2,
+        "AutomaticFailoverEnabled": true,
+        "MultiAZEnabled": true,
+        "Port": 6379,
+        "CacheSubnetGroupName": {
+          "Ref": "CacheSubnets"
+        },
+        "SecurityGroupIds": [
+          {
+            "Ref": "CacheSg"
+          }
+        ],
+        "AtRestEncryptionEnabled": true,
+        "TransitEncryptionEnabled": true
+      }
+    },
+    "AlertasTopic": {
+      "Type": "AWS::SNS::Topic",
+      "Properties": {
+        "DisplayName": "Alertas de Solventa"
+      }
+    },
+    "AlertasSuscripcion": {
+      "Type": "AWS::SNS::Subscription",
+      "Condition": "HayAlertasEmail",
+      "Properties": {
+        "TopicArn": {
+          "Ref": "AlertasTopic"
+        },
+        "Protocol": "email",
+        "Endpoint": {
+          "Ref": "AlertasEmail"
+        }
+      }
+    },
+    "BackendUnhealthyAlarm": {
+      "Type": "AWS::CloudWatch::Alarm",
+      "Properties": {
+        "AlarmDescription": "El balanceador tiene tareas del backend que no pasan la verificacion de salud.",
+        "Namespace": "AWS/ApplicationELB",
+        "MetricName": "UnHealthyHostCount",
+        "Dimensions": [
+          {
+            "Name": "TargetGroup",
+            "Value": {
+              "Fn::GetAtt": [
+                "Targets",
+                "TargetGroupFullName"
+              ]
+            }
+          },
+          {
+            "Name": "LoadBalancer",
+            "Value": {
+              "Fn::GetAtt": [
+                "LoadBalancer",
+                "LoadBalancerFullName"
+              ]
+            }
+          }
+        ],
+        "Statistic": "Maximum",
+        "Period": 60,
+        "EvaluationPeriods": 3,
+        "Threshold": 0,
+        "ComparisonOperator": "GreaterThanThreshold",
+        "TreatMissingData": "notBreaching",
+        "AlarmActions": [
+          {
+            "Ref": "AlertasTopic"
+          }
+        ]
+      }
+    },
+    "BackendScalableTarget": {
+      "Type": "AWS::ApplicationAutoScaling::ScalableTarget",
+      "Properties": {
+        "ServiceNamespace": "ecs",
+        "ScalableDimension": "ecs:service:DesiredCount",
+        "ResourceId": {
+          "Fn::Sub": "service/${Cluster}/${Service.Name}"
+        },
+        "MinCapacity": {
+          "Ref": "BackendDesiredCount"
+        },
+        "MaxCapacity": {
+          "Ref": "BackendMaxCount"
+        }
+      }
+    },
+    "BackendCpuPolicy": {
+      "Type": "AWS::ApplicationAutoScaling::ScalingPolicy",
+      "Properties": {
+        "PolicyName": {
+          "Fn::Sub": "${AWS::StackName}-backend-cpu"
+        },
+        "PolicyType": "TargetTrackingScaling",
+        "ScalingTargetId": {
+          "Ref": "BackendScalableTarget"
+        },
+        "TargetTrackingScalingPolicyConfiguration": {
+          "TargetValue": 60,
+          "PredefinedMetricSpecification": {
+            "PredefinedMetricType": "ECSServiceAverageCPUUtilization"
+          },
+          "ScaleOutCooldown": 60,
+          "ScaleInCooldown": 300
+        }
+      }
+    },
+    "BackendRequestsPolicy": {
+      "Type": "AWS::ApplicationAutoScaling::ScalingPolicy",
+      "Properties": {
+        "PolicyName": {
+          "Fn::Sub": "${AWS::StackName}-backend-solicitudes"
+        },
+        "PolicyType": "TargetTrackingScaling",
+        "ScalingTargetId": {
+          "Ref": "BackendScalableTarget"
+        },
+        "TargetTrackingScalingPolicyConfiguration": {
+          "TargetValue": 200,
+          "PredefinedMetricSpecification": {
+            "PredefinedMetricType": "ALBRequestCountPerTarget",
+            "ResourceLabel": {
+              "Fn::Sub": "${LoadBalancer.LoadBalancerFullName}/${Targets.TargetGroupFullName}"
+            }
+          },
+          "ScaleOutCooldown": 60,
+          "ScaleInCooldown": 300
+        }
+      }
+    },
+    "WorkerScalableTarget": {
+      "Type": "AWS::ApplicationAutoScaling::ScalableTarget",
+      "Condition": "EscalarTelemetria",
+      "Properties": {
+        "ServiceNamespace": "ecs",
+        "ScalableDimension": "ecs:service:DesiredCount",
+        "ResourceId": {
+          "Fn::Sub": "service/${Cluster}/${WorkerService.Name}"
+        },
+        "MinCapacity": {
+          "Ref": "WorkerDesiredCount"
+        },
+        "MaxCapacity": 4
+      }
+    },
+    "WorkerScaleOutPolicy": {
+      "Type": "AWS::ApplicationAutoScaling::ScalingPolicy",
+      "Condition": "EscalarTelemetria",
+      "Properties": {
+        "PolicyName": {
+          "Fn::Sub": "${AWS::StackName}-worker-mas"
+        },
+        "PolicyType": "StepScaling",
+        "ScalingTargetId": {
+          "Ref": "WorkerScalableTarget"
+        },
+        "StepScalingPolicyConfiguration": {
+          "AdjustmentType": "ChangeInCapacity",
+          "Cooldown": 60,
+          "MetricAggregationType": "Maximum",
+          "StepAdjustments": [
+            {
+              "MetricIntervalLowerBound": 0,
+              "ScalingAdjustment": 1
+            }
+          ]
+        }
+      }
+    },
+    "WorkerScaleInPolicy": {
+      "Type": "AWS::ApplicationAutoScaling::ScalingPolicy",
+      "Condition": "EscalarTelemetria",
+      "Properties": {
+        "PolicyName": {
+          "Fn::Sub": "${AWS::StackName}-worker-menos"
+        },
+        "PolicyType": "StepScaling",
+        "ScalingTargetId": {
+          "Ref": "WorkerScalableTarget"
+        },
+        "StepScalingPolicyConfiguration": {
+          "AdjustmentType": "ChangeInCapacity",
+          "Cooldown": 300,
+          "MetricAggregationType": "Maximum",
+          "StepAdjustments": [
+            {
+              "MetricIntervalUpperBound": 0,
+              "ScalingAdjustment": -1
+            }
+          ]
+        }
+      }
+    },
+    "WorkerBacklogAlarm": {
+      "Type": "AWS::CloudWatch::Alarm",
+      "Condition": "EscalarTelemetria",
+      "Properties": {
+        "AlarmDescription": "La cola de telemetria tiene un atraso: se agrega una tarea al worker.",
+        "Namespace": "AWS/SQS",
+        "MetricName": "ApproximateNumberOfMessagesVisible",
+        "Dimensions": [
+          {
+            "Name": "QueueName",
+            "Value": {
+              "Fn::GetAtt": [
+                "TelemetriaQueue",
+                "QueueName"
+              ]
+            }
+          }
+        ],
+        "Statistic": "Maximum",
+        "Period": 60,
+        "EvaluationPeriods": 2,
+        "Threshold": 100,
+        "ComparisonOperator": "GreaterThanThreshold",
+        "TreatMissingData": "notBreaching",
+        "AlarmActions": [
+          {
+            "Ref": "WorkerScaleOutPolicy"
+          }
+        ]
+      }
+    },
+    "WorkerIdleAlarm": {
+      "Type": "AWS::CloudWatch::Alarm",
+      "Condition": "EscalarTelemetria",
+      "Properties": {
+        "AlarmDescription": "La cola de telemetria esta vacia: se quita una tarea al worker.",
+        "Namespace": "AWS/SQS",
+        "MetricName": "ApproximateNumberOfMessagesVisible",
+        "Dimensions": [
+          {
+            "Name": "QueueName",
+            "Value": {
+              "Fn::GetAtt": [
+                "TelemetriaQueue",
+                "QueueName"
+              ]
+            }
+          }
+        ],
+        "Statistic": "Maximum",
+        "Period": 60,
+        "EvaluationPeriods": 10,
+        "Threshold": 1,
+        "ComparisonOperator": "LessThanThreshold",
+        "TreatMissingData": "notBreaching",
+        "AlarmActions": [
+          {
+            "Ref": "WorkerScaleInPolicy"
+          }
+        ]
+      }
     }
   },
   "Outputs": {
@@ -1997,6 +2757,42 @@
           "WorkerService",
           "Name"
         ]
+      }
+    },
+    "EventosTopicArn": {
+      "Value": {
+        "Ref": "EventosNegocioTopic"
+      }
+    },
+    "PagosQueueUrl": {
+      "Value": {
+        "Ref": "PagosQueue"
+      }
+    },
+    "PagosDlqUrl": {
+      "Value": {
+        "Ref": "PagosDlq"
+      }
+    },
+    "PagosWorkerService": {
+      "Value": {
+        "Fn::GetAtt": [
+          "PagosWorkerService",
+          "Name"
+        ]
+      }
+    },
+    "CacheEndpoint": {
+      "Value": {
+        "Fn::GetAtt": [
+          "Cache",
+          "PrimaryEndPoint.Address"
+        ]
+      }
+    },
+    "AlertasTopicArn": {
+      "Value": {
+        "Ref": "AlertasTopic"
       }
     }
   }

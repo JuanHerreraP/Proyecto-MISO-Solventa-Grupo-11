@@ -39,3 +39,18 @@ def test_entrypoint_materializa_secretos_y_codifica_password(monkeypatch, tmp_pa
     monkeypatch.setattr(os, "execvp", ejecutar)
     with pytest.raises(Arranque):
         runpy.run_path(str(Path(__file__).parents[1] / "entrypoint.py"), run_name="__main__")
+
+
+def test_el_rol_worker_pagos_arranca_el_consumidor_de_pagos_y_no_la_api(monkeypatch):
+    import os
+
+    llamadas = []
+    for variable in ("DB_HOST", "JWT_PRIVATE_KEY_PEM", "JWT_PUBLIC_KEY_PEM"):
+        monkeypatch.delenv(variable, raising=False)
+    monkeypatch.setenv("SOLVENTA_ROL", "worker-pagos")
+    monkeypatch.setattr("app.desembolsos.worker.ejecutar", lambda: llamadas.append("pagos"))
+    monkeypatch.setattr(os, "execvp", lambda *_: pytest.fail("No debe arrancar la API."))
+
+    runpy.run_path(str(Path(__file__).parents[1] / "entrypoint.py"), run_name="__main__")
+
+    assert llamadas == ["pagos"]

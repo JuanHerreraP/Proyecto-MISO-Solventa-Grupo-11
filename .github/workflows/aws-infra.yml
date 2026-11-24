@@ -254,9 +254,19 @@ jobs:
 
       - name: Validar y desplegar el stack
         run: |
-          aws cloudformation validate-template --template-body "file://infra/aws/stack.json" >/dev/null
+          # CloudFormation acepta como máximo 51.200 bytes si la plantilla va en la solicitud
+          # (todavía no hay un bucket donde subirla). Minificada ocupa casi la mitad.
+          mkdir -p infra/secrets
+          python3 -c "import json; json.dump(json.load(open('infra/aws/stack.json')), open('infra/secrets/stack.min.json', 'w'), separators=(',', ':'))"
+          TAMANO=$(wc -c < infra/secrets/stack.min.json)
+          echo "Plantilla minificada: $TAMANO bytes (máximo 51200)."
+          if [ "$TAMANO" -gt 51200 ]; then
+            echo "::error::La plantilla supera el máximo de 51200 bytes; hay que subirla a S3 o dividir el stack."
+            exit 1
+          fi
+          aws cloudformation validate-template --template-body "file://infra/secrets/stack.min.json" >/dev/null
           aws cloudformation deploy --stack-name "$STACK" \
-            --template-file infra/aws/stack.json \
+            --template-file infra/secrets/stack.min.json \
             --parameter-overrides file://infra/secrets/parameters.json \
             --capabilities CAPABILITY_IAM --no-fail-on-empty-changeset
           aws cloudformation describe-stacks --stack-name "$STACK" \
@@ -273,16 +283,89 @@ jobs:
 
       # ECS lee los secretos solo al iniciar cada tarea: si el valor cambió y el stack no, las
       # tareas en ejecución seguirían con el valor anterior hasta reiniciarse.
-      - name: Reiniciar el servicio para tomar el secreto nuevo
+      - name: Reiniciar los servicios para tomar el secreto nuevo
         if: ${{ env.SECRETO_CAMBIO == 'true' }}
         run: |
           CLUSTER=$(aws cloudformation describe-stacks --stack-name "$STACK" \
             --query "Stacks[0].Outputs[?OutputKey=='Cluster'].OutputValue" --output text)
-          SERVICE=$(aws cloudformation describe-stacks --stack-name "$STACK" \
-            --query "Stacks[0].Outputs[?OutputKey=='Service'].OutputValue" --output text)
-          aws ecs update-service --cluster "$CLUSTER" --service "$SERVICE" \
-            --force-new-deployment >/dev/null
-          aws ecs wait services-stable --cluster "$CLUSTER" --services "$SERVICE"
+          # La API y los dos workers (telemetría y pagos) leen los secretos al iniciar.
+          SERVICIOS=""
+          for SALIDA in Service WorkerService PagosWorkerService; do
+            NOMBRE=$(aws cloudformation describe-stacks --stack-name "$STACK" \
+              --query "Stacks[0].Outputs[?OutputKey=='$SALIDA'].OutputValue" --output text)
+            if [ -z "$NOMBRE" ] || [ "$NOMBRE" = "None" ]; then continue; fi
+            aws ecs update-service --cluster "$CLUSTER" --service "$NOMBRE" \
+              --force-new-deployment >/dev/null
+            SERVICIOS="$SERVICIOS $NOMBRE"
+          done
+          aws ecs wait services-stable --cluster "$CLUSTER" --services $SERVICIOS
+
+      # Patrón de mensajería: el tópico debe repartir a la cola de pagos y su worker debe estar vivo.
+      - name: Verificar la mensajería de pagos
+        run: |
+          SALIDAS() {
+            aws cloudformation describe-stacks --stack-name "$STACK" \
+              --query "Stacks[0].Outputs[?OutputKey=='$1'].OutputValue" --output text
+          }
+          TOPICO=$(SALIDAS EventosTopicArn)
+          SUSCRIPCIONES=$(aws sns list-subscriptions-by-topic --topic-arn "$TOPICO" \
+            --query "length(Subscriptions[?Protocol=='sqs' && SubscriptionArn!='PendingConfirmation'])" \
+            --output text)
+          if [ "$SUSCRIPCIONES" != "1" ]; then
+            echo "::error::El tópico $TOPICO debería tener 1 suscripción confirmada a la cola de pagos y tiene $SUSCRIPCIONES."
+            exit 1
+          fi
+          echo "El tópico de eventos reparte a la cola de pagos."
+          CLUSTER=$(SALIDAS Cluster)
+          PAGOS=$(SALIDAS PagosWorkerService)
+          EN_EJECUCION=$(aws ecs describe-services --cluster "$CLUSTER" --services "$PAGOS" \
+            --query "services[0].runningCount" --output text)
+          echo "Worker de pagos: $EN_EJECUCION tarea(s) en ejecución."
+          if [ "$EN_EJECUCION" = "0" ]; then
+            echo "::warning::El worker de pagos no tiene tareas en ejecución: los pagos paramétricos se acumularán en la cola."
+          fi
+
+      # Patrones de caché (Redis) y de disponibilidad (Multi-AZ y autoescalado).
+      - name: Verificar la caché y la alta disponibilidad
+        run: |
+          SALIDAS() {
+            aws cloudformation describe-stacks --stack-name "$STACK" \
+              --query "Stacks[0].Outputs[?OutputKey=='$1'].OutputValue" --output text
+          }
+          GRUPO=$(aws cloudformation describe-stack-resource --stack-name "$STACK" \
+            --logical-resource-id Cache --query "StackResourceDetail.PhysicalResourceId" --output text)
+          ESTADO=$(aws elasticache describe-replication-groups --replication-group-id "$GRUPO" \
+            --query "ReplicationGroups[0].[Status,AutomaticFailover,MultiAZ,length(MemberClusters)]" \
+            --output text)
+          echo "Redis $GRUPO: $ESTADO"
+          if [ "$ESTADO" != "$(printf 'available\tenabled\tenabled\t2')" ]; then
+            echo "::error::Redis debería estar disponible, con failover automático, Multi-AZ y 2 nodos."
+            exit 1
+          fi
+          BASE=$(aws cloudformation describe-stack-resource --stack-name "$STACK" \
+            --logical-resource-id Database --query "StackResourceDetail.PhysicalResourceId" --output text)
+          MULTI_AZ=$(aws rds describe-db-instances --db-instance-identifier "$BASE" \
+            --query "DBInstances[0].MultiAZ" --output text)
+          if [ "$MULTI_AZ" != "True" ]; then
+            echo "::error::La base $BASE debería ser Multi-AZ y no lo es."
+            exit 1
+          fi
+          echo "La base es Multi-AZ."
+          CLUSTER=$(SALIDAS Cluster)
+          API=$(SALIDAS Service)
+          EN_EJECUCION=$(aws ecs describe-services --cluster "$CLUSTER" --services "$API" \
+            --query "services[0].runningCount" --output text)
+          echo "Backend: $EN_EJECUCION tarea(s) en ejecución."
+          if [ "$EN_EJECUCION" -lt 2 ]; then
+            echo "::warning::El backend tiene menos de 2 tareas: no hay redundancia ante la caída de una."
+          fi
+          OBJETIVOS=$(aws application-autoscaling describe-scalable-targets --service-namespace ecs \
+            --resource-ids "service/$CLUSTER/$API" --query "length(ScalableTargets)" --output text)
+          if [ "$OBJETIVOS" != "1" ]; then
+            echo "::error::El backend debería tener un objetivo de autoescalado registrado."
+            exit 1
+          fi
+          echo "Autoescalado del backend registrado."
 
       - name: Mostrar logs si el despliegue falló
         if: failure()
@@ -365,11 +448,79 @@ jobs:
             --query "Stacks[0].Outputs[?OutputKey=='BackendUri'].OutputValue" --output text 2>/dev/null || true)
           [ "$BACKEND_REPO" = "None" ] && BACKEND_REPO=""
           echo "ECR_REPO_NAME=${BACKEND_REPO#*/}" >> "$GITHUB_ENV"
+          # La mensajería (tópico SNS y colas SQS) se borra con el stack; se anota su identidad
+          # ahora porque después de borrarlo ya no se puede consultar.
+          for PAR in EventosTopicArn:TOPIC_ARN PagosQueueUrl:PAGOS_QUEUE_URL \
+              PagosDlqUrl:PAGOS_DLQ_URL QueueUrl:TELEMETRIA_QUEUE_URL DlqUrl:TELEMETRIA_DLQ_URL \
+              AlertasTopicArn:ALERTAS_TOPIC_ARN; do
+            SALIDA="${PAR%%:*}"
+            VARIABLE="${PAR##*:}"
+            VALOR=$(aws cloudformation describe-stacks --stack-name "$STACK" \
+              --query "Stacks[0].Outputs[?OutputKey=='$SALIDA'].OutputValue" --output text 2>/dev/null || true)
+            if [ "$VALOR" = "None" ]; then VALOR=""; fi
+            echo "$VARIABLE=$VALOR" >> "$GITHUB_ENV"
+          done
+          # La caché Redis y la base Multi-AZ también se borran con el stack; se anota su
+          # identificador para comprobar después que no quedó nada facturando.
+          for PAR in Cache:CACHE_GRUPO Database:BASE_ID; do
+            RECURSO="${PAR%%:*}"
+            VARIABLE="${PAR##*:}"
+            VALOR=$(aws cloudformation describe-stack-resource --stack-name "$STACK" \
+              --logical-resource-id "$RECURSO" \
+              --query "StackResourceDetail.PhysicalResourceId" --output text 2>/dev/null || true)
+            if [ "$VALOR" = "None" ]; then VALOR=""; fi
+            echo "$VARIABLE=$VALOR" >> "$GITHUB_ENV"
+          done
 
       - name: Eliminar stack solventa-mvp
         run: |
           aws cloudformation delete-stack --stack-name "$STACK"
           aws cloudformation wait stack-delete-complete --stack-name "$STACK"
+
+      # Si el borrado del stack se interrumpió, o alguien recreó estos recursos a mano, la
+      # mensajería puede quedar viva (y facturando). Se comprueba y, si existe, se elimina.
+      - name: Comprobar que la mensajería, la caché y las alarmas quedaron eliminadas
+        run: |
+          if [ -n "$ALERTAS_TOPIC_ARN" ] && aws sns get-topic-attributes --topic-arn "$ALERTAS_TOPIC_ARN" >/dev/null 2>&1; then
+            echo "El tópico de alertas $ALERTAS_TOPIC_ARN sigue existiendo; se elimina."
+            aws sns delete-topic --topic-arn "$ALERTAS_TOPIC_ARN"
+          fi
+          if [ -n "$CACHE_GRUPO" ] && aws elasticache describe-replication-groups \
+              --replication-group-id "$CACHE_GRUPO" >/dev/null 2>&1; then
+            echo "La caché $CACHE_GRUPO sigue existiendo; se elimina."
+            aws elasticache delete-replication-group --replication-group-id "$CACHE_GRUPO" \
+              --no-retain-primary-cluster || true
+            aws elasticache wait replication-group-deleted --replication-group-id "$CACHE_GRUPO" || true
+          fi
+          if [ -n "$BASE_ID" ] && aws rds describe-db-instances --db-instance-identifier "$BASE_ID" >/dev/null 2>&1; then
+            echo "La base $BASE_ID sigue existiendo; se elimina."
+            aws rds delete-db-instance --db-instance-identifier "$BASE_ID" \
+              --skip-final-snapshot --delete-automated-backups || true
+            aws rds wait db-instance-deleted --db-instance-identifier "$BASE_ID" || true
+          fi
+          if [ -n "$TOPIC_ARN" ] && aws sns get-topic-attributes --topic-arn "$TOPIC_ARN" >/dev/null 2>&1; then
+            echo "El tópico $TOPIC_ARN sigue existiendo; se elimina."
+            aws sns delete-topic --topic-arn "$TOPIC_ARN"
+          fi
+          for COLA in "$PAGOS_QUEUE_URL" "$PAGOS_DLQ_URL" "$TELEMETRIA_QUEUE_URL" "$TELEMETRIA_DLQ_URL"; do
+            if [ -z "$COLA" ]; then continue; fi
+            if aws sqs get-queue-attributes --queue-url "$COLA" --attribute-names QueueArn >/dev/null 2>&1; then
+              echo "La cola $COLA sigue existiendo; se elimina."
+              aws sqs delete-queue --queue-url "$COLA"
+            fi
+          done
+          # Todas las alarmas del stack (cola de fallidos, salud del backend, atraso del worker)
+          # y las que crea el autoescalado del backend (`TargetTracking-service/<cluster>/...`).
+          ALARMAS=$(aws cloudwatch describe-alarms --alarm-name-prefix "${STACK}-" \
+            --query "MetricAlarms[].AlarmName" --output text)
+          ALARMAS="$ALARMAS $(aws cloudwatch describe-alarms --alarm-name-prefix "TargetTracking-service/${STACK}-" \
+            --query "MetricAlarms[].AlarmName" --output text)"
+          ALARMAS=$(echo $ALARMAS)
+          if [ -n "$ALARMAS" ]; then
+            echo "Alarma(s) sin eliminar: $ALARMAS; se eliminan."
+            aws cloudwatch delete-alarms --alarm-names $ALARMAS
+          fi
+          echo "Mensajería, caché y alarmas eliminadas."
 
       # Ambos buckets son versionados y de política Retain: hay que borrar todas las
       # versiones y los marcadores de eliminación antes de poder eliminar el bucket.

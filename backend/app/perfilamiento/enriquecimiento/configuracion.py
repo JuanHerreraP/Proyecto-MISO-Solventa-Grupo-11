@@ -11,18 +11,23 @@ el backend en local sin proveedores reales.
 | FUENTES_JWT_ISSUER               | Emisor del token firmado (por defecto `solventa`)       |
 | FUENTES_TIEMPO_LIMITE_SEGUNDOS  | Tiempo límite por fuente (por defecto 0.25)             |
 | FUENTES_PERMITIR_HTTP           | "true" permite http:// (solo desarrollo local)          |
+| REDIS_URL                       | Caché compartida (sin ella, memoria del proceso)        |
+| ENRIQUECIMIENTO_CACHE_FRESCURA_MINUTOS | Minutos de caché sin consultar (60 con Redis, 0 sin) |
 """
 
 import os
 from collections.abc import Mapping
+from datetime import timedelta
 from pathlib import Path
 
+from app.infraestructura.redis_cliente import AlmacenRedis, cliente_redis
 from app.perfilamiento.enriquecimiento.adaptadores import (
     AdaptadorOpenData,
     AdaptadorOpenFinance,
     FuenteSimuladaOpenData,
     FuenteSimuladaOpenFinance,
 )
+from app.perfilamiento.enriquecimiento.cache_redis import CacheSenalesRedis, UltimosResultadosRedis
 from app.perfilamiento.enriquecimiento.cliente_http import (
     TIEMPO_LIMITE_SEGUNDOS,
     ConfiguracionInsegura,
@@ -82,9 +87,20 @@ def crear_servicio(
 ) -> ServicioEnriquecimiento:
     entorno = os.environ if entorno is None else entorno
     tiempo_limite = float(entorno.get("FUENTES_TIEMPO_LIMITE_SEGUNDOS", TIEMPO_LIMITE_SEGUNDOS))
+    redis = cliente_redis() if entorno.get("REDIS_URL") else None
+    if redis is not None:
+        cache = CacheSenalesRedis(AlmacenRedis(redis, "senales"))
+        ultimos = UltimosResultadosRedis(AlmacenRedis(redis, "enriquecimiento"))
+    else:
+        cache, ultimos = CacheSenalesEnMemoria(), None
+    frescura = float(
+        entorno.get("ENRIQUECIMIENTO_CACHE_FRESCURA_MINUTOS", 60 if redis is not None else 0)
+    )
     return ServicioEnriquecimiento(
         fuentes=crear_fuentes(entorno, tiempo_limite),
-        cache=CacheSenalesEnMemoria(),
+        cache=cache,
         consentimientos=consentimientos or RepositorioConsentimientosEnMemoria(),
         tiempo_limite=tiempo_limite,
+        ultimos=ultimos,
+        frescura=timedelta(minutes=frescura),
     )

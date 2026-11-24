@@ -44,6 +44,7 @@ Los contratos externos y estas fórmulas son los que definió el equipo de desar
 ## Caída de un proveedor (EC12)
 
 - Cada respuesta correcta se guarda en caché por cliente y por fuente durante 24 horas.
+- Con Redis, la caché se consulta primero: un dato más reciente que la ventana de frescura se usa sin llamar al proveedor (ver [caché y alta disponibilidad](alta-disponibilidad.md)).
 - Si una fuente falla o supera el tiempo límite, se usa su último dato vigente. La otra fuente se sigue consultando en vivo.
 - El uso de caché queda en tres sitios: `origen: CACHE` en las señales y en el perfil, la traza de la fuente con el motivo, y una línea `uso_de_cache` en el log `solventa.auditoria.enriquecimiento`.
 - Sin dato vigente en caché no se inventa nada: la solicitud responde 503.
@@ -76,10 +77,10 @@ Sin URL configurada se usan simuladores en proceso, deterministas por cliente, p
 
 ## Pendientes conocidos
 
-- **Consentimiento provisional:** el registro y la consulta de consentimientos pertenecen al servicio de Identidad, KYC y Consentimiento. Aquí están en memoria detrás del puerto `RepositorioConsentimientos`.
+- **Consentimiento provisional:** el registro y la consulta de consentimientos pertenecen al servicio de Identidad, KYC y Consentimiento. Aquí están detrás del puerto `RepositorioConsentimientos`: en la base con `CONSENTIMIENTOS_EN_BD=true` (AWS) y en memoria si no.
 - **Proceso de cotización autorizado:** solo se exige que la solicitud traiga `cotizacion_id`. No se valida contra el servicio de cotización, que es de la HU03 (Sprint 2).
 - **Autenticación:** se requiere JWT Bearer y se autoriza con el rol vigente del usuario. `X-Rol` no concede permisos. Los clientes solo pueden registrar su propio consentimiento. Ver [control de acceso y auditoría](identidad-autenticacion.md#matriz-de-permisos).
 - **EC07 parcial:** la autenticación es por token de portador. No hay mTLS ni tokens firmados por solicitud, y no se han hecho pruebas de intrusión.
 - **EC12 parcial:** el comportamiento está probado, pero la disponibilidad del 99,9 % no se ha medido en un ambiente desplegado.
-- **Caché en memoria:** falta el adaptador de ElastiCache Redis; hoy la caché no se comparte entre instancias ni sobrevive a un reinicio.
+- **Caché:** en AWS es Redis (ElastiCache) y se comparte entre réplicas. Sin `REDIS_URL` (desarrollo local) sigue en memoria. Ver [caché y alta disponibilidad](alta-disponibilidad.md).
 - **Proveedores reales:** los adaptadores HTTP están probados contra respuestas simuladas, no contra un proveedor real.

@@ -278,6 +278,23 @@ def test_con_bucket_y_sin_red_guarda_en_disco_y_responde_rapido(sin_nube, monkey
     assert segunda < 1  # ya está en pausa: no vuelve a esperar a S3
 
 
+def test_con_solo_s3_no_se_usa_el_disco_de_respaldo(sin_nube, monkeypatch) -> None:
+    monkeypatch.setenv("POLIZAS_S3_BUCKET", "bucket-que-no-existe")
+    monkeypatch.setenv("ALMACEN_SOLO_S3", "true")
+    monkeypatch.setenv("AWS_ACCESS_KEY_ID", "prueba")
+    monkeypatch.setenv("AWS_SECRET_ACCESS_KEY", "prueba")
+
+    almacen = crear_almacen()
+
+    assert isinstance(almacen, AlmacenS3)
+
+
+def test_con_solo_s3_y_sin_bucket_se_usa_el_disco_local(sin_nube, monkeypatch) -> None:
+    monkeypatch.setenv("ALMACEN_SOLO_S3", "true")
+
+    assert isinstance(crear_almacen(), AlmacenEnDisco)
+
+
 # --- La emisión completa sobre el almacén con respaldo ---------------------------------------
 
 

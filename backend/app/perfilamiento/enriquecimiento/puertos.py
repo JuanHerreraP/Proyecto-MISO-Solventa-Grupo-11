@@ -9,7 +9,11 @@ from datetime import datetime
 from typing import Protocol
 
 from app.perfilamiento.dominio.modelos import SenalesOpenData, SenalesOpenFinance
-from app.perfilamiento.enriquecimiento.modelos import Consentimiento, TipoFuente
+from app.perfilamiento.enriquecimiento.modelos import (
+    Consentimiento,
+    ResultadoEnriquecimiento,
+    TipoFuente,
+)
 
 SenalesFuente = SenalesOpenFinance | SenalesOpenData
 
@@ -40,6 +44,14 @@ class CacheSenales(Protocol):
     def obtener(
         self, cliente_id: str, tipo: TipoFuente
     ) -> tuple[SenalesFuente, datetime] | None: ...
+
+
+class UltimosResultados(Protocol):
+    """El último resultado consolidado de cada cliente, visible para todas las réplicas."""
+
+    def guardar(self, cliente_id: str, resultado: ResultadoEnriquecimiento) -> None: ...
+
+    def obtener(self, cliente_id: str) -> ResultadoEnriquecimiento | None: ...
 
 
 class RepositorioConsentimientos(Protocol):

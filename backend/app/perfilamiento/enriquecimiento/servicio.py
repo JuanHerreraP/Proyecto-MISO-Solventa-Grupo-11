@@ -4,9 +4,10 @@ import asyncio
 import logging
 import time
 from collections.abc import Callable, Sequence
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from app.perfilamiento.dominio.modelos import OrigenSenales, SenalesPerfilamiento
+from app.perfilamiento.enriquecimiento.memoria import UltimosResultadosEnMemoria
 from app.perfilamiento.enriquecimiento.modelos import (
     OrigenDato,
     ResultadoEnriquecimiento,
@@ -19,6 +20,7 @@ from app.perfilamiento.enriquecimiento.puertos import (
     FuenteNoDisponible,
     RepositorioConsentimientos,
     SenalesFuente,
+    UltimosResultados,
 )
 
 auditoria = logging.getLogger("solventa.auditoria.enriquecimiento")
@@ -52,7 +54,12 @@ class ServicioEnriquecimiento:
         *,
         tiempo_limite: float,
         reloj: Callable[[], datetime] = _ahora,
+        ultimos: UltimosResultados | None = None,
+        frescura: timedelta = timedelta(0),
     ):
+        """`frescura` es el tiempo durante el cual un dato de la caché se usa SIN consultar al
+        proveedor (Cache-Aside: la caché se consulta primero). Con cero, el proveedor se
+        consulta siempre y la caché solo se usa si falla."""
         por_tipo = {fuente.tipo: fuente for fuente in fuentes}
         faltantes = [tipo.value for tipo in TIPOS_REQUERIDOS if tipo not in por_tipo]
         if faltantes:
@@ -62,7 +69,8 @@ class ServicioEnriquecimiento:
         self._consentimientos = consentimientos
         self._tiempo_limite = tiempo_limite
         self._reloj = reloj
-        self._ultimos: dict[str, ResultadoEnriquecimiento] = {}
+        self._ultimos = ultimos or UltimosResultadosEnMemoria()
+        self._frescura = frescura
 
     async def enriquecer(self, cliente_id: str, cotizacion_id: str) -> ResultadoEnriquecimiento:
         ahora = self._reloj()
@@ -93,23 +101,27 @@ class ServicioEnriquecimiento:
             fuentes=trazas,
             fecha=ahora,
         )
-        self._ultimos[cliente_id] = resultado
+        self._ultimos.guardar(cliente_id, resultado)
         return resultado
 
     def ultimo(self, cliente_id: str) -> ResultadoEnriquecimiento | None:
-        return self._ultimos.get(cliente_id)
+        return self._ultimos.obtener(cliente_id)
 
     async def _consultar(
         self, cliente_id: str, tipo: TipoFuente
     ) -> tuple[SenalesFuente, TrazaFuente]:
         fuente = self._fuentes[tipo]
+        guardado = self._cache.obtener(cliente_id, tipo)
+        if guardado is not None and self._es_fresco(guardado[1]):
+            return self._desde_cache_fresca(cliente_id, fuente, guardado)
+
         inicio = time.perf_counter()
         try:
             senales = await asyncio.wait_for(fuente.consultar(cliente_id), self._tiempo_limite)
         except asyncio.TimeoutError:
-            return self._desde_cache(cliente_id, fuente, "tiempo de espera agotado")
+            return self._desde_cache(cliente_id, fuente, "tiempo de espera agotado", guardado)
         except FuenteNoDisponible as error:
-            return self._desde_cache(cliente_id, fuente, error.motivo)
+            return self._desde_cache(cliente_id, fuente, error.motivo, guardado)
 
         obtenido_en = self._reloj()
         self._cache.guardar(cliente_id, tipo, senales, obtenido_en)
@@ -122,11 +134,41 @@ class ServicioEnriquecimiento:
         )
         return senales, traza
 
+    def _es_fresco(self, obtenido_en: datetime) -> bool:
+        return self._frescura > timedelta(0) and self._reloj() - obtenido_en < self._frescura
+
+    def _desde_cache_fresca(
+        self,
+        cliente_id: str,
+        fuente: FuenteExterna,
+        guardado: tuple[SenalesFuente, datetime],
+    ) -> tuple[SenalesFuente, TrazaFuente]:
+        """Cache-Aside: hay un dato fresco, se usa sin molestar al proveedor."""
+        senales, obtenido_en = guardado
+        auditoria.info(
+            "cache_fresca cliente=%s fuente=%s proveedor=%s dato_del=%s",
+            cliente_id,
+            fuente.tipo.value,
+            fuente.proveedor,
+            obtenido_en.isoformat(),
+        )
+        traza = TrazaFuente(
+            tipo=fuente.tipo,
+            proveedor=fuente.proveedor,
+            origen=OrigenDato.CACHE,
+            obtenido_en=obtenido_en,
+            motivo_cache="dato vigente en caché",
+        )
+        return senales, traza
+
     def _desde_cache(
-        self, cliente_id: str, fuente: FuenteExterna, motivo: str
+        self,
+        cliente_id: str,
+        fuente: FuenteExterna,
+        motivo: str,
+        guardado: tuple[SenalesFuente, datetime] | None,
     ) -> tuple[SenalesFuente, TrazaFuente]:
         """Degradación elegante (EC12): usa el último dato vigente y deja registro."""
-        guardado = self._cache.obtener(cliente_id, fuente.tipo)
         if guardado is None:
             auditoria.warning(
                 "fuente_no_disponible_sin_cache cliente=%s fuente=%s proveedor=%s motivo=%s",

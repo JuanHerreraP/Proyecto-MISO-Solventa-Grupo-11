@@ -1,5 +1,6 @@
 """API del enriquecimiento del perfil con Open Finance y Open Data (HU10)."""
 
+import os
 from functools import lru_cache
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -9,6 +10,9 @@ from app.api.perfilamiento import obtener_servicio as obtener_servicio_perfilami
 from app.api.seguridad import Rol, requiere_roles, verificar_propietario
 from app.perfilamiento.dominio.modelos import Dictamen
 from app.perfilamiento.enriquecimiento.configuracion import crear_servicio
+from app.perfilamiento.enriquecimiento.consentimientos_db import (
+    RepositorioConsentimientosPostgres,
+)
 from app.perfilamiento.enriquecimiento.memoria import RepositorioConsentimientosEnMemoria
 from app.perfilamiento.enriquecimiento.modelos import Consentimiento, ResultadoEnriquecimiento
 from app.perfilamiento.enriquecimiento.puertos import RepositorioConsentimientos
@@ -33,6 +37,10 @@ consultor_actual = requiere_roles(*ROLES_QUE_CONSULTAN)
 
 @lru_cache
 def obtener_consentimientos() -> RepositorioConsentimientos:
+    # CONSENTIMIENTOS_EN_BD=true: los consentimientos viven en la base y los ven todas las
+    # réplicas. Sin ella, memoria del proceso (desarrollo local y pruebas).
+    if os.getenv("CONSENTIMIENTOS_EN_BD", "").lower() == "true":
+        return RepositorioConsentimientosPostgres()
     return RepositorioConsentimientosEnMemoria()
 
 

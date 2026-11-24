@@ -5,7 +5,9 @@
 - Aprobar fija el monto (por defecto la estimación de daños) con tope en la suma asegurada
   de la póliza, deja quién y cuándo, y ordena el desembolso en la misma operación.
 - Repetir la misma aprobación es inocuo: devuelve el mismo siniestro y el mismo desembolso.
-- Los siniestros paramétricos se aprueban solos por la suma contratada.
+- Los siniestros paramétricos se aprueban solos por la suma contratada. Con un publicador de
+  eventos configurado (SNS), la aprobación automática no ordena el pago: publica el evento y el
+  consumidor de pagos lo ordena a su ritmo (patrón de mensajería asíncrona).
 """
 
 import logging
@@ -15,9 +17,11 @@ from decimal import Decimal
 
 from app.desembolsos.modelos import Desembolso
 from app.desembolsos.servicio import ServicioDesembolsos
+from app.eventos.publicador import PublicadorNegocio
 from app.notificaciones.eventos import estado_siniestro, pago_parametrico
 from app.notificaciones.servicio import ServicioNotificaciones
 from app.polizas.repositorio import RepositorioPolizas
+from app.siniestros.eventos import evento_pago_parametrico
 from app.siniestros.modelos import EstadoSiniestro, OrigenSiniestro, Siniestro
 from app.siniestros.repositorio import RepositorioSiniestros
 
@@ -52,8 +56,10 @@ class ServicioEvaluacion:
         desembolsos: ServicioDesembolsos,
         reloj: Callable[[], datetime] = lambda: datetime.now(UTC),
         notificaciones: ServicioNotificaciones | None = None,
+        publicador: PublicadorNegocio | None = None,
     ):
         self._notificaciones = notificaciones
+        self._publicador = publicador
         self._siniestros = siniestros
         self._polizas = polizas
         self._desembolsos = desembolsos
@@ -70,12 +76,19 @@ class ServicioEvaluacion:
     def aprobar(
         self, siniestro_id: str, evaluador_id: str, monto: Decimal | None = None
     ) -> tuple[Siniestro, Desembolso]:
+        aprobado = self._aprobar(siniestro_id, evaluador_id, monto)
+        # Repetir la misma aprobación asegura el desembolso y devuelve el mismo.
+        return aprobado, self._desembolsos.desembolsar(aprobado)
+
+    def _aprobar(
+        self, siniestro_id: str, evaluador_id: str, monto: Decimal | None = None
+    ) -> Siniestro:
+        """Deja el siniestro aprobado y avisa al cliente, sin ordenar el desembolso."""
         siniestro = self._obtener(siniestro_id)
         if siniestro.estado is EstadoSiniestro.APROBADO:
             if monto is not None and monto != siniestro.monto_aprobado:
                 raise SiniestroYaEvaluado(siniestro.estado)
-            # Repetición de la misma aprobación: se asegura el desembolso y se devuelve.
-            return siniestro, self._desembolsos.desembolsar(siniestro)
+            return siniestro
         if siniestro.estado is EstadoSiniestro.RECHAZADO:
             raise SiniestroYaEvaluado(siniestro.estado)
 
@@ -95,23 +108,44 @@ class ServicioEvaluacion:
         )
         self._siniestros.guardar(aprobado)
         self._notificar_decision(aprobado)
-        return aprobado, self._desembolsos.desembolsar(aprobado)
+        return aprobado
 
     def aprobar_automatico(self, siniestro: Siniestro) -> Desembolso | None:
         """Aprobación del siniestro paramétrico.
+
+        Sin publicador, ordena el desembolso en el mismo proceso. Con publicador, aprueba y
+        publica el evento; el pago lo ordena el consumidor y aquí se devuelve None.
 
         Un fallo no interrumpe la recepción del evento: el siniestro queda en la bandeja de
         Operaciones, que puede aprobarlo o reintentar el desembolso.
         """
         try:
-            _, desembolso = self.aprobar(siniestro.siniestro_id, EVALUADOR_AUTOMATICO)
+            if self._publicador is None:
+                _, desembolso = self.aprobar(siniestro.siniestro_id, EVALUADOR_AUTOMATICO)
+                return desembolso
+            aprobado = self._aprobar(siniestro.siniestro_id, EVALUADOR_AUTOMATICO)
         except Exception:
             logger.exception(
                 "No se pudo aprobar automáticamente el siniestro %s; queda para Operaciones",
                 siniestro.siniestro_id,
             )
             return None
-        return desembolso
+        self._publicar_pago(aprobado)
+        return None
+
+    def _publicar_pago(self, siniestro: Siniestro) -> None:
+        """Publica el evento del pago. Un fallo no deshace la aprobación ya guardada.
+
+        Si SNS no confirma, el siniestro queda aprobado sin desembolso y el barrido de
+        pendientes lo vuelve a publicar con el mismo identificador de evento.
+        """
+        try:
+            self._publicador.publicar(evento_pago_parametrico(siniestro))
+        except Exception:
+            logger.exception(
+                "No se pudo publicar el pago del siniestro %s; lo retoma el barrido",
+                siniestro.siniestro_id,
+            )
 
     def rechazar(self, siniestro_id: str, evaluador_id: str, motivo: str) -> Siniestro:
         siniestro = self._obtener(siniestro_id)

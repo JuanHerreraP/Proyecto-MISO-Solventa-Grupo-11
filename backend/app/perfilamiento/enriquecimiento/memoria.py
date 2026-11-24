@@ -6,7 +6,11 @@ y los consentimientos por el servicio de Identidad, KYC y Consentimiento.
 
 from datetime import datetime, timedelta
 
-from app.perfilamiento.enriquecimiento.modelos import Consentimiento, TipoFuente
+from app.perfilamiento.enriquecimiento.modelos import (
+    Consentimiento,
+    ResultadoEnriquecimiento,
+    TipoFuente,
+)
 from app.perfilamiento.enriquecimiento.puertos import SenalesFuente
 
 VIGENCIA_CACHE = timedelta(hours=24)
@@ -33,6 +37,17 @@ class CacheSenalesEnMemoria:
             del self._datos[(cliente_id, tipo)]
             return None
         return registro
+
+
+class UltimosResultadosEnMemoria:
+    def __init__(self):
+        self._por_cliente: dict[str, ResultadoEnriquecimiento] = {}
+
+    def guardar(self, cliente_id: str, resultado: ResultadoEnriquecimiento) -> None:
+        self._por_cliente[cliente_id] = resultado
+
+    def obtener(self, cliente_id: str) -> ResultadoEnriquecimiento | None:
+        return self._por_cliente.get(cliente_id)
 
 
 class RepositorioConsentimientosEnMemoria:

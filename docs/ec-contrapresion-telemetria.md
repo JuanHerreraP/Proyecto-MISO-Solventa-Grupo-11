@@ -62,8 +62,11 @@ worker pueda; la profundidad de la cola es el amortiguador.
 En el worker el desembolso es configurable con `EC_ORDENAR_DESEMBOLSO`
 (default `false`). En `false` el worker llama a `ServicioTelemetria` con
 `al_crear=None`: crea el siniestro pero **no** ordena desembolso ni marca pago.
-En `true` usa `construir_evaluacion(db).aprobar_automatico`. El default conservador
-evita disparar pagos automáticos durante una prueba de carga.
+En `true` usa `construir_evaluacion(db).aprobar_automatico`: aprueba el siniestro y avisa
+al cliente. Sin `SNS_TOPIC_ARN` ordena además el desembolso en el mismo proceso. Con
+`SNS_TOPIC_ARN` **publica el pago como evento** y lo ordena un worker aparte, a su ritmo
+(ver [Pago paramétrico por eventos](mensajeria-pagos.md)). En AWS el worker corre con `true`.
+El default conservador evita disparar pagos automáticos durante una prueba de carga.
 
 ## Variables de entorno
 
@@ -73,7 +76,7 @@ evita disparar pagos automáticos durante una prueba de carga.
 | `AWS_DEFAULT_REGION` | backend y worker | (de ECS) | Región para boto3 (SQS, CloudWatch). |
 | `EC_MODO_SINCRONO` | backend | `false` | `true` conserva el procesamiento en línea anterior (compatibilidad / tests existentes). `false` publica a la cola. |
 | `EC_WORKER_CONCURRENCIA` | worker | `4` | Eventos procesados en paralelo. **Palanca de contrapresión**: bajarlo reduce la tasa de drenaje. |
-| `EC_ORDENAR_DESEMBOLSO` | worker | `false` | `true` ordena desembolso automático al crear el siniestro. |
+| `EC_ORDENAR_DESEMBOLSO` | worker | `false` | `true` aprueba el siniestro al crearlo. Con `SNS_TOPIC_ARN` publica el pago; sin ella lo ordena en línea. |
 | `EC_METRICAS` | backend y worker | `true` | `false` desactiva el envío de métricas a CloudWatch. |
 | `SOLVENTA_ROL` | ambos contenedores | (vacío=API) | `worker` arranca el loop de consumo en lugar de uvicorn (ver `entrypoint.py`). |
 | `SOLVENTA_TELEMETRY_API_KEY` | backend | `solventa-telemetry-dev` | Clave del header `X-API-Key` del endpoint de ingesta. |
