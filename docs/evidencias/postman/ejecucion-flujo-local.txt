@@ -1,0 +1,180 @@
+== 1. Cliente: registro, cotización y pago
+newman
+
+Solventa API
+
+❏ 1. Cliente: registro, cotización y pago
+↳ Salud del backend
+  GET http://localhost:8000/salud [200 OK, 230B, 23ms]
+  ✓  Responde 200
+  ✓  Backend en línea
+
+↳ Registrar clienta
+  POST http://localhost:8000/api/v1/auth/register [201 Created, 381B, 168ms]
+  ✓  Responde 201
+
+↳ Iniciar sesión (clienta)
+  POST http://localhost:8000/api/v1/auth/login [200 OK, 1.59kB, 230ms]
+  ✓  Responde 200
+  ✓  Entrega un token
+
+↳ Perfil de la clienta
+  GET http://localhost:8000/api/v1/auth/me [200 OK, 315B, 18ms]
+  ✓  Responde 200
+  ✓  Rol CLIENTE
+
+↳ Cotizar seguro de viaje
+  POST http://localhost:8000/api/v1/cotizaciones [201 Created, 858B, 12ms]
+  ✓  Responde 201
+  ✓  Tiene prima
+
+↳ Mis cotizaciones
+  GET http://localhost:8000/api/v1/cotizaciones?cliente_id=20665de4-a83b-4994-b50c-7f4aeef4fd7f [200 OK, 855B, 11ms]
+  ✓  Responde 200
+  ✓  Incluye la cotización
+
+↳ Pagar la prima con tarjeta
+  POST http://localhost:8000/api/v1/pagos [201 Created, 668B, 21ms]
+  ✓  Responde 201
+  ✓  Pago aprobado
+
+↳ Comprobante del pago
+  GET http://localhost:8000/api/v1/pagos/PAG-02126f44-f3ae-4613-b732-ec4a5b467ef3/comprobante [200 OK, 716B, 9ms]
+  ✓  Responde 200
+
+↳ Presentar el contrato
+  GET http://localhost:8000/api/v1/firmas/COT-f679632d-4dfc-443a-b142-1ecf91eb3618 [200 OK, 2.28kB, 18ms]
+  ✓  Responde 200
+
+↳ Enviar el código de firma (OTP)
+  POST http://localhost:8000/api/v1/firmas/COT-f679632d-4dfc-443a-b142-1ecf91eb3618/otp [200 OK, 2.35kB, 15ms]
+  ✓  Responde 200
+  ┌
+  │ 'Busque el OTP del proceso FIR-18aaa316-ed55-4c6e-a1b0
+  │ -982afac48f18 en el log del backend y guárdelo en la v
+  │ ariable otp.'
+  └
+
+┌─────────────────────────┬───────────────────┬──────────────────┐
+│                         │          executed │           failed │
+├─────────────────────────┼───────────────────┼──────────────────┤
+│              iterations │                 1 │                0 │
+├─────────────────────────┼───────────────────┼──────────────────┤
+│                requests │                10 │                0 │
+├─────────────────────────┼───────────────────┼──────────────────┤
+│            test-scripts │                10 │                0 │
+├─────────────────────────┼───────────────────┼──────────────────┤
+│      prerequest-scripts │                 2 │                0 │
+├─────────────────────────┼───────────────────┼──────────────────┤
+│              assertions │                16 │                0 │
+├─────────────────────────┴───────────────────┴──────────────────┤
+│ total run duration: 734ms                                      │
+├────────────────────────────────────────────────────────────────┤
+│ total data received: 8.5kB (approx)                            │
+├────────────────────────────────────────────────────────────────┤
+│ average response time: 52ms [min: 9ms, max: 230ms, s.d.: 74ms] │
+└────────────────────────────────────────────────────────────────┘
+== 2. Firma, póliza y siniestro (OTP leído del log)
+newman
+
+Solventa API
+
+❏ 2. Firma, póliza y siniestro
+↳ Firmar el contrato
+  POST http://localhost:8000/api/v1/firmas/COT-f679632d-4dfc-443a-b142-1ecf91eb3618/firma [200 OK, 2.43kB, 68ms]
+  ✓  Responde 200
+  ✓  Emite la póliza
+
+↳ Billetera de pólizas
+  GET http://localhost:8000/api/v1/billetera/polizas [200 OK, 585B, 10ms]
+  ✓  Responde 200
+  ✓  Póliza vigente
+
+↳ Certificado con QR
+  GET http://localhost:8000/api/v1/billetera/polizas/POL-f679632d-4dfc-443a-b142-1ecf91eb3618/certificado [200 OK, 1.08kB, 12ms]
+  ✓  Responde 200
+
+↳ Historial de la póliza
+  GET http://localhost:8000/api/v1/polizas/POL-f679632d-4dfc-443a-b142-1ecf91eb3618/historial [200 OK, 1.34kB, 11ms]
+  ✓  Responde 200
+
+↳ Registrar un siniestro
+  POST http://localhost:8000/api/v1/siniestros [201 Created, 813B, 17ms]
+  ✓  Responde 201
+  ✓  Queda registrado
+
+↳ Mis siniestros
+  GET http://localhost:8000/api/v1/siniestros [200 OK, 812B, 9ms]
+  ✓  Responde 200
+
+↳ Notificaciones sin leer
+  GET http://localhost:8000/api/v1/notificaciones/no-leidas [200 OK, 207B, 10ms]
+  ✓  Responde 200
+
+┌─────────────────────────┬──────────────────┬──────────────────┐
+│                         │         executed │           failed │
+├─────────────────────────┼──────────────────┼──────────────────┤
+│              iterations │                1 │                0 │
+├─────────────────────────┼──────────────────┼──────────────────┤
+│                requests │                7 │                0 │
+├─────────────────────────┼──────────────────┼──────────────────┤
+│            test-scripts │                7 │                0 │
+├─────────────────────────┼──────────────────┼──────────────────┤
+│      prerequest-scripts │                0 │                0 │
+├─────────────────────────┼──────────────────┼──────────────────┤
+│              assertions │               10 │                0 │
+├─────────────────────────┴──────────────────┴──────────────────┤
+│ total run duration: 283ms                                     │
+├───────────────────────────────────────────────────────────────┤
+│ total data received: 5.95kB (approx)                          │
+├───────────────────────────────────────────────────────────────┤
+│ average response time: 19ms [min: 9ms, max: 68ms, s.d.: 19ms] │
+└───────────────────────────────────────────────────────────────┘
+== 3. Operaciones: aprobar el siniestro
+newman
+
+Solventa API
+
+❏ 3. Operaciones: aprobar el siniestro
+↳ Iniciar sesión (administrador)
+  POST http://localhost:8000/api/v1/auth/login [200 OK, 1.56kB, 238ms]
+  ✓  Responde 200
+
+↳ Crear usuario de Operaciones
+  POST http://localhost:8000/api/v1/auth/users [201 Created, 394B, 143ms]
+  ✓  Responde 201
+
+↳ Iniciar sesión (Operaciones)
+  POST http://localhost:8000/api/v1/auth/login [200 OK, 1.62kB, 225ms]
+  ✓  Responde 200
+
+↳ Bandeja de siniestros
+  GET http://localhost:8000/api/v1/operaciones/siniestros [200 OK, 2.89kB, 14ms]
+  ✓  Responde 200
+  ✓  Incluye el siniestro
+
+↳ Aprobar y desembolsar
+  POST http://localhost:8000/api/v1/operaciones/siniestros/SIN-cbe1ac7a-1969-48f6-8fbe-f2e1f3abd861/aprobacion [200 OK, 1.24kB, 22ms]
+  ✓  Responde 200
+  ✓  Aprobado
+  ✓  Con desembolso
+
+┌─────────────────────────┬────────────────────┬───────────────────┐
+│                         │           executed │            failed │
+├─────────────────────────┼────────────────────┼───────────────────┤
+│              iterations │                  1 │                 0 │
+├─────────────────────────┼────────────────────┼───────────────────┤
+│                requests │                  5 │                 0 │
+├─────────────────────────┼────────────────────┼───────────────────┤
+│            test-scripts │                  5 │                 0 │
+├─────────────────────────┼────────────────────┼───────────────────┤
+│      prerequest-scripts │                  1 │                 0 │
+├─────────────────────────┼────────────────────┼───────────────────┤
+│              assertions │                  8 │                 0 │
+├─────────────────────────┴────────────────────┴───────────────────┤
+│ total run duration: 756ms                                        │
+├──────────────────────────────────────────────────────────────────┤
+│ total data received: 6.83kB (approx)                             │
+├──────────────────────────────────────────────────────────────────┤
+│ average response time: 128ms [min: 14ms, max: 238ms, s.d.: 95ms] │
+└──────────────────────────────────────────────────────────────────┘
