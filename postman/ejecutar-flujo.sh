@@ -6,6 +6,7 @@
 #   ADMIN_PASSWORD='...' LOG_GROUP=<grupo-de-logs> BASE_URL=https://<cloudfront> ./postman/ejecutar-flujo.sh aws
 #
 # El OTP de la firma se lee del log del backend: archivo local (BACKEND_LOG) o CloudWatch (LOG_GROUP).
+# Con REPORTES=<carpeta> se guarda además un reporte HTML por fase (requiere newman-reporter-htmlextra).
 set -euo pipefail
 
 AMBIENTE="${1:-local}"
@@ -20,10 +21,27 @@ esac
 : "${ADMIN_PASSWORD:?Defina ADMIN_PASSWORD (usuario SERVICIO_INTERNO)}"
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
-NEWMAN=(npx --yes newman@6 run "$COLECCION")
+if command -v newman > /dev/null; then
+  NEWMAN=(newman run "$COLECCION")
+else
+  NEWMAN=(npx --yes newman@6 run "$COLECCION")
+fi
 EXTRA=(--env-var "admin_password=$ADMIN_PASSWORD")
 [ -n "${BASE_URL:-}" ] && EXTRA+=(--env-var "baseUrl=$BASE_URL")
 [ -n "${ADMIN_EMAIL:-}" ] && EXTRA+=(--env-var "admin_email=$ADMIN_EMAIL")
+
+# Reporte HTML de una fase. skipSensitiveData quita encabezados y cuerpos (contraseñas, tokens) y se
+# ocultan las variables del ambiente con credenciales, porque el reporte se publica como artefacto.
+REP=()
+reporte() {
+  REP=()
+  [ -z "${REPORTES:-}" ] && return 0
+  mkdir -p "$REPORTES"
+  REP=(-r cli,htmlextra --reporter-htmlextra-export "$REPORTES/$1.html"
+    --reporter-htmlextra-skipSensitiveData
+    --reporter-htmlextra-skipEnvironmentVars "token,admin_token,operaciones_token,admin_password,cliente_password,operaciones_password,otp"
+    --reporter-htmlextra-title "Solventa API · $AMBIENTE · $1")
+}
 
 valor() { node -e "const e=require('$1');console.log((e.values.find(v=>v.key==='$2')||{}).value||'')"; }
 
@@ -47,13 +65,16 @@ leer_otp() {
 }
 
 echo "== 1. Cliente: registro, cotización y pago"
+reporte 1-cliente
 "${NEWMAN[@]}" -e "$ARCHIVO_AMBIENTE" "${EXTRA[@]}" --folder "1. Cliente: registro, cotización y pago" \
-  --export-environment "$TMP/1.json"
+  --export-environment "$TMP/1.json" ${REP[@]+"${REP[@]}"}
 
 OTP="$(leer_otp "$(valor "$TMP/1.json" firma_id)")"
 echo "== 2. Firma, póliza y siniestro (OTP leído del log)"
+reporte 2-firma-siniestro
 "${NEWMAN[@]}" -e "$TMP/1.json" --env-var "otp=$OTP" --folder "2. Firma, póliza y siniestro" \
-  --export-environment "$TMP/2.json"
+  --export-environment "$TMP/2.json" ${REP[@]+"${REP[@]}"}
 
 echo "== 3. Operaciones: aprobar el siniestro"
-"${NEWMAN[@]}" -e "$TMP/2.json" --folder "3. Operaciones: aprobar el siniestro"
+reporte 3-operaciones
+"${NEWMAN[@]}" -e "$TMP/2.json" --folder "3. Operaciones: aprobar el siniestro" ${REP[@]+"${REP[@]}"}

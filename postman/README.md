@@ -4,7 +4,7 @@
 | --- | --- |
 | `Solventa.postman_collection.json` | Flujo de la demo (22 requests con pruebas) y referencia de los 97 endpoints del OpenAPI |
 | `Solventa-local.postman_environment.json` | Backend local (`http://localhost:8000`) |
-| `Solventa-AWS.postman_environment.json` | MVP en AWS: reemplazar `baseUrl` por la salida `Url` del stack |
+| `Solventa-AWS.postman_environment.json` | MVP en AWS (`https://d18nz6820imwi8.cloudfront.net`, salida `Url` del stack `solventa-mvp`); si se redespliega con otra URL, actualizar `baseUrl` |
 | `ejecutar-flujo.sh` | Ejecuta el flujo completo con Newman, leyendo el OTP del log del backend |
 
 ## Flujo de la demo
@@ -26,7 +26,7 @@ OpenAPI, con el token de la colección.
 ## Usarla en Postman
 
 1. Importar la colección y los dos ambientes (*Import → File*).
-2. Elegir el ambiente y completar `admin_password` (y, en AWS, `baseUrl`).
+2. Elegir el ambiente y completar `admin_password`.
 3. Ejecutar la carpeta 1 (*Run folder*).
 4. Copiar el OTP del log del backend en la variable `otp`:
    - Local: `[FIRMA SIMULADA] OTP 123456 ... (proceso FIR-...)` en la consola del backend.
@@ -43,7 +43,7 @@ ADMIN_PASSWORD='Manager123!' BACKEND_LOG=/tmp/backend.log ./postman/ejecutar-flu
 # AWS (requiere AWS CLI autenticada)
 LOG_GROUP=$(aws cloudformation describe-stack-resource --stack-name solventa-mvp --logical-resource-id Logs \
   --query StackResourceDetail.PhysicalResourceId --output text)
-ADMIN_PASSWORD='...' LOG_GROUP="$LOG_GROUP" BASE_URL=https://<distribucion>.cloudfront.net \
+ADMIN_PASSWORD='...' LOG_GROUP="$LOG_GROUP" BASE_URL=https://d18nz6820imwi8.cloudfront.net \
   ./postman/ejecutar-flujo.sh aws
 ```
 
@@ -55,3 +55,11 @@ Resultado contra el backend local (22 requests, 34 aserciones, 0 fallas): [docs/
 La carpeta de referencia sale del OpenAPI de FastAPI (`/openapi.json`). Si cambian los endpoints,
 importar de nuevo `http://localhost:8000/openapi.json` en Postman o regenerarla con
 `openapi-to-postmanv2`.
+
+## En GitHub Actions
+
+El workflow **E2E web (nube)** corre este mismo flujo contra AWS después de las pruebas de Playwright,
+con la URL y el grupo de logs tomados del stack. Requiere el secret `ADMIN_PASSWORD`. Los reportes HTML
+quedan en el artefacto `reporte-postman`, sin encabezados, cuerpos ni variables con credenciales.
+
+Localmente, `REPORTES=<carpeta>` genera los mismos reportes (requiere `npm install -g newman newman-reporter-htmlextra`).

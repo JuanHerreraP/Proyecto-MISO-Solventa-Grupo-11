@@ -1,4 +1,5 @@
-# Ejecuta las pruebas E2E web (Playwright) contra el MVP desplegado en AWS.
+# Ejecuta las pruebas E2E web (Playwright) y el flujo de la colección Postman (Newman) contra el
+# MVP desplegado en AWS.
 #
 # Se lanza a mano después de "Infraestructura AWS". Toma la URL pública y el grupo de logs
 # del backend desde las salidas del stack, así que no hay que copiarlos.
@@ -6,7 +7,7 @@
 # Secrets:
 #   AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_SESSION_TOKEN (los mismos de aws-infra.yml)
 #   ADMIN_PASSWORD (opcional): contraseña del usuario SERVICIO_INTERNO; sin ella se omiten
-#   los escenarios de asesor.
+#   los escenarios de asesor y el flujo de Postman (la fase 3 crea el usuario de Operaciones).
 
 name: E2E web (nube)
 
@@ -91,4 +92,30 @@ jobs:
           path: |
             web/e2e/evidencias/report
             web/e2e/evidencias/artifacts
+          retention-days: 14
+
+      # Mismo flujo de la demo que se presenta en Postman: cliente → firma y siniestro → Operaciones.
+      # El OTP de la firma se lee de CloudWatch.
+      - name: Colección Postman (Newman)
+        if: ${{ !cancelled() }}
+        working-directory: .
+        env:
+          ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
+          ADMIN_EMAIL: ${{ inputs.admin_email }}
+        run: |
+          if [ -z "$ADMIN_PASSWORD" ]; then
+            echo "::warning::Sin el secret ADMIN_PASSWORD se omite el flujo de Postman."
+            exit 0
+          fi
+          npm install --global --no-audit --no-fund newman@6 newman-reporter-htmlextra@1
+          BASE_URL="$E2E_BASE_URL" LOG_GROUP="$E2E_LOG_GROUP" REPORTES=postman/reportes \
+            ./postman/ejecutar-flujo.sh aws
+
+      - name: Publicar reporte de Postman
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: reporte-postman
+          path: postman/reportes
+          if-no-files-found: ignore
           retention-days: 14
