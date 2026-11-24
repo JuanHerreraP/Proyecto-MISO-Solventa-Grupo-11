@@ -185,22 +185,24 @@ export default function HomePage() {
                   <tr
                     key={movimiento.movimiento_id}
                     className="home-fila-clic"
-                    tabIndex={0}
-                    role="button"
-                    aria-label={t("homePage.ver_historial_de_nombre_ramo", { nombre_ramo: movimiento.nombre_ramo })}
                     onClick={() =>
                       navigate(`/polizas/${encodeURIComponent(movimiento.poliza_id)}/historial`)
                     }
-                    onKeyDown={(evento) => {
-                      if (evento.key === "Enter" || evento.key === " ") {
-                        evento.preventDefault();
-                        navigate(`/polizas/${encodeURIComponent(movimiento.poliza_id)}/historial`);
-                      }
-                    }}
                   >
                     <td>{formatearFechaMovimiento(movimiento.fecha)}</td>
                     <td>
-                      <strong>{MOVIMIENTO_NOMBRE[movimiento.tipo] ?? movimiento.tipo}</strong>
+                      {/* Botón real (teclado y lector de pantalla); su nombre incluye el texto visible. */}
+                      <button
+                        type="button"
+                        className="home-fila-enlace"
+                        onClick={(evento) => {
+                          evento.stopPropagation();
+                          navigate(`/polizas/${encodeURIComponent(movimiento.poliza_id)}/historial`);
+                        }}
+                      >
+                        <strong>{MOVIMIENTO_NOMBRE[movimiento.tipo] ?? movimiento.tipo}</strong>
+                        <span className="sr-only"> · {t("homePage.ver_historial_de_nombre_ramo", { nombre_ramo: movimiento.nombre_ramo })}</span>
+                      </button>
                       <small className="home-fila-detalle">{movimiento.nombre_ramo}</small>
                     </td>
                     <td>{montoConSigno(movimiento)}</td>

@@ -64,7 +64,7 @@
 
 /* Dentro de .cotizar-detalle los span salen en mayúscula y pequeños: el chip y el código no. */
 .cotizar-detalle .home-chip { text-transform: none; letter-spacing: normal; margin-left: 6px; }
-.cotizar-detalle .desembolso-chip-COMPLETADA { background: #e3f7ea; color: #1b8a4a; }
+.cotizar-detalle .desembolso-chip-COMPLETADA { background: #e3f7ea; color: #16753f; }
 .cotizar-detalle .desembolso-chip-PENDIENTE { background: #fff4e5; color: #b36b00; }
 .cotizar-detalle .desembolso-chip-FALLIDA { background: #fdecea; color: #c0392b; }
 

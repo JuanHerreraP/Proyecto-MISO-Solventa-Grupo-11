@@ -197,7 +197,8 @@ export class SolventaApi {
       headers: { ...this.headers(token), "Idempotency-Key": randomUUID() },
       data: {
         poliza_id: policyId,
-        fecha_evento: futureDate(0),
+        // Ayer: con hoy y una hora fija, la prueba falla cuando esa hora aún no ha pasado.
+        fecha_evento: futureDate(-1),
         hora_evento: "10:30:00",
         lugar: "Aeropuerto Internacional El Dorado",
         descripcion: "Equipaje extraviado durante el trayecto contratado.",

@@ -2,6 +2,9 @@ import { expect, test } from "@playwright/test";
 import { SolventaApi } from "../helpers/api.js";
 import { loginUi } from "../helpers/ui.js";
 
+/** Ayer (UTC): con hoy y una hora fija el evento queda en el futuro antes de esa hora. */
+const ayer = () => new Date(Date.now() - 86_400_000).toISOString().slice(0, 10);
+
 test("registra un siniestro y lo consulta en el listado", async ({ page, request }) => {
   const api = new SolventaApi(request);
   const client = await api.registerClient();
@@ -10,7 +13,7 @@ test("registra un siniestro y lo consulta en el listado", async ({ page, request
 
   await page.goto("/siniestros/nuevo");
   await page.locator("input[name='poliza']").first().check();
-  await page.getByLabel("Fecha del evento").fill(new Date().toISOString().slice(0, 10));
+  await page.getByLabel("Fecha del evento").fill(ayer());
   await page.getByLabel("Hora del evento").fill("10:30");
   await page.getByLabel("Lugar").fill("Aeropuerto Internacional El Dorado");
   await page.getByLabel("Descripción detallada").fill("Equipaje extraviado durante el trayecto contratado.");

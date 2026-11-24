@@ -3,9 +3,10 @@ import type { TestUser } from "./api.js";
 
 export async function loginUi(page: Page, user: Pick<TestUser, "email" | "password">): Promise<void> {
   await page.goto("/login");
-  await page.getByLabel("Correo electrónico").fill(user.email);
-  await page.getByLabel("Contraseña").fill(user.password);
-  await page.getByRole("button", { name: "Iniciar sesión →" }).click();
+  // Funciona en español e inglés (el idioma puede venir guardado de antes).
+  await page.getByLabel(/^(Correo electrónico|Email)$/).fill(user.email);
+  await page.getByLabel(/^(Contraseña|Password)$/).fill(user.password);
+  await page.getByRole("button", { name: /^(Iniciar sesión|Sign in) →$/ }).click();
   await expect(page).toHaveURL(/\/home$/);
 }
 

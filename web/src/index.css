@@ -11,7 +11,8 @@
   --solventa-background: #f8f9fc;
   --solventa-border: #dde3ec;
   --solventa-text: #101b32;
-  --solventa-muted: #69758b;
+  /* Texto secundario: contraste ≥ 4.5:1 sobre los fondos claros (WCAG 2.1 AA). */
+  --solventa-muted: #5f6b80;
 
   /* Tipografía */
   --font-heading:
@@ -127,4 +128,17 @@ textarea {
 .home-selector-idioma select {
   flex: 1;
   min-width: 0;
+}
+
+/* Accesibilidad */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
 }
