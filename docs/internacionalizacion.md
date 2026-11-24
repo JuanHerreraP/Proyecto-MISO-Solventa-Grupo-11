@@ -66,6 +66,11 @@ y se aplica a los textos, a las fechas y a los montos.
 
 Las pruebas existentes verifican los textos en español, el idioma predeterminado.
 
+## Evidencias
+
+Capturas de cada pantalla en español e inglés, web y Android:
+[docs/evidencias/i18n](evidencias/i18n/README.md).
+
 ## Limitaciones conocidas
 
 - Los mensajes y nombres que llegan del backend (por ejemplo, el nombre del ramo o el detalle de un
