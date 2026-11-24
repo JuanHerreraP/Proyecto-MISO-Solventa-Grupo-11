@@ -1,6 +1,8 @@
 package com.example.solventa.ui.accesibilidad
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.SemanticsNode
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
@@ -9,10 +11,14 @@ import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.test.core.app.ApplicationProvider
 import com.example.solventa.R
 import com.example.solventa.domain.auth.Perfil
+import com.example.solventa.domain.firmas.ContratoFirma
+import com.example.solventa.domain.firmas.EstadoFirma
+import com.example.solventa.domain.firmas.ProcesoFirma
 import com.example.solventa.domain.pagos.ConceptoPago
 import com.example.solventa.domain.pagos.EstadoPago
 import com.example.solventa.domain.pagos.MetodoPago
@@ -30,6 +36,7 @@ import com.example.solventa.ui.screens.HomeScreen
 import com.example.solventa.ui.screens.PaymentsScreen
 import com.example.solventa.ui.screens.ProfileScreen
 import com.example.solventa.ui.screens.RegisterScreen
+import com.example.solventa.ui.screens.SignatureScreen
 import com.example.solventa.ui.screens.WalletScreen
 import com.example.solventa.ui.screens.WelcomeScreen
 import com.example.solventa.ui.theme.SolventaTheme
@@ -40,6 +47,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.ParameterizedRobolectricTestRunner
+import org.robolectric.annotation.GraphicsMode
 
 /**
  * Accesibilidad de las pantallas principales, en español e inglés (guías de Android y WCAG 2.1):
@@ -47,14 +55,23 @@ import org.robolectric.ParameterizedRobolectricTestRunner
  * - todo campo de texto tiene una etiqueta;
  * - los elementos táctiles miden al menos 40 dp (los componentes de Material amplían su área de
  *   toque a 48 dp con minimumInteractiveComponentSize).
+ *
+ * Cada pantalla se revisa con la letra del sistema al 100 % y al 200 % (WCAG 1.4.4), con el motor
+ * gráfico nativo de Robolectric para que los textos se midan con fuentes reales.
  */
 @RunWith(ParameterizedRobolectricTestRunner::class)
-class AccesibilidadTest(private val opcion: Idioma.Opcion) {
+@GraphicsMode(GraphicsMode.Mode.NATIVE)
+class AccesibilidadTest(private val opcion: Idioma.Opcion, private val escalaLetra: Float) {
 
     companion object {
         @JvmStatic
-        @ParameterizedRobolectricTestRunner.Parameters(name = "{0}")
-        fun idiomas() = listOf(arrayOf<Any>(Idioma.Opcion.ESPANOL), arrayOf<Any>(Idioma.Opcion.INGLES))
+        @ParameterizedRobolectricTestRunner.Parameters(name = "{0} letra {1}")
+        fun casos() = listOf(
+            arrayOf<Any>(Idioma.Opcion.ESPANOL, 1f),
+            arrayOf<Any>(Idioma.Opcion.INGLES, 1f),
+            arrayOf<Any>(Idioma.Opcion.ESPANOL, 2f),
+            arrayOf<Any>(Idioma.Opcion.INGLES, 2f)
+        )
     }
 
     @get:Rule
@@ -67,7 +84,12 @@ class AccesibilidadTest(private val opcion: Idioma.Opcion) {
 
     private fun mostrar(contenido: @Composable () -> Unit) {
         Idioma.establecer(ApplicationProvider.getApplicationContext(), opcion)
-        compose.setContent { SolventaTheme { contenido() } }
+        compose.setContent {
+            val densidad = LocalDensity.current
+            CompositionLocalProvider(LocalDensity provides Density(densidad.density, escalaLetra)) {
+                SolventaTheme { contenido() }
+            }
+        }
         compose.waitForIdle()
     }
 
@@ -207,6 +229,27 @@ class AccesibilidadTest(private val opcion: Idioma.Opcion) {
             )
         }
         revisar("Pagos")
+    }
+
+    @Test
+    fun firmaDelContrato() {
+        val contrato = ContratoFirma(
+            nombreRamo = "Viaje", coberturaPrincipal = "Gastos médicos en el exterior",
+            sumaAsegurada = BigDecimal("50000000"), primaTotal = BigDecimal("185000"), moneda = "COP",
+            clausulas = listOf("Vigencia de 20 días desde la fecha de inicio del viaje."),
+            exclusionesPrincipales = listOf("Deportes extremos.")
+        )
+        val proceso = ProcesoFirma(
+            cotizacionId = "cot-1", estado = "OTP_ENVIADO", contrato = contrato,
+            huellaDocumento = "9f2c4e7a1b3d5f60", otpDestino = "***4567", polizaId = null
+        )
+        mostrar {
+            SignatureScreen(
+                estado = EstadoFirma(proceso = proceso), onSolicitarCodigo = {}, onFirmar = {},
+                onVolver = {}, onVerPoliza = {}
+            )
+        }
+        revisar("Firma del contrato")
     }
 
     private fun perfil() = mostrar {
