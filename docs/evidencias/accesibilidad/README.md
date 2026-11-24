@@ -1,4 +1,4 @@
-# Evidencias de accesibilidad (web)
+# Evidencias de accesibilidad
 
 Ejecución del 23 de noviembre de 2026 contra el backend local, con una clienta que tiene póliza
 vigente y un siniestro registrado. Se compara la web **antes** (rama `feat/internacionalizacion`) y
@@ -52,20 +52,52 @@ La prueba se comprobó en las dos direcciones: con el color de texto secundario 
 | --- | --- |
 | ![Lighthouse perfil antes](lighthouse-perfil-antes.png) | ![Lighthouse perfil después](lighthouse-perfil-despues.png) |
 
+## Android
+
+`AccesibilidadTest` (Robolectric) revisa la semántica que anuncia TalkBack en 8 pantallas, en español e
+inglés: nombre en cada elemento táctil, etiqueta en cada campo y tamaño mínimo de toque.
+
+| Ejecución | Resultado |
+| --- | --- |
+| Primera, antes de corregir | 6 de 16 pruebas fallan: registro, ingreso con credenciales e ingreso biométrico, en los dos idiomas |
+| Después de corregir | 16 de 16 pasan; la suite completa de Android (618 pruebas) también pasa |
+
+Problemas encontrados en la primera ejecución (iguales en inglés):
+
+```
+Registro: elemento táctil sin nombre accesible (campo "Tipo de documento")
+Registro: elemento táctil sin nombre accesible (campo "Fecha de nacimiento")
+Registro: elemento táctil sin nombre accesible (casilla de términos)
+Ingreso con credenciales: '¿Olvidaste tu contraseña?' mide 363×35 dp
+Ingreso biométrico: '¿Aún no tienes cuenta? Crear una' mide 32×35 dp
+```
+
+Las correcciones están en [docs/accesibilidad.md](../../accesibilidad.md#android).
+
+| Español (8/8) | Inglés (8/8) |
+| --- | --- |
+| ![Accesibilidad Android en español](android-accesibilidad-es.png) | ![Accesibilidad Android en inglés](android-accesibilidad-en.png) |
+
+![Todas las pruebas de Android: 618, 0 fallas](android-todas-las-pruebas.png)
+
 ## Archivos
 
 | Archivo | Contenido |
 | --- | --- |
 | [resultados-axe.json](resultados-axe.json) | Violaciones, reglas aprobadas y elementos revisados por pantalla, idioma y versión |
 | [resultados-lighthouse.json](resultados-lighthouse.json) | Puntaje y auditorías fallidas por pantalla y versión |
-| [ejecucion-axe-playwright.txt](ejecucion-axe-playwright.txt) | Salida de la prueba automática |
+| [ejecucion-axe-playwright.txt](ejecucion-axe-playwright.txt) | Salida de la prueba automática web |
+| [android-resultados-junit.xml](android-resultados-junit.xml) | Resultado JUnit de `AccesibilidadTest` (16 pruebas, 0 fallas) |
 
 Las correcciones y el método están en [docs/accesibilidad.md](../../accesibilidad.md).
 
 ## Cómo repetirlo
 
 ```bash
-cd web
+cd android
+./gradlew testDebugUnitTest --tests "com.example.solventa.ui.accesibilidad.AccesibilidadTest"
+
+cd ../web
 VITE_API_URL=http://localhost:8000 E2E_BACKEND_LOG=/tmp/backend.log npx playwright test e2e/accesibilidad
 ```
 

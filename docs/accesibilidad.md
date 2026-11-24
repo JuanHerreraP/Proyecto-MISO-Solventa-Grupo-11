@@ -78,6 +78,8 @@ La primera ejecución encontró problemas en 3 de las 9 pantallas, en los dos id
 | Casilla de términos sin nombre y separada de su texto | Registro | La fila completa es la casilla (`toggleable` con `Role.Checkbox`): se anuncia el texto y el área de toque crece a 48 dp |
 | Enlaces de texto de 20 a 35 dp de alto | Ingreso biométrico, ingreso con credenciales, registro | Área táctil de 48 dp de alto, a todo el ancho, con `Role.Button` |
 
+Evidencias: [docs/evidencias/accesibilidad](evidencias/accesibilidad/README.md#android).
+
 ### Prácticas ya presentes
 
 - `contentDescription` en íconos con significado y `null` en los decorativos.
