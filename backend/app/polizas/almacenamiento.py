@@ -239,18 +239,25 @@ class AlmacenConRespaldo:
         logger.warning("Almacén principal no disponible (%s); %s", error, accion)
 
 
+def solo_s3_activo() -> bool:
+    return os.getenv("ALMACEN_SOLO_S3", "").lower() == "true"
+
+
 def crear_almacen() -> AlmacenDocumentos:
     """Disco si no hay bucket configurado; si lo hay, S3 con el disco como respaldo.
 
     Variables: `POLIZAS_S3_BUCKET` (activa S3), `POLIZAS_S3_PREFIJO` (carpeta dentro del
     bucket), `POLIZAS_S3_ENDPOINT_URL` (S3 compatible, como MinIO o LocalStack) y
-    `POLIZAS_DOCUMENTOS_DIR` (carpeta del disco).
+    `POLIZAS_DOCUMENTOS_DIR` (carpeta del disco). Con `ALMACEN_SOLO_S3=true` (varias réplicas)
+    no se usa el disco: es local a cada réplica y un documento guardado en una no lo vería la
+    otra. Si S3 no se puede preparar, falla en vez de degradar al disco.
     """
 
     disco = AlmacenEnDisco()
     bucket = os.getenv("POLIZAS_S3_BUCKET")
     if not bucket:
         return disco
+    solo_s3 = solo_s3_activo()
     try:
         s3 = AlmacenS3(
             bucket,
@@ -258,6 +265,8 @@ def crear_almacen() -> AlmacenDocumentos:
             endpoint_url=os.getenv("POLIZAS_S3_ENDPOINT_URL") or None,
         )
     except Exception as error:
+        if solo_s3:
+            raise
         logger.warning("No se pudo preparar S3 (%s); se usa solo el disco", _describir(error))
         return disco
-    return AlmacenConRespaldo(principal=s3, respaldo=disco)
+    return s3 if solo_s3 else AlmacenConRespaldo(principal=s3, respaldo=disco)

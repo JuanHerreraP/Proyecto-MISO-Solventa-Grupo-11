@@ -38,6 +38,7 @@ from app.polizas.almacenamiento import (
     AlmacenDocumentos,
     AlmacenEnDisco,
     AlmacenS3,
+    solo_s3_activo,
 )
 from app.siniestros.modelos import EstadoSiniestro, Siniestro
 from app.siniestros.repositorio import RepositorioSiniestros
@@ -483,6 +484,7 @@ def crear_almacen_evidencias() -> AlmacenDocumentos:
     bucket = os.getenv("POLIZAS_S3_BUCKET")
     if not bucket:
         return disco
+    solo_s3 = solo_s3_activo()
     try:
         s3 = AlmacenS3(
             bucket,
@@ -490,8 +492,10 @@ def crear_almacen_evidencias() -> AlmacenDocumentos:
             endpoint_url=os.getenv("POLIZAS_S3_ENDPOINT_URL") or None,
         )
     except Exception as error:
+        if solo_s3:
+            raise
         logger.warning(
             "No se pudo preparar S3 (%s); evidencias solo en disco", type(error).__name__
         )
         return disco
-    return AlmacenConRespaldo(principal=s3, respaldo=disco)
+    return s3 if solo_s3 else AlmacenConRespaldo(principal=s3, respaldo=disco)

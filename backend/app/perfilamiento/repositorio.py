@@ -36,3 +36,26 @@ class RepositorioPerfilesEnMemoria:
             del self._perfiles[cliente_id]
             return None
         return perfil
+
+
+class RepositorioPerfilesRedis:
+    """Perfiles en Redis, visibles para todas las réplicas del backend (Cache-Aside).
+
+    Si Redis falla, `obtener` devuelve None: el motor de precios cotiza con la tarifa base.
+    """
+
+    def __init__(self, almacen, vigencia_segundos: int = VIGENCIA_PERFIL_SEGUNDOS):
+        self._almacen = almacen
+        self._vigencia = vigencia_segundos
+
+    def guardar(self, perfil: PerfilRiesgo) -> None:
+        self._almacen.guardar(perfil.cliente_id, perfil.model_dump_json(), self._vigencia)
+
+    def obtener(self, cliente_id: str) -> PerfilRiesgo | None:
+        bruto = self._almacen.obtener(cliente_id)
+        if bruto is None:
+            return None
+        try:
+            return PerfilRiesgo.model_validate_json(bruto)
+        except ValueError:
+            return None
