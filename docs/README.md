@@ -11,6 +11,8 @@ se mantienen en la [wiki del proyecto](https://github.com/JuanHerreraP/Proyecto-
 | Documento | Contenido |
 | --- | --- |
 | [Internacionalización y localización](internacionalizacion.md) | Español e inglés en web y Android: catálogos, selector de idioma, formatos por locale, pruebas y cómo agregar textos |
+| [Accesibilidad](accesibilidad.md) | WCAG 2.1 AA: pruebas con axe en la web, revisión de semántica en Android, correcciones de contraste y revisión manual |
+| [Colección de Postman](../postman/README.md) | Flujo de la demo con pruebas (cliente, firma, siniestro, Operaciones), ambientes local y AWS, y ejecución con Newman |
 
 ## Identidad, sesión y control de acceso
 
