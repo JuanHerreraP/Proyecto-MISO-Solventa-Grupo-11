@@ -42,6 +42,7 @@ from app.api import (
     siniestros,
     socios,
     telemetria,
+    telemetria_proxy,
 )
 from app.api import (
     auditoria as api_auditoria,
@@ -178,6 +179,7 @@ def crear_app() -> FastAPI:
     app.include_router(desembolsos.router_cliente)
     app.include_router(desembolsos.router_operaciones)
     app.include_router(telemetria.router)
+    app.include_router(telemetria_proxy.router)
     app.include_router(firmas.router)
     app.include_router(emision.router)
     app.include_router(endosos.router)

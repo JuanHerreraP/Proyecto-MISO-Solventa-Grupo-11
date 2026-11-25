@@ -139,6 +139,10 @@ jobs:
           # HU05, opcionales: sin ellos el push queda simulado y el job de avisos apagado.
           FCM_CREDENCIALES_JSON: ${{ secrets.FCM_CREDENCIALES_JSON }}
           NOTIFICACIONES_CLAVE_INTERNA: ${{ secrets.NOTIFICACIONES_CLAVE_INTERNA }}
+          # HU20 telemetría: credencial de servicio del proveedor y contraseña HTTP Basic del
+          # proxy. Opcionales: si no vienen de GitHub ni existen ya, se generan aleatorias.
+          SOLVENTA_TELEMETRY_API_KEY: ${{ secrets.SOLVENTA_TELEMETRY_API_KEY }}
+          TELEMETRY_MOCK_PASSWORD: ${{ secrets.TELEMETRY_MOCK_PASSWORD }}
         run: |
           if [ -z "$PAGOS_WEBHOOK_SECRET" ]; then
             echo "::error::Falta el secret de GitHub PAGOS_WEBHOOK_SECRET (Settings > Secrets and variables > Actions)."
@@ -159,18 +163,54 @@ jobs:
           fi
           mkdir -p infra/secrets
           chmod 700 infra/secrets
+          # Se parte del secreto actual (si existe) para conservar lo que ya tenga: las claves de
+          # telemetría se generan una sola vez y no deben cambiar entre despliegues.
+          if EXISTENTE=$(aws secretsmanager get-secret-value --secret-id "$APP_SECRETS_NAME" \
+              --query SecretString --output text 2>/dev/null); then
+            printf '%s' "$EXISTENTE" > infra/secrets/app.actual.json
+          else
+            echo '{}' > infra/secrets/app.actual.json
+          fi
+          chmod 600 infra/secrets/app.actual.json
           python3 - <<'PY'
-          import json, os
+          import json, os, secrets
           from pathlib import Path
-          p = Path('infra/secrets/app.json')
-          p.write_text(json.dumps({
+
+          actual = json.loads(Path('infra/secrets/app.actual.json').read_text() or '{}')
+
+          def resolver(clave, valor_github, generar=False):
+              """GitHub manda; si no, se conserva lo existente; si no, se genera (opcional)."""
+              desde_github = (valor_github or '').strip()
+              if desde_github:
+                  return desde_github
+              existente = (actual.get(clave) or '').strip()
+              if existente:
+                  return existente
+              return secrets.token_urlsafe(32) if generar else ''
+
+          datos = dict(actual)
+          datos.update({
               'pagos_webhook_secret': os.environ['PAGOS_WEBHOOK_SECRET'],
               # Siempre presentes: ECS falla al iniciar si el secreto no trae la clave. Vacío = apagado.
               'fcm_credenciales_json': os.environ.get('FCM_CREDENCIALES_JSON', ''),
               'notificaciones_clave_interna': os.environ.get('NOTIFICACIONES_CLAVE_INTERNA', ''),
-          }))
+              # HU20: credencial de servicio y contraseña Basic. Se generan si no existen todavía.
+              'solventa_telemetry_api_key': resolver(
+                  'solventa_telemetry_api_key',
+                  os.environ.get('SOLVENTA_TELEMETRY_API_KEY'),
+                  generar=True,
+              ),
+              'telemetry_mock_password': resolver(
+                  'telemetry_mock_password',
+                  os.environ.get('TELEMETRY_MOCK_PASSWORD'),
+                  generar=True,
+              ),
+          })
+          p = Path('infra/secrets/app.json')
+          p.write_text(json.dumps(datos))
           p.chmod(0o600)
           PY
+          rm -f infra/secrets/app.actual.json
           SECRETO_CAMBIO=false
           if APP_SECRETS_ARN=$(aws secretsmanager describe-secret --secret-id "$APP_SECRETS_NAME" \
               --query ARN --output text 2>/dev/null); then
@@ -395,10 +435,31 @@ jobs:
         run: |
           MVP_URL=$(aws cloudformation describe-stacks --stack-name "$STACK" \
             --query "Stacks[0].Outputs[?OutputKey=='Url'].OutputValue" --output text)
+          MVP_URL="${MVP_URL%/}"
           echo "MVP_URL=$MVP_URL"
+          # Backend principal.
           curl --fail --retry 10 --retry-delay 15 --retry-all-errors "$MVP_URL/salud"
-          curl --fail "$MVP_URL/openapi.json" -o /dev/null -w "%{http_code}\n"
+          curl --fail "$MVP_URL/openapi.json" -o /dev/null -w "backend openapi: %{http_code}\n"
+          # Proveedor de telemetría (HU20) tras el proxy. La contraseña Basic sale de Secrets Manager.
+          TEL_USUARIO=telemetry
+          TEL_PASSWORD=$(aws secretsmanager get-secret-value --secret-id "$APP_SECRETS_NAME" \
+            --query SecretString --output text | python3 -c 'import json,sys;print(json.load(sys.stdin).get("telemetry_mock_password",""))')
+          TEL_BASE="$MVP_URL/api/telemetry"
+          curl --fail --retry 10 --retry-delay 15 --retry-all-errors \
+            -u "$TEL_USUARIO:$TEL_PASSWORD" "$TEL_BASE/health" -o /dev/null -w "telemetry health: %{http_code}\n"
+          curl --fail -u "$TEL_USUARIO:$TEL_PASSWORD" "$TEL_BASE/openapi.json" \
+            -o /dev/null -w "telemetry openapi: %{http_code}\n"
+          curl --fail -u "$TEL_USUARIO:$TEL_PASSWORD" "$TEL_BASE/docs" \
+            -o /dev/null -w "telemetry docs: %{http_code}\n"
+          # Sin credenciales, el proxy debe rechazar con 401 (acceso externo protegido).
+          CODIGO=$(curl -s -o /dev/null -w "%{http_code}" "$TEL_BASE/health")
+          if [ "$CODIGO" != "401" ]; then
+            echo "::error::El proveedor de telemetría debería exigir autenticación (401) y devolvió $CODIGO."
+            exit 1
+          fi
+          echo "Proveedor de telemetría protegido y operativo."
           echo "### URL del MVP: $MVP_URL" >> "$GITHUB_STEP_SUMMARY"
+          echo "### Swagger de telemetría: $TEL_BASE/docs" >> "$GITHUB_STEP_SUMMARY"
 
       # Paso 6
       - name: Crear el primer usuario administrador
