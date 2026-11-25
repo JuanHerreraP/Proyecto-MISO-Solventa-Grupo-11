@@ -447,11 +447,16 @@ jobs:
           done
 
       # Opcional: crear el primer usuario administrador si se definió ADMIN_PASSWORD_TELEMETRIA.
+      # El contexto secrets no se puede usar en un if de paso, así que la condición se evalúa dentro
+      # del bloque run mediante Bash: sin la contraseña, el paso termina bien sin hacer nada.
       - name: Crear el primer usuario administrador
-        if: ${{ secrets.ADMIN_PASSWORD_TELEMETRIA != '' }}
         env:
           ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD_TELEMETRIA }}
         run: |
+          if [ -z "$ADMIN_PASSWORD" ]; then
+            echo "Sin ADMIN_PASSWORD_TELEMETRIA: se omite la creación del usuario administrador."
+            exit 0
+          fi
           chmod +x infra/aws/crear-admin-ecs.sh
           ./infra/aws/crear-admin-ecs.sh
 
