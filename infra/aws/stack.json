@@ -1117,6 +1117,75 @@
             }
           },
           {
+            "Name": "telemetry",
+            "Image": {
+              "Ref": "BackendImage"
+            },
+            "Essential": false,
+            "Command": [
+              "uvicorn",
+              "mocks.telemetry.main:app",
+              "--host",
+              "127.0.0.1",
+              "--port",
+              "8004"
+            ],
+            "Environment": [
+              {
+                "Name": "TELEMETRY_ROOT_PATH",
+                "Value": "/api/telemetry"
+              },
+              {
+                "Name": "SOLVENTA_TELEMETRY_URL",
+                "Value": "http://127.0.0.1:8000/api/v1/integraciones/telemetria/eventos"
+              },
+              {
+                "Name": "AWS_DEFAULT_REGION",
+                "Value": {
+                  "Ref": "AWS::Region"
+                }
+              },
+              {
+                "Name": "REDIS_URL",
+                "Value": {
+                  "Fn::Sub": "rediss://${Cache.PrimaryEndPoint.Address}:${Cache.PrimaryEndPoint.Port}"
+                }
+              }
+            ],
+            "Secrets": [
+              {
+                "Name": "SOLVENTA_TELEMETRY_API_KEY",
+                "ValueFrom": {
+                  "Fn::Sub": "${AppSecretsArn}:solventa_telemetry_api_key::"
+                }
+              }
+            ],
+            "LogConfiguration": {
+              "LogDriver": "awslogs",
+              "Options": {
+                "awslogs-group": {
+                  "Ref": "Logs"
+                },
+                "awslogs-region": {
+                  "Ref": "AWS::Region"
+                },
+                "awslogs-stream-prefix": "telemetry"
+              }
+            },
+            "HealthCheck": {
+              "Command": [
+                "CMD",
+                "python",
+                "-c",
+                "import urllib.request; urllib.request.urlopen('http://localhost:8004/health', timeout=3)"
+              ],
+              "Interval": 15,
+              "Timeout": 5,
+              "Retries": 5,
+              "StartPeriod": 30
+            }
+          },
+          {
             "Name": "backend",
             "Image": {
               "Ref": "BackendImage"
@@ -1213,6 +1282,10 @@
               {
                 "Name": "ALMACEN_SOLO_S3",
                 "Value": "true"
+              },
+              {
+                "Name": "TELEMETRY_UPSTREAM_URL",
+                "Value": "http://127.0.0.1:8004"
               }
             ],
             "Secrets": [
@@ -1250,6 +1323,18 @@
                 "Name": "NOTIFICACIONES_CLAVE_INTERNA",
                 "ValueFrom": {
                   "Fn::Sub": "${AppSecretsArn}:notificaciones_clave_interna::"
+                }
+              },
+              {
+                "Name": "SOLVENTA_TELEMETRY_API_KEY",
+                "ValueFrom": {
+                  "Fn::Sub": "${AppSecretsArn}:solventa_telemetry_api_key::"
+                }
+              },
+              {
+                "Name": "TELEMETRY_MOCK_PASSWORD",
+                "ValueFrom": {
+                  "Fn::Sub": "${AppSecretsArn}:telemetry_mock_password::"
                 }
               }
             ],
